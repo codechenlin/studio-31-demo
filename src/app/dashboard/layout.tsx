@@ -177,16 +177,24 @@ export default function DashboardLayout({
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {item.submenu.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.href}>
-                                <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
-                                  <Link href={subItem.href}>
-                                    <subItem.icon />
-                                    <span>{subItem.label}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
+                            {item.submenu.map((subItem) => {
+                               const isSubmenuItemSelected = pathname === subItem.href;
+                              return (
+                                <SidebarMenuSubItem key={subItem.href}>
+                                  <SidebarMenuSubButton asChild isActive={isSubmenuItemSelected}>
+                                    <Link href={subItem.href} className="flex items-center justify-between w-full">
+                                      <div className="flex items-center gap-2">
+                                        <subItem.icon />
+                                        <span>{subItem.label}</span>
+                                      </div>
+                                      {isSubmenuItemSelected && (
+                                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#00CE07', boxShadow: '0 0 8px #00CE07'}}></div>
+                                      )}
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )
+                            })}
                           </SidebarMenuSub>
                         </CollapsibleContent>
                       </Collapsible>
