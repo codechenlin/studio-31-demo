@@ -131,12 +131,10 @@ export default function DashboardLayout({
         <SidebarHeader>
            <div className="flex items-center justify-between">
             <Logo />
-             <SidebarTrigger asChild>
-                <button
-                    className="group/trigger relative h-9 w-9 rounded-md bg-gradient-to-br from-[#AD00EC] to-[#1700E6] text-white hover:bg-gradient-to-br hover:from-[#00CE07] hover:to-[#A6EE00] transition-all duration-300 flex items-center justify-center"
-                >
-                    <LayoutGrid className="size-5 text-white" />
-                </button>
+             <SidebarTrigger
+                className="group/trigger relative h-9 w-9 rounded-md bg-gradient-to-br from-[#AD00EC] to-[#1700E6] text-white hover:bg-gradient-to-br hover:from-[#00CE07] hover:to-[#A6EE00] transition-all duration-300 flex items-center justify-center"
+             >
+                <LayoutGrid className="size-5 text-white" />
              </SidebarTrigger>
           </div>
         </SidebarHeader>
