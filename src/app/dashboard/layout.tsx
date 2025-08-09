@@ -86,6 +86,12 @@ export default function DashboardLayout({
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
+  React.useEffect(() => {
+    // This effect runs only when isDarkMode changes, after the initial render.
+    // We can safely show the toast here.
+    // The initial state is set without a toast.
+  }, [isDarkMode]);
+
   const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
@@ -109,51 +115,58 @@ export default function DashboardLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                {item.submenu ? (
-                   <Collapsible>
-                    <CollapsibleTrigger asChild>
-                       <SidebarMenuButton
-                        isActive={isSubmenuActive(item.href)}
-                        tooltip={{ children: item.label }}
-                        className="w-full justify-between"
-                      >
-                         <div className="flex items-center gap-2">
-                           <item.icon />
-                           <span>{item.label}</span>
-                         </div>
-                         <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                       </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                     <CollapsibleContent>
-                       <SidebarMenuSub>
-                        {item.submenu.map((subItem) => (
-                           <SidebarMenuSubItem key={subItem.href}>
-                             <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
-                               <Link href={subItem.href}>
-                                  <subItem.icon />
-                                  <span>{subItem.label}</span>
-                               </Link>
-                             </SidebarMenuSubButton>
-                           </SidebarMenuSubItem>
-                        ))}
-                       </SidebarMenuSub>
-                     </CollapsibleContent>
-                   </Collapsible>
-                ) : (
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton
-                      isActive={pathname === item.href}
-                      tooltip={{ children: item.label }}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                )}
-              </SidebarMenuItem>
-            ))}
+            {menuItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    {item.submenu ? (
+                      <Collapsible>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            isActive={isSubmenuActive(item.href)}
+                            tooltip={{ children: item.label }}
+                            className="w-full justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <item.icon className="shrink-0"/>
+                              <span className={cn(isSubmenuActive(item.href) && "bg-clip-text text-transparent bg-gradient-to-r from-led-start to-led-end")}>{item.label}</span>
+                            </div>
+                            <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.submenu.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.href}>
+                                <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
+                                  <Link href={subItem.href}>
+                                    <subItem.icon />
+                                    <span>{subItem.label}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ) : (
+                      <div className="relative">
+                        <Link href={item.href} passHref>
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            tooltip={{ children: item.label }}
+                            className="w-full justify-start gap-3"
+                          >
+                            <item.icon className="shrink-0"/>
+                            <span className={cn(isActive && "bg-clip-text text-transparent bg-gradient-to-r from-led-start to-led-end")}>{item.label}</span>
+                          </SidebarMenuButton>
+                        </Link>
+                        {isActive && <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-led-start to-led-end rounded-full"/>}
+                      </div>
+                    )}
+                  </SidebarMenuItem>
+                )
+            })}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="flex flex-col gap-2">
@@ -233,5 +246,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    

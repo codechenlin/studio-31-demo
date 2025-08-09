@@ -79,6 +79,10 @@ export default {
           'hover-start': '#00CE07',
           'hover-end': '#A6EE00',
         },
+        led: {
+            'start': '#00EF10',
+            'end': '#00CE07',
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',
