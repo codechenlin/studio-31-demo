@@ -84,13 +84,12 @@ export default function DashboardLayout({
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
-    
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    if (!isInitialMount.current) {
+        toast({
+          title: `Cambiado a modo ${isDarkMode ? "oscuro" : "claro"}`,
+        });
     } else {
-      toast({
-        title: `Cambiado a modo ${isDarkMode ? "oscuro" : "claro"}`,
-      });
+      isInitialMount.current = false;
     }
   }, [isDarkMode, toast]);
 
@@ -181,16 +180,16 @@ export default function DashboardLayout({
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#009AFF] dark:hover:bg-[#009AFF] hover:text-white"
+                className="group rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r hover:from-[#1700E6] hover:to-[#009AFF] dark:hover:bg-gradient-to-r dark:from-[#1700E6] dark:to-[#009AFF]"
             >
-              <Bell className="size-5"/>
+              <Bell className="size-5 text-black dark:text-white"/>
               <span className="sr-only">Notificaciones</span>
             </Button>
             <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
+                className="group rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r hover:from-[#1700E6] hover:to-[#009AFF] dark:hover:bg-gradient-to-r dark:from-[#1700E6] dark:to-[#009AFF]"
             >
               {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black group-hover:text-white" />}
               <span className="sr-only">Cambiar tema</span>
@@ -199,18 +198,21 @@ export default function DashboardLayout({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={cn("flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 border-t border-sidebar-border mt-auto", 
-              "group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:border-t-0"
+               <button className={cn(
+                "group/profile-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+                "bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10",
+                "hover:bg-gradient-to-r from-settings-hover-start to-settings-hover-end",
+                "group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
               )}>
                 <Avatar className="size-8">
                   <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="profile avatar" />
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
-                  <span className="font-semibold">Usuario</span>
+                  <span className="font-semibold text-foreground">Usuario</span>
                   <span className="text-xs text-muted-foreground">user@mailflow.ai</span>
                 </div>
-                <ChevronRight className="size-4 ml-auto group-data-[collapsible=icon]:hidden"/>
+                <ChevronRight className="size-4 ml-auto text-muted-foreground group-data-[collapsible=icon]:hidden"/>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
