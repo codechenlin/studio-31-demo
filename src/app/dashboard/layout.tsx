@@ -117,6 +117,15 @@ export default function DashboardLayout({
           <SidebarMenu>
             {menuItems.map((item) => {
                 const isActive = item.submenu ? isSubmenuActive(item.href) : pathname === item.href;
+                const buttonContent = (
+                  <>
+                     <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
+                      <item.icon className="shrink-0 text-white size-3"/>
+                    </div>
+                    <span className={cn("text-sm text-black dark:text-white", isActive ? "dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
+                  </>
+                );
+
                 return (
                   <SidebarMenuItem key={item.href}>
                     {item.submenu ? (
@@ -124,19 +133,16 @@ export default function DashboardLayout({
                         <CollapsibleTrigger asChild>
                            <div className={cn(
                               "group/menu-item-wrapper relative rounded-lg p-1",
-                              isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
+                              isActive ? "bg-gradient-to-r from-active-led-start to-active-led-end" : "bg-transparent",
                               "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
                             )}>
-                              <div className="bg-sidebar rounded-md p-0.5">
+                              <div className={cn("rounded-md p-0.5", isActive ? "bg-card/90 dark:bg-zinc-800" : "bg-sidebar")}>
                                 <SidebarMenuButton
                                   isActive={false} // We manage active state on the wrapper
                                   className="w-full justify-between bg-transparent hover:bg-transparent"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-zinc-700/60 rounded-full">
-                                      <item.icon className="shrink-0 text-white size-3"/>
-                                    </div>
-                                    <span className={cn("text-sm", isActive ? "text-black dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
+                                     {buttonContent}
                                   </div>
                                   <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-black dark:text-white" />
                                 </SidebarMenuButton>
@@ -162,18 +168,15 @@ export default function DashboardLayout({
                        <Link href={item.href} passHref>
                         <div className={cn(
                           "group/menu-item-wrapper relative rounded-lg p-1",
-                          isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
+                          isActive ? "bg-gradient-to-r from-active-led-start to-active-led-end" : "bg-transparent",
                           "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
                         )}>
-                           <div className={cn("bg-sidebar rounded-md p-0.5", isActive && "bg-transparent")}>
+                           <div className={cn("rounded-md p-0.5", isActive ? "bg-card/90 dark:bg-zinc-800" : "bg-sidebar")}>
                             <SidebarMenuButton
                               isActive={false}
                               className="w-full justify-start gap-2 bg-transparent hover:bg-transparent"
                             >
-                               <div className={cn("p-1.5 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
-                                <item.icon className="shrink-0 text-white dark:text-white size-3"/>
-                              </div>
-                              <span className={cn("text-sm", isActive ? "text-black dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
+                               {buttonContent}
                             </SidebarMenuButton>
                           </div>
                         </div>
