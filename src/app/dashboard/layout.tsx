@@ -173,7 +173,7 @@ export default function DashboardLayout({
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full size-10 bg-background/50 dark:bg-black/20 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/5 text-black dark:text-white hover:bg-[#009AFF] hover:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
             >
               <Bell className="size-5"/>
               <span className="sr-only">Notificaciones</span>
@@ -182,7 +182,7 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-black/20 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/5 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
             >
               {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
               <span className="sr-only">Cambiar tema</span>
