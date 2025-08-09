@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -70,6 +71,7 @@ export default function SignupPage() {
       toast({
         title: "Cuenta Creada",
         description: "¡Bienvenido! Revisa tu correo para verificar tu cuenta.",
+        className: 'bg-gradient-to-r from-[#E48900] to-[#F5D400] border-none text-white',
       });
       router.push("/login?new_user=true");
     }
