@@ -119,7 +119,7 @@ export default function CreateCampaignPage() {
               {currentStep === 0 && (
                 <div className="max-w-lg mx-auto space-y-4 pt-8">
                    <Label htmlFor="campaignName" className="text-lg font-medium flex items-center gap-2">
-                     <Sparkles className="text-accent"/>
+                     <Sparkles className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/>
                      Nombre de la Campaña
                    </Label>
                    <Input
@@ -139,7 +139,7 @@ export default function CreateCampaignPage() {
                         onClick={() => setCampaignType('regular')}
                         className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'regular' ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border' )}
                         >
-                        <div className="p-3 rounded-full bg-accent/10"> <Mail className="size-6 text-accent" /> </div>
+                        <div className="p-3 rounded-full bg-accent/10"> <Mail className="size-6 text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-lg mb-1">Constructor</h3>
                             <p className="text-muted-foreground text-sm">Campaña con contenido de correo HTML, además de imágenes y enlaces. Este es el tipo más común.</p>
@@ -150,7 +150,7 @@ export default function CreateCampaignPage() {
                         onClick={() => setCampaignType('plaintext')}
                         className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'plaintext' ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border' )}
                         >
-                        <div className="p-3 rounded-full bg-accent/10"> <FileText className="size-6 text-accent" /> </div>
+                        <div className="p-3 rounded-full bg-accent/10"> <FileText className="size-6 text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-lg mb-1">Texto Plano</h3>
                             <p className="text-muted-foreground text-sm">Envía un correo de texto plano sin seguimiento de enlaces, imágenes o HTML.</p>
@@ -176,7 +176,7 @@ export default function CreateCampaignPage() {
                     <div className="relative text-center my-2"> <div className="absolute inset-0 flex items-center"> <span className="w-full border-t border-dashed border-border/70" /> </div> <span className="relative bg-card px-4 text-xs text-muted-foreground uppercase">Seleccionar Audiencia</span> </div>
                   
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2"><List className="text-accent"/> Enviar a una Lista de Contactos</h3>
+                      <h3 className="font-semibold text-lg flex items-center gap-2"><List className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Enviar a una Lista de Contactos</h3>
                       <p className="text-sm text-muted-foreground">Selecciona una de tus listas de contactos para un envío masivo. Ideal para newsletters y anuncios.</p>
                        <Select onValueChange={(value) => setAudienceType('list')}>
                           <SelectTrigger className="py-6 text-base"> <SelectValue placeholder="Selecciona una lista..." /> </SelectTrigger>
@@ -186,13 +186,13 @@ export default function CreateCampaignPage() {
                             <SelectItem value="list-3">Nuevos Registros - Q3 (890 contactos)</SelectItem>
                           </SelectContent>
                         </Select>
-                      <Button variant="outline" size="sm"> <PlusCircle className="mr-2"/> Crear Nueva Lista </Button>
+                      <Button variant="outline" size="sm"> <PlusCircle className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Crear Nueva Lista </Button>
                   </div>
                   
                   <div className="relative text-center my-6"> <div className="absolute inset-0 flex items-center"> <span className="w-full border-t border-dashed border-border/70" /> </div> <span className="relative bg-card px-4 text-sm text-muted-foreground">O</span> </div>
 
                   <div className="space-y-4">
-                      <h3 className="font-semibold text-lg flex items-center gap-2"><Send className="text-accent"/> Enviar a un Destinatario Único</h3>
+                      <h3 className="font-semibold text-lg flex items-center gap-2"><Send className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Enviar a un Destinatario Único</h3>
                       <p className="text-sm text-muted-foreground">Envía un correo electrónico a un solo contacto.</p>
                       <Input type="email" placeholder="ejemplo@dominio.com" className="py-6 text-base" onChange={() => setAudienceType('single')} />
                   </div>
@@ -205,7 +205,7 @@ export default function CreateCampaignPage() {
                         <Input placeholder="CC: admin@ejemplo.com, test@ejemplo.com" className="py-6"/>
                     </div>
                      <Button variant="outline" className="w-full md:w-auto">
-                        <Paperclip className="mr-2"/> Adjuntar Archivos
+                        <Paperclip className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Adjuntar Archivos
                     </Button>
                     <div className="space-y-4 pt-4">
                          <div className="flex flex-col md:flex-row gap-4 justify-between">
