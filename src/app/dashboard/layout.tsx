@@ -169,13 +169,12 @@ export default function DashboardLayout({
               </SidebarMenuItem>
           </SidebarMenu>
           
-          <div className="flex items-center justify-center gap-2 border-t border-sidebar-border pt-2 group-data-[collapsible=icon]:flex-col">
+          <div className="flex items-center justify-center gap-4 p-2 group-data-[collapsible=icon]:flex-col">
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="group/button relative rounded-lg shadow-md dark:shadow-black/50 overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-black/20 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/5 text-black dark:text-white hover:bg-[#009AFF] hover:text-white"
             >
-              <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
               <Bell className="size-5"/>
               <span className="sr-only">Notificaciones</span>
             </Button>
@@ -183,10 +182,9 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="group/button relative rounded-lg shadow-md dark:shadow-black/50 overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-black/20 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/5 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
             >
-               <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
-              {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5 text-black dark:text-white" />}
+              {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>
