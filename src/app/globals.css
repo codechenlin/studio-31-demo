@@ -23,8 +23,8 @@ body {
     --accent: 182 100% 74%;
     --accent-foreground: 182 100% 10%;
     --accent-light-mode-override: 236 96% 44%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 47%;
+    --destructive-foreground: 0 0% 100%;
     --border: 275 20% 90%;
     --input: 275 20% 90%;
     --ring: 283 100% 41%;
@@ -59,8 +59,8 @@ body {
     --accent: 182 100% 60%;
     --accent-foreground: 182 100% 10%;
     --accent-light-mode-override: 182 100% 60%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 47%;
+    --destructive-foreground: 0 0% 100%;
     --border: 275 100% 25%;
     --input: 275 100% 25%;
     --ring: 283 100% 55%;
@@ -113,5 +113,3 @@ body {
     scrollbar-color: hsl(var(--border) / 0.5) transparent;
   }
 }
-
-    

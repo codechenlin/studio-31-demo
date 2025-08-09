@@ -51,11 +51,19 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword(values);
 
     if (error) {
-      toast({
-        title: "Error al iniciar sesión",
-        description: error.message,
-        variant: "destructive",
-      });
+       if (error.message === "Email not confirmed") {
+        toast({
+          title: "Aun no puedes iniciar sesion",
+          description: "Confirma tu correo electrónico para activar tu cuenta.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error al iniciar sesión",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Inicio de sesión exitoso",
