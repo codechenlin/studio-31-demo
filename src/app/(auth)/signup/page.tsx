@@ -71,7 +71,7 @@ export default function SignupPage() {
       toast({
         title: "Cuenta Creada",
         description: "¡Bienvenido! Revisa tu correo para verificar tu cuenta.",
-        className: 'bg-gradient-to-r from-[#E48900] to-[#F5D400] border-none text-white',
+        className: 'bg-gradient-to-r from-[#E18700] to-[#FFAB00] border-none text-white',
       });
       router.push("/login?new_user=true");
     }

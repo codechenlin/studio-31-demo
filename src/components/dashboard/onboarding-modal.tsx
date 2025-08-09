@@ -12,33 +12,69 @@ import { Progress } from '../ui/progress';
 const onboardingSteps = [
   {
     title: "¡Bienvenido a Mailflow AI!",
-    description: "Este es tu centro de control. Desde aquí, podrás gestionar tus campañas, analizar resultados y optimizar tu estrategia de email marketing con el poder de la IA.",
+    description: "Este es tu Dashboard o centro de control. Desde aquí, podrás gestionar tus campañas, analizar resultados y optimizar tu estrategia con el poder de la IA.",
     image: "https://placehold.co/600x400.png",
-    aiHint: "dashboard overview"
+    aiHint: "dashboard analytics"
   },
   {
-    title: "Menú de Navegación",
-    description: "En la barra lateral izquierda encontrarás todas las herramientas principales: campañas, listas de contactos, plantillas, automatizaciones y mucho más. ¡Explóralas!",
+    title: "Gestión de Campañas",
+    description: "La sección 'Campaña' te permite crear nuevos envíos de correo desde cero o ver el historial de todas tus campañas pasadas, analizando su rendimiento.",
     image: "https://placehold.co/600x400.png",
-    aiHint: "application sidebar"
+    aiHint: "email campaign list"
   },
   {
-    title: "Selector de Tema y Notificaciones",
-    description: "Personaliza tu experiencia cambiando entre el modo oscuro y claro. El botón de campana te mantendrá al tanto de las notificaciones importantes.",
+    title: "Administra tus Listas",
+    description: "En 'Lista', puedes importar, crear y segmentar tus listas de contactos. Una buena gestión de tu audiencia es clave para el éxito.",
     image: "https://placehold.co/600x400.png",
-    aiHint: "dark mode toggle"
+    aiHint: "contact list interface"
   },
   {
-    title: "Gestión de tu Perfil",
-    description: "En la parte inferior del menú, puedes acceder a los ajustes de tu cuenta, ver tu perfil y cerrar sesión de forma segura. ¡Mantén tus datos actualizados!",
+    title: "Plantillas de Correo",
+    description: "La sección 'Plantillas' es donde puedes diseñar, guardar y reutilizar tus correos. Ahorra tiempo y mantén una imagen de marca consistente.",
     image: "https://placehold.co/600x400.png",
-    aiHint: "user profile"
+    aiHint: "email template builder"
+  },
+  {
+    title: "Automatización Inteligente",
+    description: "Con 'Automatización', crea flujos de trabajo que se disparan por acciones del usuario, como correos de bienvenida o recordatorios de carritos abandonados.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "automation workflow nodes"
+  },
+   {
+    title: "Configura tus Servidores",
+    description: "En 'Servidores', puedes conectar tus propios proveedores de envío de correo (como AWS, SendGrid, etc.) para gestionar tus envíos.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "server configuration screen"
+  },
+  {
+    title: "Integración y API",
+    description: "Las secciones 'Integración' y 'API Campaña' son para usuarios avanzados que deseen conectar Mailflow AI con otras aplicaciones o servicios.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "api code integration"
+  },
+  {
+    title: "Ajustes Generales",
+    description: "En 'Ajustes', podrás configurar las preferencias generales de la aplicación para adaptarla a tus necesidades.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "application settings page"
+  },
+  {
+    title: "Notificaciones y Tema",
+    description: "Los botones de campana y luna/sol te permiten ver notificaciones importantes y personalizar la apariencia entre modo claro y oscuro.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "notification bell icon"
+  },
+  {
+    title: "Tu Perfil de Usuario",
+    description: "En la parte inferior, puedes acceder a tu perfil para gestionar tus datos personales, ver tu plan y cerrar sesión de forma segura.",
+    image: "https://placehold.co/600x400.png",
+    aiHint: "user profile dropdown"
   },
   {
     title: "¡Todo Listo para Empezar!",
-    description: "Has completado el recorrido inicial. Ahora estás listo para crear tu primera campaña y llevar tu email marketing al siguiente nivel. ¡Mucho éxito!",
+    description: "Has completado el recorrido. Ahora estás listo para crear tu primera campaña y llevar tu email marketing al siguiente nivel. ¡Mucho éxito!",
     image: "https://placehold.co/600x400.png",
-    aiHint: "rocket launch"
+    aiHint: "rocket launch space"
   }
 ];
 
