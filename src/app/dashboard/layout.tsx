@@ -18,6 +18,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/common/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,7 @@ import {
   PlusCircle,
   History,
   User,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +74,25 @@ const menuItems = [
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
   { href: "/dashboard/campaign-api", label: "API Campaña", icon: Code },
 ];
+
+function FloatingActionButton() {
+    const { state, toggleSidebar } = useSidebar();
+
+    if (state === 'expanded') {
+        return null;
+    }
+
+    return (
+        <Button
+            size="icon"
+            onClick={toggleSidebar}
+            className="fixed bottom-6 left-6 z-20 rounded-full h-14 w-14 shadow-lg bg-gradient-to-br from-[#AD00EC] to-[#1700E6] text-white hover:bg-gradient-to-br hover:from-[#00CE07] hover:to-[#A6EE00] transition-all duration-300 transform hover:scale-110"
+        >
+            <LayoutGrid className="size-6"/>
+            <span className="sr-only">Abrir menú</span>
+        </Button>
+    )
+}
 
 export default function DashboardLayout({
   children,
@@ -110,7 +131,9 @@ export default function DashboardLayout({
         <SidebarHeader>
           <div className="flex items-center justify-between">
             <Logo />
-            <SidebarTrigger />
+            <SidebarTrigger>
+                <LayoutGrid className="size-5" />
+            </SidebarTrigger>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -258,9 +281,10 @@ export default function DashboardLayout({
           </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        {children}
+        <FloatingActionButton />
+      </SidebarInset>
     </SidebarProvider>
   );
 }
-
-    
