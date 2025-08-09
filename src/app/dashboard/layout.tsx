@@ -190,9 +190,9 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
             >
-              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black" />}
+              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black group-hover:text-white" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>
