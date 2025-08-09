@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail } from "lucide-react";
 import React from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -45,14 +46,24 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would typically handle authentication
-    toast({
-      title: "Login Successful",
-      description: "Redirecting to your dashboard...",
-    });
-    router.push("/dashboard");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword(values);
+
+    if (error) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Redirigiendo a tu panel...",
+      });
+      router.push("/dashboard");
+      router.refresh();
+    }
   }
 
   return (
@@ -117,8 +128,8 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
-              Sign In
+            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Iniciando sesión..." : "Sign In"}
             </Button>
           </form>
         </Form>

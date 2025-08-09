@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -41,14 +42,25 @@ export default function ForgotPasswordPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would handle sending the password reset email
-    toast({
-      title: "Password Reset Email Sent",
-      description: "Please check your inbox for further instructions.",
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+      redirectTo: `${location.origin}/auth/callback?next=/update-password`,
     });
-    form.reset();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Correo de recuperación enviado",
+        description: "Revisa tu bandeja de entrada para continuar.",
+      });
+      form.reset();
+    }
   }
 
   return (
@@ -82,8 +94,8 @@ export default function ForgotPasswordPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
-              Send Reset Link
+            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Enviando..." : "Send Reset Link"}
             </Button>
           </form>
         </Form>

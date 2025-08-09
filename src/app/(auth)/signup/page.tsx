@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Eye, EyeOff } from "lucide-react";
 import React from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -47,14 +48,31 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would typically handle user registration
-    toast({
-      title: "Account Created",
-      description: "Welcome! Please login to continue.",
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          full_name: values.name,
+        },
+      },
     });
-    router.push("/login");
+
+    if (error) {
+      toast({
+        title: "Error al registrarse",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Cuenta Creada",
+        description: "¡Bienvenido! Revisa tu correo para verificar tu cuenta.",
+      });
+      router.push("/login");
+    }
   }
 
   return (
@@ -131,8 +149,8 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
-              Create Account
+            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Creando cuenta..." : "Create Account"}
             </Button>
           </form>
         </Form>
