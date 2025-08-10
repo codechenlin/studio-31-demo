@@ -339,61 +339,63 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-        <div className="flex-1 bg-transparent p-8 overflow-auto custom-scrollbar">
-            <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
-               {canvasContent.length === 0 ? (
-                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground">
-                   <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
-                 </div>
-               ) : (
-                <div className="space-y-2">
-                  <AnimatePresence>
-                  {canvasContent.map((block, index) => (
-                    <motion.div 
-                      key={block.id} 
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="group/row relative p-2 rounded-lg hover:bg-primary/5"
-                    >
-                      <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
-                          <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
-                            <ArrowUp className="size-4" />
-                          </Button>
-                          <GripVertical className="size-5 text-muted-foreground cursor-grab" />
-                          <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
-                            <ArrowDown className="size-4" />
-                          </Button>
-                      </div>
-
-                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
-                            <Trash2 className="size-4" />
-                         </Button>
-                      </div>
-
-                      <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
-                        {block.payload.columns.map((col) => (
-                          <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]">
-                             {col.blocks.length > 0 ? (
-                                 col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
-                             ) : (
-                               <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={() => handleOpenBlockSelector(col.id)}>
-                                 <PlusCircle className="mb-1"/>
-                                 <span className="text-xs font-medium -mb-0.5">Añadir</span>
-                                 <span className="text-xs font-medium">Bloque</span>
-                               </Button>
-                             )}
+        <div className="flex-1 bg-transparent overflow-auto custom-scrollbar">
+            <div className="p-8">
+                <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
+                   {canvasContent.length === 0 ? (
+                     <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
+                       <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
+                     </div>
+                   ) : (
+                    <div className="space-y-2 p-4">
+                      <AnimatePresence>
+                      {canvasContent.map((block, index) => (
+                        <motion.div 
+                          key={block.id} 
+                          layout
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="group/row relative p-2 rounded-lg hover:bg-primary/5"
+                        >
+                          <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
+                              <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                                <ArrowUp className="size-4" />
+                              </Button>
+                              <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+                              <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                                <ArrowDown className="size-4" />
+                              </Button>
                           </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  ))}
-                  </AnimatePresence>
+    
+                          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                             <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
+                                <Trash2 className="size-4" />
+                             </Button>
+                          </div>
+    
+                          <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+                            {block.payload.columns.map((col) => (
+                              <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]">
+                                 {col.blocks.length > 0 ? (
+                                     col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
+                                 ) : (
+                                   <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={() => handleOpenBlockSelector(col.id)}>
+                                     <PlusCircle className="mb-1"/>
+                                     <span className="text-xs font-medium -mb-0.5">Añadir</span>
+                                     <span className="text-xs font-medium">Bloque</span>
+                                   </Button>
+                                 )}
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      ))}
+                      </AnimatePresence>
+                    </div>
+                   )}
                 </div>
-               )}
             </div>
         </div>
       </main>
