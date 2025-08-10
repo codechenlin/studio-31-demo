@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Square,
   Type,
@@ -30,6 +30,7 @@ import {
   Italic,
   Underline,
   Heading1,
+  Pencil,
 } from 'lucide-react';
 
 const contentBlocks = [
@@ -51,10 +52,13 @@ export default function CreateTemplatePage() {
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       {/* Left Panel: Content & Blocks */}
-      <aside className="w-80 border-r border-border/20 flex flex-col bg-card/5">
+      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px]">
             <div className="flex items-center gap-2">
                 <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
+                <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                  <Pencil className="size-4" />
+                </Button>
             </div>
         </header>
         <ScrollArea className="flex-1">
@@ -112,7 +116,7 @@ export default function CreateTemplatePage() {
       </main>
 
       {/* Right Panel: Style & Configuration */}
-      <aside className="w-80 border-l border-border/20 flex flex-col bg-card/5">
+      <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
          <header className="h-[61px] border-b border-border/20 flex-shrink-0">
              <Tabs defaultValue="style" className="flex-1 flex flex-col h-full">
                 <TabsList className="grid w-full grid-cols-2 m-2 bg-card/10 border-border/20">
