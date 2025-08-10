@@ -42,6 +42,7 @@ import {
   User,
   LayoutGrid,
   FilePlus,
+  Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +75,7 @@ const menuItems = [
     label: "Plantillas", 
     icon: LayoutTemplate,
     submenu: [
-      { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: FilePlus },
+      { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: Leaf },
       { href: "/dashboard/templates", label: "Mis Plantillas", icon: LayoutGrid },
     ]
   },
@@ -109,6 +110,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { setOpen } = useSidebar();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   
+  const [openMenu, setOpenMenu] = React.useState<string | null>(() => {
+    const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
+    return activeItem ? activeItem.href : null;
+  });
+
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
@@ -123,7 +129,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/dashboard/templates/create') {
       setOpen(false);
     }
+  }, [pathname, setOpen]);
+  
+   React.useEffect(() => {
+    const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
+    setOpenMenu(activeItem ? activeItem.href : null);
   }, [pathname]);
+
 
   const toggleTheme = () => {
     const newMode = !isDarkMode;
@@ -136,6 +148,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const isSubmenuActive = (basePath: string) => {
     return pathname.startsWith(basePath);
   }
+
+  const handleMenuToggle = (href: string) => {
+    setOpenMenu(openMenu === href ? null : href);
+  };
 
   return (
     <>
@@ -158,7 +174,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 return (
                   <SidebarMenuItem key={item.href}>
                     {item.submenu ? (
-                      <Collapsible defaultOpen={isActive}>
+                      <Collapsible open={openMenu === item.href} onOpenChange={() => handleMenuToggle(item.href)}>
                         <CollapsibleTrigger asChild>
                            <div className={cn(
                               "group/menu-item-wrapper relative rounded-lg p-1",
@@ -329,5 +345,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   )
 }
-
-    
