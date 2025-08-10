@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,6 +56,7 @@ import {
   AlertTriangle,
   Tablet,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const contentBlocks = [
@@ -111,6 +112,8 @@ type CanvasBlock = ColumnsBlock;
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [viewport, setViewport] = useState<Viewport>('desktop');
+  const [templateName, setTemplateName] = useState("Plantilla sin título");
+  const [tempTemplateName, setTempTemplateName] = useState(templateName);
   
   // Modals State
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
@@ -119,7 +122,7 @@ export default function CreateTemplatePage() {
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [blockToDelete, setBlockToDelete] = useState<number | null>(null);
-
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -225,13 +228,11 @@ export default function CreateTemplatePage() {
   }
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
-    startTransition(() => {
-        const newCanvasContent = [...canvasContent];
-        const item = newCanvasContent.splice(index, 1)[0];
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
-        newCanvasContent.splice(newIndex, 0, item);
-        setCanvasContent(newCanvasContent);
-    });
+    const newCanvasContent = [...canvasContent];
+    const item = newCanvasContent.splice(index, 1)[0];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    newCanvasContent.splice(newIndex, 0, item);
+    setCanvasContent(newCanvasContent);
   };
 
   const promptDeleteBlock = (index: number) => {
@@ -247,6 +248,15 @@ export default function CreateTemplatePage() {
     }
   };
 
+  const handleSaveTemplateName = () => {
+    setTemplateName(tempTemplateName);
+    setIsEditNameModalOpen(false);
+  };
+
+  useEffect(() => {
+    setTempTemplateName(templateName);
+  }, [isEditNameModalOpen, templateName]);
+
   const viewportClasses = {
     desktop: 'max-w-4xl', 
     tablet: 'max-w-xl',  
@@ -256,13 +266,13 @@ export default function CreateTemplatePage() {
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-56 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
-        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px]">
-            <div className="flex items-center gap-2">
-                <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
-                <Button variant="ghost" size="icon" className="size-8 shrink-0">
-                  <Pencil className="size-4" />
-                </Button>
-            </div>
+        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10">
+          <div className="flex items-center gap-1 flex-1 min-w-0">
+              <span className="text-lg font-semibold truncate flex-1">{templateName}</span>
+              <Button variant="outline" size="icon" className="size-8 shrink-0 border-border/50" onClick={() => setIsEditNameModalOpen(true)}>
+                <Pencil className="size-4" />
+              </Button>
+          </div>
         </header>
         <div className="p-4">
             <Card 
@@ -289,7 +299,7 @@ export default function CreateTemplatePage() {
                         <Button variant={viewport === 'desktop' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('desktop')}><Laptop/></Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Visualiza en <span className="font-bold">Escritorio</span></p>
+                        <p>Mira cómo se ve en <span className="font-bold">Escritorio</span></p>
                     </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -297,7 +307,7 @@ export default function CreateTemplatePage() {
                          <Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Mira cómo se ve en una <span className="font-bold">Tableta</span></p>
+                        <p>Comprueba la vista para <span className="font-bold">Tableta</span></p>
                     </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -329,16 +339,25 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-        <div className="flex-1 bg-transparent p-8 overflow-auto">
+        <div className="flex-1 bg-transparent p-8 overflow-auto custom-scrollbar">
             <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                {canvasContent.length === 0 ? (
                  <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground">
-                   <p>Arrastra un bloque desde el panel izquierdo para empezar a construir tu plantilla. <br/> Comienza con un bloque de 'Columns'.</p>
+                   <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
                  </div>
                ) : (
                 <div className="space-y-2">
+                  <AnimatePresence>
                   {canvasContent.map((block, index) => (
-                    <div key={block.id} className={cn("group/row relative p-2 rounded-lg hover:bg-primary/5 transition-all duration-300", isPending && 'opacity-50')}>
+                    <motion.div 
+                      key={block.id} 
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="group/row relative p-2 rounded-lg hover:bg-primary/5"
+                    >
                       <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
                           <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
                             <ArrowUp className="size-4" />
@@ -355,9 +374,9 @@ export default function CreateTemplatePage() {
                          </Button>
                       </div>
 
-                      <div className="flex gap-4">
+                      <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
                         {block.payload.columns.map((col) => (
-                          <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
+                          <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]">
                              {col.blocks.length > 0 ? (
                                  col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
                              ) : (
@@ -370,8 +389,9 @@ export default function CreateTemplatePage() {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
+                  </AnimatePresence>
                 </div>
                )}
             </div>
@@ -536,8 +556,32 @@ export default function CreateTemplatePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+       <Dialog open={isEditNameModalOpen} onOpenChange={setIsEditNameModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Nombre de la Plantilla</DialogTitle>
+            <DialogDescription>
+              Cambia el nombre de tu plantilla para identificarla fácilmente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={tempTemplateName}
+              onChange={(e) => setTempTemplateName(e.target.value)}
+              placeholder="Mi increíble plantilla"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditNameModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleSaveTemplateName}>
+              Guardar Nombre
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-    
