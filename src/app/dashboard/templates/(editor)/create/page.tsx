@@ -248,14 +248,14 @@ export default function CreateTemplatePage() {
   };
 
   const viewportClasses = {
-    desktop: 'max-w-3xl', // 768px
-    tablet: 'max-w-xl',  // 640px
-    mobile: 'max-w-sm', // 384px
+    desktop: 'max-w-4xl', 
+    tablet: 'max-w-xl',  
+    mobile: 'max-w-sm', 
   };
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
+      <aside className="w-56 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px]">
             <div className="flex items-center gap-2">
                 <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
@@ -264,34 +264,16 @@ export default function CreateTemplatePage() {
                 </Button>
             </div>
         </header>
-        <ScrollArea className="flex-1 h-[calc(100vh-61px)]">
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-4">
-              {contentBlocks.slice(0, 6).map((block) => (
-                <Card 
-                  key={block.id} 
-                  onClick={() => handleBlockClick(block.id)}
-                  className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-                >
-                  <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                  <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
-                </Card>
-              ))}
-            </div>
-             <div className="mt-4 grid grid-cols-2 gap-4">
-                {contentBlocks.slice(6).map((block) => (
-                    <Card
-                    key={block.id}
-                    onClick={() => handleBlockClick(block.id)}
-                    className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-                    >
-                    <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                    <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
-                    </Card>
-                ))}
-            </div>
-          </div>
-        </ScrollArea>
+        <div className="p-4">
+            <Card 
+              onClick={() => handleBlockClick('columns')}
+              className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+            >
+              <Columns className="size-10 text-[#00B0F0] transition-colors" />
+              <span className="text-md font-semibold text-center text-foreground/80 mt-2">Columns</span>
+              <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>
+            </Card>
+        </div>
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -557,3 +539,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
