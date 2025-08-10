@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -37,7 +36,6 @@ import {
   Code,
   Shapes
 } from 'lucide-react';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 const contentBlocks = [
   { name: "Columns", icon: Columns },
@@ -73,25 +71,19 @@ export default function CreateTemplatePage() {
             </div>
         </header>
         <ScrollArea className="flex-1">
-          <Carousel opts={{ align: "start", slidesToScroll: 'auto' }} className="w-full p-4">
-            <CarouselContent>
-              {Array.from({ length: Math.ceil(contentBlocks.length / 6) }).map((_, pageIndex) => (
-                <CarouselItem key={pageIndex}>
-                  <div className="grid grid-cols-2 gap-4">
-                    {contentBlocks.slice(pageIndex * 6, pageIndex * 6 + 6).map((block) => (
-                      <Card 
-                        key={block.name} 
-                        className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-                      >
-                        <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                        <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
-                      </Card>
-                    ))}
-                  </div>
-                </CarouselItem>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4">
+              {contentBlocks.map((block) => (
+                <Card 
+                  key={block.name} 
+                  className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                >
+                  <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                  <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
+                </Card>
               ))}
-            </CarouselContent>
-          </Carousel>
+            </div>
+          </div>
         </ScrollArea>
       </aside>
 
@@ -127,7 +119,7 @@ export default function CreateTemplatePage() {
 
         <div className="flex-1 bg-transparent p-8 overflow-auto">
             <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg h-[1200px] p-8">
-               <div className="border-2 border-dashed border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
+               <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
                    <p>Arrastra un bloque para empezar a construir tu plantilla.</p>
                </div>
             </div>
