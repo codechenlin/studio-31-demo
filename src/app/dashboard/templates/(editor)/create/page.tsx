@@ -49,6 +49,10 @@ import {
   LayoutGrid,
   Box,
   PlusCircle,
+  ArrowUp,
+  ArrowDown,
+  GripVertical,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -215,6 +219,19 @@ export default function CreateTemplatePage() {
     }
   }
 
+  const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
+    const newCanvasContent = [...canvasContent];
+    const item = newCanvasContent.splice(index, 1)[0];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    newCanvasContent.splice(newIndex, 0, item);
+    setCanvasContent(newCanvasContent);
+  };
+
+  const handleDeleteBlock = (index: number) => {
+    const newCanvasContent = canvasContent.filter((_, i) => i !== index);
+    setCanvasContent(newCanvasContent);
+  };
+
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
@@ -284,19 +301,37 @@ export default function CreateTemplatePage() {
                  </div>
                ) : (
                 <div className="space-y-4">
-                  {canvasContent.map(block => (
-                    <div key={block.id} className="flex gap-4">
-                      {block.payload.columns.map((col) => (
-                        <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
-                           {col.blocks.length > 0 ? (
-                               col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
-                           ) : (
-                             <Button variant="outline" size="sm" onClick={() => handleOpenBlockSelector(col.id)}>
-                               <PlusCircle className="mr-2"/> Añadir Bloque
-                             </Button>
-                           )}
-                        </div>
-                      ))}
+                  {canvasContent.map((block, index) => (
+                    <div key={block.id} className="group/row relative p-2 rounded-lg hover:bg-primary/5">
+                      <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
+                          <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                            <ArrowUp className="size-4" />
+                          </Button>
+                          <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+                          <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                            <ArrowDown className="size-4" />
+                          </Button>
+                      </div>
+
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                         <Button variant="destructive" size="icon" className="size-7" onClick={() => handleDeleteBlock(index)}>
+                            <Trash2 className="size-4" />
+                         </Button>
+                      </div>
+
+                      <div className="flex gap-4">
+                        {block.payload.columns.map((col) => (
+                          <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
+                             {col.blocks.length > 0 ? (
+                                 col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
+                             ) : (
+                               <Button variant="outline" size="sm" onClick={() => handleOpenBlockSelector(col.id)}>
+                                 <PlusCircle className="mr-2"/> Añadir Bloque
+                               </Button>
+                             )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
