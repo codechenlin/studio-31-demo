@@ -48,6 +48,7 @@ import {
   Shapes,
   LayoutGrid,
   Box,
+  PlusCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -73,19 +74,44 @@ const columnOptions = [
     { num: 5, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
-interface ContentBlock {
+// --- STATE MANAGEMENT TYPES ---
+type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'icons' | 'emojis' | 'html';
+
+interface PrimitiveBlock {
   id: string;
-  type: 'columns';
+  type: PrimitiveBlockType;
   payload: {
-    columnCount: number;
+    [key: string]: any;
   };
 }
 
+interface Column {
+  id: string;
+  blocks: PrimitiveBlock[];
+}
+
+interface ColumnsBlock {
+  id: string;
+  type: 'columns';
+  payload: {
+    columns: Column[];
+  };
+}
+
+type CanvasBlock = ColumnsBlock;
+
+
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  // Modals State
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
-  const [canvasContent, setCanvasContent] = useState<ContentBlock[]>([]);
+  const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  
+  // Canvas State
+  const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -96,22 +122,99 @@ export default function CreateTemplatePage() {
       setSelectedColumnLayout(null);
       setIsColumnModalOpen(true);
     }
-    // Handle other blocks here in the future
+    // Future: Handle other top-level blocks
   };
 
   const handleAddColumns = () => {
     if (selectedColumnLayout) {
-      const newBlock: ContentBlock = {
+      const newBlock: ColumnsBlock = {
         id: `block_${Date.now()}`,
         type: 'columns',
         payload: {
-          columnCount: selectedColumnLayout,
+          columns: Array.from({ length: selectedColumnLayout }).map((_, i) => ({
+            id: `col_${Date.now()}_${i}`,
+            blocks: [],
+          })),
         },
       };
       setCanvasContent([...canvasContent, newBlock]);
       setIsColumnModalOpen(false);
     }
   };
+
+  const handleOpenBlockSelector = (columnId: string) => {
+    setActiveColumnId(columnId);
+    setIsBlockSelectorOpen(true);
+  };
+
+  const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
+    if (!activeColumnId) return;
+
+    const newBlock: PrimitiveBlock = {
+      id: `${blockType}_${Date.now()}`,
+      type: blockType,
+      payload: {
+        ...(blockType === 'heading' && { text: 'Título principal' }),
+        // ... default payloads for other types
+      },
+    };
+
+    const newCanvasContent = canvasContent.map(row => {
+      const newColumns = row.payload.columns.map(col => {
+        if (col.id === activeColumnId) {
+          return { ...col, blocks: [...col.blocks, newBlock] };
+        }
+        return col;
+      });
+      return { ...row, payload: { columns: newColumns } };
+    });
+
+    setCanvasContent(newCanvasContent);
+    setIsBlockSelectorOpen(false);
+    setActiveColumnId(null);
+  };
+  
+  const handleHeadingTextChange = (blockId: string, newText: string) => {
+    const newCanvasContent = canvasContent.map(row => ({
+      ...row,
+      payload: {
+        columns: row.payload.columns.map(col => ({
+          ...col,
+          blocks: col.blocks.map(block => {
+            if (block.id === blockId) {
+              return { ...block, payload: { ...block.payload, text: newText } };
+            }
+            return block;
+          })
+        }))
+      }
+    }));
+    setCanvasContent(newCanvasContent);
+  };
+
+  const renderBlock = (block: PrimitiveBlock) => {
+    switch(block.type) {
+      case 'heading':
+        return (
+          <h1 
+            contentEditable 
+            suppressContentEditableWarning 
+            onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.textContent || '')}
+            className="text-4xl font-bold w-full p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+          >
+            {block.payload.text}
+          </h1>
+        );
+      // Future cases for other block types
+      default:
+        return (
+          <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
+            Block: {block.type}
+          </div>
+        )
+    }
+  }
+
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
@@ -125,10 +228,10 @@ export default function CreateTemplatePage() {
                 </Button>
             </div>
         </header>
-        <ScrollArea className="flex-1 h-[calc(100vh-61px)]">
+        <ScrollArea className="flex-1 h-[calc(100vh-61px-3rem)]">
           <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
-              {contentBlocks.map((block) => (
+              {contentBlocks.slice(0, 6).map((block) => (
                 <Card 
                   key={block.id} 
                   onClick={() => handleBlockClick(block.id)}
@@ -176,25 +279,26 @@ export default function CreateTemplatePage() {
         <div className="flex-1 bg-transparent p-8 overflow-auto">
             <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8">
                {canvasContent.length === 0 ? (
-                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
-                   <p>Arrastra un bloque para empezar a construir tu plantilla.</p>
+                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground">
+                   <p>Arrastra un bloque desde el panel izquierdo para empezar a construir tu plantilla. <br/> Comienza con un bloque de 'Columns'.</p>
                  </div>
                ) : (
                 <div className="space-y-4">
-                  {canvasContent.map(block => {
-                    if (block.type === 'columns') {
-                      return (
-                        <div key={block.id} className="flex gap-4">
-                          {Array.from({ length: block.payload.columnCount }).map((_, index) => (
-                            <div key={index} className="flex-1 p-4 border-2 border-dashed border-border/30 rounded-lg min-h-[100px] flex items-center justify-center">
-                              <span className="text-muted-foreground text-xs">Columna</span>
-                            </div>
-                          ))}
+                  {canvasContent.map(block => (
+                    <div key={block.id} className="flex gap-4">
+                      {block.payload.columns.map((col) => (
+                        <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors">
+                           {col.blocks.length > 0 ? (
+                               col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
+                           ) : (
+                             <Button variant="outline" size="sm" onClick={() => handleOpenBlockSelector(col.id)}>
+                               <PlusCircle className="mr-2"/> Añadir Bloque
+                             </Button>
+                           )}
                         </div>
-                      )
-                    }
-                    return null;
-                  })}
+                      ))}
+                    </div>
+                  ))}
                 </div>
                )}
             </div>
@@ -312,6 +416,32 @@ export default function CreateTemplatePage() {
               Aceptar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Block Selector Modal */}
+       <Dialog open={isBlockSelectorOpen} onOpenChange={setIsBlockSelectorOpen}>
+        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir un Nuevo Bloque</DialogTitle>
+            <DialogDescription>
+              Selecciona un bloque de contenido para añadirlo a la columna.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="grid grid-cols-3 gap-4 p-4">
+                {contentBlocks.filter(b => b.id !== 'columns').map((block) => (
+                  <Card 
+                    key={block.id} 
+                    onClick={() => handleSelectBlockToAdd(block.id as PrimitiveBlockType)}
+                    className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                  >
+                    <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                    <span className="text-sm font-medium text-center text-foreground/80 mt-2">{block.name}</span>
+                  </Card>
+                ))}
+              </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
