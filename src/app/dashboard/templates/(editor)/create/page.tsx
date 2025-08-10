@@ -31,7 +31,13 @@ import {
   Underline,
   Heading1,
   Pencil,
+  Youtube,
+  Timer,
+  Smile,
+  Code,
+  Shapes
 } from 'lucide-react';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 const contentBlocks = [
   { name: "Columns", icon: Columns },
@@ -40,6 +46,11 @@ const contentBlocks = [
   { name: "Image", icon: ImageIcon },
   { name: "Button", icon: Square },
   { name: "Separator", icon: Minus },
+  { name: "Video Youtube", icon: Youtube },
+  { name: "Contador", icon: Timer },
+  { name: "Iconos", icon: Shapes },
+  { name: "Emojis", icon: Smile },
+  { name: "Codigo HTML", icon: Code },
 ];
 
 export default function CreateTemplatePage() {
@@ -62,17 +73,25 @@ export default function CreateTemplatePage() {
             </div>
         </header>
         <ScrollArea className="flex-1">
-          <div className="p-4 grid grid-cols-2 gap-4">
-            {contentBlocks.map((block) => (
-              <Card 
-                key={block.name} 
-                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-              >
-                <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
-              </Card>
-            ))}
-          </div>
+          <Carousel opts={{ align: "start", slidesToScroll: 'auto' }} className="w-full p-4">
+            <CarouselContent>
+              {Array.from({ length: Math.ceil(contentBlocks.length / 6) }).map((_, pageIndex) => (
+                <CarouselItem key={pageIndex}>
+                  <div className="grid grid-cols-2 gap-4">
+                    {contentBlocks.slice(pageIndex * 6, pageIndex * 6 + 6).map((block) => (
+                      <Card 
+                        key={block.name} 
+                        className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                      >
+                        <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                        <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
+                      </Card>
+                    ))}
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </ScrollArea>
       </aside>
 
