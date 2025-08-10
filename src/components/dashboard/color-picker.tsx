@@ -12,10 +12,10 @@ type ColorPickerProps = {
 };
 
 const presetColors = [
-  "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#F7A4A4",
-  "#FFAD60", "#96E072", "#64C5FF", "#B1AFFF", "#FF9E9E",
-  "#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#ec4899",
-  "#6366f1", "#0ea5e9", "#f59e0b", "#ef4444", "#14b8a6",
+  '#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF',
+  '#33FFA1', '#FF7F50', '#6A5ACD', '#00CED1', '#FFD700',
+  '#FF4500', '#2E8B57', '#4682B4', '#DA70D6', '#8A2BE2',
+  '#00FF7F', '#DC143C', '#1E90FF', '#9932CC', '#FF1493',
 ];
 
 export function ColorPicker({ color, setColor }: ColorPickerProps) {
@@ -40,7 +40,7 @@ export function ColorPicker({ color, setColor }: ColorPickerProps) {
           type="text"
           value={color}
           onChange={(e) => setColor(e.target.value)}
-          placeholder="#FFFFFF"
+          placeholder="#A020F0"
           className="pl-10"
         />
         <div

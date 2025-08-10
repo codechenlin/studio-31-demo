@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { HelpButton } from '@/components/dashboard/help-button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorPicker } from '@/components/dashboard/color-picker';
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 const steps = [
   {
@@ -79,7 +80,7 @@ export default function CreateCampaignPage() {
   const [campaignName, setCampaignName] = useState('');
   const [selectedTags, setSelectedTags] = useState<CampaignTag[]>([]);
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#FFFFFF');
+  const [newTagColor, setNewTagColor] = useState('#A020F0');
   
   const [campaignType, setCampaignType] = useState<'regular' | 'plaintext' | null>(null);
   const [audienceType, setAudienceType] = useState<'list' | 'single' | null>(null);
@@ -123,7 +124,7 @@ export default function CreateCampaignPage() {
       setSelectedTags([...selectedTags, newTag]);
       existingTags.push(newTag); // Add to mock DB
       setNewTagName('');
-      setNewTagColor('#FFFFFF');
+      setNewTagColor('#A020F0');
     }
   };
 
@@ -205,7 +206,12 @@ export default function CreateCampaignPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-80">
                                 <div className="grid gap-4">
-                                    <h4 className="font-medium leading-none">Nueva Etiqueta</h4>
+                                    <div className="flex justify-between items-center">
+                                      <h4 className="font-medium leading-none">Nueva Etiqueta</h4>
+                                      <PopoverPrimitive.Close>
+                                        <X className="h-4 w-4" />
+                                      </PopoverPrimitive.Close>
+                                    </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="new-tag-name">Nombre</Label>
                                         <Input id="new-tag-name" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder="Nombre de la etiqueta" />
