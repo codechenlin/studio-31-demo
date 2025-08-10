@@ -47,7 +47,7 @@ export default function CreateTemplatePage() {
       {/* Left Panel: Content & Blocks */}
       <aside className="w-80 border-r border-border/20 flex flex-col bg-card/5">
         <div className="p-4 border-b border-border/20 flex items-center gap-2 h-[61px]">
-           <Button variant="outline" className="w-full border-border/50"><ArrowLeft className="mr-2"/> Volver</Button>
+           <span className="font-semibold text-lg">Bloques</span>
         </div>
         <ScrollArea className="flex-1">
           <div className="p-4 grid grid-cols-2 gap-4">
@@ -77,6 +77,7 @@ export default function CreateTemplatePage() {
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm"><Undo/> Deshacer</Button>
                 <Button variant="ghost" size="sm"><Redo/> Rehacer</Button>
+                <Button variant="outline" size="sm"><ArrowLeft/> Volver</Button>
                 <Button variant="outline" size="sm" className="border-primary/50 text-primary bg-transparent"><Save/> Guardar Borrador</Button>
                  <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors">
                     <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground">
