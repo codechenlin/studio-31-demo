@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { HelpButton } from "@/components/dashboard/help-button";
 
 const campaigns = [
   // This is mock data. In a real app, you would fetch this from your backend.
@@ -28,7 +28,7 @@ const campaigns = [
 ];
 
 export default function CampaignsPage() {
-  const [date, setDate] = useState<DateRange | undefined>();
+  const [date, setDate] = useState<Date | undefined>();
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
@@ -40,12 +40,15 @@ export default function CampaignsPage() {
           </h1>
           <p className="text-muted-foreground">Aquí puedes ver, filtrar y gestionar todas tus campañas pasadas.</p>
         </div>
-        <Link href="/dashboard/campaigns/create">
-            <Button className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
-                <PlusCircle className="mr-2" />
-                Crear Nueva Campaña
-            </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+            <HelpButton />
+            <Link href="/dashboard/campaigns/create">
+                <Button className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
+                    <PlusCircle className="mr-2" />
+                    Crear Nueva Campaña
+                </Button>
+            </Link>
+        </div>
       </div>
       
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl flex-1">
@@ -85,28 +88,16 @@ export default function CampaignsPage() {
                             className="w-full md:w-[280px] justify-start text-left font-normal"
                         >
                             <CalendarIcon className="mr-2 size-4" />
-                            {date?.from ? (
-                                date.to ? (
-                                    <>
-                                        {format(date.from, "LLL dd, y")} -{" "}
-                                        {format(date.to, "LLL dd, y")}
-                                    </>
-                                ) : (
-                                    format(date.from, "LLL dd, y")
-                                )
-                            ) : (
-                                <span>Seleccionar rango de fechas</span>
-                            )}
+                            {date ? format(date, "LLL dd, y") : <span>Seleccionar una fecha</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                             initialFocus
-                            mode="range"
-                            defaultMonth={date?.from}
+                            mode="single"
                             selected={date}
                             onSelect={setDate}
-                            numberOfMonths={2}
+                            numberOfMonths={1}
                         />
                     </PopoverContent>
                 </Popover>

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, X, LayoutDashboard, Mails, Users, LayoutTemplate, Zap, Server, Plug, Code, Settings, Bell, Sun, Moon, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X, LayoutDashboard, Mails, Users, LayoutTemplate, Zap, Server, Plug, Code, Settings, Bell, Sun, Moon, User as UserIcon, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Progress } from '../ui/progress';
 
@@ -19,7 +19,7 @@ const onboardingSteps = [
   },
   {
     title: "Gestión de Campañas",
-    description: "La sección 'Campaña' te permite crear nuevos envíos de correo desde cero o ver el historial de todas tus campañas pasadas, analizando su rendimiento.",
+    description: "Busca la opción 'Campaña' en el menú lateral. Aquí podrás crear nuevos envíos de correo desde cero o ver el historial de todas tus campañas pasadas.",
     image: "https://placehold.co/600x400.png",
     aiHint: "email campaign list",
     icon: Mails,
@@ -33,7 +33,7 @@ const onboardingSteps = [
   },
   {
     title: "Plantillas de Correo",
-    description: "La sección 'Plantillas' es donde puedes diseñar, guardar y reutilizar tus correos. Ahorra tiempo y mantén una imagen de marca consistente.",
+    description: "En la sección 'Plantillas', puedes diseñar, guardar y reutilizar tus correos para ahorrar tiempo y mantener una imagen de marca consistente.",
     image: "https://placehold.co/600x400.png",
     aiHint: "email template builder",
     icon: LayoutTemplate,
@@ -47,21 +47,21 @@ const onboardingSteps = [
   },
    {
     title: "Configura tus Servidores",
-    description: "En 'Servidores', puedes conectar tus propios proveedores de envío de correo (como AWS, SendGrid, etc.) para gestionar tus envíos.",
+    description: "En 'Servidores', conecta tus propios proveedores de envío de correo (como AWS, SendGrid, etc.) para gestionar tus envíos de forma centralizada.",
     image: "https://placehold.co/600x400.png",
     aiHint: "server configuration screen",
     icon: Server,
   },
   {
     title: "Integración y API",
-    description: "Las secciones 'Integración' y 'API Campaña' son para usuarios avanzados que deseen conectar Mailflow AI con otras aplicaciones o servicios.",
+    description: "Las secciones 'Integración' y 'API Campaña' son para usuarios avanzados que deseen conectar Mailflow AI con otras aplicaciones o servicios externos.",
     image: "https://placehold.co/600x400.png",
     aiHint: "api code integration",
     icon: Plug,
   },
   {
     title: "Ajustes Generales",
-    description: "En 'Ajustes', podrás configurar las preferencias generales de la aplicación para adaptarla a tus necesidades.",
+    description: "En 'Ajustes', podrás configurar las preferencias generales de la aplicación para adaptarla a tus necesidades y flujo de trabajo.",
     image: "https://placehold.co/600x400.png",
     aiHint: "application settings page",
     icon: Settings,
@@ -75,7 +75,7 @@ const onboardingSteps = [
   },
   {
     title: "Tu Perfil de Usuario",
-    description: "En la parte inferior, puedes acceder a tu perfil para gestionar tus datos personales, ver tu plan y cerrar sesión de forma segura.",
+    description: "En la parte inferior del menú, puedes acceder a tu perfil para gestionar tus datos personales, ver tu plan y cerrar sesión de forma segura.",
     image: "https://placehold.co/600x400.png",
     aiHint: "user profile dropdown",
     icon: UserIcon,
@@ -89,22 +89,29 @@ const onboardingSteps = [
   }
 ];
 
-export function OnboardingModal() {
+type OnboardingModalProps = {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+};
+
+export function OnboardingModal({ isOpen, onOpenChange }: OnboardingModalProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
-  const [isOpen, setIsOpen] = useState(true);
 
   const cleanUrl = () => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.delete('welcome');
-    router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+    const newUrl = newParams.size > 0 ? `${pathname}?${newParams.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
   };
   
   const handleClose = () => {
-    setIsOpen(false);
+    onOpenChange(false);
     cleanUrl();
+    // Reset step for next time it opens
+    setTimeout(() => setCurrentStep(0), 300);
   };
 
   const handleNext = () => {
@@ -124,6 +131,13 @@ export function OnboardingModal() {
   const progressValue = ((currentStep + 1) / onboardingSteps.length) * 100;
   const isLastStep = currentStep === onboardingSteps.length - 1;
   const CurrentIcon = onboardingSteps[currentStep].icon;
+  
+  // Reset step when modal is re-opened
+  React.useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

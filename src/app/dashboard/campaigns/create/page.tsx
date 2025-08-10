@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { HelpButton } from '@/components/dashboard/help-button';
 
 const steps = [
   {
@@ -99,6 +100,7 @@ export default function CreateCampaignPage() {
           </h1>
           <p className="text-muted-foreground">Sigue los pasos para configurar y lanzar tu próxima campaña exitosa.</p>
         </div>
+        <HelpButton />
       </div>
       
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
