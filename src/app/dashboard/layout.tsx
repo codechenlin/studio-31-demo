@@ -41,6 +41,7 @@ import {
   History,
   User,
   LayoutGrid,
+  FilePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +74,7 @@ const menuItems = [
     label: "Plantillas", 
     icon: LayoutTemplate,
     submenu: [
-      { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: PlusCircle },
+      { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: FilePlus },
       { href: "/dashboard/templates", label: "Mis Plantillas", icon: LayoutGrid },
     ]
   },
@@ -102,13 +103,10 @@ function FloatingActionButton() {
     )
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
+  const { setOpen } = useSidebar();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   
   React.useEffect(() => {
@@ -120,6 +118,12 @@ export default function DashboardLayout({
     // We can safely show the toast here.
     // The initial state is set without a toast.
   }, [isDarkMode]);
+
+  React.useEffect(() => {
+    if (pathname === '/dashboard/templates/create') {
+      setOpen(false);
+    }
+  }, [pathname, setOpen]);
 
   const toggleTheme = () => {
     const newMode = !isDarkMode;
@@ -134,7 +138,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
+    <>
       <Sidebar>
         <SidebarHeader>
            <div className="flex items-center justify-between">
@@ -310,8 +314,18 @@ export default function DashboardLayout({
         {children}
         <FloatingActionButton />
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
 
-    
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SidebarProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </SidebarProvider>
+  )
+}

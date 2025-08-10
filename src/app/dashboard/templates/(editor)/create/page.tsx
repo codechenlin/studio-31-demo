@@ -70,7 +70,7 @@ export default function CreateTemplatePage() {
                 </Button>
             </div>
         </header>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 h-[calc(100vh-61px)]">
           <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
               {contentBlocks.map((block) => (
