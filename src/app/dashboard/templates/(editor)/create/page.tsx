@@ -53,6 +53,7 @@ import {
   ArrowDown,
   GripVertical,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -113,6 +114,9 @@ export default function CreateTemplatePage() {
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [blockToDelete, setBlockToDelete] = useState<number | null>(null);
+
   
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -227,9 +231,17 @@ export default function CreateTemplatePage() {
     setCanvasContent(newCanvasContent);
   };
 
-  const handleDeleteBlock = (index: number) => {
-    const newCanvasContent = canvasContent.filter((_, i) => i !== index);
-    setCanvasContent(newCanvasContent);
+  const promptDeleteBlock = (index: number) => {
+    setBlockToDelete(index);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteBlock = () => {
+    if (blockToDelete !== null) {
+      setCanvasContent(canvasContent.filter((_, i) => i !== blockToDelete));
+      setIsDeleteModalOpen(false);
+      setBlockToDelete(null);
+    }
   };
 
 
@@ -302,7 +314,7 @@ export default function CreateTemplatePage() {
                ) : (
                 <div className="space-y-4">
                   {canvasContent.map((block, index) => (
-                    <div key={block.id} className="group/row relative p-2 rounded-lg hover:bg-primary/5">
+                    <div key={block.id} className="group/row relative p-2 rounded-lg hover:bg-primary/5 transition-all duration-300">
                       <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
                           <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
                             <ArrowUp className="size-4" />
@@ -314,7 +326,7 @@ export default function CreateTemplatePage() {
                       </div>
 
                       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                         <Button variant="destructive" size="icon" className="size-7" onClick={() => handleDeleteBlock(index)}>
+                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
                             <Trash2 className="size-4" />
                          </Button>
                       </div>
@@ -325,8 +337,10 @@ export default function CreateTemplatePage() {
                              {col.blocks.length > 0 ? (
                                  col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
                              ) : (
-                               <Button variant="outline" size="sm" onClick={() => handleOpenBlockSelector(col.id)}>
-                                 <PlusCircle className="mr-2"/> Añadir Bloque
+                               <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={() => handleOpenBlockSelector(col.id)}>
+                                 <PlusCircle className="mb-1"/>
+                                 <span className="text-xs font-medium -mb-1">Añadir</span>
+                                 <span className="text-xs font-medium">Bloque</span>
                                </Button>
                              )}
                           </div>
@@ -479,6 +493,31 @@ export default function CreateTemplatePage() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-destructive"/>
+              Confirmar Eliminación
+            </DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar este bloque? Todos los contenidos dentro de él se perderán permanentemente. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDeleteBlock}>
+              Sí, eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+    
