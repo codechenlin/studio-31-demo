@@ -42,6 +42,9 @@ body {
     --sidebar-accent-foreground: 275 10% 10%;
     --sidebar-border: 275 20% 90%;
     --sidebar-ring: 283 100% 41%;
+
+    --editor-dark-bg-start: 0 0% 0%;
+    --editor-dark-bg-end: 240 50% 5%;
   }
   .dark {
     --background: 232 50% 6%;
@@ -86,6 +89,10 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  .dark .bg-editor-dark {
+    background: linear-gradient(145deg, hsl(var(--editor-dark-bg-start)) 0%, hsl(var(--editor-dark-bg-end)) 100%);
   }
   
   /* Custom scrollbar for webkit browsers */

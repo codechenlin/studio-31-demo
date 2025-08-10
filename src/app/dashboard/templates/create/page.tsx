@@ -3,9 +3,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,18 +26,12 @@ import {
   Save,
   Rocket,
   Palette,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
   Bold,
   Italic,
   Underline,
   Heading1,
-  LayoutGrid
 } from 'lucide-react';
 
-// Mock data for UI elements
 const contentBlocks = [
   { name: "Columns", icon: Columns },
   { name: "Heading", icon: Heading1 },
@@ -51,55 +43,51 @@ const contentBlocks = [
 
 export default function CreateTemplatePage() {
   return (
-    <div className="flex h-screen max-h-screen bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       {/* Left Panel: Content & Blocks */}
-      <aside className="w-80 border-r flex flex-col">
-        <div className="p-4 border-b flex items-center gap-2">
-            <LayoutGrid className="text-primary"/>
-            <h2 className="text-lg font-semibold">Bloques de Contenido</h2>
+      <aside className="w-80 border-r border-border/20 flex flex-col bg-card/5">
+        <div className="p-4 border-b border-border/20 flex items-center gap-2 h-[61px]">
+           <Button variant="outline" className="w-full border-border/50"><ArrowLeft className="mr-2"/> Volver</Button>
         </div>
         <ScrollArea className="flex-1">
           <div className="p-4 grid grid-cols-2 gap-4">
             {contentBlocks.map((block) => (
               <Card 
                 key={block.name} 
-                className="group flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg"
               >
-                <block.icon className="size-8 mb-2 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-sm font-medium text-center">{block.name}</span>
+                <block.icon className="size-8 mb-2 text-[#00B0F0] transition-colors" />
+                <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
               </Card>
             ))}
           </div>
         </ScrollArea>
-        <div className="p-2 border-t">
-             <Button variant="outline" className="w-full"><ArrowLeft className="mr-2"/> Volver a Plantillas</Button>
-        </div>
       </aside>
 
       {/* Center Panel: Editor/Canvas */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between p-2 border-b bg-card/50 backdrop-blur-sm">
+        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm">
             <div className="flex items-center gap-2">
-                <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto"/>
+                <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
             </div>
             <div className="flex items-center gap-2">
-              <Toggle size="sm"><Laptop/></Toggle>
-              <Toggle size="sm"><Smartphone/></Toggle>
+              <Toggle size="sm" className="border-border/50" pressed><Laptop/></Toggle>
+              <Toggle size="sm" className="border-border/50"><Smartphone/></Toggle>
             </div>
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm"><Undo/> Deshacer</Button>
                 <Button variant="ghost" size="sm"><Redo/> Rehacer</Button>
-                <Button variant="outline" size="sm" className="border-primary/50 text-primary"><Save/> Guardar Borrador</Button>
+                <Button variant="outline" size="sm" className="border-primary/50 text-primary bg-transparent"><Save/> Guardar Borrador</Button>
                  <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors">
-                    <Button className="bg-background dark:bg-card hover:bg-background/80 dark:hover:bg-card/80 text-foreground">
+                    <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground">
                         <Rocket className="mr-2"/> Publicar
                     </Button>
                 </div>
             </div>
         </header>
-        <div className="flex-1 bg-muted/40 p-8 overflow-auto">
-            <div className="bg-white dark:bg-card max-w-3xl mx-auto shadow-2xl rounded-lg h-[1200px] p-8">
-               <div className="border-2 border-dashed border-border/60 rounded-lg h-full flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 bg-transparent p-8 overflow-auto">
+            <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg h-[1200px] p-8">
+               <div className="border-2 border-dashed border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
                    <p>Arrastra un bloque para empezar a construir tu plantilla.</p>
                </div>
             </div>
@@ -107,62 +95,69 @@ export default function CreateTemplatePage() {
       </main>
 
       {/* Right Panel: Style & Configuration */}
-      <aside className="w-80 border-l flex flex-col">
+      <aside className="w-80 border-l border-border/20 flex flex-col bg-card/5">
          <Tabs defaultValue="style" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-2 m-2">
+            <TabsList className="grid w-full grid-cols-2 m-2 bg-card/10 border-border/20">
                 <TabsTrigger value="style"><Palette className="mr-2"/> Estilo</TabsTrigger>
                 <TabsTrigger value="config"><ChevronsUpDown className="mr-2"/> Capas</TabsTrigger>
             </TabsList>
-            <Separator />
+            <Separator className="bg-border/20" />
             <ScrollArea className="flex-1">
                 <TabsContent value="style" className="p-4">
-                    <div className="space-y-6">
-                        <Accordion type="single" collapsible defaultValue="item-1">
-                            <AccordionItem value="item-1">
-                                <AccordionTrigger>Dimensiones</AccordionTrigger>
-                                <AccordionContent className="space-y-4">
-                                     <div className="grid grid-cols-2 gap-2">
-                                        <div><Label>Ancho</Label><Input placeholder="600px"/></div>
-                                        <div><Label>Alto</Label><Input placeholder="Auto"/></div>
-                                    </div>
-                                    <div><Label>Padding</Label><Input placeholder="16px"/></div>
-                                </AccordionContent>
-                            </AccordionItem>
-                             <AccordionItem value="item-2">
-                                <AccordionTrigger>Tipografía</AccordionTrigger>
-                                <AccordionContent className="space-y-4">
-                                    <div>
-                                        <Label>Fuente</Label>
-                                        <Select>
-                                            <SelectTrigger><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="arial">Arial</SelectItem>
-                                                <SelectItem value="helvetica">Helvetica</SelectItem>
-                                                <SelectItem value="georgia">Georgia</SelectItem>
-                                                <SelectItem value="times">Times New Roman</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div><Label>Tamaño</Label><Input placeholder="16px"/></div>
-                                        <div><Label>Peso</Label><Input placeholder="Normal"/></div>
-                                    </div>
-                                     <div className="grid grid-cols-4 gap-1">
-                                        <Toggle><Bold/></Toggle>
-                                        <Toggle><Italic/></Toggle>
-                                        <Toggle><Underline/></Toggle>
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                            <AccordionItem value="item-3">
-                                <AccordionTrigger>Fondo y Borde</AccordionTrigger>
-                                <AccordionContent className="space-y-4">
-                                    <div><Label>Color de Fondo</Label><Input placeholder="#FFFFFF"/></div>
-                                    <div><Label>Color de Borde</Label><Input placeholder="#DDDDDD"/></div>
-                                    <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
+                    <div className="space-y-4">
+                        {/* Dimensions Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
+                                    <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
+                                </div>
+                                <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                            </div>
+                        </div>
+
+                        <Separator className="bg-border/20" />
+
+                        {/* Typography Section */}
+                        <div className="space-y-4">
+                             <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
+                             <div className="space-y-4">
+                                <div>
+                                    <Label>Fuente</Label>
+                                    <Select>
+                                        <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="arial">Arial</SelectItem>
+                                            <SelectItem value="helvetica">Helvetica</SelectItem>
+                                            <SelectItem value="georgia">Georgia</SelectItem>
+                                            <SelectItem value="times">Times New Roman</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                                    <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
+                                </div>
+                                 <div className="grid grid-cols-3 gap-1">
+                                    <Toggle className="border-border/50"><Bold/></Toggle>
+                                    <Toggle className="border-border/50"><Italic/></Toggle>
+                                    <Toggle className="border-border/50"><Underline/></Toggle>
+                                </div>
+                             </div>
+                        </div>
+
+                        <Separator className="bg-border/20" />
+
+                        {/* Background & Border Section */}
+                        <div className="space-y-4">
+                           <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
+                           <div className="space-y-4">
+                                <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
+                                <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
+                                <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
+                           </div>
+                        </div>
                     </div>
                 </TabsContent>
                 <TabsContent value="config" className="p-4 text-center text-muted-foreground">
