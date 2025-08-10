@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,12 @@ const contentBlocks = [
 ];
 
 export default function CreateTemplatePage() {
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  const handleSave = () => {
+    setLastSaved(new Date());
+  };
+
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       {/* Left Panel: Content & Blocks */}
@@ -77,10 +83,14 @@ export default function CreateTemplatePage() {
             <Button variant="ghost" size="icon"><Laptop/></Button>
             <Button variant="ghost" size="icon"><Smartphone/></Button>
           </div>
-          <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="text-xs"><ArrowLeft className="mr-1"/> Volver</Button>
+          <div className="flex items-center gap-4">
+              <div className="text-xs text-muted-foreground">
+                {lastSaved
+                  ? `Último guardado: ${lastSaved.toLocaleTimeString()}`
+                  : "Aún sin guardar"}
+              </div>
                <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors">
-                   <Button variant="outline" size="sm" className="bg-transparent text-foreground dark:text-white hover:bg-transparent hover:text-black dark:hover:text-white">
+                   <Button variant="outline" size="sm" onClick={handleSave} className="bg-transparent text-foreground dark:text-white hover:bg-transparent hover:text-black dark:hover:text-white">
                       <Save className="mr-1"/> Guardar
                   </Button>
               </div>
