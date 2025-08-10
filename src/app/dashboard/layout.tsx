@@ -110,10 +110,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { setOpen } = useSidebar();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   
-  const [openMenu, setOpenMenu] = React.useState<string | null>(() => {
-    const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
-    return activeItem ? activeItem.href : null;
-  });
+  const [openMenu, setOpenMenu] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -129,11 +126,15 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/dashboard/templates/create') {
       setOpen(false);
     }
-  }, [pathname, setOpen]);
+  }, [pathname]);
   
    React.useEffect(() => {
     const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
-    setOpenMenu(activeItem ? activeItem.href : null);
+    if (activeItem) {
+        setOpenMenu(activeItem.href);
+    } else {
+        setOpenMenu(null);
+    }
   }, [pathname]);
 
 
@@ -343,5 +344,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <LayoutContent>{children}</LayoutContent>
     </SidebarProvider>
-  )
+  );
 }
+
+    
