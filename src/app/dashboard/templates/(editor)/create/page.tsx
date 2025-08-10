@@ -56,7 +56,7 @@ export default function CreateTemplatePage() {
             {contentBlocks.map((block) => (
               <Card 
                 key={block.name} 
-                className="group bg-card/5 border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
                 <block.icon className="size-8 mb-2 text-[#00B0F0] transition-colors" />
                 <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
