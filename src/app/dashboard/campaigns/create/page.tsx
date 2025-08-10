@@ -198,12 +198,14 @@ export default function CreateCampaignPage() {
                           </SelectContent>
                         </Select>
                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full sm:w-auto">
-                                    <PlusCircle className="mr-2"/>
-                                    Crear Nueva Etiqueta
-                                </Button>
-                            </PopoverTrigger>
+                            <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors w-full sm:w-auto">
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full hover:bg-transparent hover:text-black dark:hover:text-white">
+                                        <PlusCircle className="mr-2"/>
+                                        Crear Nueva Etiqueta
+                                    </Button>
+                                </PopoverTrigger>
+                            </div>
                             <PopoverContent className="w-80">
                                 <div className="grid gap-4">
                                     <div className="flex justify-between items-center">
@@ -366,3 +368,5 @@ export default function CreateCampaignPage() {
     </main>
   );
 }
+
+    
