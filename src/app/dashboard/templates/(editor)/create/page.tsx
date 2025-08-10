@@ -286,7 +286,7 @@ export default function CreateTemplatePage() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Undo/></Button>
