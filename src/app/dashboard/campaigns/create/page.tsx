@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2, Users, User, PlusCircle, List, Send, Search, Paperclip, FileImage, Server, XCircle, ChevronDown, CheckCircle, Tag, LayoutGrid, Eye, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2, Users, User, PlusCircle, List, Send, Search, Paperclip, FileImage, Server, XCircle, ChevronDown, CheckCircle, Tag, LayoutGrid, Eye, Pencil, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { HelpButton } from '@/components/dashboard/help-button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ColorPicker } from '@/components/dashboard/color-picker';
 
 const steps = [
   {
@@ -60,9 +62,25 @@ const templates = [
     { id: 10, name: 'Feliz Cumpleaños', category: 'Personalizado', preview: 'https://placehold.co/400x500.png', hint: 'birthday celebration' },
 ];
 
+type CampaignTag = {
+  id: number;
+  name: string;
+  color: string;
+};
+
+const existingTags: CampaignTag[] = [
+  { id: 1, name: "Promoción", color: "#3b82f6" },
+  { id: 2, name: "Ventas Q3", color: "#10b981" },
+  { id: 3, name: "Newsletter", color: "#f97316" },
+];
+
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [campaignName, setCampaignName] = useState('');
+  const [selectedTags, setSelectedTags] = useState<CampaignTag[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#FFFFFF');
+  
   const [campaignType, setCampaignType] = useState<'regular' | 'plaintext' | null>(null);
   const [audienceType, setAudienceType] = useState<'list' | 'single' | null>(null);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
@@ -88,6 +106,31 @@ export default function CreateCampaignPage() {
     return false;
   };
   
+  const handleSelectTag = (tagId: string) => {
+    const tag = existingTags.find(t => t.id.toString() === tagId);
+    if (tag && !selectedTags.some(st => st.id === tag.id)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const handleCreateTag = () => {
+    if (newTagName.trim() !== '') {
+      const newTag: CampaignTag = {
+        id: Date.now(), // simple unique id
+        name: newTagName.trim(),
+        color: newTagColor,
+      };
+      setSelectedTags([...selectedTags, newTag]);
+      existingTags.push(newTag); // Add to mock DB
+      setNewTagName('');
+      setNewTagColor('#FFFFFF');
+    }
+  };
+
+  const handleRemoveTag = (tagId: number) => {
+    setSelectedTags(selectedTags.filter(t => t.id !== tagId));
+  };
+
   const progressValue = ((currentStep + 1) / steps.length) * 100;
 
   return (
@@ -119,20 +162,64 @@ export default function CreateCampaignPage() {
         <CardContent className="min-h-[400px]">
             <div>
               {currentStep === 0 && (
-                <div className="max-w-lg mx-auto space-y-4 pt-8">
-                   <Label htmlFor="campaignName" className="text-lg font-medium flex items-center gap-2">
-                     <Sparkles className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/>
-                     Nombre de la Campaña
-                   </Label>
-                   <Input
-                    id="campaignName"
-                    type="text"
-                    placeholder="Ej: Lanzamiento de Verano"
-                    value={campaignName}
-                    onChange={(e) => setCampaignName(e.target.value)}
-                    className="py-6 text-lg"
-                  />
-                  <p className="text-xs text-muted-foreground">Este nombre es solo para tu referencia interna.</p>
+                <div className="max-w-2xl mx-auto space-y-8 pt-8">
+                   <div className="space-y-3">
+                     <Label htmlFor="campaignName" className="text-lg font-medium flex items-center gap-2">
+                       <Sparkles className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/>
+                       Nombre de la Campaña
+                     </Label>
+                     <Input
+                      id="campaignName"
+                      type="text"
+                      placeholder="Ej: Lanzamiento de Verano"
+                      value={campaignName}
+                      onChange={(e) => setCampaignName(e.target.value)}
+                      className="py-6 text-lg"
+                    />
+                    <p className="text-xs text-muted-foreground">Este nombre es solo para tu referencia interna.</p>
+                   </div>
+                   
+                   <div className="space-y-4">
+                      <Label className="text-lg font-medium flex items-center gap-2"><Tag className="text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}} />Etiquetas de Campaña</Label>
+                      <div className="flex flex-wrap items-center gap-2">
+                         {selectedTags.map(tag => (
+                            <div key={tag.id} className="flex items-center gap-2 rounded-full p-1 pl-3 text-sm font-medium border-2" style={{borderColor: tag.color}}>
+                                {tag.name}
+                                <button onClick={() => handleRemoveTag(tag.id)} className="rounded-full bg-muted hover:bg-destructive/80 hover:text-white p-0.5"><X size={14}/></button>
+                            </div>
+                         ))}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Select onValueChange={handleSelectTag}>
+                          <SelectTrigger><SelectValue placeholder="Seleccionar etiqueta existente..." /></SelectTrigger>
+                          <SelectContent>
+                            {existingTags.map(tag => <SelectItem key={tag.id} value={tag.id.toString()}>{tag.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full sm:w-auto">
+                                    <PlusCircle className="mr-2"/>
+                                    Crear Nueva Etiqueta
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                                <div className="grid gap-4">
+                                    <h4 className="font-medium leading-none">Nueva Etiqueta</h4>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="new-tag-name">Nombre</Label>
+                                        <Input id="new-tag-name" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder="Nombre de la etiqueta" />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Color del Borde</Label>
+                                        <ColorPicker color={newTagColor} setColor={setNewTagColor} />
+                                    </div>
+                                    <Button onClick={handleCreateTag}>Añadir Etiqueta</Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                      </div>
+                   </div>
                 </div>
               )}
                {currentStep === 1 && (

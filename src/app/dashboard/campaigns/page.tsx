@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { HelpButton } from "@/components/dashboard/help-button";
+import { cn } from "@/lib/utils";
 
 const campaigns = [
   // This is mock data. In a real app, you would fetch this from your backend.
@@ -81,26 +82,32 @@ export default function CampaignsPage() {
                         <SelectItem value="blog">Blog</SelectItem>
                     </SelectContent>
                 </Select>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className="w-full md:w-[280px] justify-start text-left font-normal"
-                        >
-                            <CalendarIcon className="mr-2 size-4" />
-                            {date ? format(date, "LLL dd, y") : <span>Seleccionar una fecha</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            initialFocus
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            numberOfMonths={1}
-                        />
-                    </PopoverContent>
-                </Popover>
+                 <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors">
+                  <Popover>
+                      <PopoverTrigger asChild>
+                          <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full md:w-[280px] justify-start text-left font-normal bg-background dark:bg-background",
+                                !date && "text-muted-foreground",
+                                "group-hover:bg-transparent dark:group-hover:bg-transparent transition-colors"
+                              )}
+                          >
+                              <CalendarIcon className="mr-2 size-4" />
+                              {date ? format(date, "LLL dd, y") : <span>Seleccionar una fecha</span>}
+                          </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                              initialFocus
+                              mode="single"
+                              selected={date}
+                              onSelect={setDate}
+                              numberOfMonths={1}
+                          />
+                      </PopoverContent>
+                  </Popover>
+                </div>
             </div>
             {campaigns.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-lg">
