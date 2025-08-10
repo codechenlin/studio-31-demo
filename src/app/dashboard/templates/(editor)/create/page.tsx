@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useTransition, useEffect } from 'react';
@@ -339,7 +340,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-        <div className="flex-1 bg-transparent overflow-auto custom-scrollbar">
+        <div className="flex-1 bg-transparent overflow-auto">
             <div className="p-8">
                 <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                    {canvasContent.length === 0 ? (

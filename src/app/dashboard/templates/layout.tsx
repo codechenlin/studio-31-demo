@@ -12,11 +12,13 @@ export default function TemplatesLayout({
 }) {
   const pathname = usePathname();
 
-  // If we are on the template creation page, render children directly without the dashboard layout.
+  // This is a simple router. If the path is the create page, it renders the children directly.
+  // Otherwise, it wraps the children with the DashboardLayout.
+  // This approach is not ideal for Next.js App Router and can cause issues.
+  // A better approach is using Route Groups to define different layouts for different routes.
   if (pathname === '/dashboard/templates/create') {
     return <>{children}</>;
   }
 
-  // Otherwise, wrap the children with the main DashboardLayout.
   return <DashboardLayout>{children}</DashboardLayout>;
 }
