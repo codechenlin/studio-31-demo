@@ -123,7 +123,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/dashboard/templates/create') {
       setOpen(false);
     }
-  }, [pathname, setOpen]);
+  }, [pathname]);
 
   const toggleTheme = () => {
     const newMode = !isDarkMode;
@@ -329,3 +329,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   )
 }
+
+    
