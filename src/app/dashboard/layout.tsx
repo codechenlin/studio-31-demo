@@ -73,7 +73,7 @@ const menuItems = [
     label: "Plantillas", 
     icon: LayoutTemplate,
     submenu: [
-      { href: "/dashboard/templates/create", label: "Crear Nueva Plantilla", icon: PlusCircle },
+      { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: PlusCircle },
       { href: "/dashboard/templates", label: "Mis Plantillas", icon: LayoutGrid },
     ]
   },
