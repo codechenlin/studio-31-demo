@@ -345,7 +345,7 @@ export default function CreateTemplatePage() {
         </header>
 
         <div className="flex-1 bg-transparent p-8 overflow-auto">
-            <div className={cn("bg-card/5 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
+            <div className={cn("bg-card/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                {canvasContent.length === 0 ? (
                  <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground">
                    <p>Arrastra un bloque desde el panel izquierdo para empezar a construir tu plantilla. <br/> Comienza con un bloque de 'Columns'.</p>

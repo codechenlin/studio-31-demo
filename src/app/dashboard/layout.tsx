@@ -124,7 +124,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [isDarkMode]);
 
   React.useEffect(() => {
-    if (pathname === '/dashboard/templates/create') {
+    if (pathname === '/dashboard/templates/create' || pathname === '/dashboard/templates/(editor)/create') {
       setOpen(false);
     }
   }, [pathname, setOpen]);
