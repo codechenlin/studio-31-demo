@@ -524,7 +524,7 @@ export default function CreateTemplatePage() {
           }
           return col;
         });
-        return { ...row, payload: { ...newColumns } };
+        return { ...row, payload: { columns: newColumns } };
       }
       if (row.type === 'wrapper' && row.id === activeContainerId) {
         return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
@@ -1316,6 +1316,7 @@ export default function CreateTemplatePage() {
     
 
     
+
 
 
 
