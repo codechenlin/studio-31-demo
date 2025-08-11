@@ -97,6 +97,8 @@ const columnOptions = [
 const popularEmojis = Array.from(new Set([
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
   '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
+  '📅', '🧠', '⭐', '🤔', '✨', '🙌', '👀', '💼', '⏰', '💸',
+  '📊', '📈', '💡', '💻', '📱'
 ]));
 
 
@@ -252,7 +254,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         <Button 
           variant="outline" 
           size="icon" 
-          className="size-7 border-[#F00000] hover:bg-[#F00000] hover:text-white" 
+          className="size-7 border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white" 
           onClick={() => updateStyle('background', undefined)}
         >
             <Trash2 className="size-4"/>
@@ -661,11 +663,6 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
-         <div className="absolute top-1/2 -translate-y-1/2 -right-8 flex items-center gap-1 opacity-0 group-hover/primitive:opacity-100 transition-opacity">
-             <Button variant="destructive" size="icon" className="size-6" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
-                <X className="size-3.5" />
-             </Button>
-         </div>
         {
           (() => {
              switch(block.type) {
@@ -773,12 +770,12 @@ export default function CreateTemplatePage() {
                 </Button>
             </div>
 
-            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <div className="absolute top-2 -right-8 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
                <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                   <Trash2 className="size-4" />
                </Button>
             </div>
-
+            
             <div className="flex overflow-x-auto">
               {block.payload.columns.map((col) => (
                 <div 
@@ -916,7 +913,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                  </div>
                ) : (
-                <div className="p-4">
+                <div className="p-4 flex flex-col">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </AnimatePresence>
@@ -939,7 +936,16 @@ export default function CreateTemplatePage() {
          <Separator className="bg-border/20" />
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
-              
+               { selectedElement?.type === 'primitive' && (
+                <Button 
+                    variant="outline" 
+                    className="w-full border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white"
+                    onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
+                >
+                    Bloque <X className="ml-auto"/>
+                </Button>
+              )}
+
               { selectedElement?.type === 'column' && (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
