@@ -24,7 +24,7 @@ export default function DashboardPage() {
     if (isWelcome) {
       setShowOnboarding(true);
       toast({
-        title: "CUENTA ACTIVADA",
+        title: "Activación de cuenta",
         description: "Tu cuenta ha sido activada correctamente.",
         className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
         duration: 5000,
