@@ -59,10 +59,13 @@ import {
   Droplets,
   Paintbrush,
   XIcon,
+  ArrowRight,
+  Sun,
+  Circle,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { ColorPicker } from '@/components/dashboard/color-picker';
+import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
 const contentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
@@ -98,6 +101,8 @@ interface PrimitiveBlock {
   };
 }
 
+type GradientDirection = 'vertical' | 'horizontal' | 'radial';
+
 interface Column {
   id: string;
   blocks: PrimitiveBlock[];
@@ -106,6 +111,7 @@ interface Column {
       type: 'solid' | 'gradient';
       color1: string;
       color2?: string;
+      direction?: GradientDirection;
     }
   }
 }
@@ -119,14 +125,14 @@ interface ColumnsBlock {
 }
 
 type CanvasBlock = ColumnsBlock;
-type SelectedElement = { type: 'column', columnId: string, rowId: string } | null;
+type SelectedElement = { type: 'column', columnId: string, rowId: string } | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } | null;
 
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-  if (!selectedElement) return null;
+  if (!selectedElement || selectedElement.type !== 'column') return null;
 
   const getElement = () => {
     if (selectedElement.type === 'column') {
@@ -143,9 +149,9 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
 
   const updateBackground = (newBg: Column['styles']['background'] | undefined) => {
     const newCanvasContent = canvasContent.map(row => {
-      if (row.id !== selectedElement.rowId) return row;
+      if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
       const newColumns = row.payload.columns.map(col => {
-        if (col.id === selectedElement.columnId) {
+        if (col.id === (selectedElement as { columnId: string }).columnId) {
           return { ...col, styles: { ...col.styles, background: newBg } };
         }
         return col;
@@ -158,8 +164,9 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const setBgType = (type: 'solid' | 'gradient') => {
      updateBackground({
         type,
-        color1: background?.color1 || '#000000',
-        color2: background?.color2 || '#ffffff'
+        color1: background?.color1 || '#A020F0',
+        color2: background?.color2 || '#3357FF',
+        direction: background?.direction || 'vertical',
      });
   };
 
@@ -167,7 +174,13 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
       if(background){
           updateBackground({...background, [colorProp]: value });
       } else {
-          updateBackground({ type: 'solid', color1: value });
+          updateBackground({ type: 'solid', color1: value, direction: 'vertical' });
+      }
+  }
+  
+  const setDirection = (direction: GradientDirection) => {
+      if(background) {
+          updateBackground({...background, direction });
       }
   }
 
@@ -185,13 +198,40 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
       </Tabs>
       <div className="space-y-3">
         <Label>Color 1</Label>
-        <ColorPicker color={background?.color1 || '#A020F0'} setColor={(c) => setColor('color1', c)} />
+        <ColorPickerAdvanced color={background?.color1 || '#A020F0'} setColor={(c) => setColor('color1', c)} />
       </div>
       {background?.type === 'gradient' && (
-        <div className="space-y-3">
-          <Label>Color 2</Label>
-          <ColorPicker color={background?.color2 || '#3357FF'} setColor={(c) => setColor('color2', c)} />
-        </div>
+        <>
+          <div className="space-y-3">
+            <Label>Color 2</Label>
+            <ColorPickerAdvanced color={background?.color2 || '#3357FF'} setColor={(c) => setColor('color2', c)} />
+          </div>
+          <div className="space-y-3">
+             <Label>Dirección del Degradado</Label>
+             <div className="grid grid-cols-3 gap-2">
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant={background?.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Vertical</p></TooltipContent>
+                    </Tooltip>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant={background?.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Horizontal</p></TooltipContent>
+                    </Tooltip>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant={background?.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Radial</p></TooltipContent>
+                    </Tooltip>
+                 </TooltipProvider>
+             </div>
+          </div>
+        </>
       )}
     </div>
   )
@@ -210,7 +250,7 @@ export default function CreateTemplatePage() {
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [blockToDelete, setBlockToDelete] = useState<number | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   
   // Canvas State
@@ -295,27 +335,84 @@ export default function CreateTemplatePage() {
     }));
     setCanvasContent(newCanvasContent);
   };
+  
+  const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
+    setItemToDelete({ rowId, colId, primId });
+    setIsDeleteModalOpen(true);
+  };
+  
+  const handleDeleteItem = () => {
+    if (!itemToDelete) return;
 
-  const renderBlock = (block: PrimitiveBlock) => {
-    switch(block.type) {
-      case 'heading':
-        return (
-          <h1 
-            contentEditable 
-            suppressContentEditableWarning 
-            onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.textContent || '')}
-            className="text-4xl font-bold w-full p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
-          >
-            {block.payload.text}
-          </h1>
-        );
-      default:
-        return (
-          <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
-            Block: {block.type}
-          </div>
-        )
+    let newCanvasContent;
+
+    if (itemToDelete.primId && itemToDelete.colId) { // Deleting a primitive block
+        newCanvasContent = canvasContent.map(row => {
+            if (row.id !== itemToDelete.rowId) return row;
+            return {
+                ...row,
+                payload: {
+                    ...row.payload,
+                    columns: row.payload.columns.map(col => {
+                        if (col.id !== itemToDelete.colId) return col;
+                        return {
+                            ...col,
+                            blocks: col.blocks.filter(block => block.id !== itemToDelete.primId),
+                        }
+                    })
+                }
+            }
+        });
+    } else { // Deleting a whole row
+        newCanvasContent = canvasContent.filter(row => row.id !== itemToDelete.rowId);
     }
+    
+    setCanvasContent(newCanvasContent);
+    setIsDeleteModalOpen(false);
+    setItemToDelete(null);
+  };
+
+  const renderBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
+     const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
+    return (
+       <div 
+        key={block.id}
+        className={cn(
+            "group/primitive relative w-full",
+            isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
+        )}
+        onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
+       >
+         <div className="absolute top-0 -right-8 flex items-center gap-1 opacity-0 group-hover/primitive:opacity-100 transition-opacity">
+             <Button variant="destructive" size="icon" className="size-6" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
+                <Trash2 className="size-3.5" />
+             </Button>
+         </div>
+        {
+          (() => {
+             switch(block.type) {
+              case 'heading':
+                return (
+                  <h1 
+                    contentEditable 
+                    suppressContentEditableWarning 
+                    onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.textContent || '')}
+                    className="text-4xl font-bold w-full p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                  >
+                    {block.payload.text}
+                  </h1>
+                );
+              default:
+                return (
+                  <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
+                    Block: {block.type}
+                  </div>
+                )
+            }
+          })()
+        }
+      </div>
+    )
   }
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
@@ -324,19 +421,6 @@ export default function CreateTemplatePage() {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     newCanvasContent.splice(newIndex, 0, item);
     setCanvasContent(newCanvasContent);
-  };
-
-  const promptDeleteBlock = (index: number) => {
-    setBlockToDelete(index);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteBlock = () => {
-    if (blockToDelete !== null) {
-      setCanvasContent(canvasContent.filter((_, i) => i !== blockToDelete));
-      setIsDeleteModalOpen(false);
-      setBlockToDelete(null);
-    }
   };
 
   const handleSaveTemplateName = () => {
@@ -356,20 +440,27 @@ export default function CreateTemplatePage() {
   
   const getColumnStyle = (col: Column) => {
     if (!col.styles.background) return {};
-    const { type, color1, color2 } = col.styles.background;
+    const { type, color1, color2, direction } = col.styles.background;
     if (type === 'solid') {
       return { backgroundColor: color1 };
     }
-    return { backgroundImage: `linear-gradient(${color1}, ${color2})` };
+    if (type === 'gradient') {
+      if (direction === 'radial') {
+        return { backgroundImage: `radial-gradient(${color1}, ${color2})` };
+      }
+      const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+      return { backgroundImage: `linear-gradient(${angle}, ${color1}, ${color2})` };
+    }
+    return {};
   };
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-56 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-1 flex-1 min-w-0">
               <span className="text-base font-semibold truncate flex-1">{templateName}</span>
-              <Button variant="outline" size="icon" className="size-8 shrink-0 border-border/50" onClick={() => setIsEditNameModalOpen(true)}>
+              <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => setIsEditNameModalOpen(true)}>
                 <Pencil className="size-4" />
               </Button>
           </div>
@@ -381,7 +472,7 @@ export default function CreateTemplatePage() {
             >
               <Columns className="size-10 text-[#00B0F0] transition-colors" />
               <span className="text-md font-semibold text-center text-foreground/80 mt-2">Columns</span>
-              <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>
+               <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>
             </Card>
         </div>
       </aside>
@@ -470,16 +561,16 @@ export default function CreateTemplatePage() {
                       </div>
 
                       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
+                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                             <Trash2 className="size-4" />
                          </Button>
                       </div>
 
-                      <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+                      <div className="flex overflow-x-auto custom-scrollbar pb-2">
                         {block.payload.columns.map((col) => (
                           <div 
                               key={col.id}
-                              onClick={() => setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}
+                              onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
                               style={getColumnStyle(col)}
                               className={cn(
                                 "flex-1 p-2 border-2 border-dashed rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
@@ -487,7 +578,7 @@ export default function CreateTemplatePage() {
                               )}
                           >
                              {col.blocks.length > 0 ? (
-                                 col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
+                                 col.blocks.map(b => renderBlock(b, block.id, col.id))
                              ) : (
                                <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
                                  <PlusCircle className="mb-1"/>
@@ -521,7 +612,7 @@ export default function CreateTemplatePage() {
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
               
-              { selectedElement ? (
+              { selectedElement?.type === 'column' ? (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               ) : (
                 <>
@@ -667,7 +758,7 @@ export default function CreateTemplatePage() {
             <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="button" variant="destructive" onClick={handleDeleteBlock}>
+            <Button type="button" variant="destructive" onClick={handleDeleteItem}>
               Sí, eliminar
             </Button>
           </DialogFooter>
