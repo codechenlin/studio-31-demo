@@ -39,4 +39,3 @@ export function ColorPickerAdvanced({ color, setColor, className }: ColorPickerA
     </Popover>
   );
 }
-
