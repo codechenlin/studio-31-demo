@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -62,8 +63,8 @@ export default function LoginPage() {
         });
       } else {
         toast({
-          title: "Error al iniciar sesión",
-          description: error.message,
+          title: "Inicio de sesión incorrecto",
+          description: "Correo electrónico o contraseña no son correctos, intenta nuevamente",
           variant: "destructive",
         });
       }
