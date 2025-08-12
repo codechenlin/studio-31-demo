@@ -70,8 +70,10 @@ import {
   RotateCw,
   Move,
   Scale,
+  ArrowLeftRight,
+  ArrowUpDown,
 } from 'lucide-react';
-import { motion, useMotionValue, PanInfo } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
@@ -421,9 +423,6 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-  const [joystickPosition, setJoystickPosition] = useState({ x: 50, y: 50 });
-  const joystickRef = useRef<HTMLDivElement>(null);
-
   if (selectedElement?.type !== 'wrapper-primitive') return null;
 
   const getElement = (): InteractiveEmojiBlock | null => {
@@ -433,12 +432,6 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
     return block?.type === 'emoji-interactive' ? block as InteractiveEmojiBlock : null;
   }
   const element = getElement();
-
-  useEffect(() => {
-    if (element) {
-      setJoystickPosition({ x: element.payload.x, y: element.payload.y });
-    }
-  }, [element]);
 
   if (!element) return null;
 
@@ -457,35 +450,29 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
     });
     setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
-
-  const handleJoystickPan = (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (!joystickRef.current) return;
-    const rect = joystickRef.current.getBoundingClientRect();
-    let newX = joystickPosition.x + (info.delta.x / rect.width) * 100;
-    let newY = joystickPosition.y + (info.delta.y / rect.height) * 100;
-    newX = Math.max(0, Math.min(100, newX));
-    newY = Math.max(0, Math.min(100, newY));
-    setJoystickPosition({ x: newX, y: newY });
-    updatePayload('x', newX);
-    updatePayload('y', newY);
-  };
   
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Move />Posición</h3>
-        <div ref={joystickRef} className="relative w-full aspect-square bg-muted/30 rounded-lg border-2 border-dashed border-border overflow-hidden cursor-move">
-          <motion.div
-            className="absolute w-6 h-6 bg-primary rounded-full border-4 border-card shadow-lg"
-            style={{ 
-              top: `calc(${joystickPosition.y}% - 12px)`, 
-              left: `calc(${joystickPosition.x}% - 12px)`
-            }}
-            drag
-            dragConstraints={joystickRef}
-            dragElastic={0}
-            dragMomentum={false}
-            onPan={handleJoystickPan}
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4" /> Eje X</Label>
+          <Slider
+            value={[element.payload.x]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={(value) => updatePayload('x', value[0])}
+          />
+        </div>
+        <div className="space-y-3">
+           <Label className="flex items-center gap-2"><ArrowUpDown className="size-4" /> Eje Y</Label>
+           <Slider
+            value={[element.payload.y]}
+            min={0}
+            max={100}
+            step={1}
+            onValueChange={(value) => updatePayload('y', value[0])}
           />
         </div>
       </div>
@@ -542,7 +529,6 @@ export default function CreateTemplatePage() {
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
-  const [isPending, startTransition] = useTransition();
 
   // Wrapper resize state
   const [isResizing, setIsResizing] = useState(false);
@@ -1422,5 +1408,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
