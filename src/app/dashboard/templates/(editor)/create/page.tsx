@@ -429,36 +429,20 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
 }) => {
     const nodeRef = useRef<HTMLDivElement>(null);
     const { x, y, width, height, rotate } = block.payload.styles.transform;
+    const [isInteracting, setIsInteracting] = useState(false);
 
-    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const handleUpdate = (newTransform: Partial<InteractiveEmojiBlock['payload']['styles']['transform']>) => {
         onUpdate(block.id, {
-            x: x + info.offset.x,
-            y: y + info.offset.y,
-            width,
-            height,
-            rotate
+            ...block.payload.styles.transform,
+            ...newTransform
         });
-    };
+    }
 
     const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (nodeRef.current) {
-            const newWidth = Math.max(20, width + info.delta.x);
-            const newHeight = Math.max(20, height + info.delta.y);
-            nodeRef.current.style.width = `${newWidth}px`;
-            nodeRef.current.style.height = `${newHeight}px`;
-        }
-    };
-    
-    const handleResizeEnd = () => {
-        if(nodeRef.current) {
-            onUpdate(block.id, {
-                x,
-                y,
-                width: parseFloat(nodeRef.current.style.width),
-                height: parseFloat(nodeRef.current.style.height),
-                rotate
-            });
-        }
+        handleUpdate({
+            width: Math.max(20, width + info.delta.x),
+            height: Math.max(20, height + info.delta.y),
+        });
     };
     
     const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -466,21 +450,11 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
             const centerX = left + width / 2;
             const centerY = top + height / 2;
-            const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
-            const newRotate = angle + 90; // Adjust for initial handle position
-             nodeRef.current.style.transform = `translate(${x}px, ${y}px) rotate(${newRotate}deg)`;
+            const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX);
+            const newRotate = (angle * 180) / Math.PI + 90;
+            handleUpdate({ rotate: newRotate });
         }
     };
-
-    const handleRotateEnd = () => {
-         if (nodeRef.current) {
-            const currentTransform = nodeRef.current.style.transform;
-            const rotationMatch = currentTransform.match(/rotate\(([^deg)]+)deg\)/);
-            const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : rotate;
-            onUpdate(block.id, { x, y, width, height, rotate: newRotate });
-        }
-    }
-
 
     return (
         <motion.div
@@ -488,7 +462,7 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(e, info) => handleUpdate({ x: info.point.x, y: info.point.y })}
             onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
             className="absolute cursor-grab active:cursor-grabbing z-10"
             style={{
@@ -497,8 +471,11 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
                 x,
                 y,
                 rotate,
-                position: 'absolute'
+                transformOrigin: 'center center',
             }}
+            initial={{ x, y, rotate, width, height }}
+            animate={{ x, y, rotate, width, height }}
+            transition={{ type: 'spring', stiffness: 700, damping: 30 }}
         >
             <div className={cn(
                 "w-full h-full relative flex items-center justify-center border-2 border-transparent",
@@ -510,14 +487,14 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
                 {isSelected && (
                     <>
                         <motion.div
-                            className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onPan={handleResize}
-                            onPanEnd={handleResizeEnd}
+                            className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
                         />
                         <motion.div
-                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onPan={handleRotate}
-                            onPanEnd={handleRotateEnd}
+                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
                         >
                             <RotateCw className="w-full h-full p-0.5 text-white"/>
                         </motion.div>
@@ -615,7 +592,7 @@ export default function CreateTemplatePage() {
 
     if (type === 'column') {
         setIsColumnBlockSelectorOpen(true);
-    } else {
+    } else if (type === 'wrapper') {
         setIsWrapperBlockSelectorOpen(true);
     }
   };
@@ -1446,5 +1423,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-    
