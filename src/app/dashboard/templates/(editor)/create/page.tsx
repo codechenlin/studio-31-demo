@@ -86,7 +86,7 @@ const columnContentBlocks = [
   { name: "Separator", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
-  { name: "Emoji", icon: Smile, id: 'emoji-static' }, // Different id for static emoji
+  { name: "Emoji", icon: Smile, id: 'emoji-static' },
   { name: "Codigo HTML", icon: Code, id: 'html' },
 ];
 
@@ -428,45 +428,48 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
     isSelected: boolean;
 }) => {
     const nodeRef = useRef<HTMLDivElement>(null);
-    const { x, y, width, height, rotate } = block.payload.styles.transform;
-
+    
     const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        onUpdate(block.id, { ...block.payload.styles.transform, x: info.point.x, y: info.point.y });
+        const { x, y, width, height, rotate } = block.payload.styles.transform;
+        const newX = x + info.offset.x;
+        const newY = y + info.offset.y;
+        onUpdate(block.id, { x: newX, y: newY, width, height, rotate });
     };
 
-    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const handlePanResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        if (!nodeRef.current) return;
+        const { width, height } = block.payload.styles.transform;
         const newWidth = Math.max(20, width + info.delta.x);
         const newHeight = Math.max(20, height + info.delta.y);
-        if (nodeRef.current) {
-            nodeRef.current.style.width = `${newWidth}px`;
-            nodeRef.current.style.height = `${newHeight}px`;
-        }
-    };
-    
-    const handleResizeEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        onUpdate(block.id, {
-            ...block.payload.styles.transform,
-            width: parseFloat(nodeRef.current!.style.width),
-            height: parseFloat(nodeRef.current!.style.height),
-        });
+        nodeRef.current.style.width = `${newWidth}px`;
+        nodeRef.current.style.height = `${newHeight}px`;
     };
 
-    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const handlePanResizeEnd = () => {
+        if (!nodeRef.current) return;
+        const { x, y, rotate } = block.payload.styles.transform;
+        const newWidth = parseFloat(nodeRef.current.style.width);
+        const newHeight = parseFloat(nodeRef.current.style.height);
+        onUpdate(block.id, { x, y, width: newWidth, height: newHeight, rotate });
+    };
+
+    const handlePanRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!nodeRef.current) return;
         const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
         const centerX = left + width / 2;
         const centerY = top + height / 2;
         const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
         const newRotate = angle + 90;
-        nodeRef.current.style.transform = `translate(${x}px, ${y}px) rotate(${newRotate}deg)`;
+        nodeRef.current.style.transform = `translate(${block.payload.styles.transform.x}px, ${block.payload.styles.transform.y}px) rotate(${newRotate}deg)`;
     };
-
-    const handleRotateEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    
+    const handlePanRotateEnd = () => {
         if (!nodeRef.current) return;
         const currentTransform = nodeRef.current.style.transform;
         const rotationMatch = currentTransform.match(/rotate\(([^deg)]+)deg\)/);
-        const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : rotate;
-        onUpdate(block.id, { ...block.payload.styles.transform, rotate: newRotate });
+        const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : block.payload.styles.transform.rotate;
+        const { x, y, width, height } = block.payload.styles.transform;
+        onUpdate(block.id, { x, y, width, height, rotate: newRotate });
     };
 
     return (
@@ -479,10 +482,10 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
             className="absolute cursor-grab active:cursor-grabbing z-10"
             style={{
-                width: `${width}px`,
-                height: `${height}px`,
-                transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
-                position: 'absolute' // Ensure it's absolute
+                width: `${block.payload.styles.transform.width}px`,
+                height: `${block.payload.styles.transform.height}px`,
+                transform: `translate(${block.payload.styles.transform.x}px, ${block.payload.styles.transform.y}px) rotate(${block.payload.styles.transform.rotate}deg)`,
+                position: 'absolute'
             }}
         >
             <div className={cn(
@@ -496,13 +499,13 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
                     <>
                         <motion.div
                             className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
-                            onPan={handleResize}
-                            onPanEnd={handleResizeEnd}
+                            onPan={handlePanResize}
+                            onPanEnd={handlePanResizeEnd}
                         />
                         <motion.div
                             className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
-                            onPan={handleRotate}
-                            onPanEnd={handleRotateEnd}
+                            onPan={handlePanRotate}
+                            onPanEnd={handlePanRotateEnd}
                         >
                             <RotateCw className="w-full h-full p-0.5 text-white"/>
                         </motion.div>
@@ -647,9 +650,8 @@ export default function CreateTemplatePage() {
  const handleAddBlockToWrapper = (blockType: InteractiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'wrapper') return;
      if (blockType === 'emoji-interactive') {
-      setIsWrapperBlockSelectorOpen(false); // Close the block selector
-      setIsEmojiSelectorOpen(true); // Open the emoji picker
-      // activeContainer is already set
+      setIsWrapperBlockSelectorOpen(false);
+      setIsEmojiSelectorOpen(true);
     }
   };
 
@@ -1433,3 +1435,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
