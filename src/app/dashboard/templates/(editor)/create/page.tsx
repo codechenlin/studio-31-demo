@@ -86,13 +86,14 @@ const columnContentBlocks = [
   { name: "Separator", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
-  { name: "Emojis", icon: Smile, id: 'emojis' },
+  { name: "Emoji", icon: Smile, id: 'emoji-static' }, // Different id for static emoji
   { name: "Codigo HTML", icon: Code, id: 'html' },
 ];
 
 const wrapperContentBlocks = [
-   { name: "Emojis", icon: Smile, id: 'emojis' },
+   { name: "Emoji Interactivo", icon: Smile, id: 'emoji-interactive' },
 ];
+
 
 const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
@@ -111,14 +112,16 @@ const popularEmojis = Array.from(new Set([
 
 
 // --- STATE MANAGEMENT TYPES ---
-type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emojis' | 'html';
-type BlockType = PrimitiveBlockType | 'columns' | 'wrapper';
+type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
+type InteractiveBlockType = 'emoji-interactive';
+
+type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
 
 interface BaseBlock {
   id: string;
-  type: PrimitiveBlockType;
+  type: StaticPrimitiveBlockType | InteractiveBlockType;
   payload: { [key: string]: any };
 }
 
@@ -141,7 +144,7 @@ interface ButtonBlock extends BaseBlock {
 }
 
 interface InteractiveEmojiBlock extends BaseBlock {
-    type: 'emojis';
+    type: 'emoji-interactive';
     payload: {
         emoji: string;
         styles: {
@@ -157,7 +160,8 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | InteractiveEmojiBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock;
+type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
@@ -187,14 +191,19 @@ interface WrapperBlock {
   id: string;
   type: 'wrapper';
   payload: {
-    blocks: (PrimitiveBlock | ColumnsBlock | InteractiveEmojiBlock)[];
+    blocks: InteractivePrimitiveBlock[];
     height: number;
   };
 }
 
 
 type CanvasBlock = ColumnsBlock | WrapperBlock;
-type SelectedElement = { type: 'column', columnId: string, rowId: string } | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } | { type: 'wrapper', wrapperId: string } | { type: 'wrapper-primitive', primitiveId: string, wrapperId: string } | null;
+type SelectedElement = 
+  | { type: 'column', columnId: string, rowId: string } 
+  | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } 
+  | { type: 'wrapper', wrapperId: string } 
+  | { type: 'wrapper-primitive', primitiveId: string, wrapperId: string } 
+  | null;
 
 
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
@@ -407,97 +416,93 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  </div>
             </div>
             <Separator className="bg-border/20"/>
-            {/* <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} /> */}
         </>
     )
 }
 
 const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect, isSelected }: {
-    block: InteractiveEmojiBlock,
-    containerRef: React.RefObject<HTMLDivElement>,
-    onUpdate: (blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => void,
-    onSelect: () => void,
-    isSelected: boolean
+    block: InteractiveEmojiBlock;
+    containerRef: React.RefObject<HTMLDivElement>;
+    onUpdate: (blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => void;
+    onSelect: () => void;
+    isSelected: boolean;
 }) => {
-    const { transform } = block.payload.styles;
     const nodeRef = useRef<HTMLDivElement>(null);
+    const { x, y, width, height, rotate } = block.payload.styles.transform;
 
-    const handleInteractionEnd = (info: PanInfo) => {
-        if (!nodeRef.current) return;
-        const { x, y } = nodeRef.current.style;
+    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        onUpdate(block.id, { ...block.payload.styles.transform, x: info.point.x, y: info.point.y });
+    };
+
+    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        const newWidth = Math.max(20, width + info.delta.x);
+        const newHeight = Math.max(20, height + info.delta.y);
+        if (nodeRef.current) {
+            nodeRef.current.style.width = `${newWidth}px`;
+            nodeRef.current.style.height = `${newHeight}px`;
+        }
+    };
+    
+    const handleResizeEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         onUpdate(block.id, {
-            ...transform,
-            x: parseFloat(x),
-            y: parseFloat(y),
+            ...block.payload.styles.transform,
+            width: parseFloat(nodeRef.current!.style.width),
+            height: parseFloat(nodeRef.current!.style.height),
         });
     };
 
-    const handleRotate = (event: React.PointerEvent, info: PanInfo) => {
+    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!nodeRef.current) return;
         const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
         const centerX = left + width / 2;
         const centerY = top + height / 2;
         const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
-        nodeRef.current.style.transform = `${nodeRef.current.style.transform.split(' rotate')[0]} rotate(${angle + 90}deg)`;
+        const newRotate = angle + 90;
+        nodeRef.current.style.transform = `translate(${x}px, ${y}px) rotate(${newRotate}deg)`;
     };
 
-    const handleResize = (event: React.PointerEvent, info: PanInfo) => {
+    const handleRotateEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!nodeRef.current) return;
-        const newWidth = transform.width + info.delta.x;
-        const newHeight = transform.height + info.delta.y;
-        nodeRef.current.style.width = `${newWidth}px`;
-        nodeRef.current.style.height = `${newHeight}px`;
+        const currentTransform = nodeRef.current.style.transform;
+        const rotationMatch = currentTransform.match(/rotate\(([^deg)]+)deg\)/);
+        const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : rotate;
+        onUpdate(block.id, { ...block.payload.styles.transform, rotate: newRotate });
     };
 
-    const handleInteractionEndWithUpdate = () => {
-         if (!nodeRef.current) return;
-        const { x, y } = nodeRef.current.style;
-        const newTransform = {
-            ...transform,
-            x: parseFloat(x) || transform.x,
-            y: parseFloat(y) || transform.y,
-            width: parseFloat(nodeRef.current.style.width) || transform.width,
-            height: parseFloat(nodeRef.current.style.height) || transform.height,
-            rotate: parseFloat(nodeRef.current.style.transform.split('rotate(')[1]) || transform.rotate
-        };
-        onUpdate(block.id, newTransform);
-    }
-    
     return (
         <motion.div
             ref={nodeRef}
-            className="absolute cursor-grab active:cursor-grabbing"
-            style={{ 
-                ...transform,
-                left: `${transform.x}px`,
-                top: `${transform.y}px`,
-                width: `${transform.width}px`,
-                height: `${transform.height}px`,
-                transform: `rotate(${transform.rotate}deg)`,
-                position: 'absolute'
-            }}
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
-            onDragEnd={handleInteractionEndWithUpdate}
-            onTapStart={onSelect}
+            onDragEnd={handleDragEnd}
+            onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
+            className="absolute cursor-grab active:cursor-grabbing z-10"
+            style={{
+                width: `${width}px`,
+                height: `${height}px`,
+                transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                position: 'absolute' // Ensure it's absolute
+            }}
         >
             <div className={cn(
                 "w-full h-full relative flex items-center justify-center border-2 border-transparent",
                 isSelected && "border-dashed border-primary"
             )}>
-                <span style={{ fontSize: transform.width, lineHeight: 1 }}>{block.payload.emoji}</span>
+                <span style={{ fontSize: '100%', lineHeight: 1 }} className="w-full h-full flex items-center justify-center select-none">
+                    {block.payload.emoji}
+                </span>
                 {isSelected && (
                     <>
                         <motion.div
-                            className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nwse-resize z-20"
+                            className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
                             onPan={handleResize}
-                            onPanEnd={handleInteractionEndWithUpdate}
+                            onPanEnd={handleResizeEnd}
                         />
                         <motion.div
-                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-alias z-20 flex items-center justify-center"
+                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
                             onPan={handleRotate}
-                            onPanEnd={handleInteractionEndWithUpdate}
+                            onPanEnd={handleRotateEnd}
                         >
                             <RotateCw className="w-full h-full p-0.5 text-white"/>
                         </motion.div>
@@ -580,21 +585,27 @@ export default function CreateTemplatePage() {
 
   const handleOpenBlockSelector = (containerId: string, type: 'column' | 'wrapper', event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    const rect = target.closest('.group\\/wrapper, .group\\/column')?.getBoundingClientRect();
-    if (rect) {
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      setClickPosition({ x, y });
-    }
-    setActiveContainer({ id: containerId, type });
-    if (type === 'column') {
-      setIsColumnBlockSelectorOpen(true);
+    // Find the correct container element for relative positioning
+    const containerElement = target.closest('.group\\/wrapper, .group\\/column');
+    if (containerElement) {
+        const rect = containerElement.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        setClickPosition({ x, y });
     } else {
-      setIsWrapperBlockSelectorOpen(true);
+        setClickPosition({ x: 50, y: 50 }); // Fallback
+    }
+
+    setActiveContainer({ id: containerId, type });
+
+    if (type === 'column') {
+        setIsColumnBlockSelectorOpen(true);
+    } else {
+        setIsWrapperBlockSelectorOpen(true);
     }
   };
 
-  const handleAddBlockToColumn = (blockType: PrimitiveBlockType) => {
+  const handleAddBlockToColumn = (blockType: StaticPrimitiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'column') return;
      let newBlock: PrimitiveBlock;
 
@@ -610,7 +621,7 @@ export default function CreateTemplatePage() {
             type: blockType,
             payload: {
                 ...(blockType === 'heading' && { text: 'Título principal' }),
-                ...(blockType === 'emojis' && { emoji: '😀' }), // Default static emoji for columns
+                ...(blockType === 'emoji-static' && { emoji: '😀' }),
             },
         };
     }
@@ -633,23 +644,22 @@ export default function CreateTemplatePage() {
     setActiveContainer(null);
   }
 
-  const handleAddBlockToWrapper = (blockType: PrimitiveBlockType) => {
+ const handleAddBlockToWrapper = (blockType: InteractiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'wrapper') return;
-     if (blockType === 'emojis') {
-      setIsEmojiSelectorOpen(true);
-      setIsWrapperBlockSelectorOpen(false);
-      return;
+     if (blockType === 'emoji-interactive') {
+      setIsWrapperBlockSelectorOpen(false); // Close the block selector
+      setIsEmojiSelectorOpen(true); // Open the emoji picker
+      // activeContainer is already set
     }
-    // Handle other block types for wrapper if needed in the future
   };
 
   
-  const handleSelectEmoji = (emoji: string) => {
+  const handleSelectEmojiForWrapper = (emoji: string) => {
     if (!activeContainer || !clickPosition) return;
 
     const newBlock: InteractiveEmojiBlock = {
       id: `emoji_${Date.now()}`,
-      type: 'emojis',
+      type: 'emoji-interactive',
       payload: {
         emoji,
         styles: {
@@ -807,7 +817,7 @@ export default function CreateTemplatePage() {
                 );
               case 'text':
                 return <p className="p-2">{block.payload.text || 'Lorem ipsum dolor sit amet...'}</p>
-              case 'emojis':
+              case 'emoji-static':
                 return <p className="text-center" style={{fontSize: '48px'}}>{(block as PrimitiveBlock & { payload: { emoji: string } }).payload.emoji}</p>
               case 'button':
                 return (
@@ -893,7 +903,7 @@ export default function CreateTemplatePage() {
         prevContent.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
                 const newBlocks = row.payload.blocks.map(block => {
-                    if (block.id === blockId && block.type === 'emojis') {
+                    if (block.id === blockId && block.type === 'emoji-interactive') {
                         return {
                             ...block,
                             payload: {
@@ -964,7 +974,7 @@ export default function CreateTemplatePage() {
       return null;
   }
   
-  const blockTypeNames: Record<PrimitiveBlockType, string> = {
+  const blockTypeNames: Record<StaticPrimitiveBlockType | InteractiveBlockType, string> = {
       heading: 'título',
       text: 'texto',
       image: 'imagen',
@@ -972,8 +982,9 @@ export default function CreateTemplatePage() {
       separator: 'separador',
       youtube: 'video de Youtube',
       timer: 'contador',
-      emojis: 'emoji',
-      html: 'HTML'
+      'emoji-static': 'emoji',
+      html: 'HTML',
+      'emoji-interactive': 'emoji interactivo'
   }
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -1003,7 +1014,7 @@ export default function CreateTemplatePage() {
               </Button>
           </div>
     
-          <div className="absolute top-2 right-2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
+          <div className="absolute top-2 -right-8 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
               <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                   <Trash2 className="size-4" />
               </Button>
@@ -1012,17 +1023,17 @@ export default function CreateTemplatePage() {
           <div
             id={block.id}
             ref={wrapperRef}
-            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
+            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500 overflow-hidden" // overflow hidden is important
             style={{ height: `${block.payload.height}px` }}
             onClick={(e) => {
-              if((e.target as HTMLElement).closest('.emoji-wrapper')) return;
+              if((e.target as HTMLElement).closest('.cursor-grab')) return; // prevent opening modal when clicking emoji
               setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
               handleOpenBlockSelector(block.id, 'wrapper', e);
             }}
           >
-            <div className="w-full h-full relative overflow-hidden">
+            <div className="w-full h-full relative">
               {block.payload.blocks.map(b => {
-                if (b.type === 'emojis') {
+                if (b.type === 'emoji-interactive') {
                   const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === b.id;
                   return (
                       <DraggableResizableRotatableEmoji
@@ -1040,7 +1051,7 @@ export default function CreateTemplatePage() {
             </div>
             <div 
                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
-               className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+               className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-20"
             />
           </div>
         </motion.div>
@@ -1311,7 +1322,7 @@ export default function CreateTemplatePage() {
                 {columnContentBlocks.map((block) => (
                   <Card 
                     key={block.id} 
-                    onClick={() => handleAddBlockToColumn(block.id as PrimitiveBlockType)}
+                    onClick={() => handleAddBlockToColumn(block.id as StaticPrimitiveBlockType)}
                     className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
                   >
                     <block.icon className="size-8 text-[#00B0F0] transition-colors" />
@@ -1336,7 +1347,7 @@ export default function CreateTemplatePage() {
                 {wrapperContentBlocks.map((block) => (
                   <Card 
                     key={block.id} 
-                    onClick={() => handleAddBlockToWrapper(block.id as PrimitiveBlockType)}
+                    onClick={() => handleAddBlockToWrapper(block.id as InteractiveBlockType)}
                     className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
                   >
                     <block.icon className="size-8 text-[#00B0F0] transition-colors" />
@@ -1409,7 +1420,7 @@ export default function CreateTemplatePage() {
                     {popularEmojis.map((emoji) => (
                         <button 
                             key={emoji}
-                            onClick={() => handleSelectEmoji(emoji)}
+                            onClick={() => handleSelectEmojiForWrapper(emoji)}
                             className="text-3xl p-2 rounded-lg hover:bg-accent transition-colors"
                         >
                             {emoji}
