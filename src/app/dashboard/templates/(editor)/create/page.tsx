@@ -69,7 +69,7 @@ import {
   AlignRight,
   RotateCw,
 } from 'lucide-react';
-import { motion, useMotionValue } from 'framer-motion';
+import { motion, useMotionValue, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
@@ -410,11 +410,12 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect }: {
+const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect, isSelected }: {
     block: EmojiBlock,
     containerRef: React.RefObject<HTMLDivElement>,
     onUpdate: (blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => void,
     onSelect: () => void,
+    isSelected: boolean
 }) => {
     const { transform } = block.payload.styles;
     const x = useMotionValue(transform.x);
@@ -422,6 +423,7 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
     const width = useMotionValue(transform.width);
     const height = useMotionValue(transform.height);
     const rotate = useMotionValue(transform.rotate);
+    const nodeRef = useRef<HTMLDivElement>(null);
 
     const handleInteractionEnd = () => {
         onUpdate(block.id, {
@@ -433,53 +435,24 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
         });
     };
 
-    const handleRotate = (event: React.PointerEvent) => {
-        const rotateHandle = event.target as HTMLElement;
-        const emojiDiv = rotateHandle.closest('.emoji-wrapper');
-        if (!emojiDiv || !containerRef.current) return;
-    
-        const emojiRect = emojiDiv.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        
-        const emojiCenterX = emojiRect.left - containerRect.left + emojiRect.width / 2;
-        const emojiCenterY = emojiRect.top - containerRect.top + emojiRect.height / 2;
-        
-        const onPointerMove = (moveEvent: PointerEvent) => {
-          const angle = Math.atan2(moveEvent.clientY - (containerRect.top + emojiCenterY), moveEvent.clientX - (containerRect.left + emojiCenterX)) * (180 / Math.PI) + 90;
-          rotate.set(angle);
-        };
-    
-        const onPointerUp = () => {
-          document.removeEventListener('pointermove', onPointerMove);
-          document.removeEventListener('pointerup', onPointerUp);
-          handleInteractionEnd();
-        };
-    
-        document.addEventListener('pointermove', onPointerMove);
-        document.addEventListener('pointerup', onPointerUp);
-      };
-
-    const handleResize = (event: React.PointerEvent) => {
-        const onPointerMove = (moveEvent: PointerEvent) => {
-          const newWidth = Math.max(20, width.get() + moveEvent.movementX);
-          const newHeight = Math.max(20, height.get() + moveEvent.movementY);
-          width.set(newWidth);
-          height.set(newHeight);
-        };
-    
-        const onPointerUp = () => {
-          document.removeEventListener('pointermove', onPointerMove);
-          document.removeEventListener('pointerup', onPointerUp);
-          handleInteractionEnd();
-        };
-    
-        document.addEventListener('pointermove', onPointerMove);
-        document.addEventListener('pointerup', onPointerUp);
+    const handleRotate = (event: React.PointerEvent, info: PanInfo) => {
+        if (!nodeRef.current) return;
+        const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
+        const centerX = left + width / 2;
+        const centerY = top + height / 2;
+        const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
+        rotate.set(angle + 90);
     };
-    
+
+    const handleResize = (event: React.PointerEvent, info: PanInfo) => {
+        width.set(width.get() + info.delta.x);
+        height.set(height.get() + info.delta.y);
+    };
+
     return (
         <motion.div
-            className="emoji-wrapper absolute cursor-grab active:cursor-grabbing"
+            ref={nodeRef}
+            className="absolute cursor-grab active:cursor-grabbing"
             style={{ x, y, width, height, rotate, zIndex: 10 }}
             drag
             dragConstraints={containerRef}
@@ -487,18 +460,27 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             onDragEnd={handleInteractionEnd}
             onTapStart={onSelect}
         >
-            <div className="w-full h-full relative flex items-center justify-center">
-                <motion.span style={{ fontSize: height, lineHeight: 1 }}>{block.payload.emoji}</motion.span>
-                <motion.div
-                    className="absolute bottom-[-8px] right-[-8px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize z-20"
-                    onPointerDown={handleResize}
-                />
-                <motion.div
-                    className="absolute top-[-24px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias z-20 flex items-center justify-center"
-                    onPointerDown={handleRotate}
-                >
-                    <RotateCw className="w-full h-full p-0.5 text-primary"/>
-                </motion.div>
+            <div className={cn(
+                "w-full h-full relative flex items-center justify-center border-2 border-transparent",
+                isSelected && "border-dashed border-primary"
+            )}>
+                <span style={{ fontSize: width.get(), lineHeight: 1 }}>{block.payload.emoji}</span>
+                {isSelected && (
+                    <>
+                        <motion.div
+                            className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nwse-resize z-20"
+                            onPan={handleResize}
+                            onPanEnd={handleInteractionEnd}
+                        />
+                        <motion.div
+                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-alias z-20 flex items-center justify-center"
+                            onPan={handleRotate}
+                            onPanEnd={handleInteractionEnd}
+                        >
+                            <RotateCw className="w-full h-full p-0.5 text-white"/>
+                        </motion.div>
+                    </>
+                )}
             </div>
         </motion.div>
     );
@@ -963,10 +945,16 @@ export default function CreateTemplatePage() {
   const getSelectedBlockType = () => {
       if(selectedElement?.type !== 'primitive') return null;
       const row = canvasContent.find(r => r.id === selectedElement.rowId);
-      if (row?.type !== 'columns') return null;
-      const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-      const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-      return block?.type;
+      if (row?.type === 'wrapper') {
+        const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type;
+      }
+      if (row?.type === 'columns') {
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type;
+      }
+      return null;
   }
   
   const blockTypeNames: Record<PrimitiveBlockType, string> = {
@@ -1028,6 +1016,7 @@ export default function CreateTemplatePage() {
             <div className="w-full h-full relative overflow-hidden">
               {block.payload.blocks.map(b => {
                 if (b.type === 'emojis') {
+                  const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === b.id;
                   return (
                       <DraggableResizableRotatableEmoji
                           key={b.id}
@@ -1035,6 +1024,7 @@ export default function CreateTemplatePage() {
                           containerRef={wrapperRef}
                           onUpdate={handleUpdate}
                           onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
+                          isSelected={isSelected}
                       />
                   )
                 }
@@ -1228,6 +1218,16 @@ export default function CreateTemplatePage() {
                     Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
                 </Button>
               )}
+               { selectedElement?.type === 'wrapper-primitive' && (
+                <Button 
+                    variant="outline" 
+                    className="w-full justify-start border-destructive text-destructive hover:bg-destructive hover:text-white"
+                    onClick={() => promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId)}
+                >
+                    Bloque emoji <Trash2 className="ml-auto"/>
+                </Button>
+              )}
+
 
               { selectedElement?.type === 'column' && (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
