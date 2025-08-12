@@ -496,7 +496,8 @@ export default function CreateTemplatePage() {
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
-  const [activeContainerId, setActiveContainerId] = useState<string | null>(null); // For columns or wrappers
+  const [activeContainer, setActiveContainer] = useState<{ id: string; ref: React.RefObject<HTMLDivElement> } | null>(null);
+  const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
@@ -510,7 +511,7 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
-  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const wrapperRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
 
   const handleSave = () => {
@@ -553,13 +554,19 @@ export default function CreateTemplatePage() {
     }
   };
 
-  const handleOpenBlockSelector = (containerId: string) => {
-    setActiveContainerId(containerId);
+  const handleOpenBlockSelector = (containerId: string, ref: React.RefObject<HTMLDivElement>, event: React.MouseEvent) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (rect) {
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      setClickPosition({ x, y });
+    }
+    setActiveContainer({ id: containerId, ref });
     setIsBlockSelectorOpen(true);
   };
 
   const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
-    if (!activeContainerId) return;
+    if (!activeContainer) return;
 
     if (blockType === 'emojis') {
       setIsEmojiSelectorOpen(true);
@@ -596,7 +603,7 @@ export default function CreateTemplatePage() {
     const newCanvasContent = canvasContent.map((row) => {
         if (row.type === 'columns') {
             const newColumns = row.payload.columns.map((col) => {
-              if (col.id === activeContainerId) {
+              if (col.id === activeContainer.id) {
                 return { ...col, blocks: [...col.blocks, newBlock] };
               }
               return col;
@@ -604,7 +611,7 @@ export default function CreateTemplatePage() {
             // This was the fix: ensure payload structure is maintained
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         }
-        if (row.type === 'wrapper' && row.id === activeContainerId) {
+        if (row.type === 'wrapper' && row.id === activeContainer.id) {
             return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
         }
         return row;
@@ -612,43 +619,43 @@ export default function CreateTemplatePage() {
 
     setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsBlockSelectorOpen(false);
-    setActiveContainerId(null);
+    setActiveContainer(null);
   };
   
   const handleSelectEmoji = (emoji: string) => {
-      if (!activeContainerId) return;
-      const newBlock: EmojiBlock = {
-        id: `emoji_${Date.now()}`,
-        type: 'emojis',
-        payload: {
-            emoji,
-            styles: {
-                fontSize: '48px',
-                textAlign: 'center',
-                position: 'absolute',
-                transform: { x: 50, y: 50, width: 50, height: 50, rotate: 0 }
-            }
-        }
-      };
+    if (!activeContainer || !clickPosition) return;
 
-      const newCanvasContent = canvasContent.map(row => {
-        if(row.type === 'columns') {
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === activeContainerId) {
-              return { ...col, blocks: [...col.blocks, newBlock] };
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
+    const newBlock: EmojiBlock = {
+      id: `emoji_${Date.now()}`,
+      type: 'emojis',
+      payload: {
+        emoji,
+        styles: {
+          fontSize: '48px',
+          textAlign: 'center',
+          position: 'absolute',
+          transform: {
+            x: clickPosition.x - 25, // Center the emoji on the click
+            y: clickPosition.y - 25,
+            width: 50,
+            height: 50,
+            rotate: 0
+          }
         }
-        if (row.type === 'wrapper' && row.id === activeContainerId) {
-            return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
-        }
-        return row;
-      });
-      setCanvasContent(newCanvasContent as CanvasBlock[]);
-      setIsEmojiSelectorOpen(false);
-      setActiveContainerId(null);
+      }
+    };
+
+    const newCanvasContent = canvasContent.map(row => {
+      if (row.type === 'wrapper' && row.id === activeContainer.id) {
+        return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
+      }
+      return row;
+    });
+
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
+    setIsEmojiSelectorOpen(false);
+    setActiveContainer(null);
+    setClickPosition(null);
   }
   
   const handleHeadingTextChange = (blockId: string, newText: string) => {
@@ -765,8 +772,8 @@ export default function CreateTemplatePage() {
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
         <div className="absolute top-1/2 -right-7 -translate-y-1/2 opacity-0 group-hover/primitive:opacity-100 transition-opacity z-10">
-          <Button variant="ghost" size="icon" className="size-7 border border-destructive/50 text-destructive/80 hover:bg-destructive hover:text-white" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
-            <X className="size-4" />
+          <Button variant="ghost" size="icon" className="size-7" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
+            <Trash2 className="size-4 text-destructive" />
           </Button>
         </div>
         {
@@ -950,13 +957,14 @@ export default function CreateTemplatePage() {
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    // This ensures that for every WrapperComponent instance, we have a ref in our central refs object.
     useEffect(() => {
-      wrapperRefs.current[block.id] = wrapperRef.current;
-      return () => {
-        delete wrapperRefs.current[block.id];
-      }
+        if (!wrapperRefs.current[block.id]) {
+            wrapperRefs.current[block.id] = React.createRef<HTMLDivElement>();
+        }
     }, [block.id]);
-    
+
     const handleUpdate = useCallback((wrapperId: string, blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
         updateWrapperBlockTransform(wrapperId, blockId, newTransform);
     }, []);
@@ -992,7 +1000,7 @@ export default function CreateTemplatePage() {
           ref={wrapperRef}
           className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
           style={{ height: `${block.payload.height}px` }}
-          onClick={() => {setSelectedElement({ type: 'wrapper', wrapperId: block.id }); handleOpenBlockSelector(block.id);}}
+          onClick={(e) => {setSelectedElement({ type: 'wrapper', wrapperId: block.id }); handleOpenBlockSelector(block.id, wrapperRef, e);}}
         >
           <div className="w-full h-full relative overflow-hidden">
             {block.payload.blocks.map(b => {
@@ -1067,10 +1075,10 @@ export default function CreateTemplatePage() {
                    {col.blocks.length > 0 ? (
                        <div className="flex flex-col gap-2 w-full">
                            {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
-                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}><PlusCircle className="mr-2"/>Añadir</Button>
+                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, React.createRef(), e); }}><PlusCircle className="mr-2"/>Añadir</Button>
                        </div>
                    ) : (
-                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
+                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, React.createRef(), e); }}>
                        <PlusCircle className="mb-1"/>
                        <span className="text-xs font-medium -mb-0.5">Añadir</span>
                        <span className="text-xs font-medium">Bloque</span>
@@ -1200,7 +1208,7 @@ export default function CreateTemplatePage() {
                { selectedElement?.type === 'primitive' && (
                 <Button 
                     variant="outline" 
-                    className="w-full justify-between border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white"
+                    className="w-full justify-between border-destructive text-destructive hover:bg-destructive hover:text-white"
                     onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
                 >
                     Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
@@ -1368,4 +1376,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
