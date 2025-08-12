@@ -74,6 +74,8 @@ import {
   ArrowUpDown,
   Moon,
   Edit,
+  Expand,
+  Upload,
 } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -125,6 +127,8 @@ type InteractiveBlockType = 'emoji-interactive';
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
+type BackgroundFit = 'cover' | 'contain' | 'auto';
+
 
 interface BaseBlock {
   id: string;
@@ -188,21 +192,30 @@ interface ColumnsBlock {
   };
 }
 
+interface WrapperStyles {
+    borderRadius?: number;
+    background?: {
+      type: 'solid' | 'gradient';
+      color1: string;
+      color2?: string;
+      direction?: GradientDirection;
+    };
+    backgroundImage?: {
+        url: string;
+        fit: BackgroundFit;
+        positionX: number;
+        positionY: number;
+        zoom: number;
+    }
+}
+
 interface WrapperBlock {
   id: string;
   type: 'wrapper';
   payload: {
     blocks: InteractivePrimitiveBlock[];
     height: number;
-     styles: {
-      borderRadius?: number;
-      background?: {
-        type: 'solid' | 'gradient';
-        color1: string;
-        color2?: string;
-        direction?: GradientDirection;
-      }
-    }
+    styles: WrapperStyles;
   };
 }
 
@@ -216,10 +229,11 @@ type SelectedElement =
   | null;
 
 
-const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenImageModal }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
+  onOpenImageModal: () => void;
 }) => {
   if (!selectedElement || (selectedElement.type !== 'column' && selectedElement.type !== 'wrapper')) return null;
 
@@ -357,6 +371,28 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
                   onValueChange={(value) => updateStyle('borderRadius', value[0])}
               />
               <span className="text-xs text-muted-foreground w-12 text-right">{borderRadius || 0}px</span>
+            </div>
+        </div>
+        <Separator className="bg-border/20" />
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Imagen de Fondo</h3>
+                {(styles as WrapperStyles)?.backgroundImage && (
+                     <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="size-7 border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white" 
+                        onClick={() => updateStyle('backgroundImage', undefined)}
+                        >
+                        <Trash2 className="size-4"/>
+                    </Button>
+                )}
+            </div>
+             <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-primary to-accent transition-colors">
+                <Button variant="outline" className="w-full hover:bg-transparent" onClick={onOpenImageModal}>
+                    <Upload className="mr-2"/>
+                    {(styles as WrapperStyles)?.backgroundImage ? 'Cambiar Imagen' : 'Añadir Imagen'}
+                </Button>
             </div>
         </div>
       </>
@@ -598,6 +634,7 @@ export default function CreateTemplatePage() {
   const [isColumnBlockSelectorOpen, setIsColumnBlockSelectorOpen] = useState(false);
   const [isWrapperBlockSelectorOpen, setIsWrapperBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [activeContainer, setActiveContainer] = useState<{ id: string, type: 'column' | 'wrapper' } | null>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -605,7 +642,14 @@ export default function CreateTemplatePage() {
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   const [isActionSelectorModalOpen, setIsActionSelectorModalOpen] = useState(false);
   const [actionTargetWrapperId, setActionTargetWrapperId] = useState<string | null>(null);
-  
+  const [imageModalState, setImageModalState] = useState({
+      url: '',
+      fit: 'cover' as BackgroundFit,
+      positionX: 50,
+      positionY: 50,
+      zoom: 100,
+  });
+
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
@@ -977,7 +1021,7 @@ export default function CreateTemplatePage() {
   
   const getElementStyle = (element: ColumnsBlock | WrapperBlock | Column) => {
     const styles = 'payload' in element && 'styles' in element.payload ? element.payload.styles : 'styles' in element ? element.styles : {};
-    const { background, borderRadius } = styles || {};
+    const { background, borderRadius, backgroundImage } = styles || {};
 
     const style: React.CSSProperties = {};
 
@@ -999,6 +1043,14 @@ export default function CreateTemplatePage() {
         }
       }
     }
+    
+    if (backgroundImage) {
+        style.backgroundImage = `url(${backgroundImage.url})`;
+        style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit;
+        style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`;
+        style.backgroundRepeat = 'no-repeat';
+    }
+    
     return style;
   };
   
@@ -1036,6 +1088,37 @@ export default function CreateTemplatePage() {
       'emoji-static': 'emoji',
       html: 'HTML',
       'emoji-interactive': 'emoji interactivo'
+  }
+  
+  const handleOpenImageModal = () => {
+    if (selectedElement?.type === 'wrapper') {
+        const wrapper = canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined;
+        const currentBgImage = wrapper?.payload.styles.backgroundImage;
+        setImageModalState({
+            url: currentBgImage?.url || '',
+            fit: currentBgImage?.fit || 'cover',
+            positionX: currentBgImage?.positionX || 50,
+            positionY: currentBgImage?.positionY || 50,
+            zoom: currentBgImage?.zoom || 100,
+        });
+    }
+    setIsImageModalOpen(true);
+  };
+  
+  const handleApplyBackgroundImage = () => {
+     if (selectedElement?.type !== 'wrapper') return;
+
+    setCanvasContent(prevCanvasContent => 
+        prevCanvasContent.map(row => {
+            if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+                const currentStyles = row.payload.styles || {};
+                const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: imageModalState } };
+                return { ...row, payload: newPayload };
+            }
+            return row;
+        }) as CanvasBlock[]
+    );
+    setIsImageModalOpen(false);
   }
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -1125,7 +1208,7 @@ export default function CreateTemplatePage() {
                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
                className="absolute bottom-0 left-0 w-full h-4 flex items-center justify-center cursor-ns-resize z-20 group"
             >
-                <div className="w-24 h-2 rounded-full bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 group-hover:from-primary/80 group-hover:via-accent/80 group-hover:to-primary/80 transition-all flex items-center justify-center">
+                 <div className="w-24 h-2 rounded-full bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 group-hover:from-primary/80 group-hover:via-accent/80 group-hover:to-primary/80 transition-all flex items-center justify-center">
                     <ChevronsUpDown className="size-4 text-white/50 group-hover:text-white/80 transition-colors"/>
                 </div>
             </div>
@@ -1323,7 +1406,12 @@ export default function CreateTemplatePage() {
               )}
 
               { (selectedElement?.type === 'column' || selectedElement?.type === 'wrapper') && (
-                 <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                 <BackgroundEditor 
+                    selectedElement={selectedElement} 
+                    canvasContent={canvasContent} 
+                    setCanvasContent={setCanvasContent}
+                    onOpenImageModal={handleOpenImageModal}
+                 />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -1549,6 +1637,92 @@ export default function CreateTemplatePage() {
           </DialogContent>
       </Dialog>
 
+       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="sm:max-w-4xl bg-card/90 backdrop-blur-xl border-border/50">
+          <DialogHeader>
+            <DialogTitle>Gestionar Imagen de Fondo</DialogTitle>
+            <DialogDescription>
+              Añade una URL y ajusta la posición y el tamaño de tu imagen de fondo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="image-url">URL de la Imagen</Label>
+                <Input
+                  id="image-url"
+                  placeholder="https://example.com/image.png"
+                  value={imageModalState.url}
+                  onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ajuste de Imagen</Label>
+                <Select
+                  value={imageModalState.fit}
+                  onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar ajuste" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Cubrir (Cover)</SelectItem>
+                    <SelectItem value="contain">Contener (Contain)</SelectItem>
+                    <SelectItem value="auto">Automático/Zoom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                 <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
+                <Slider
+                  value={[imageModalState.positionX]}
+                  onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}
+                />
+              </div>
+               <div className="space-y-2">
+                 <Label className="flex items-center gap-2"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
+                <Slider
+                  value={[imageModalState.positionY]}
+                  onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}
+                />
+              </div>
+              <div className="space-y-2">
+                 <Label className="flex items-center gap-2"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
+                <Slider
+                  value={[imageModalState.zoom]}
+                  min={10} max={300}
+                  onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })}
+                  disabled={imageModalState.fit !== 'auto'}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden border border-dashed">
+                {imageModalState.url ? (
+                    <div className="w-full h-full" style={{
+                        backgroundImage: `url(${imageModalState.url})`,
+                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                        backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
+                        backgroundRepeat: 'no-repeat',
+                    }} />
+                ) : (
+                    <div className="text-center text-muted-foreground p-8">
+                        <ImageIcon className="mx-auto size-12" />
+                        <p className="mt-2">Vista previa de la imagen</p>
+                    </div>
+                )}
+            </div>
+          </div>
+          <DialogFooter>
+             <DialogClose asChild>
+                <Button type="button" variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleApplyBackgroundImage} disabled={!imageModalState.url}>
+                Aplicar Imagen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
