@@ -723,24 +723,22 @@ export default function CreateTemplatePage() {
   
     let newCanvasContent;
   
-    if (itemToDelete.primId) {
+    if (itemToDelete.primId && itemToDelete.colId) { // Deleting a primitive from a column
       newCanvasContent = canvasContent.map((row) => {
-        if (row.id !== itemToDelete.rowId) return row;
+        if (row.id !== itemToDelete.rowId || row.type !== 'columns') return row;
+        
+        const newColumns = row.payload.columns.map((col) => {
+          if (col.id !== itemToDelete.colId) return col;
+          return { ...col, blocks: col.blocks.filter((block) => block.id !== itemToDelete!.primId) };
+        });
+        return { ...row, payload: { ...row.payload, columns: newColumns } };
+      });
+    } else if (itemToDelete.primId) { // Deleting a primitive from a wrapper
+       newCanvasContent = canvasContent.map((row) => {
+        if (row.id !== itemToDelete.rowId || row.type !== 'wrapper') return row;
   
-        if (row.type === 'columns' && itemToDelete.colId) {
-          const newColumns = row.payload.columns.map((col) => {
-            if (col.id !== itemToDelete.colId) return col;
-            return { ...col, blocks: col.blocks.filter((block) => block.id !== itemToDelete.primId) };
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }
-  
-        if (row.type === 'wrapper') {
-          const newBlocks = row.payload.blocks.filter((block) => block.id !== itemToDelete.primId);
-          return { ...row, payload: { ...row.payload, blocks: newBlocks } };
-        }
-  
-        return row;
+        const newBlocks = row.payload.blocks.filter((block) => block.id !== itemToDelete!.primId);
+        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
       });
     } else { // Deleting a whole row (ColumnsBlock or WrapperBlock)
       newCanvasContent = canvasContent.filter((row) => row.id !== itemToDelete.rowId);
@@ -935,13 +933,21 @@ export default function CreateTemplatePage() {
   };
   
   const getSelectedBlockType = () => {
-      if(selectedElement?.type !== 'primitive') return null;
-      const row = canvasContent.find(r => r.id === selectedElement.rowId);
-      if (row?.type === 'wrapper') {
-        const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type;
+      if(!selectedElement) return null;
+
+      const getRow = () => {
+        if ('rowId' in selectedElement) return canvasContent.find(r => r.id === selectedElement.rowId);
+        if ('wrapperId' in selectedElement) return canvasContent.find(r => r.id === selectedElement.wrapperId);
+        return null;
       }
-      if (row?.type === 'columns') {
+      const row = getRow();
+      
+      if(row?.type === 'wrapper' && selectedElement.type === 'wrapper-primitive'){
+         const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
+         return block?.type;
+      }
+      
+      if (row?.type === 'columns' && selectedElement.type === 'primitive') {
         const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
         return block?.type;
@@ -1008,13 +1014,15 @@ export default function CreateTemplatePage() {
                   return (
                       <div
                         key={b.id}
-                        className={cn("interactive-emoji absolute text-4xl", isSelected && "ring-2 ring-accent")}
+                        className={cn(
+                          "interactive-emoji absolute text-4xl cursor-pointer", 
+                          isSelected ? "ring-2 ring-accent z-10" : "z-0"
+                        )}
                         style={{
                            left: `${b.payload.x}%`,
                            top: `${b.payload.y}%`,
                            transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
                            fontSize: '48px',
-                           cursor: 'pointer'
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1220,7 +1228,7 @@ export default function CreateTemplatePage() {
                     className="w-full justify-start border-destructive text-destructive hover:bg-destructive hover:text-white"
                     onClick={() => promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId)}
                 >
-                    Bloque emoji <Trash2 className="ml-auto"/>
+                    Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
                 </Button>
               )}
 
@@ -1414,4 +1422,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
