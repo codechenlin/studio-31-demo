@@ -410,11 +410,10 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUpdate, onSelect }: {
+const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect }: {
     block: EmojiBlock,
-    wrapperId: string,
     containerRef: React.RefObject<HTMLDivElement>,
-    onUpdate: (wrapperId: string, blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => void,
+    onUpdate: (blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => void,
     onSelect: () => void,
 }) => {
     const { transform } = block.payload.styles;
@@ -425,7 +424,7 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
     const rotate = useMotionValue(transform.rotate);
 
     const handleInteractionEnd = () => {
-        onUpdate(wrapperId, block.id, {
+        onUpdate(block.id, {
             x: x.get(),
             y: y.get(),
             width: width.get(),
@@ -459,7 +458,7 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
     return (
         <motion.div
             className="emoji-wrapper absolute cursor-grab active:cursor-grabbing"
-            style={{ x, y, width, height, rotate, position: 'absolute' }}
+            style={{ x, y, width, height, rotate, zIndex: 10 }}
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
@@ -470,11 +469,11 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
             <div className="w-full h-full relative flex items-center justify-center">
                 <motion.span style={{ fontSize: height, lineHeight: 1 }}>{block.payload.emoji}</motion.span>
                 <motion.div
-                    className="absolute bottom-[-8px] right-[-8px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize z-10"
+                    className="absolute bottom-[-8px] right-[-8px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize z-20"
                     onPan={handleResize}
                 />
                 <motion.div
-                    className="absolute top-[-24px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias z-10 flex items-center justify-center"
+                    className="absolute top-[-24px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias z-20 flex items-center justify-center"
                     onPan={handleRotate}
                 >
                     <RotateCw className="w-full h-full p-0.5 text-primary"/>
@@ -496,7 +495,7 @@ export default function CreateTemplatePage() {
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
-  const [activeContainer, setActiveContainer] = useState<{ id: string; ref: React.RefObject<HTMLDivElement> } | null>(null);
+  const [activeContainer, setActiveContainer] = useState<{ id: string } | null>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
@@ -554,14 +553,15 @@ export default function CreateTemplatePage() {
     }
   };
 
-  const handleOpenBlockSelector = (containerId: string, ref: React.RefObject<HTMLDivElement>, event: React.MouseEvent) => {
-    const rect = ref.current?.getBoundingClientRect();
+  const handleOpenBlockSelector = (containerId: string, event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const rect = target.closest('.group\\/wrapper, .group\\/column')?.getBoundingClientRect();
     if (rect) {
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       setClickPosition({ x, y });
     }
-    setActiveContainer({ id: containerId, ref });
+    setActiveContainer({ id: containerId });
     setIsBlockSelectorOpen(true);
   };
 
@@ -608,7 +608,6 @@ export default function CreateTemplatePage() {
               }
               return col;
             });
-            // This was the fix: ensure payload structure is maintained
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         }
         if (row.type === 'wrapper' && row.id === activeContainer.id) {
@@ -635,7 +634,7 @@ export default function CreateTemplatePage() {
           textAlign: 'center',
           position: 'absolute',
           transform: {
-            x: clickPosition.x - 25, // Center the emoji on the click
+            x: clickPosition.x - 25, 
             y: clickPosition.y - 25,
             width: 50,
             height: 50,
@@ -771,11 +770,18 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
-        <div className="absolute top-1/2 -right-7 -translate-y-1/2 opacity-0 group-hover/primitive:opacity-100 transition-opacity z-10">
-          <Button variant="ghost" size="icon" className="size-7" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
-            <Trash2 className="size-4 text-destructive" />
-          </Button>
-        </div>
+        {isSelected && (
+           <div className="absolute -top-2 -right-2 z-10">
+            <Button
+              variant="destructive"
+              size="icon"
+              className="size-7"
+              onClick={(e) => { e.stopPropagation(); promptDeleteItem(rowId, colId, block.id); }}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        )}
         {
           (() => {
              switch(block.type) {
@@ -958,17 +964,14 @@ export default function CreateTemplatePage() {
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
 
-    // This ensures that for every WrapperComponent instance, we have a ref in our central refs object.
     useEffect(() => {
-        if (!wrapperRefs.current[block.id]) {
-            wrapperRefs.current[block.id] = React.createRef<HTMLDivElement>();
-        }
+        wrapperRefs.current[block.id] = wrapperRef;
     }, [block.id]);
 
-    const handleUpdate = useCallback((wrapperId: string, blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
-        updateWrapperBlockTransform(wrapperId, blockId, newTransform);
-    }, []);
-
+    const handleUpdate = useCallback((blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
+        updateWrapperBlockTransform(block.id, blockId, newTransform);
+    }, [block.id]);
+    
     return (
       <motion.div 
         key={block.id} 
@@ -1000,7 +1003,11 @@ export default function CreateTemplatePage() {
           ref={wrapperRef}
           className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
           style={{ height: `${block.payload.height}px` }}
-          onClick={(e) => {setSelectedElement({ type: 'wrapper', wrapperId: block.id }); handleOpenBlockSelector(block.id, wrapperRef, e);}}
+          onClick={(e) => {
+            if((e.target as HTMLElement).closest('.emoji-wrapper')) return;
+            setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
+            handleOpenBlockSelector(block.id, e);
+          }}
         >
           <div className="w-full h-full relative overflow-hidden">
             {block.payload.blocks.map(b => {
@@ -1009,7 +1016,6 @@ export default function CreateTemplatePage() {
                     <DraggableResizableRotatableEmoji
                         key={b.id}
                         block={b as EmojiBlock}
-                        wrapperId={block.id}
                         containerRef={wrapperRef}
                         onUpdate={handleUpdate}
                         onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
@@ -1068,17 +1074,17 @@ export default function CreateTemplatePage() {
                     onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
                     style={getColumnStyle(col)}
                     className={cn(
-                      "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
+                      "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px] group/column",
                       selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
                     )}
                 >
                    {col.blocks.length > 0 ? (
                        <div className="flex flex-col gap-2 w-full">
                            {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
-                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, React.createRef(), e); }}><PlusCircle className="mr-2"/>Añadir</Button>
+                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, e); }}><PlusCircle className="mr-2"/>Añadir</Button>
                        </div>
                    ) : (
-                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, React.createRef(), e); }}>
+                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, e); }}>
                        <PlusCircle className="mb-1"/>
                        <span className="text-xs font-medium -mb-0.5">Añadir</span>
                        <span className="text-xs font-medium">Bloque</span>
@@ -1205,10 +1211,10 @@ export default function CreateTemplatePage() {
          <Separator className="bg-border/20" />
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
-               { selectedElement?.type === 'primitive' && (
+              { selectedElement?.type === 'primitive' && (
                 <Button 
                     variant="outline" 
-                    className="w-full justify-between border-destructive text-destructive hover:bg-destructive hover:text-white"
+                    className="w-full justify-start border-destructive text-destructive hover:bg-destructive hover:text-white"
                     onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
                 >
                     Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
