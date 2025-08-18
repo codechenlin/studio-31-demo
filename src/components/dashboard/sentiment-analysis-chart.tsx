@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Pie, PieChart } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, ChartConfig } from "@/components/ui/chart"
+import { ChartContainer, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 
 const chartData = [
   { sentiment: "Positivo", value: 75, fill: "url(#sentiment-positive)", color: "hsl(var(--chart-2))" },
@@ -20,17 +20,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function SentimentAnalysisChart() {
-  const radius = [80, 70, 60];
-  const totalValue = chartData.reduce((acc, curr) => acc + curr.value, 0);
+  const totalValue = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.value, 0), []);
 
   return (
     <Card className="flex flex-col bg-card/80 backdrop-blur-sm border-border/50 shadow-lg relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ai-glow-start via-ai-glow-mid to-ai-glow-end opacity-80"/>
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary opacity-80"/>
       <CardHeader className="items-center pb-0 z-10">
         <CardTitle>Análisis de Sentimiento</CardTitle>
         <CardDescription>Respuesta de la Audiencia</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex-1 flex flex-col items-center justify-center pb-0">
         <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[320px]">
           <PieChart>
              <defs>
@@ -47,49 +46,21 @@ export function SentimentAnalysisChart() {
                 <stop offset="100%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3} />
               </radialGradient>
             </defs>
-            {chartData.map((entry, index) => (
-              <React.Fragment key={`background-${entry.sentiment}`}>
-                <Pie
-                    data={[{ value: 100 }]}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={radius[index] - 5}
-                    outerRadius={radius[index]}
-                    startAngle={90}
-                    endAngle={450}
-                    fill="hsl(var(--ai-track))"
-                    stroke="hsl(var(--border) / 0.2)"
-                    strokeWidth={1}
-                />
-                <Pie
-                    data={[entry]}
-                    dataKey="value"
-                    nameKey="sentiment"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={radius[index] - 5}
-                    outerRadius={radius[index]}
-                    startAngle={90}
-                    endAngle={90 + (entry.value / totalValue) * 360}
-                    cornerRadius={5}
-                    fill={entry.fill}
-                    style={{ filter: `drop-shadow(0 0 5px ${entry.color})` }}
-                />
-              </React.Fragment>
-            ))}
+            
+            {/* Background Tracks */}
+            <Pie data={[{ value: 100 }]} dataKey="value" cx="50%" cy="50%" innerRadius={80 - 5} outerRadius={80} startAngle={90} endAngle={450} fill="hsl(var(--ai-track))" stroke="hsl(var(--border) / 0.2)" strokeWidth={1} />
+            <Pie data={[{ value: 100 }]} dataKey="value" cx="50%" cy="50%" innerRadius={70 - 5} outerRadius={70} startAngle={90} endAngle={450} fill="hsl(var(--ai-track))" stroke="hsl(var(--border) / 0.2)" strokeWidth={1} />
+            <Pie data={[{ value: 100 }]} dataKey="value" cx="50%" cy="50%" innerRadius={60 - 5} outerRadius={60} startAngle={90} endAngle={450} fill="hsl(var(--ai-track))" stroke="hsl(var(--border) / 0.2)" strokeWidth={1} />
+
+            {/* Data Pies */}
+            <Pie data={[chartData[0]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={80 - 5} outerRadius={80} startAngle={90} endAngle={90 + (chartData[0].value / totalValue) * 360} cornerRadius={5} fill={chartData[0].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[0].color})` }} />
+            <Pie data={[chartData[1]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={70 - 5} outerRadius={70} startAngle={90} endAngle={90 + (chartData[1].value / totalValue) * 360} cornerRadius={5} fill={chartData[1].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[1].color})` }} />
+            <Pie data={[chartData[2]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={60 - 5} outerRadius={60} startAngle={90} endAngle={90 + (chartData[2].value / totalValue) * 360} cornerRadius={5} fill={chartData[2].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[2].color})` }} />
+
           </PieChart>
         </ChartContainer>
+         <ChartLegend content={<ChartLegendContent nameKey="sentiment" />} className="flex-col items-start gap-2 text-sm" />
       </CardContent>
-       <div className="flex flex-col items-center justify-center p-4 text-sm gap-2 mt-auto">
-         {chartData.map((item) => (
-            <div key={item.sentiment} className="flex items-center gap-2 w-32">
-                <div className="w-2 h-2 rounded-full" style={{ background: item.color }}/>
-                <span className="text-muted-foreground flex-1">{item.sentiment}</span>
-                <span className="font-semibold text-foreground">{item.value}%</span>
-            </div>
-         ))}
-       </div>
     </Card>
   )
 }
