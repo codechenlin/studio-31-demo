@@ -1285,7 +1285,6 @@ export default function CreateTemplatePage() {
               <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={() => setIsEditNameModalOpen(true)}>
                 <Pencil className="size-4" />
               </Button>
-              <ThemeToggle />
           </div>
         </header>
         <div className="p-2 space-y-2">
@@ -1309,34 +1308,37 @@ export default function CreateTemplatePage() {
             <Button variant="ghost" size="icon"><Undo/></Button>
             <Button variant="ghost" size="icon"><Redo/></Button>
           </div>
-          <TooltipProvider>
-            <div className="flex items-center gap-2 p-1 bg-card/10 rounded-lg border border-border/20">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant={viewport === 'desktop' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('desktop')}><Laptop/></Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Mira cómo se ve en <span className="font-bold">Escritorio</span></p>
-                    </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Comprueba la vista para <span className="font-bold">Tableta</span></p>
-                    </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Comprueba la vista para <span className="font-bold">Móvil</span></p>
-                    </TooltipContent>
-                </Tooltip>
-            </div>
-          </TooltipProvider>
+          <div className="flex items-center gap-4">
+            <TooltipProvider>
+              <div className="flex items-center gap-2 p-1 bg-card/10 rounded-lg border border-border/20">
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant={viewport === 'desktop' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('desktop')}><Laptop/></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Mira cómo se ve en <span className="font-bold">Escritorio</span></p>
+                      </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                           <Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Comprueba la vista para <span className="font-bold">Tableta</span></p>
+                      </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          <p>Comprueba la vista para <span className="font-bold">Móvil</span></p>
+                      </TooltipContent>
+                  </Tooltip>
+              </div>
+            </TooltipProvider>
+            <ThemeToggle />
+          </div>
           <div className="flex items-center gap-4">
               <div className="text-xs text-muted-foreground">
                 {lastSaved
