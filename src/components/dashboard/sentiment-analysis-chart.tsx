@@ -20,19 +20,18 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function SentimentAnalysisChart() {
-  const radius = [65, 55, 45];
+  const radius = [80, 70, 60];
   const totalValue = chartData.reduce((acc, curr) => acc + curr.value, 0);
 
   return (
     <Card className="flex flex-col bg-card/80 backdrop-blur-sm border-border/50 shadow-lg relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ai-glow-start via-ai-glow-mid to-ai-glow-end opacity-80"/>
-        <div className="absolute inset-0 size-full bg-black/95 opacity-5 [mask-image:radial-gradient(ellipse_100%_50%_at_50%_0%,#000_70%,transparent_100%)]"/>
       <CardHeader className="items-center pb-0 z-10">
         <CardTitle>Análisis de Sentimiento</CardTitle>
         <CardDescription>Respuesta de la Audiencia</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[280px]">
+        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[320px]">
           <PieChart>
              <defs>
               <radialGradient id="sentiment-positive" cx="50%" cy="50%" r="50%">
@@ -49,24 +48,21 @@ export function SentimentAnalysisChart() {
               </radialGradient>
             </defs>
             {chartData.map((entry, index) => (
-               <Pie
-                  key={`track-${entry.sentiment}`}
-                  data={[{ value: 100 }]}
-                  dataKey="value"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={radius[index] - 5}
-                  outerRadius={radius[index]}
-                  startAngle={90}
-                  endAngle={450}
-                  fill="hsl(var(--ai-track))"
-                  stroke="hsl(var(--border) / 0.2)"
-                  strokeWidth={1}
-                />
-            ))}
-             {chartData.map((entry, index) => (
+              <React.Fragment key={`background-${entry.sentiment}`}>
                 <Pie
-                    key={`value-${entry.sentiment}`}
+                    data={[{ value: 100 }]}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={radius[index] - 5}
+                    outerRadius={radius[index]}
+                    startAngle={90}
+                    endAngle={450}
+                    fill="hsl(var(--ai-track))"
+                    stroke="hsl(var(--border) / 0.2)"
+                    strokeWidth={1}
+                />
+                <Pie
                     data={[entry]}
                     dataKey="value"
                     nameKey="sentiment"
@@ -80,6 +76,7 @@ export function SentimentAnalysisChart() {
                     fill={entry.fill}
                     style={{ filter: `drop-shadow(0 0 5px ${entry.color})` }}
                 />
+              </React.Fragment>
             ))}
           </PieChart>
         </ChartContainer>

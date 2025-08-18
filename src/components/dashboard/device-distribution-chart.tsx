@@ -25,13 +25,12 @@ export function DeviceDistributionChart() {
   return (
     <Card className="flex flex-col bg-card/80 backdrop-blur-sm border-border/50 shadow-lg relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-ai-glow-start via-ai-glow-mid to-ai-glow-end opacity-80"/>
-        <div className="absolute inset-0 size-full bg-black/95 opacity-5 [mask-image:radial-gradient(ellipse_100%_50%_at_50%_0%,#000_70%,transparent_100%)]"/>
       <CardHeader className="items-center pb-0 z-10">
         <CardTitle>Distribución por Dispositivo</CardTitle>
         <CardDescription>Aperturas en Escritorio vs. Móvil</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[280px]">
+        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[320px]">
           <PieChart>
             <defs>
                  <linearGradient id="device-mobile" x1="0" y1="0" x2="0" y2="1">
