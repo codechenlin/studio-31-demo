@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartConfig } from "@/components/ui/chart"
 
 const chartData = [
-  { sentiment: "Positivo", value: 75, fill: "url(#sentiment-positive)" },
-  { sentiment: "Neutral", value: 15, fill: "url(#sentiment-neutral)" },
-  { sentiment: "Negativo", value: 10, fill: "url(#sentiment-negative)" },
+  { sentiment: "Positivo", value: 75, fill: "url(#sentiment-positive)", color: "hsl(var(--chart-2))" },
+  { sentiment: "Neutral", value: 15, fill: "url(#sentiment-neutral)", color: "hsl(var(--chart-3))" },
+  { sentiment: "Negativo", value: 10, fill: "url(#sentiment-negative)", color: "hsl(var(--chart-5))" },
 ];
 
 const chartConfig = {
@@ -74,7 +74,8 @@ export function SentimentAnalysisChart() {
                         startAngle={90}
                         endAngle={90 + (entry.value / totalValue) * 360}
                         cornerRadius={5}
-                        filter={`drop-shadow(0 0 5px ${entry.fill.replace('url(#sentiment-', 'hsl(var(--chart-').replace(')','')})`}
+                        fill={entry.fill}
+                        style={{ filter: `drop-shadow(0 0 5px ${entry.color}` }}
                     />
                </React.Fragment>
             ))}
@@ -84,7 +85,7 @@ export function SentimentAnalysisChart() {
        <div className="flex flex-col items-center justify-center p-4 text-sm gap-2 mt-auto">
          {chartData.map((item) => (
             <div key={item.sentiment} className="flex items-center gap-2 w-32">
-                <div className="w-2 h-2 rounded-full" style={{ background: item.fill.replace('url(#sentiment-', 'hsl(var(--chart-').replace(')','') }}/>
+                <div className="w-2 h-2 rounded-full" style={{ background: item.color }}/>
                 <span className="text-muted-foreground flex-1">{item.sentiment}</span>
                 <span className="font-semibold text-foreground">{item.value}%</span>
             </div>
