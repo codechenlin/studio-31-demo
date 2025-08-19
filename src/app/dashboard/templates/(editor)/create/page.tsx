@@ -265,20 +265,10 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
     if (!row) return null;
 
-    const { columns, alignment } = row.payload;
+    const { columns } = row.payload;
     const columnIndex = columns.findIndex(c => c.id === selectedElement.columnId);
     if(columnIndex === -1) return null;
 
-
-    const handleAlignmentChange = (value: number) => {
-        const updatedCanvasContent = canvasContent.map(r => {
-            if (r.id === selectedElement.rowId) {
-                return { ...r, payload: { ...r.payload, alignment: value } };
-            }
-            return r;
-        });
-        setCanvasContent(updatedCanvasContent);
-    };
 
     const handleTwoColumnChange = (value: number) => {
         const newColumns = [...columns];
@@ -385,29 +375,6 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
             r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
         ));
     };
-
-
-    if (columns.length === 1) {
-      return (
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns /> Posición de Columna</h3>
-                 <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Izquierda</span>
-                        <span>Centro</span>
-                        <span>Derecha</span>
-                    </div>
-                     <Slider
-                        value={[alignment]}
-                        max={100}
-                        min={0}
-                        step={1}
-                        onValueChange={(value) => handleAlignmentChange(value[0])}
-                    />
-                 </div>
-            </div>
-      )
-    }
 
     if (columns.length === 2) {
         return (
@@ -1732,14 +1699,7 @@ export default function CreateTemplatePage() {
     }
     
     const blockId = block.id;
-    const { alignment, columns } = block.payload;
-
-    const getJustifyContent = () => {
-      if (columns.length > 1) return 'center';
-      if (alignment <= 25) return 'flex-start';
-      if (alignment >= 75) return 'flex-end';
-      return 'center';
-    }
+    const { columns } = block.payload;
 
     return (
         <div 
@@ -1764,7 +1724,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full overflow-x-auto relative" style={{ justifyContent: getJustifyContent() }}>
+            <div className="flex w-full overflow-x-auto relative">
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
