@@ -1625,7 +1625,7 @@ export default function CreateTemplatePage() {
       return (
         <div 
           key={block.id} 
-          className="group/row relative px-2"
+          className="group/row relative"
         >
           <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
               <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1705,7 +1705,7 @@ export default function CreateTemplatePage() {
         <div 
             key={block.id} 
             id={block.id}
-            className="group/row relative px-2"
+            className="group/row relative"
         >
         <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
             <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
