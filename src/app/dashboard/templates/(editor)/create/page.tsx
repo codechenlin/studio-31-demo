@@ -254,6 +254,97 @@ type SelectedElement =
   | null;
 
 
+const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+    selectedElement: SelectedElement;
+    canvasContent: CanvasBlock[];
+    setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+    if (selectedElement?.type !== 'column') return null;
+
+    const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
+    if (!row || row.payload.columns.length < 2 || row.payload.columns.length > 4) return null;
+
+    const { columns } = row.payload;
+
+    const handleWidthChange = (index: number, newWidth: number) => {
+        const oldWidth = columns[index].width;
+        const delta = oldWidth - newWidth;
+
+        const newColumns = [...columns];
+        newColumns[index] = { ...newColumns[index], width: newWidth };
+
+        const otherColsCount = columns.length - 1 - index;
+        if (otherColsCount > 0) {
+            const adjustment = delta / otherColsCount;
+            for (let i = index + 1; i < columns.length; i++) {
+                newColumns[i] = { ...newColumns[i], width: newColumns[i].width + adjustment };
+            }
+        } else {
+             // If we're adjusting the second to last, the last one gets the remainder
+            if (index === columns.length - 2) {
+                const totalOfOthers = newColumns.slice(0, columns.length - 1).reduce((acc, col) => acc + col.width, 0);
+                newColumns[columns.length-1] = {...newColumns[columns.length-1], width: 100 - totalOfOthers};
+            }
+        }
+        
+        const updatedCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId) {
+                return { ...r, payload: { ...r.payload, columns: newColumns } };
+            }
+            return r;
+        });
+        setCanvasContent(updatedCanvasContent);
+    };
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns />Distribución de Columnas</h3>
+            <div className="space-y-2">
+                {columns.map((col, index) => (
+                    <div key={col.id} className="bg-muted/30 p-2 rounded-md">
+                        <button className="w-full text-left" onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}>
+                            <div className="flex justify-between items-center text-xs font-medium">
+                                <span>Columna {index + 1}</span>
+                                <span>{col.width.toFixed(2)}%</span>
+                            </div>
+                            <div className="w-full bg-muted/50 rounded-full h-2.5 mt-2">
+                                <div
+                                    className="bg-gradient-to-r from-primary to-accent h-2.5 rounded-full"
+                                    style={{ width: `${col.width}%`, transition: 'width 0.3s ease-in-out' }}
+                                ></div>
+                            </div>
+                        </button>
+                        <AnimatePresence>
+                            {expandedIndex === index && index < columns.length -1 && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="pt-3">
+                                        <Slider
+                                            value={[col.width]}
+                                            max={80}
+                                            min={10}
+                                            step={1}
+                                            onValueChange={(value) => handleWidthChange(index, value[0])}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                ))}
+            </div>
+            <p className="text-xs text-muted-foreground">Ajusta el ancho de cada columna. La última se ajustará automáticamente.</p>
+        </div>
+    );
+};
+
+
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenImageModal }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -870,9 +961,6 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
-  // Column resize state
-  const [resizingColumnInfo, setResizingColumnInfo] = useState<{ rowId: string; handleIndex: number; startX: number; initialWidths: number[] } | null>(null);
-
   const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSave = () => {
@@ -1265,90 +1353,6 @@ export default function CreateTemplatePage() {
     setIsResizing(false);
     setResizingWrapperId(null);
   }, []);
-  
-  // --- Column Resize Logic ---
-  const handleMouseDownColumnResize = (e: React.MouseEvent, rowId: string, handleIndex: number) => {
-    e.preventDefault();
-    const row = canvasContent.find(r => r.id === rowId) as ColumnsBlock | undefined;
-    if (!row) return;
-
-    setResizingColumnInfo({
-        rowId,
-        handleIndex,
-        startX: e.clientX,
-        initialWidths: row.payload.columns.map(c => c.width),
-    });
-  };
-
-  const handleMouseMoveColumnResize = useCallback((e: MouseEvent) => {
-      if (!resizingColumnInfo) return;
-
-      const { rowId, handleIndex, startX, initialWidths } = resizingColumnInfo;
-      let dx = e.clientX - startX;
-
-      const rowElement = document.getElementById(rowId);
-      if (!rowElement) return;
-
-      const totalWidth = rowElement.offsetWidth;
-      const dxPercent = (dx / totalWidth) * 100;
-
-      const newWidths = [...initialWidths];
-      let leftColWidth = newWidths[handleIndex];
-      let rightColWidth = newWidths[handleIndex + 1];
-
-      let newLeftWidth = leftColWidth + dxPercent;
-      let newRightWidth = rightColWidth - dxPercent;
-      
-      const minWidth = 10; // 10% minimum width
-
-      if (newLeftWidth < minWidth) {
-          const diff = minWidth - newLeftWidth;
-          dx += (diff / 100) * totalWidth; // Adjust dx to stop at the limit
-          newLeftWidth = minWidth;
-          newRightWidth -= diff;
-      }
-      if (newRightWidth < minWidth) {
-          const diff = minWidth - newRightWidth;
-          dx -= (diff / 100) * totalWidth; // Adjust dx to stop at the limit
-          newRightWidth = minWidth;
-          newLeftWidth -= diff;
-      }
-      
-      newWidths[handleIndex] = newLeftWidth;
-      newWidths[handleIndex + 1] = newRightWidth;
-
-      setCanvasContent(prev => 
-          prev.map(row => {
-              if (row.id === rowId && row.type === 'columns') {
-                  const updatedColumns = row.payload.columns.map((col, i) => ({
-                      ...col,
-                      width: newWidths[i],
-                  }));
-                  return { ...row, payload: { ...row.payload, columns: updatedColumns } };
-              }
-              return row;
-          })
-      );
-
-  }, [resizingColumnInfo, setCanvasContent]);
-
-  const handleMouseUpColumnResize = useCallback(() => {
-      setResizingColumnInfo(null);
-  }, []);
-
-  useEffect(() => {
-    if (resizingColumnInfo) {
-      document.addEventListener('mousemove', handleMouseMoveColumnResize);
-      document.addEventListener('mouseup', handleMouseUpColumnResize);
-    } else {
-      document.removeEventListener('mousemove', handleMouseMoveColumnResize);
-      document.removeEventListener('mouseup', handleMouseUpColumnResize);
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMoveColumnResize);
-      document.removeEventListener('mouseup', handleMouseUpColumnResize);
-    };
-  }, [resizingColumnInfo, handleMouseMoveColumnResize, handleMouseUpColumnResize]);
 
   useEffect(() => {
     if (isResizing) {
@@ -1505,7 +1509,7 @@ export default function CreateTemplatePage() {
       return (
         <div 
           key={block.id} 
-          className="group/row relative p-2"
+          className="group/row relative px-2"
         >
           <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
               <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1627,15 +1631,6 @@ export default function CreateTemplatePage() {
                          </Button>
                        )}
                     </div>
-                    {colIndex < block.payload.columns.length - 1 && (
-                      <div 
-                        onMouseDown={(e) => handleMouseDownColumnResize(e, blockId, colIndex)}
-                        className="w-2 h-auto bg-transparent hover:bg-primary/50 cursor-col-resize absolute top-0 bottom-0 z-20 group/resizer flex items-center justify-center"
-                        style={{ left: `calc(${block.payload.columns.slice(0, colIndex + 1).reduce((acc, c) => acc + c.width, 0)}% - 4px)`}}
-                      >
-                         <div className="w-1.5 h-12 bg-gradient-to-b from-[#1700E6] to-[#009AFF] rounded-full opacity-50 group-hover/resizer:opacity-100 transition-opacity" />
-                      </div>
-                    )}
                 </React.Fragment>
               ))}
             </div>
@@ -1735,7 +1730,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col">
+                  <div className="flex flex-col space-y-2">
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
@@ -1782,6 +1777,16 @@ export default function CreateTemplatePage() {
                     setCanvasContent={setCanvasContent}
                     onOpenImageModal={handleOpenImageModal}
                  />
+              )}
+              { selectedElement?.type === 'column' && (
+                <>
+                    <Separator className="bg-border/20" />
+                    <ColumnDistributionEditor 
+                        selectedElement={selectedElement}
+                        canvasContent={canvasContent}
+                        setCanvasContent={setCanvasContent}
+                    />
+                </>
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -2098,4 +2103,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
