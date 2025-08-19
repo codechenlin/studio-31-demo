@@ -267,30 +267,9 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
 
     const { columns } = row.payload;
 
-    // Handle single column alignment
+    // Handle single column alignment - This functionality is removed.
     if (columns.length === 1) {
-        const handleAlignmentChange = (value: number) => {
-            const updatedCanvasContent = canvasContent.map(r => {
-                if (r.id === selectedElement.rowId) {
-                    return { ...r, payload: { ...r.payload, alignment: value } };
-                }
-                return r;
-            });
-            setCanvasContent(updatedCanvasContent);
-        };
-        return (
-            <div className="space-y-2">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ArrowLeftRight /> Posición de Columna</h3>
-                <Slider
-                    value={[row.payload.alignment]}
-                    max={100}
-                    min={0}
-                    step={1}
-                    onValueChange={(value) => handleAlignmentChange(value[0])}
-                />
-                <p className="text-xs text-muted-foreground text-center">{row.payload.alignment}%</p>
-            </div>
-        );
+        return null;
     }
     
     // Handle 2-column distribution
@@ -1568,19 +1547,6 @@ export default function CreateTemplatePage() {
     
     const blockId = block.id;
 
-    const getColumnContainerStyle = (payload: ColumnsBlock['payload']): React.CSSProperties => {
-        if (payload.columns.length === 1) {
-            const width = 100; // The container is always full width
-            const marginValue = (100 - width) / 2;
-            const alignmentShift = (payload.alignment - 50) / 2;
-            return {
-                paddingLeft: `${marginValue + alignmentShift}%`,
-                paddingRight: `${marginValue - alignmentShift}%`,
-            }
-        }
-        return {};
-    };
-
     return (
         <div 
             key={block.id} 
@@ -1604,7 +1570,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full overflow-x-auto relative" style={getColumnContainerStyle(block.payload)}>
+            <div className="flex w-full overflow-x-auto relative">
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
@@ -2075,7 +2041,7 @@ export default function CreateTemplatePage() {
                 {imageModalState.url ? (
                     <div className="w-full h-full" style={{
                         backgroundImage: `url(${imageModalState.url})`,
-                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModal-state.zoom}%` : imageModalState.fit,
                         backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
                         backgroundRepeat: 'no-repeat',
                     }} />
