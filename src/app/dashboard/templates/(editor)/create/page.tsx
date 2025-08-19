@@ -265,29 +265,97 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
     if (!row) return null;
 
-    const { columns } = row.payload;
+    const { columns, alignment } = row.payload;
+    const columnIndex = columns.findIndex(c => c.id === selectedElement.columnId);
+    if(columnIndex === -1) return null;
 
-    // Handle single column alignment - This functionality is removed.
-    if (columns.length === 1) {
-        return null;
+
+    const handleAlignmentChange = (value: number) => {
+        const updatedCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId) {
+                return { ...r, payload: { ...r.payload, alignment: value } };
+            }
+            return r;
+        });
+        setCanvasContent(updatedCanvasContent);
+    };
+
+    const handleTwoColumnChange = (value: number) => {
+        const newColumns = [...columns];
+        newColumns[0] = { ...newColumns[0], width: value };
+        newColumns[1] = { ...newColumns[1], width: 100 - value };
+
+        const updatedCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId) {
+                return { ...r, payload: { ...r.payload, columns: newColumns } };
+            }
+            return r;
+        });
+        setCanvasContent(updatedCanvasContent);
     }
     
-    // Handle 2-column distribution
+    const handleThreeColumnChange = (changedIndex: number, newValue: number) => {
+      let newColumns = [...columns];
+      const oldValue = newColumns[changedIndex].width;
+      const diff = oldValue - newValue;
+
+      newColumns[changedIndex].width = newValue;
+
+      if (changedIndex === 0) {
+        // Adjust col 2 and 3 proportionally
+        const remainingWidth = 100 - newValue;
+        const col2Old = newColumns[1].width;
+        const col3Old = newColumns[2].width;
+        const oldTotal = col2Old + col3Old;
+
+        newColumns[1].width = (col2Old / oldTotal) * remainingWidth;
+        newColumns[2].width = (col3Old / oldTotal) * remainingWidth;
+      } else if (changedIndex === 1) {
+        // Adjust col 2, take from col 3
+        newColumns[2].width += diff;
+      }
+      
+       // Final check to ensure total is 100
+      const totalWidth = newColumns.reduce((sum, col) => sum + col.width, 0);
+      if (totalWidth !== 100) {
+          const adjustment = (100 - totalWidth) / (newColumns.length -1);
+          for(let i = 0; i < newColumns.length; i++) {
+              if (i !== changedIndex) {
+                 newColumns[i].width += adjustment;
+              }
+          }
+      }
+
+
+      setCanvasContent(canvasContent.map(r => 
+        r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
+      ));
+    };
+
+
+    if (columns.length === 1) {
+      return (
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns /> Posición de Columna</h3>
+                 <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Izquierda</span>
+                        <span>Centro</span>
+                        <span>Derecha</span>
+                    </div>
+                     <Slider
+                        value={[alignment]}
+                        max={100}
+                        min={0}
+                        step={1}
+                        onValueChange={(value) => handleAlignmentChange(value[0])}
+                    />
+                 </div>
+            </div>
+      )
+    }
+
     if (columns.length === 2) {
-        const handleDistributionChange = (value: number) => {
-             const newColumns = [...columns];
-             newColumns[0] = { ...newColumns[0], width: value };
-             newColumns[1] = { ...newColumns[1], width: 100 - value };
-
-             const updatedCanvasContent = canvasContent.map(r => {
-                if (r.id === selectedElement.rowId) {
-                    return { ...r, payload: { ...r.payload, columns: newColumns } };
-                }
-                return r;
-            });
-            setCanvasContent(updatedCanvasContent);
-        }
-
         return (
              <div className="space-y-4">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns /> Distribución de Columnas</h3>
@@ -301,14 +369,50 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
                         max={90}
                         min={10}
                         step={1}
-                        onValueChange={(value) => handleDistributionChange(value[0])}
+                        onValueChange={(value) => handleTwoColumnChange(value[0])}
                     />
                  </div>
             </div>
         )
     }
+    
+    if (columns.length === 3) {
+      return (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+            <Columns /> Distribución de Columnas
+          </h3>
+          <div className="space-y-3">
+            <Label>Columna 1: {columns[0].width.toFixed(0)}%</Label>
+            <Slider
+              value={[columns[0].width]}
+              min={10}
+              max={80}
+              step={1}
+              onValueChange={(val) => handleThreeColumnChange(0, val[0])}
+            />
+          </div>
+          <div className="space-y-3">
+            <Label>Columna 2: {columns[1].width.toFixed(0)}%</Label>
+            <Slider
+              value={[columns[1].width]}
+              min={10}
+              max={80}
+              step={1}
+              onValueChange={(val) => handleThreeColumnChange(1, val[0])}
+            />
+          </div>
+          <div className="space-y-3">
+             <Label>Columna 3: {columns[2].width.toFixed(0)}%</Label>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full bg-primary/50" style={{ width: `${columns[2].width}%` }} />
+              </div>
+          </div>
+        </div>
+      );
+    }
 
-    return null; // For now, only handle 1 and 2 columns
+    return null;
 };
 
 
@@ -1546,6 +1650,14 @@ export default function CreateTemplatePage() {
     }
     
     const blockId = block.id;
+    const { alignment, columns } = block.payload;
+
+    const getJustifyContent = () => {
+      if (columns.length > 1) return 'center';
+      if (alignment <= 25) return 'flex-start';
+      if (alignment >= 75) return 'flex-end';
+      return 'center';
+    }
 
     return (
         <div 
@@ -1570,7 +1682,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full overflow-x-auto relative">
+            <div className="flex w-full overflow-x-auto relative" style={{ justifyContent: getJustifyContent() }}>
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
@@ -2041,7 +2153,7 @@ export default function CreateTemplatePage() {
                 {imageModalState.url ? (
                     <div className="w-full h-full" style={{
                         backgroundImage: `url(${imageModalState.url})`,
-                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModal-state.zoom}%` : imageModalState.fit,
+                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
                         backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
                         backgroundRepeat: 'no-repeat',
                     }} />
