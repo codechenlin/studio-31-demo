@@ -282,8 +282,9 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
 
     const handleTwoColumnChange = (value: number) => {
         const newColumns = [...columns];
-        newColumns[0] = { ...newColumns[0], width: value };
-        newColumns[1] = { ...newColumns[1], width: 100 - value };
+        const clampedValue = Math.max(10, Math.min(90, value));
+        newColumns[0] = { ...newColumns[0], width: clampedValue };
+        newColumns[1] = { ...newColumns[1], width: 100 - clampedValue };
 
         const updatedCanvasContent = canvasContent.map(r => {
             if (r.id === selectedElement.rowId) {
@@ -295,41 +296,94 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     }
     
     const handleThreeColumnChange = (changedIndex: number, newValue: number) => {
-      let newColumns = [...columns];
-      const oldValue = newColumns[changedIndex].width;
-      const diff = oldValue - newValue;
+        let newColumns = [...columns];
+        const clampedValue = Math.max(10, Math.min(80, newValue));
+    
+        const remainingWidth = 100 - clampedValue;
+        const otherIndices = [0, 1, 2].filter(i => i !== changedIndex);
+    
+        newColumns[changedIndex].width = clampedValue;
+    
+        if (changedIndex === 0) {
+            let col2Width = newColumns[1].width;
+            let col3Width = newColumns[2].width;
+            const totalOtherWidth = col2Width + col3Width;
 
-      newColumns[changedIndex].width = newValue;
+            let newCol2Width = (col2Width / totalOtherWidth) * remainingWidth;
+            let newCol3Width = (col3Width / totalOtherWidth) * remainingWidth;
+            
+            if(newCol2Width < 10) {
+                newCol2Width = 10;
+                newCol3Width = remainingWidth - 10;
+            }
+            if(newCol3Width < 10) {
+                newCol3Width = 10;
+                newCol2Width = remainingWidth - 10;
+            }
 
-      if (changedIndex === 0) {
-        // Adjust col 2 and 3 proportionally
-        const remainingWidth = 100 - newValue;
-        const col2Old = newColumns[1].width;
-        const col3Old = newColumns[2].width;
-        const oldTotal = col2Old + col3Old;
+            newColumns[1].width = newCol2Width;
+            newColumns[2].width = newCol3Width;
+        } else if (changedIndex === 1) {
+            let col3Width = 100 - newColumns[0].width - clampedValue;
+            if (col3Width < 10) {
+                col3Width = 10;
+                newColumns[1].width = 100 - newColumns[0].width - 10;
+            } else {
+                 newColumns[1].width = clampedValue;
+            }
+            newColumns[2].width = 100 - newColumns[0].width - newColumns[1].width;
+        } else { // changedIndex === 2
+            let col2Width = 100 - newColumns[0].width - clampedValue;
+             if (col2Width < 10) {
+                col2Width = 10;
+                newColumns[2].width = 100 - newColumns[0].width - 10;
+            } else {
+                newColumns[2].width = clampedValue;
+            }
+            newColumns[1].width = 100 - newColumns[0].width - newColumns[2].width;
+        }
+    
+        setCanvasContent(canvasContent.map(r => 
+            r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
+        ));
+    };
 
-        newColumns[1].width = (col2Old / oldTotal) * remainingWidth;
-        newColumns[2].width = (col3Old / oldTotal) * remainingWidth;
-      } else if (changedIndex === 1) {
-        // Adjust col 2, take from col 3
-        newColumns[2].width += diff;
-      }
-      
-       // Final check to ensure total is 100
-      const totalWidth = newColumns.reduce((sum, col) => sum + col.width, 0);
-      if (totalWidth !== 100) {
-          const adjustment = (100 - totalWidth) / (newColumns.length -1);
-          for(let i = 0; i < newColumns.length; i++) {
-              if (i !== changedIndex) {
-                 newColumns[i].width += adjustment;
-              }
-          }
-      }
+    const handleFourColumnChange = (changedIndex: number, newValue: number) => {
+        let newColumns = [...columns];
+        // Clamp the new value between 10 and 70
+        let clampedValue = Math.max(10, Math.min(70, newValue));
 
+        const otherIndices = [0, 1, 2, 3].filter(i => i > changedIndex);
+        const fixedIndices = [0, 1, 2, 3].filter(i => i < changedIndex);
+        
+        const fixedWidth = fixedIndices.reduce((acc, i) => acc + newColumns[i].width, 0);
 
-      setCanvasContent(canvasContent.map(r => 
-        r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
-      ));
+        // Check if the new value is possible
+        const remainingForOthers = 100 - fixedWidth - clampedValue;
+        if (remainingForOthers < otherIndices.length * 10) {
+             clampedValue = 100 - fixedWidth - (otherIndices.length * 10);
+        }
+
+        newColumns[changedIndex].width = clampedValue;
+        
+        const remainingWidth = 100 - fixedWidth - clampedValue;
+        const totalOtherWidth = otherIndices.reduce((acc, i) => acc + columns[i].width, 0); // use original width for proportion
+
+        otherIndices.forEach(i => {
+            const proportion = columns[i].width / totalOtherWidth;
+            newColumns[i].width = remainingWidth * proportion;
+        });
+
+        // Due to rounding, ensure total is 100
+        const finalTotalWidth = newColumns.reduce((sum, col) => sum + col.width, 0);
+        const roundingError = 100 - finalTotalWidth;
+        if (newColumns[3]) {
+            newColumns[3].width += roundingError;
+        }
+        
+        setCanvasContent(canvasContent.map(r => 
+            r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
+        ));
     };
 
 
@@ -406,6 +460,34 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
              <Label>Columna 3: {columns[2].width.toFixed(0)}%</Label>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
                   <div className="h-full bg-primary/50" style={{ width: `${columns[2].width}%` }} />
+              </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (columns.length === 4) {
+      return (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+            <Columns /> Distribución de Columnas
+          </h3>
+          {[0, 1, 2].map(i => (
+            <div key={i} className="space-y-3">
+              <Label>Columna {i + 1}: {columns[i].width.toFixed(0)}%</Label>
+              <Slider
+                value={[columns[i].width]}
+                min={10}
+                max={70}
+                step={1}
+                onValueChange={(val) => handleFourColumnChange(i, val[0])}
+              />
+            </div>
+          ))}
+          <div className="space-y-3">
+             <Label>Columna 4: {columns[3].width.toFixed(0)}%</Label>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full bg-primary/50" style={{ width: `${columns[3].width}%` }} />
               </div>
           </div>
         </div>
