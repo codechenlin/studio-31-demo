@@ -214,6 +214,7 @@ interface ColumnsBlock {
   type: 'columns';
   payload: {
     columns: Column[];
+    alignment: number; // 0-100, for single column positioning
   };
 }
 
@@ -259,89 +260,76 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     canvasContent: CanvasBlock[];
     setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
     if (selectedElement?.type !== 'column') return null;
 
     const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
-    if (!row || row.payload.columns.length < 2 || row.payload.columns.length > 4) return null;
+    if (!row) return null;
 
     const { columns } = row.payload;
 
-    const handleWidthChange = (index: number, newWidth: number) => {
-        const oldWidth = columns[index].width;
-        const delta = oldWidth - newWidth;
-
-        const newColumns = [...columns];
-        newColumns[index] = { ...newColumns[index], width: newWidth };
-
-        const otherColsCount = columns.length - 1 - index;
-        if (otherColsCount > 0) {
-            const adjustment = delta / otherColsCount;
-            for (let i = index + 1; i < columns.length; i++) {
-                newColumns[i] = { ...newColumns[i], width: newColumns[i].width + adjustment };
-            }
-        } else {
-             // If we're adjusting the second to last, the last one gets the remainder
-            if (index === columns.length - 2) {
-                const totalOfOthers = newColumns.slice(0, columns.length - 1).reduce((acc, col) => acc + col.width, 0);
-                newColumns[columns.length-1] = {...newColumns[columns.length-1], width: 100 - totalOfOthers};
-            }
-        }
-        
-        const updatedCanvasContent = canvasContent.map(r => {
-            if (r.id === selectedElement.rowId) {
-                return { ...r, payload: { ...r.payload, columns: newColumns } };
-            }
-            return r;
-        });
-        setCanvasContent(updatedCanvasContent);
-    };
-
-    return (
-        <div className="space-y-4">
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns />Distribución de Columnas</h3>
+    // Handle single column alignment
+    if (columns.length === 1) {
+        const handleAlignmentChange = (value: number) => {
+            const updatedCanvasContent = canvasContent.map(r => {
+                if (r.id === selectedElement.rowId) {
+                    return { ...r, payload: { ...r.payload, alignment: value } };
+                }
+                return r;
+            });
+            setCanvasContent(updatedCanvasContent);
+        };
+        return (
             <div className="space-y-2">
-                {columns.map((col, index) => (
-                    <div key={col.id} className="bg-muted/30 p-2 rounded-md">
-                        <button className="w-full text-left" onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}>
-                            <div className="flex justify-between items-center text-xs font-medium">
-                                <span>Columna {index + 1}</span>
-                                <span>{col.width.toFixed(2)}%</span>
-                            </div>
-                            <div className="w-full bg-muted/50 rounded-full h-2.5 mt-2">
-                                <div
-                                    className="bg-gradient-to-r from-primary to-accent h-2.5 rounded-full"
-                                    style={{ width: `${col.width}%`, transition: 'width 0.3s ease-in-out' }}
-                                ></div>
-                            </div>
-                        </button>
-                        <AnimatePresence>
-                            {expandedIndex === index && index < columns.length -1 && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="pt-3">
-                                        <Slider
-                                            value={[col.width]}
-                                            max={80}
-                                            min={10}
-                                            step={1}
-                                            onValueChange={(value) => handleWidthChange(index, value[0])}
-                                        />
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                ))}
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ArrowLeftRight /> Posición de Columna</h3>
+                <Slider
+                    value={[row.payload.alignment]}
+                    max={100}
+                    min={0}
+                    step={1}
+                    onValueChange={(value) => handleAlignmentChange(value[0])}
+                />
+                <p className="text-xs text-muted-foreground text-center">{row.payload.alignment}%</p>
             </div>
-            <p className="text-xs text-muted-foreground">Ajusta el ancho de cada columna. La última se ajustará automáticamente.</p>
-        </div>
-    );
+        );
+    }
+    
+    // Handle 2-column distribution
+    if (columns.length === 2) {
+        const handleDistributionChange = (value: number) => {
+             const newColumns = [...columns];
+             newColumns[0] = { ...newColumns[0], width: value };
+             newColumns[1] = { ...newColumns[1], width: 100 - value };
+
+             const updatedCanvasContent = canvasContent.map(r => {
+                if (r.id === selectedElement.rowId) {
+                    return { ...r, payload: { ...r.payload, columns: newColumns } };
+                }
+                return r;
+            });
+            setCanvasContent(updatedCanvasContent);
+        }
+
+        return (
+             <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Columns /> Distribución de Columnas</h3>
+                 <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Columna 1: {columns[0].width.toFixed(0)}%</span>
+                        <span>Columna 2: {columns[1].width.toFixed(0)}%</span>
+                    </div>
+                     <Slider
+                        value={[columns[0].width]}
+                        max={90}
+                        min={10}
+                        step={1}
+                        onValueChange={(value) => handleDistributionChange(value[0])}
+                    />
+                 </div>
+            </div>
+        )
+    }
+
+    return null; // For now, only handle 1 and 2 columns
 };
 
 
@@ -369,7 +357,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, on
   const element = getElement();
   if (!element) return null;
 
-  const styles = selectedElement.type === 'wrapper' ? (element as WrapperBlock).payload.styles : (element as Column).styles;
+  const styles = 'payload' in element && 'styles' in element.payload ? element.payload.styles : 'styles' in element ? element.styles : {};
   const { background, borderRadius } = styles || {};
   
   const updateStyle = (key: string, value: any) => {
@@ -878,15 +866,10 @@ function ThemeToggle() {
 
   React.useEffect(() => {
     setMounted(true);
+    const storedTheme = localStorage.getItem("theme");
+    setIsDarkMode(storedTheme === "dark");
   }, []);
   
-  React.useEffect(() => {
-    if (mounted) {
-      const storedTheme = localStorage.getItem("theme");
-      setIsDarkMode(storedTheme === "dark");
-    }
-  }, [mounted]);
-
   React.useEffect(() => {
     if (mounted) {
       document.documentElement.classList.toggle("dark", isDarkMode);
@@ -998,6 +981,7 @@ export default function CreateTemplatePage() {
             styles: {},
             width: 100 / selectedColumnLayout,
           })),
+          alignment: 50,
         },
       };
       setCanvasContent([...canvasContent, newBlock]);
@@ -1584,6 +1568,19 @@ export default function CreateTemplatePage() {
     
     const blockId = block.id;
 
+    const getColumnContainerStyle = (payload: ColumnsBlock['payload']): React.CSSProperties => {
+        if (payload.columns.length === 1) {
+            const width = 100; // The container is always full width
+            const marginValue = (100 - width) / 2;
+            const alignmentShift = (payload.alignment - 50) / 2;
+            return {
+                paddingLeft: `${marginValue + alignmentShift}%`,
+                paddingRight: `${marginValue - alignmentShift}%`,
+            }
+        }
+        return {};
+    };
+
     return (
         <div 
             key={block.id} 
@@ -1607,8 +1604,8 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full overflow-x-auto relative">
-              {block.payload.columns.map((col, colIndex) => (
+            <div className="flex w-full overflow-x-auto relative" style={getColumnContainerStyle(block.payload)}>
+              {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
                         style={{ ...getElementStyle(col), flexBasis: `${col.width}%` }}
