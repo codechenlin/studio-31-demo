@@ -30,7 +30,28 @@ const fontUrls = [
   "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap",
   "https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap",
   "https://fonts.googleapis.com/css2?family=Days+One&display=swap",
-  "https://fonts.googleapis.com/css2?family=Russo+One&display=swap"
+  "https://fonts.googleapis.com/css2?family=Russo+One&display=swap",
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Karla:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Pacifico&display=swap",
+  "https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Satisfy&display=swap",
+  "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap",
+  "https://fonts.googleapis.com/css2?family=Bangers&display=swap",
+  "https://fonts.googleapis.com/css2?family=Righteous&display=swap",
+  "https://fonts.googleapis.com/css2?family=Lobster&display=swap",
+  "https://fonts.googleapis.com/css2?family=Anton&display=swap",
+  "https://fonts.googleapis.com/css2?family=Passion+One:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap",
+  "https://fonts.googleapis.com/css2?family=Cabin:wght@400;700&display=swap"
 ];
 
 

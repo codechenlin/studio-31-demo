@@ -79,6 +79,7 @@ import {
   Expand,
   Upload,
   View,
+  Strikethrough,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -125,7 +126,10 @@ const googleFonts = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
   "Slabo 27px", "Raleway", "PT Sans", "Merriweather", "Noto Sans", "Poppins",
   "Ubuntu", "Playfair Display", "Lora", "Fira Sans", "Nunito Sans",
-  "Quicksand", "Days One", "Russo One"
+  "Quicksand", "Days One", "Russo One", "Inter", "Work Sans", "Rubik",
+  "Karla", "Inconsolata", "Libre Baskerville", "Arvo", "Zilla Slab", "Pacifico",
+  "Caveat", "Satisfy", "Dancing Script", "Permanent Marker", "Bangers", "Righteous",
+  "Lobster", "Anton", "Passion One", "Josefin Sans", "Exo 2", "Cabin"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -155,7 +159,7 @@ interface HeadingBlock extends BaseBlock {
             textAlign: TextAlign;
             fontWeight: 'normal' | 'bold';
             fontStyle: 'normal' | 'italic';
-            textDecoration: 'none' | 'underline';
+            textDecoration: 'none' | 'underline' | 'line-through';
         }
     }
 }
@@ -877,10 +881,11 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             
             <div className="space-y-3">
                  <Label>Estilos</Label>
-                 <div className="grid grid-cols-3 gap-2">
+                 <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
                     <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
 
@@ -2016,7 +2021,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-4">
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
@@ -2398,6 +2403,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
