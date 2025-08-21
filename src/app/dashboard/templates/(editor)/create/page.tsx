@@ -187,6 +187,7 @@ interface StaticEmojiBlock extends BaseBlock {
         styles: {
             fontSize: number;
             textAlign: TextAlign;
+            rotate: number;
         }
     }
 }
@@ -1026,6 +1027,22 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
             </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><RotateCw/>Rotación</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.rotate || 0]}
+                      max={360}
+                      min={0}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('rotate', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.rotate || 0}°</span>
+                </div>
+            </div>
         </div>
     )
 }
@@ -1317,6 +1334,7 @@ export default function CreateTemplatePage() {
                 styles: {
                     fontSize: 48,
                     textAlign: 'center',
+                    rotate: 0,
                 }
             }
         };
@@ -1505,12 +1523,14 @@ export default function CreateTemplatePage() {
   };
 
   const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
-    const { fontSize, textAlign } = block.payload.styles;
+    const { fontSize, textAlign, rotate } = block.payload.styles;
     return {
         fontSize: `${fontSize || 48}px`,
         textAlign: textAlign || 'center',
         width: '100%',
         padding: '8px',
+        transform: `rotate(${rotate || 0}deg)`,
+        display: 'inline-block',
     };
   };
 
@@ -1996,7 +2016,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-2">
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
@@ -2378,6 +2398,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
