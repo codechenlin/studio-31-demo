@@ -984,7 +984,7 @@ const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     
     const { styles } = element.payload;
-    
+
     return (
         <div className="space-y-4">
             <div className="space-y-3">
@@ -1038,6 +1038,35 @@ const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   />
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
+               <ScrollArea className="h-24 w-full rounded-md border p-2">
+                  <div className="grid grid-cols-6 gap-2">
+                      {insertableSymbols.map(symbol => (
+                          <TooltipProvider key={symbol}>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button 
+                                      variant="outline" 
+                                      size="icon" 
+                                      className="text-lg"
+                                      onClick={() => handleCopySymbol(symbol)}
+                                  >
+                                      {symbol}
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                  <p>Copiar "{symbol}"</p>
+                              </TooltipContent>
+                          </Tooltip>
+                          </TooltipProvider>
+                      ))}
+                  </div>
+               </ScrollArea>
             </div>
         </div>
     )
@@ -1321,25 +1350,25 @@ const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
     onInput: (e: React.FormEvent<HTMLElement>) => void;
     [key: string]: any;
 }) => {
-    const elRef = useRef<HTMLElement>(null);
+    const ref = useRef<HTMLElement>(null);
     
     // Only update the DOM if the content from the state is different from the DOM content.
     // This prevents the cursor from jumping.
     useEffect(() => {
-        if (elRef.current && content !== elRef.current.innerHTML) {
-            elRef.current.innerHTML = content;
+        if (ref.current && content !== ref.current.innerHTML) {
+            ref.current.innerHTML = content;
         }
     }, [content]);
 
     return (
         <Comp
-            ref={elRef}
+            ref={ref}
             onInput={onInput}
             contentEditable
-            dangerouslySetInnerHTML={{ __html: content }}
             suppressContentEditableWarning
             {...props}
         >
+          {/* We render the content as a child to give React control over it, preventing issues with dangerouslySetInnerHTML */}
         </Comp>
     );
 });
@@ -1473,7 +1502,6 @@ export default function CreateTemplatePage() {
   };
 
   // Canvas State
-  const contentEditableRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
 
@@ -1828,7 +1856,6 @@ export default function CreateTemplatePage() {
 
     return (
        <div 
-        key={block.id}
         className={cn(
             "group/primitive relative w-full",
             isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
@@ -1842,6 +1869,7 @@ export default function CreateTemplatePage() {
                 const headingBlock = block as HeadingBlock;
                 return (
                   <EditableBlock
+                    key={block.id}
                     as="h1"
                     content={headingBlock.payload.text}
                     onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
@@ -1853,6 +1881,7 @@ export default function CreateTemplatePage() {
                 const textBlock = block as TextBlock;
                  return (
                   <EditableBlock 
+                    key={block.id}
                     as="div"
                     content={textBlock.payload.text}
                     onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
@@ -2803,3 +2832,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
