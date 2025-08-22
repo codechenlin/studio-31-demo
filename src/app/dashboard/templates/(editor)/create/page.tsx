@@ -80,12 +80,15 @@ import {
   Upload,
   View,
   Strikethrough,
+  Highlighter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 import { useToast } from '@/hooks/use-toast';
 import { HexColorPicker } from 'react-colorful';
+import { Switch } from '@/components/ui/switch';
+
 
 const mainContentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
@@ -123,7 +126,10 @@ const popularEmojis = Array.from(new Set([
     '📊', '💻', '📱', '🎯', '📣', '✍️'
   ]));
   
-const insertableSymbols = ['©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', '✔', '✘'];
+const insertableSymbols = [
+  '©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', 
+  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°', '·'
+];
 
 const googleFonts = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
@@ -978,15 +984,6 @@ const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     
     const { styles } = element.payload;
-
-    const handleInsertSymbol = (symbol: string) => {
-      const activeElement = document.activeElement;
-      if (activeElement && activeElement.getAttribute('contenteditable') === 'true') {
-        document.execCommand('insertText', false, symbol);
-        const event = new Event('input', { bubbles: true });
-        activeElement.dispatchEvent(event);
-      }
-    };
     
     return (
         <div className="space-y-4">
@@ -1042,17 +1039,6 @@ const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
             </div>
-             <Separator className="bg-border/20"/>
-             <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
-                <div className="grid grid-cols-6 gap-2">
-                    {insertableSymbols.map(symbol => (
-                        <Button key={symbol} variant="outline" size="icon" onClick={() => handleInsertSymbol(symbol)}>
-                            {symbol}
-                        </Button>
-                    ))}
-                </div>
-             </div>
         </div>
     )
 }
@@ -1350,10 +1336,10 @@ const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
             ref={elRef}
             onInput={onInput}
             contentEditable
+            dangerouslySetInnerHTML={{ __html: content }}
             suppressContentEditableWarning
             {...props}
         >
-          {/* We render the content as a child to give React control, avoiding dangerouslySetInnerHTML */}
         </Comp>
     );
 });
@@ -1364,6 +1350,7 @@ export default function CreateTemplatePage() {
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [templateName, setTemplateName] = useState("Plantilla sin título");
   const [tempTemplateName, setTempTemplateName] = useState(templateName);
+  const { toast } = useToast();
   
   // Modals State
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
@@ -1387,7 +1374,106 @@ export default function CreateTemplatePage() {
       zoom: 100,
   });
 
+  // Inline editing state
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+  const [isSpecialFunctionsModalOpen, setIsSpecialFunctionsModalOpen] = useState(false);
+  const [specialFunctionsConfig, setSpecialFunctionsConfig] = useState({
+      textColor: '#000000',
+      highlightColor: '#ffffff',
+      linkUrl: '',
+      linkNewWindow: true,
+  });
+  const [savedSelection, setSavedSelection] = useState<Range | null>(null);
+  
+  const handleSelectionChange = useCallback(() => {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const editorCanvas = document.getElementById('editor-canvas');
+        if (editorCanvas) {
+            const canvasRect = editorCanvas.getBoundingClientRect();
+            setPopupPosition({
+                top: rect.bottom + window.scrollY - canvasRect.top + 5,
+                left: rect.left + window.scrollX - canvasRect.left + rect.width / 2,
+            });
+            setShowEditPopup(true);
+            setSavedSelection(range.cloneRange());
+        }
+    } else {
+        setShowEditPopup(false);
+    }
+  }, []);
+
+  useEffect(() => {
+      document.addEventListener('selectionchange', handleSelectionChange);
+      return () => {
+          document.removeEventListener('selectionchange', handleSelectionChange);
+      };
+  }, [handleSelectionChange]);
+  
+  const openSpecialFunctionsModal = () => {
+    setShowEditPopup(false);
+    setIsSpecialFunctionsModalOpen(true);
+  };
+  
+  const applyStyleToSelection = (style: 'color' | 'backgroundColor' | 'link', value: any) => {
+    if (savedSelection) {
+        const selection = window.getSelection();
+        if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(savedSelection);
+        }
+
+        if (style === 'color') {
+            document.execCommand('foreColor', false, value);
+        } else if (style === 'backgroundColor') {
+            document.execCommand('hiliteColor', false, value);
+        } else if (style === 'link') {
+            const { url, newWindow } = value;
+            const linkElement = document.createElement('a');
+            linkElement.href = url;
+            linkElement.style.color = 'blue';
+            linkElement.style.textDecoration = 'underline';
+            if (newWindow) {
+                linkElement.target = '_blank';
+            }
+            try {
+                savedSelection.surroundContents(linkElement);
+            } catch (e) {
+                console.error("Could not surround contents", e);
+                // Fallback for complex selections
+                document.execCommand('createLink', false, url);
+                const links = document.querySelectorAll('a[href="' + url + '"]');
+                links.forEach(link => {
+                    if(newWindow) (link as HTMLAnchorElement).target = '_blank';
+                });
+            }
+        }
+
+        // After applying style, trigger an input event to update the state
+        savedSelection.startContainer.parentElement?.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  };
+
+  const handleCopySymbol = (symbol: string) => {
+    navigator.clipboard.writeText(symbol).then(() => {
+        toast({
+            title: "Símbolo Copiado",
+            description: `El símbolo "${symbol}" ha sido copiado a tu portapapeles.`,
+        });
+    }, (err) => {
+        toast({
+            title: "Error",
+            description: "No se pudo copiar el símbolo.",
+            variant: "destructive"
+        });
+    });
+  };
+
   // Canvas State
+  const contentEditableRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
 
@@ -2220,7 +2306,22 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-         <div className="flex-1 overflow-auto custom-scrollbar">
+         <div id="editor-canvas" className="flex-1 overflow-auto custom-scrollbar relative" onMouseUp={handleSelectionChange}>
+           {showEditPopup && (
+              <div
+                className="absolute z-20"
+                style={{ top: popupPosition.top, left: popupPosition.left, transform: 'translateX(-50%)' }}
+                onMouseDown={(e) => e.preventDefault()} // Prevent losing selection
+              >
+                 <Button
+                    variant="outline"
+                    className="h-8 bg-background border-primary shadow-lg"
+                    onClick={openSpecialFunctionsModal}
+                  >
+                    <Pencil className="mr-2 size-4 text-primary" /> Editar
+                </Button>
+              </div>
+            )}
           <div className="p-8">
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                  {canvasContent.length === 0 ? (
@@ -2523,6 +2624,95 @@ export default function CreateTemplatePage() {
                   </Button>
               </div>
           </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isSpecialFunctionsModalOpen} onOpenChange={setIsSpecialFunctionsModalOpen}>
+        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
+            <DialogHeader>
+                <DialogTitle>Funciones Especiales de Texto</DialogTitle>
+                <DialogDescription>
+                    Aplica formato avanzado al texto que has seleccionado.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2"><Palette className="size-4 text-primary"/>Color del Texto</Label>
+                        <ColorPickerAdvanced 
+                            color={specialFunctionsConfig.textColor} 
+                            setColor={(color) => {
+                                setSpecialFunctionsConfig(prev => ({...prev, textColor: color}));
+                                applyStyleToSelection('color', color);
+                            }} 
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label className="flex items-center gap-2"><Highlighter className="size-4 text-primary"/>Color de Resaltado</Label>
+                        <ColorPickerAdvanced 
+                            color={specialFunctionsConfig.highlightColor} 
+                            setColor={(color) => {
+                                setSpecialFunctionsConfig(prev => ({...prev, highlightColor: color}));
+                                applyStyleToSelection('backgroundColor', color);
+                            }}
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label className="flex items-center gap-2"><LinkIcon className="size-4 text-primary"/>Hipervínculo</Label>
+                        <Input 
+                            placeholder="https://ejemplo.com"
+                            value={specialFunctionsConfig.linkUrl}
+                            onChange={(e) => setSpecialFunctionsConfig(prev => ({...prev, linkUrl: e.target.value}))}
+                        />
+                         <div className="flex items-center space-x-2 pt-2">
+                            <Switch 
+                                id="new-window-switch" 
+                                checked={specialFunctionsConfig.linkNewWindow}
+                                onCheckedChange={(checked) => setSpecialFunctionsConfig(prev => ({...prev, linkNewWindow: checked}))}
+                            />
+                            <Label htmlFor="new-window-switch">Abrir en una nueva ventana</Label>
+                        </div>
+                        <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => applyStyleToSelection('link', { url: specialFunctionsConfig.linkUrl, newWindow: specialFunctionsConfig.linkNewWindow })}
+                            disabled={!specialFunctionsConfig.linkUrl}
+                        >
+                            Aplicar Enlace
+                        </Button>
+                    </div>
+                </div>
+                <div className="space-y-4">
+                     <Label className="flex items-center gap-2">Copiar Símbolo</Label>
+                     <ScrollArea className="h-60 w-full rounded-md border p-4">
+                        <div className="grid grid-cols-5 gap-2">
+                            {insertableSymbols.map(symbol => (
+                                <TooltipProvider key={symbol}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                            variant="outline" 
+                                            size="icon" 
+                                            className="text-lg"
+                                            onClick={() => handleCopySymbol(symbol)}
+                                        >
+                                            {symbol}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Copiar "{symbol}"</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            ))}
+                        </div>
+                     </ScrollArea>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={() => setIsSpecialFunctionsModalOpen(false)}>Cerrar</Button>
+            </DialogFooter>
+        </DialogContent>
       </Dialog>
 
        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
