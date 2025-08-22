@@ -97,7 +97,6 @@ const mainContentBlocks = [
 
 const columnContentBlocks = [
   { name: "Heading", icon: Heading1, id: 'heading' },
-  { name: "Texto", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
   { name: "Button", icon: Square, id: 'button' },
   { name: "Separator", icon: Minus, id: 'separator' },
@@ -142,7 +141,7 @@ const googleFonts = [
 ];
 
 // --- STATE MANAGEMENT TYPES ---
-type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
+type StaticPrimitiveBlockType = 'heading' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
 type InteractiveBlockType = 'emoji-interactive';
 
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
@@ -155,22 +154,6 @@ interface BaseBlock {
   id: string;
   type: StaticPrimitiveBlockType | InteractiveBlockType;
   payload: { [key: string]: any };
-}
-
-interface TextBlock extends BaseBlock {
-    type: 'text';
-    payload: {
-        text: string;
-        styles: {
-            color: string;
-            fontFamily: string;
-            fontSize: number;
-            textAlign: TextAlign;
-            fontWeight: 'normal' | 'bold';
-            fontStyle: 'normal' | 'italic';
-            textDecoration: 'none' | 'underline' | 'line-through';
-        }
-    }
 }
 
 interface HeadingBlock extends BaseBlock {
@@ -232,7 +215,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | StaticEmojiBlock | TextBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | StaticEmojiBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -863,6 +846,27 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const element = getElement();
     if(!element) return null;
 
+    const updatePayload = (key: keyof HeadingBlock['payload'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'heading') {
+                        return { ...block, payload: { ...block.payload, [key]: value }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+
     const updateStyle = (key: keyof HeadingBlock['payload']['styles'], value: any) => {
         const newCanvasContent = canvasContent.map(row => {
           if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
@@ -890,6 +894,15 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         <div className="space-y-4">
             <div className="space-y-3">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
+                <Label>Texto</Label>
+                <Input
+                    value={element.payload.text}
+                    onChange={(e) => updatePayload('text', e.target.value)}
+                    placeholder="Tu título aquí..."
+                    className="bg-transparent border-border/50"
+                />
+            </div>
+            <div className="space-y-3">
                 <Label>Color del Texto</Label>
                 <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
             </div>
@@ -941,104 +954,6 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
             </div>
 
-        </div>
-    )
-}
-
-const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
-}) => {
-    if(selectedElement?.type !== 'primitive') return null;
-    
-    const getElement = () => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'text' ? block as TextBlock : null;
-    }
-    const element = getElement();
-    if(!element) return null;
-
-    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === (selectedElement as { columnId: string }).columnId) {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
-                    }
-                    return block;
-                })
-                return {...col, blocks: newBlocks};
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    }
-    
-    const { styles } = element.payload;
-
-    return (
-        <div className="space-y-4">
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
-                <Label>Color del Texto</Label>
-                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
-            </div>
-
-            <div className="space-y-3">
-                <Label>Fuente</Label>
-                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
-                    <SelectContent>
-                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-            
-            <div className="space-y-3">
-                 <Label>Estilos</Label>
-                 <div className="grid grid-cols-4 gap-2">
-                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
-                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-            
-            <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
-                 <div className="grid grid-cols-3 gap-2">
-                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
-                <div className="flex items-center gap-2">
-                  <Slider 
-                      value={[styles.fontSize]}
-                      max={100}
-                      min={12}
-                      step={1} 
-                      onValueChange={(value) => updateStyle('fontSize', value[0])}
-                  />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
-                </div>
-            </div>
         </div>
     )
 }
@@ -1314,37 +1229,6 @@ function ThemeToggle() {
   );
 }
 
-// A new component to handle contentEditable elements without causing re-render issues.
-const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
-    as: 'div' | 'h1';
-    content: string;
-    onInput: (e: React.FormEvent<HTMLElement>) => void;
-    [key: string]: any;
-}) => {
-    const ref = useRef<HTMLElement>(null);
-    
-    // Only update the DOM if the content from the state is different from the DOM content.
-    // This prevents the cursor from jumping.
-    useEffect(() => {
-        if (ref.current && content !== ref.current.innerHTML) {
-            ref.current.innerHTML = content;
-        }
-    }, [content]);
-
-    return (
-        <Comp
-            ref={ref}
-            onInput={onInput}
-            contentEditable
-            suppressContentEditableWarning
-            {...props}
-        >
-            {/* The content is now managed by the useEffect hook to prevent re-render issues */}
-        </Comp>
-    );
-});
-EditableBlock.displayName = "EditableBlock";
-
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [viewport, setViewport] = useState<Viewport>('desktop');
@@ -1373,126 +1257,6 @@ export default function CreateTemplatePage() {
       positionY: 50,
       zoom: 100,
   });
-
-  // Inline editing state
-  const [showEditPopup, setShowEditPopup] = useState(false);
-  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
-  const [isSpecialFunctionsModalOpen, setIsSpecialFunctionsModalOpen] = useState(false);
-  const [specialFunctionsConfig, setSpecialFunctionsConfig] = useState({
-      textColor: '#000000',
-      highlightColor: '#ffffff',
-      linkUrl: '',
-      linkNewWindow: true,
-  });
-  const [savedSelection, setSavedSelection] = useState<Range | null>(null);
-  
-  const handleSelectionChange = useCallback(() => {
-    const selection = window.getSelection();
-    if (selection && !selection.isCollapsed) {
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        const editorCanvas = document.getElementById('editor-canvas');
-        if (editorCanvas) {
-            const canvasRect = editorCanvas.getBoundingClientRect();
-            setPopupPosition({
-                top: rect.bottom + window.scrollY - canvasRect.top + 5,
-                left: rect.left + window.scrollX - canvasRect.left + rect.width / 2,
-            });
-            setShowEditPopup(true);
-            setSavedSelection(range.cloneRange());
-        }
-    } else {
-        setShowEditPopup(false);
-    }
-  }, []);
-
-  useEffect(() => {
-      document.addEventListener('selectionchange', handleSelectionChange);
-      return () => {
-          document.removeEventListener('selectionchange', handleSelectionChange);
-      };
-  }, [handleSelectionChange]);
-  
-  const openSpecialFunctionsModal = () => {
-    setShowEditPopup(false);
-    setIsSpecialFunctionsModalOpen(true);
-  };
-  
-  const applyStyleToSelection = (style: 'color' | 'backgroundColor' | 'link' | 'bold' | 'italic' | 'underline' | 'strikeThrough', value: any) => {
-    if (savedSelection) {
-        const selection = window.getSelection();
-        if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(savedSelection);
-        }
-
-        if (style === 'color') {
-            document.execCommand('foreColor', false, value);
-        } else if (style === 'backgroundColor') {
-            document.execCommand('hiliteColor', false, value);
-        } else if (style === 'link') {
-            const { url, newWindow } = value;
-            
-            // For robust link creation, we wrap the content in an <a> tag
-            const linkElement = document.createElement('a');
-            linkElement.href = url;
-            linkElement.style.color = '#0000EE'; // Standard link blue
-            linkElement.style.textDecoration = 'underline';
-            if (newWindow) {
-                linkElement.target = '_blank';
-                linkElement.rel = 'noopener noreferrer';
-            }
-            
-            try {
-                // This is the cleanest way to wrap the selected content
-                savedSelection.surroundContents(linkElement);
-            } catch (e) {
-                // Fallback for complex selections that can't be surrounded
-                document.execCommand('createLink', false, url);
-                
-                const editorDiv = savedSelection.startContainer.parentElement?.closest('[contenteditable="true"]');
-                if (editorDiv) {
-                    const links = editorDiv.querySelectorAll('a[href="' + url + '"]');
-                    links.forEach(link => {
-                        const anchor = link as HTMLAnchorElement;
-                        if (!anchor.target) { // only apply if not already set by surroundContents
-                             if(newWindow) {
-                                anchor.target = '_blank';
-                                anchor.rel = 'noopener noreferrer';
-                             }
-                             anchor.style.color = '#0000EE';
-                             anchor.style.textDecoration = 'underline';
-                        }
-                    });
-                }
-            }
-
-        } else if (['bold', 'italic', 'underline', 'strikeThrough'].includes(style)) {
-            document.execCommand(style, false);
-        }
-
-        // After applying style, trigger an input event to update the state
-        const editorElement = savedSelection.startContainer.parentElement?.closest('[contenteditable="true"]');
-        if (editorElement) {
-             editorElement.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    }
-  };
-
-  const handleCopySymbol = (symbol: string) => {
-    navigator.clipboard.writeText(symbol).then(() => {
-        toast({
-            title: "Símbolo Copiado",
-            description: `El símbolo "${symbol}" ha sido copiado a tu portapapeles.`,
-        });
-    }, (err) => {
-        toast({
-            title: "Error",
-            description: "No se pudo copiar el símbolo.",
-            variant: "destructive"
-        });
-    });
-  };
 
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -1605,23 +1369,6 @@ export default function CreateTemplatePage() {
                 }
             },
         };
-    } else if (blockType === 'text') {
-        newBlock = {
-            id: `text_${Date.now()}`,
-            type: 'text',
-            payload: { 
-                text: 'Este es un bloque de texto. Haz clic para editarlo.',
-                styles: {
-                    color: '#000000',
-                    fontFamily: 'Roboto',
-                    fontSize: 16,
-                    textAlign: 'left',
-                    fontWeight: 'normal',
-                    fontStyle: 'normal',
-                    textDecoration: 'none',
-                }
-            },
-        };
     } else if (blockType === 'emoji-static') {
         newBlock = {
             id: `emoji-static_${Date.now()}`,
@@ -1701,26 +1448,6 @@ export default function CreateTemplatePage() {
     setActiveContainer(null);
     setClickPosition(null);
   }
-  
-  const handleTextChange = (blockId: string, newHtml: string) => {
-    setCanvasContent(prevCanvas => {
-        const newCanvas = prevCanvas.map(row => {
-            if (row.type !== 'columns') return row;
-            
-            const newColumns = row.payload.columns.map(col => {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === blockId && (block.type === 'text' || block.type === 'heading')) {
-                      return { ...block, payload: { ...block.payload, text: newHtml } };
-                    }
-                    return block;
-                });
-                return { ...col, blocks: newBlocks };
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        return newCanvas as CanvasBlock[];
-    });
-};
   
   const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
     setItemToDelete({ rowId, colId, primId });
@@ -1802,21 +1529,6 @@ export default function CreateTemplatePage() {
     }
   }
 
-  const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
-    return {
-        color: color || '#000000',
-        fontFamily: fontFamily || 'Arial, sans-serif',
-        fontSize: `${fontSize || 16}px`,
-        textAlign: textAlign || 'left',
-        fontWeight: fontWeight || 'normal',
-        fontStyle: fontStyle || 'normal',
-        textDecoration: textDecoration || 'none',
-        width: '100%',
-        padding: '8px',
-    };
-  };
-
   const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
     const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
     return {
@@ -1862,26 +1574,9 @@ export default function CreateTemplatePage() {
               case 'heading':
                 const headingBlock = block as HeadingBlock;
                 return (
-                  <EditableBlock
-                    key={block.id}
-                    as="h1"
-                    content={headingBlock.payload.text}
-                    onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
-                    style={getHeadingStyle(headingBlock)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
-                  />
-                );
-              case 'text':
-                const textBlock = block as TextBlock;
-                 return (
-                  <EditableBlock 
-                    key={block.id}
-                    as="div"
-                    content={textBlock.payload.text}
-                    onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
-                    style={getTextStyle(textBlock)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
-                  />
+                  <h1 style={getHeadingStyle(headingBlock)}>
+                    {headingBlock.payload.text}
+                  </h1>
                 );
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
@@ -2044,7 +1739,6 @@ export default function CreateTemplatePage() {
   
   const blockTypeNames: Record<StaticPrimitiveBlockType | InteractiveBlockType, string> = {
       heading: 'título',
-      text: 'texto',
       image: 'imagen',
       button: 'botón',
       separator: 'separador',
@@ -2329,22 +2023,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-         <div id="editor-canvas" className="flex-1 overflow-auto custom-scrollbar relative" onMouseUp={handleSelectionChange}>
-           {showEditPopup && (
-              <div
-                className="absolute z-20"
-                style={{ top: popupPosition.top, left: popupPosition.left, transform: 'translateX(-50%)' }}
-                onMouseDown={(e) => e.preventDefault()} // Prevent losing selection
-              >
-                 <Button
-                    variant="outline"
-                    className="h-8 bg-background border-primary shadow-lg"
-                    onClick={openSpecialFunctionsModal}
-                  >
-                    <Pencil className="mr-2 size-4 text-primary" /> Editar
-                </Button>
-              </div>
-            )}
+         <div id="editor-canvas" className="flex-1 overflow-auto custom-scrollbar relative">
           <div className="p-8">
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                  {canvasContent.length === 0 ? (
@@ -2421,9 +2100,6 @@ export default function CreateTemplatePage() {
               )}
                { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
-                  <TextoEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
                   <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -2649,104 +2325,6 @@ export default function CreateTemplatePage() {
           </DialogContent>
       </Dialog>
       
-      <Dialog open={isSpecialFunctionsModalOpen} onOpenChange={setIsSpecialFunctionsModalOpen}>
-        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
-            <DialogHeader>
-                <DialogTitle>Funciones Especiales de Texto</DialogTitle>
-                <DialogDescription>
-                    Aplica formato avanzado al texto que has seleccionado.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                <div className="space-y-4">
-                     <div className="space-y-2">
-                        <Label>Estilos Rápidos</Label>
-                        <div className="grid grid-cols-4 gap-2">
-                            <Button variant="outline" onClick={() => applyStyleToSelection('bold', null)}><Bold/></Button>
-                            <Button variant="outline" onClick={() => applyStyleToSelection('italic', null)}><Italic/></Button>
-                            <Button variant="outline" onClick={() => applyStyleToSelection('underline', null)}><Underline/></Button>
-                            <Button variant="outline" onClick={() => applyStyleToSelection('strikeThrough', null)}><Strikethrough/></Button>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Palette className="size-4 text-primary"/>Color del Texto</Label>
-                        <ColorPickerAdvanced 
-                            color={specialFunctionsConfig.textColor} 
-                            setColor={(color) => {
-                                setSpecialFunctionsConfig(prev => ({...prev, textColor: color}));
-                                applyStyleToSelection('color', color);
-                            }} 
-                        />
-                    </div>
-                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Highlighter className="size-4 text-primary"/>Color de Resaltado</Label>
-                        <ColorPickerAdvanced 
-                            color={specialFunctionsConfig.highlightColor} 
-                            setColor={(color) => {
-                                setSpecialFunctionsConfig(prev => ({...prev, highlightColor: color}));
-                                applyStyleToSelection('backgroundColor', color);
-                            }}
-                        />
-                    </div>
-                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><LinkIcon className="size-4 text-primary"/>Hipervínculo</Label>
-                        <Input 
-                            placeholder="https://ejemplo.com"
-                            value={specialFunctionsConfig.linkUrl}
-                            onChange={(e) => setSpecialFunctionsConfig(prev => ({...prev, linkUrl: e.target.value}))}
-                        />
-                         <div className="flex items-center space-x-2 pt-2">
-                            <Switch 
-                                id="new-window-switch" 
-                                checked={specialFunctionsConfig.linkNewWindow}
-                                onCheckedChange={(checked) => setSpecialFunctionsConfig(prev => ({...prev, linkNewWindow: checked}))}
-                            />
-                            <Label htmlFor="new-window-switch">Abrir en una nueva ventana</Label>
-                        </div>
-                        <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="w-full"
-                            onClick={() => applyStyleToSelection('link', { url: specialFunctionsConfig.linkUrl, newWindow: specialFunctionsConfig.linkNewWindow })}
-                            disabled={!specialFunctionsConfig.linkUrl}
-                        >
-                            Aplicar Enlace
-                        </Button>
-                    </div>
-                </div>
-                <div className="space-y-4">
-                     <Label className="flex items-center gap-2">Copiar Símbolo</Label>
-                     <ScrollArea className="h-60 w-full rounded-md border p-4">
-                        <div className="grid grid-cols-5 gap-2">
-                            {insertableSymbols.map(symbol => (
-                                <TooltipProvider key={symbol}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button 
-                                            variant="outline" 
-                                            size="icon" 
-                                            className="text-lg"
-                                            onClick={() => handleCopySymbol(symbol)}
-                                        >
-                                            {symbol}
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Copiar "{symbol}"</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            ))}
-                        </div>
-                     </ScrollArea>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button onClick={() => setIsSpecialFunctionsModalOpen(false)}>Cerrar</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent className="sm:max-w-4xl bg-card/90 backdrop-blur-xl border-border/50">
           <DialogHeader>
@@ -2810,7 +2388,7 @@ export default function CreateTemplatePage() {
                 {imageModalState.url ? (
                     <div className="w-full h-full" style={{
                         backgroundImage: `url(${imageModalState.url})`,
-                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModal-state.zoom}%` : imageModalState.fit,
+                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
                         backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
                         backgroundRepeat: 'no-repeat',
                     }} />
@@ -2835,6 +2413,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
