@@ -96,7 +96,7 @@ const mainContentBlocks = [
 ];
 
 const columnContentBlocks = [
-  { name: "Heading", icon: Heading1, id: 'heading' },
+  { name: "Titulo", icon: Heading1, id: 'heading' },
   { name: "Image", icon: ImageIcon, id: 'image' },
   { name: "Button", icon: Square, id: 'button' },
   { name: "Separator", icon: Minus, id: 'separator' },
@@ -893,8 +893,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     return (
         <div className="space-y-4">
             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
-                <Label>Texto</Label>
+                <Label>Añadir Texto</Label>
                 <Input
                     value={element.payload.text}
                     onChange={(e) => updatePayload('text', e.target.value)}
@@ -2413,6 +2412,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
