@@ -1328,6 +1328,37 @@ function ThemeToggle() {
   );
 }
 
+// A new component to handle contentEditable elements without causing re-render issues.
+const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
+    as: 'div' | 'h1';
+    content: string;
+    onInput: (e: React.FormEvent<HTMLElement>) => void;
+    [key: string]: any;
+}) => {
+    const elRef = useRef<HTMLElement>(null);
+    
+    // Only update the DOM if the content from the state is different from the DOM content.
+    // This prevents the cursor from jumping.
+    useEffect(() => {
+        if (elRef.current && content !== elRef.current.innerHTML) {
+            elRef.current.innerHTML = content;
+        }
+    }, [content]);
+
+    return (
+        <Comp
+            ref={elRef}
+            onInput={onInput}
+            contentEditable
+            suppressContentEditableWarning
+            {...props}
+        >
+          {/* We render the content as a child to give React control, avoiding dangerouslySetInnerHTML */}
+        </Comp>
+    );
+});
+EditableBlock.displayName = "EditableBlock";
+
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [viewport, setViewport] = useState<Viewport>('desktop');
@@ -1365,8 +1396,7 @@ export default function CreateTemplatePage() {
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
   const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const contentEditableRefs = useRef<Record<string, HTMLElement | null>>({});
-
+  
   const handleSave = () => {
     setLastSaved(new Date());
   };
@@ -1566,11 +1596,6 @@ export default function CreateTemplatePage() {
   }
   
   const handleTextChange = (blockId: string, newHtml: string) => {
-    const currentBlockRef = contentEditableRefs.current[blockId];
-    if (currentBlockRef && newHtml === currentBlockRef.innerHTML) {
-      return;
-    }
-  
     setCanvasContent(prevCanvas => {
         const newCanvas = prevCanvas.map(row => {
             if (row.type !== 'columns') return row;
@@ -1728,19 +1753,24 @@ export default function CreateTemplatePage() {
           (() => {
              switch(block.type) {
               case 'heading':
-              case 'text':
-                const textBlock = block as TextBlock | HeadingBlock;
-                const isHeading = block.type === 'heading';
-                const Comp = isHeading ? 'h1' : 'div';
-                const style = isHeading ? getHeadingStyle(textBlock as HeadingBlock) : getTextStyle(textBlock as TextBlock);
-                 return (
-                  <Comp 
-                    ref={(el) => { contentEditableRefs.current[block.id] = el; }}
-                    contentEditable 
-                    suppressContentEditableWarning 
-                    style={style}
+                const headingBlock = block as HeadingBlock;
+                return (
+                  <EditableBlock
+                    as="h1"
+                    content={headingBlock.payload.text}
                     onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
-                    dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
+                    style={getHeadingStyle(headingBlock)}
+                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                  />
+                );
+              case 'text':
+                const textBlock = block as TextBlock;
+                 return (
+                  <EditableBlock 
+                    as="div"
+                    content={textBlock.payload.text}
+                    onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
+                    style={getTextStyle(textBlock)}
                     className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
                   />
                 );
@@ -2583,13 +2613,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
