@@ -94,7 +94,7 @@ const mainContentBlocks = [
 
 const columnContentBlocks = [
   { name: "Heading", icon: Heading1, id: 'heading' },
-  { name: "Text", icon: Type, id: 'text' },
+  { name: "Texto", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
   { name: "Button", icon: Square, id: 'button' },
   { name: "Separator", icon: Minus, id: 'separator' },
@@ -939,6 +939,124 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
+const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if(selectedElement?.type !== 'primitive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'text' ? block as TextBlock : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
+                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+    
+    const { styles } = element.payload;
+
+    const handleInsertSymbol = (symbol: string) => {
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement.getAttribute('contenteditable') === 'true') {
+        document.execCommand('insertText', false, symbol);
+        const event = new Event('input', { bubbles: true });
+        activeElement.dispatchEvent(event);
+      }
+    };
+    
+    return (
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
+                <Label>Color del Texto</Label>
+                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
+            </div>
+
+            <div className="space-y-3">
+                <Label>Fuente</Label>
+                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
+                    <SelectContent>
+                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            <div className="space-y-3">
+                 <Label>Estilos</Label>
+                 <div className="grid grid-cols-4 gap-2">
+                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
+                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.fontSize]}
+                      max={100}
+                      min={12}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                </div>
+            </div>
+             <Separator className="bg-border/20"/>
+             <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
+                <div className="grid grid-cols-6 gap-2">
+                    {insertableSymbols.map(symbol => (
+                        <Button key={symbol} variant="outline" size="icon" onClick={() => handleInsertSymbol(symbol)}>
+                            {symbol}
+                        </Button>
+                    ))}
+                </div>
+             </div>
+        </div>
+    )
+}
+
 const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -1067,125 +1185,6 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.rotate || 0}°</span>
                 </div>
             </div>
-        </div>
-    )
-}
-
-const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
-}) => {
-    if(selectedElement?.type !== 'primitive') return null;
-    
-    const getElement = () => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'text' ? block as TextBlock : null;
-    }
-    const element = getElement();
-    if(!element) return null;
-
-    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === (selectedElement as { columnId: string }).columnId) {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
-                    }
-                    return block;
-                })
-                return {...col, blocks: newBlocks};
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    }
-    
-    const { styles } = element.payload;
-
-    const handleInsertSymbol = (symbol: string) => {
-      const activeElement = document.activeElement;
-      if (activeElement && activeElement.getAttribute('contenteditable') === 'true') {
-        document.execCommand('insertText', false, symbol);
-        // We need to manually trigger the onInput event for the change to be saved
-        const event = new Event('input', { bubbles: true });
-        activeElement.dispatchEvent(event);
-      }
-    };
-    
-    return (
-        <div className="space-y-4">
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
-                <Label>Color del Texto</Label>
-                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
-            </div>
-
-            <div className="space-y-3">
-                <Label>Fuente</Label>
-                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
-                    <SelectContent>
-                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-            
-            <div className="space-y-3">
-                 <Label>Estilos</Label>
-                 <div className="grid grid-cols-4 gap-2">
-                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
-                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-            
-            <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
-                 <div className="grid grid-cols-3 gap-2">
-                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
-                <div className="flex items-center gap-2">
-                  <Slider 
-                      value={[styles.fontSize]}
-                      max={100}
-                      min={12}
-                      step={1} 
-                      onValueChange={(value) => updateStyle('fontSize', value[0])}
-                  />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
-                </div>
-            </div>
-             <Separator className="bg-border/20"/>
-             <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
-                <div className="grid grid-cols-6 gap-2">
-                    {insertableSymbols.map(symbol => (
-                        <Button key={symbol} variant="outline" size="icon" onClick={() => handleInsertSymbol(symbol)}>
-                            {symbol}
-                        </Button>
-                    ))}
-                </div>
-             </div>
         </div>
     )
 }
@@ -1569,7 +1568,7 @@ export default function CreateTemplatePage() {
   const handleTextChange = (blockId: string, newHtml: string) => {
     const currentBlockRef = contentEditableRefs.current[blockId];
     if (currentBlockRef && newHtml === currentBlockRef.innerHTML) {
-      return; // No change, no need to update state
+      return;
     }
   
     setCanvasContent(prevCanvas => {
@@ -2270,7 +2269,7 @@ export default function CreateTemplatePage() {
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
                { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
-                  <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  <TextoEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
                   <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -2584,6 +2583,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
