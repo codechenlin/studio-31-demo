@@ -1000,6 +1000,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const selectionRef = useRef<Range | null>(null);
 
     const [isToolbarActive, setIsToolbarActive] = useState(false);
+    const [localTextColor, setLocalTextColor] = useState("#000000");
+    const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
     
     // States for special editing tools
     const [linkUrl, setLinkUrl] = useState('');
@@ -1068,7 +1070,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         document.execCommand(command, false, value);
         handleTextChange();
         contentEditableRef.current?.focus();
-        saveSelection();
     };
 
 
@@ -1151,6 +1152,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     suppressContentEditableWarning
                     onBlur={handleTextChange}
                     onMouseUp={handleMouseUp}
+                    onKeyUp={handleMouseUp} // Also check on key up for keyboard selections
                     dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                     style={{
@@ -1169,25 +1171,27 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
               <div className="p-3 border rounded-md space-y-4 bg-background/50">
                   <div className="flex items-center gap-2">
-                       <Popover onOpenChange={saveSelection}>
+                       <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                             <PopoverTrigger asChild>
                                <Button size="icon" variant="outline" disabled={!isToolbarActive}><PaletteIcon/></Button>
                             </PopoverTrigger>
-                            <PopoverContent onMouseDown={(e) => e.preventDefault()}>
+                            <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Texto</Label>
-                                <ColorPickerAdvanced color={"#000000"} setColor={(c) => handleExecCommand('foreColor', c)} />
+                                <ColorPickerAdvanced color={localTextColor} setColor={setLocalTextColor} />
+                                <Button className="w-full mt-2" onClick={() => handleExecCommand('foreColor', localTextColor)}>Aceptar</Button>
                             </PopoverContent>
                        </Popover>
-                        <Popover onOpenChange={saveSelection}>
+                        <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                             <PopoverTrigger asChild>
                                 <Button size="icon" variant="outline" disabled={!isToolbarActive}><Highlighter/></Button>
                             </PopoverTrigger>
-                             <PopoverContent onMouseDown={(e) => e.preventDefault()}>
+                             <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Resaltado</Label>
-                                <ColorPickerAdvanced color={"#FFFF00"} setColor={(c) => handleExecCommand('hiliteColor', c)} />
+                                <ColorPickerAdvanced color={localHighlightColor} setColor={setLocalHighlightColor} />
+                                <Button className="w-full mt-2" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>Aceptar</Button>
                             </PopoverContent>
                         </Popover>
-                        <Popover onOpenChange={saveSelection}>
+                        <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                              <PopoverTrigger asChild>
                                 <Button size="icon" variant="outline" disabled={!isToolbarActive}><LinkIcon/></Button>
                             </PopoverTrigger>
