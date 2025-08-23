@@ -191,11 +191,6 @@ interface TextBlock extends BaseBlock {
     type: 'text';
     payload: {
         fragments: TextFragment[];
-        globalStyles: {
-            fontFamily: string;
-            fontSize: number;
-            textAlign: TextAlign;
-        }
     }
 }
 
@@ -1000,6 +995,17 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
+const LinkPopoverContent = ({ initialUrl, onAccept }: { initialUrl: string; onAccept: (url: string) => void }) => {
+    const [url, setUrl] = useState(initialUrl);
+    return (
+        <div className="space-y-2">
+            <Label className="text-xs">URL del enlace</Label>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
+            <Button size="sm" className="w-full" onClick={() => onAccept(url)}>Aceptar</Button>
+        </div>
+    );
+};
+
 const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -1087,7 +1093,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const handleToggleStyle = (fragmentId: string, style: 'bold' | 'italic' | 'underline' | 'strikethrough') => {
         const fragment = element.payload.fragments.find(f => f.id === fragmentId);
         if (fragment) {
-            updateFragment(fragmentId, { styles: { [style]: !fragment.styles[style] } });
+            updateFragment(fragmentId, { styles: { ...fragment.styles, [style]: !fragment.styles[style] } });
         }
     };
     
@@ -1096,7 +1102,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: "Enlace añadido",
             description: "La URL se ha añadido al texto seleccionado.",
-            className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
+            className: 'text-white',
             style: { backgroundColor: '#00CB07' }
         });
     };
@@ -1106,7 +1112,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: 'Símbolo Copiado',
             description: `"${symbol}" ha sido copiado al portapapeles.`,
-            className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
+            className: 'text-white',
             style: { backgroundColor: '#00CB07' }
         });
     };
@@ -1114,8 +1120,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     return (
         <div className="space-y-4">
             <div>
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
-                <p className="text-xs text-muted-foreground mt-1">Edita el texto y los estilos para cada fragmento.</p>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Editor de Contenido de Texto</h3>
+                <p className="text-xs text-muted-foreground mt-1">Añade y estiliza fragmentos de texto individuales.</p>
             </div>
             <ScrollArea className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
                 <div className="space-y-3">
@@ -1135,34 +1141,25 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><PaletteIcon size={16} /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.color || '#000000'} setColor={(c) => updateFragment(fragment.id, { styles: { color: c } })} /></PopoverContent>
+                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.color || '#000000'} setColor={(c) => updateFragment(fragment.id, { styles: { ...fragment.styles, color: c } })} /></PopoverContent>
                                 </Popover>
                                 
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><Highlighter size={16} /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.highlight || '#ffffff'} setColor={(c) => updateFragment(fragment.id, { styles: { highlight: c } })} /></PopoverContent>
+                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.highlight || '#ffffff'} setColor={(c) => updateFragment(fragment.id, { styles: { ...fragment.styles, highlight: c } })} /></PopoverContent>
                                 </Popover>
 
                                 <Popover>
-                                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><LinkIcon size={16} /></Button></PopoverTrigger>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="sm" className="p-2 h-auto">
+                                            <LinkIcon size={16} />
+                                        </Button>
+                                    </PopoverTrigger>
                                     <PopoverContent className="w-64 p-2">
-                                        {(popoverProps) => {
-                                            const [url, setUrl] = useState(fragment.link || '');
-                                            return (
-                                              <div className="space-y-2">
-                                                <Label className="text-xs">URL del enlace</Label>
-                                                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
-                                                <Button size="sm" className="w-full" onClick={() => {
-                                                    handleSetLink(fragment.id, url);
-                                                    if ('onOpenChange' in popoverProps) {
-                                                        (popoverProps as { onOpenChange: (open: boolean) => void }).onOpenChange(false);
-                                                    }
-                                                }}>Aceptar</Button>
-                                              </div>
-                                            );
-                                        }}
+                                        <LinkPopoverContent initialUrl={fragment.link || ''} onAccept={(url) => handleSetLink(fragment.id, url)} />
                                     </PopoverContent>
                                 </Popover>
+
 
                                 <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto size-8" onClick={() => handleRemoveFragment(fragment.id)}><Trash2 className="size-4" /></Button>
                             </div>
@@ -1636,11 +1633,6 @@ export default function CreateTemplatePage() {
             type: 'text',
             payload: {
                 fragments: [{ id: `frag_${Date.now()}`, text: 'Este es un párrafo de texto. ', styles: {} }],
-                globalStyles: {
-                    fontFamily: 'Roboto',
-                    fontSize: 16,
-                    textAlign: 'left',
-                }
             },
         };
     } else if (blockType === 'emoji-static') {
@@ -1823,24 +1815,15 @@ export default function CreateTemplatePage() {
     const style: React.CSSProperties = {};
     if (fragment.styles.bold) style.fontWeight = 'bold';
     if (fragment.styles.italic) style.fontStyle = 'italic';
-    if (fragment.styles.underline) style.textDecoration = 'underline';
-    if (fragment.styles.strikethrough) style.textDecoration = 'line-through';
+    if (fragment.styles.underline) {
+        style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'underline';
+    }
+    if (fragment.styles.strikethrough) {
+        style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'line-through';
+    }
     if (fragment.styles.color) style.color = fragment.styles.color;
     if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
     return style;
-  };
-
-  const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { fontFamily, fontSize, textAlign } = block.payload.globalStyles;
-    return {
-        fontFamily: fontFamily || 'Arial, sans-serif',
-        fontSize: `${fontSize || 16}px`,
-        textAlign: textAlign || 'left',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
-        width: '100%',
-        padding: '8px',
-    };
   };
 
   const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
@@ -1880,7 +1863,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 const textBlock = block as TextBlock;
                 return (
-                    <div style={getTextStyle(textBlock)}>
+                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                         {textBlock.payload.fragments.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
                             const props = fragment.link ? { href: fragment.link, target: '_blank', rel: 'noopener noreferrer', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
@@ -1890,7 +1873,7 @@ export default function CreateTemplatePage() {
                                 </El>
                             );
                         })}
-                    </div>
+                    </p>
                 );
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
@@ -2223,19 +2206,6 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <style jsx global>{`
-        [contenteditable] a {
-          color: hsl(var(--primary));
-          text-decoration: underline;
-          text-decoration-style: dotted;
-        }
-        
-        [disabled] {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-      `}</style>
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
