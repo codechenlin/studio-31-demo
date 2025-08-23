@@ -1051,8 +1051,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             selectionRef.current = selection.getRangeAt(0).cloneRange();
-        } else {
-            selectionRef.current = null;
         }
       } catch (error) {
         console.warn("Could not save selection.", error);
@@ -1077,9 +1075,17 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         contentEditableRef.current?.focus();
     };
 
-
     const handleLink = () => {
         restoreSelection();
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !selectionRef.current) return;
+
+        const range = selectionRef.current;
+        const selectedText = range.toString();
+
+        // If selection is collapsed, don't create an empty link
+        if (range.collapsed && selectedText.length === 0) return;
+
         const a = document.createElement('a');
         a.href = linkUrl;
         if (openInNewTab) {
@@ -1090,9 +1096,24 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         a.style.textDecorationStyle = 'dotted';
         
         try {
-            if(selectionRef.current) {
-                selectionRef.current.surroundContents(a);
+            // Check if the selection is already a link
+            let parentElement = range.startContainer.parentElement;
+            while (parentElement && parentElement !== contentEditableRef.current) {
+                if (parentElement.tagName === 'A') {
+                    // It's already a link, just update it
+                    (parentElement as HTMLAnchorElement).href = linkUrl;
+                     if (openInNewTab) {
+                        parentElement.target = '_blank';
+                    } else {
+                        parentElement.removeAttribute('target');
+                    }
+                    handleTextChange();
+                    return;
+                }
+                parentElement = parentElement.parentElement;
             }
+
+            range.surroundContents(a);
         } catch (e) {
             console.warn("Could not wrap content in link, applying link via execCommand as fallback.", e);
             document.execCommand('createLink', false, linkUrl);
@@ -1101,23 +1122,29 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     
     const handleMouseUp = () => {
-        saveSelection();
         const selection = window.getSelection();
         if (toolbarRef.current) {
             const buttons = toolbarRef.current.querySelectorAll('button');
-            if (selection && !selection.isCollapsed) {
-                buttons.forEach(button => button.removeAttribute('disabled'));
-            } else {
-                buttons.forEach(button => button.setAttribute('disabled', 'true'));
-            }
+            const isDisabled = !selection || selection.isCollapsed;
+            
+            buttons.forEach(button => {
+                if (isDisabled) {
+                    button.setAttribute('disabled', 'true');
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    button.removeAttribute('disabled');
+                    button.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        if (selection && !selection.isCollapsed) {
+            saveSelection();
         }
     };
-
+    
     useEffect(() => {
-        if (toolbarRef.current) {
-            const buttons = toolbarRef.current.querySelectorAll('button');
-            buttons.forEach(button => button.setAttribute('disabled', 'true'));
-        }
+        handleMouseUp(); // Set initial state
     }, []);
 
     const copySymbol = (symbol: string) => {
@@ -1184,7 +1211,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
               <div ref={toolbarRef} className="p-3 border rounded-md space-y-4 bg-background/50">
                   <div className="flex items-center gap-2">
-                       <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
+                       <Popover>
                             <PopoverTrigger asChild>
                                <Button size="icon" variant="outline"><PaletteIcon/></Button>
                             </PopoverTrigger>
@@ -1194,7 +1221,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 <Button className="w-full mt-2" onClick={() => handleExecCommand('foreColor', localTextColor)}>Aceptar</Button>
                             </PopoverContent>
                        </Popover>
-                        <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
+                        <Popover>
                             <PopoverTrigger asChild>
                                 <Button size="icon" variant="outline"><Highlighter/></Button>
                             </PopoverTrigger>
@@ -1204,7 +1231,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 <Button className="w-full mt-2" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>Aceptar</Button>
                             </PopoverContent>
                         </Popover>
-                        <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
+                        <Popover>
                              <PopoverTrigger asChild>
                                 <Button size="icon" variant="outline"><LinkIcon/></Button>
                             </PopoverTrigger>
@@ -2791,5 +2818,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-    
