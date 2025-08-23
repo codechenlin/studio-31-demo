@@ -1000,7 +1000,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     const element = getElement();
 
-    const [localTextColor, setLocalTextColor] = useState("#0000EE");
+    const [localTextColor, setLocalTextColor] = useState("#000000");
     const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
     const [linkUrl, setLinkUrl] = useState("");
     const [linkNewWindow, setLinkNewWindow] = useState(true);
@@ -1160,7 +1160,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 </div>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 border-none">
+                        <PopoverContent 
+                           onMouseDown={(e) => e.preventDefault()}
+                           className="w-auto p-0 border-none"
+                        >
                             <div className="p-4 bg-card rounded-md shadow-lg">
                                 <HexColorPicker color={localTextColor} onChange={setLocalTextColor} />
                                 <Button className="w-full mt-4" onClick={() => handleExecCommand('foreColor', localTextColor)}>
@@ -1181,7 +1184,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 </div>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 border-none">
+                        <PopoverContent 
+                           onMouseDown={(e) => e.preventDefault()}
+                           className="w-auto p-0 border-none"
+                        >
                             <div className="p-4 bg-card rounded-md shadow-lg">
                                 <HexColorPicker color={localHighlightColor} onChange={setLocalHighlightColor} />
                                  <Button className="w-full mt-4" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>
@@ -1709,7 +1715,7 @@ export default function CreateTemplatePage() {
             id: `text_${Date.now()}`,
             type: 'text',
             payload: { 
-                html: 'Este es un párrafo de texto. Puedes editarlo en el panel de la derecha para añadir tu propio contenido y darle estilo como quieras.',
+                html: '<p>Este es un párrafo de texto. Puedes editarlo en el panel de la derecha para añadir tu propio contenido y darle estilo como quieras.</p>',
                 styles: {
                     color: '#333333',
                     fontFamily: 'Roboto',
