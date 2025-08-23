@@ -105,7 +105,7 @@ const columnContentBlocks = [
   { name: "Titulo", icon: Heading1, id: 'heading' },
   { name: "Texto", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
-  { name: "Button", icon: Square, id: 'button' },
+  { name: "Botón", icon: Square, id: 'button' },
   { name: "Separator", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
@@ -172,15 +172,18 @@ interface HeadingBlock extends BaseBlock {
             fontWeight: 'normal' | 'bold';
             fontStyle: 'normal' | 'italic';
             textDecoration: 'none' | 'underline' | 'line-through';
+            highlight?: string;
         }
     }
 }
 
-// New TextBlock structure
 interface TextFragment {
     id: string;
     text: string;
-    link?: string;
+    link?: {
+        url: string;
+        openInNewTab: boolean;
+    };
     styles: {
         bold?: boolean;
         italic?: boolean;
@@ -208,7 +211,10 @@ interface ButtonBlock extends BaseBlock {
     type: 'button';
     payload: {
         text: string;
-        url: string;
+        link: {
+            url: string;
+            openInNewTab: boolean;
+        };
         textAlign: TextAlign;
         styles: {
             color: string;
@@ -799,12 +805,25 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <div className="relative">
                         <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input 
-                            value={element.payload.url}
-                            onChange={(e) => updatePayload('url', e.target.value)}
+                            value={element.payload.link.url}
+                            onChange={(e) => updatePayload('link', { ...element.payload.link, url: e.target.value })}
                             placeholder="https://example.com"
                             className="bg-transparent border-border/50 pl-10"
                         />
                     </div>
+                 </div>
+                 <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id={`btn-new-tab-${element.id}`}
+                        checked={element.payload.link.openInNewTab}
+                        onCheckedChange={(checked) => updatePayload('link', { ...element.payload.link, openInNewTab: !!checked })}
+                    />
+                    <label
+                        htmlFor={`btn-new-tab-${element.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        Abrir en una nueva pestaña
+                    </label>
                  </div>
             </div>
             <Separator className="bg-border/20"/>
@@ -949,6 +968,29 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
 
             <div className="space-y-3">
+                <Label>Resaltado del Texto</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                         <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-4 w-4 rounded-full border border-border"
+                              style={{ backgroundColor: styles.highlight || 'transparent' }}
+                            />
+                            <div className="flex-1 truncate">{styles.highlight ? styles.highlight.toUpperCase() : 'Ninguno'}</div>
+                          </div>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 border-none">
+                        <div className="p-2">
+                             <ColorPickerAdvanced color={styles.highlight || '#ffff00'} setColor={(c) => updateStyle('highlight', c)} />
+                             <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => updateStyle('highlight', undefined)}><Eraser className="mr-2"/>Eliminar Resaltado</Button>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
+
+            <div className="space-y-3">
                 <Label>Fuente</Label>
                 <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
                     <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
@@ -1004,22 +1046,30 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const LinkPopoverContent = ({ initialUrl, onAccept, onOpenChange }: { initialUrl: string; onAccept: (url: string) => void, onOpenChange: (open: boolean) => void }) => {
+const LinkPopoverContent = ({ initialUrl, initialNewTab, onAccept, onOpenChange }: { initialUrl: string; initialNewTab: boolean; onAccept: (url: string, newTab: boolean) => void, onOpenChange: (open: boolean) => void }) => {
     const [url, setUrl] = useState(initialUrl);
+    const [openInNewTab, setOpenInNewTab] = useState(initialNewTab);
 
     const handleAccept = () => {
-        onAccept(url);
+        onAccept(url, openInNewTab);
         onOpenChange(false);
     };
 
     return (
-        <div className="space-y-2">
-            <Label className="text-xs">URL del enlace</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
+        <div className="space-y-3 p-1">
+            <div className="space-y-1">
+              <Label htmlFor="link-url" className="text-xs">URL del enlace</Label>
+              <Input id="link-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
+            </div>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="open-new-tab" checked={openInNewTab} onCheckedChange={(checked) => setOpenInNewTab(!!checked)} />
+                <Label htmlFor="open-new-tab" className="text-xs">Abrir en nueva pestaña</Label>
+            </div>
             <Button size="sm" className="w-full" onClick={handleAccept}>Aceptar</Button>
         </div>
     );
 };
+
 
 const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
@@ -1136,13 +1186,18 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
     };
     
-    const handleSetLink = (fragmentId: string, url: string) => {
-        updateFragment(fragmentId, { link: url });
-        toast({
-            title: "Enlace añadido",
-            description: "La URL se ha añadido al texto seleccionado.",
-            className: 'bg-[#00CB07] border-none text-white',
-        });
+    const handleSetLink = (fragmentId: string, url: string, openInNewTab: boolean) => {
+        if (!url) {
+            const { link, ...rest } = element.payload.fragments.find(f => f.id === fragmentId) || {};
+            updateFragment(fragmentId, rest);
+        } else {
+            updateFragment(fragmentId, { link: { url, openInNewTab } });
+            toast({
+                title: "Enlace añadido",
+                description: "La URL se ha añadido al texto seleccionado.",
+                className: 'bg-[#00CB07] border-none text-white',
+            });
+        }
     };
 
     const handleCopySymbol = (symbol: string) => {
@@ -1176,7 +1231,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Estilos Globales del Bloque</h3>
                  <div className="space-y-2">
                     <Label>Alineación General</Label>
-                    <div className="grid grid-cols-3 gap-2">
+                     <div className="grid grid-cols-3 gap-2">
                         <Button variant={globalStyles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'left')}><AlignLeft/></Button>
                         <Button variant={globalStyles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'center')}><AlignCenter/></Button>
                         <Button variant={globalStyles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'right')}><AlignRight/></Button>
@@ -1238,14 +1293,15 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
                                 <Popover open={activeLinkEditor === fragment.id} onOpenChange={(open) => setActiveLinkEditor(open ? fragment.id : null)}>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" size="sm" className="p-2 h-auto">
-                                            {fragment.link ? <Link2Off size={16} onClick={() => handleSetLink(fragment.id, '')} /> : <LinkIcon size={16} />}
+                                        <Button onMouseDown={(e) => e.preventDefault()} variant="outline" size="sm" className="p-2 h-auto">
+                                            {fragment.link ? <Link2Off size={16} onClick={() => handleSetLink(fragment.id, '', false)} /> : <LinkIcon size={16} />}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2">
-                                         <LinkPopoverContent 
-                                            initialUrl={fragment.link || ''} 
-                                            onAccept={(url) => handleSetLink(fragment.id, url)}
+                                    <PopoverContent className="w-64 p-0">
+                                        <LinkPopoverContent
+                                            initialUrl={fragment.link?.url || ''}
+                                            initialNewTab={fragment.link?.openInNewTab || false}
+                                            onAccept={(url, newTab) => handleSetLink(fragment.id, url, newTab)}
                                             onOpenChange={(open) => !open && setActiveLinkEditor(null)}
                                         />
                                     </PopoverContent>
@@ -1690,7 +1746,7 @@ export default function CreateTemplatePage() {
             type: 'button',
             payload: { 
               text: 'Botón', 
-              url: '#', 
+              link: { url: '#', openInNewTab: false },
               textAlign: 'center', 
               styles: { 
                 borderRadius: 8, 
@@ -1887,7 +1943,7 @@ export default function CreateTemplatePage() {
   }
 
   const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
+    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration, highlight } = block.payload.styles;
     return {
         color: color || '#000000',
         fontFamily: fontFamily || 'Arial, sans-serif',
@@ -1896,6 +1952,7 @@ export default function CreateTemplatePage() {
         fontWeight: fontWeight || 'normal',
         fontStyle: fontStyle || 'normal',
         textDecoration: textDecoration || 'none',
+        backgroundColor: highlight || 'transparent',
         width: '100%',
         padding: '8px',
         wordBreak: 'break-word',
@@ -1906,12 +1963,12 @@ export default function CreateTemplatePage() {
     const style: React.CSSProperties = {};
     if (fragment.styles.bold) style.fontWeight = 'bold';
     if (fragment.styles.italic) style.fontStyle = 'italic';
-    if (fragment.styles.underline) {
-        style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'underline';
-    }
-    if (fragment.styles.strikethrough) {
-        style.textDecoration = (style.textDecoration ? style.textDecoration + ' ' : '') + 'line-through';
-    }
+    
+    let textDecoration = '';
+    if (fragment.styles.underline) textDecoration += ' underline';
+    if (fragment.styles.strikethrough) textDecoration += ' line-through';
+    if (textDecoration) style.textDecoration = textDecoration.trim();
+
     if (fragment.styles.color) style.color = fragment.styles.color;
     if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
     if(fragment.styles.fontFamily) style.fontFamily = fragment.styles.fontFamily;
@@ -1958,7 +2015,12 @@ export default function CreateTemplatePage() {
                     <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: textBlock.payload.globalStyles.textAlign, fontSize: `${textBlock.payload.globalStyles.fontSize}px` }}>
                         {textBlock.payload.fragments.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
-                            const props = fragment.link ? { href: fragment.link, target: '_blank', rel: 'noopener noreferrer', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
+                             const props = fragment.link ? { 
+                                href: fragment.link.url, 
+                                target: fragment.link.openInNewTab ? '_blank' : '_self',
+                                rel: 'noopener noreferrer', 
+                                style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } 
+                            } : {};
                             return (
                                 <El key={fragment.id} {...props}>
                                     <span style={getFragmentStyle(fragment)}>{fragment.text}</span>
@@ -1978,8 +2040,8 @@ export default function CreateTemplatePage() {
                   );
                   return (
                       <div style={getButtonContainerStyle(buttonBlock)}>
-                        {buttonBlock.payload.url && buttonBlock.payload.url !== '#' ? (
-                           <a href={buttonBlock.payload.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                        {buttonBlock.payload.link.url && buttonBlock.payload.link.url !== '#' ? (
+                           <a href={buttonBlock.payload.link.url} target={buttonBlock.payload.link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                                 {buttonElement}
                            </a>
                         ) : (
