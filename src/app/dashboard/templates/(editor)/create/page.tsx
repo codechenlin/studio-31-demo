@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Toggle } from '@/components/ui/toggle';
 import {
