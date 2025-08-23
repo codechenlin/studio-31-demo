@@ -81,7 +81,8 @@ import {
   Strikethrough,
   Highlighter,
   Link2Off,
-  Palette as PaletteIcon
+  Palette as PaletteIcon,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -998,11 +999,9 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const contentEditableRef = useRef<HTMLDivElement>(null);
     const selectionRef = useRef<Range | null>(null);
 
-    const [isTextSelected, setIsTextSelected] = useState(false);
+    const [isToolbarActive, setIsToolbarActive] = useState(false);
     
     // States for special editing tools
-    const [localTextColor, setLocalTextColor] = useState("#000000");
-    const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
     const [linkUrl, setLinkUrl] = useState('');
     const [openInNewTab, setOpenInNewTab] = useState(true);
 
@@ -1063,13 +1062,15 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             }
         }
     };
-
-    const handleExecCommand = (command: string, value: string) => {
+    
+    const handleExecCommand = (command: string, value?: string) => {
         restoreSelection();
         document.execCommand(command, false, value);
         handleTextChange();
-        saveSelection(); // Re-save selection after applying style
+        contentEditableRef.current?.focus();
+        saveSelection();
     };
+
 
     const handleLink = () => {
         restoreSelection();
@@ -1097,10 +1098,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         setTimeout(() => {
             const selection = window.getSelection();
             if (selection && !selection.isCollapsed) {
-                setIsTextSelected(true);
+                setIsToolbarActive(true);
                 saveSelection();
             } else {
-                setIsTextSelected(false);
+                setIsToolbarActive(false);
             }
         }, 10);
     };
@@ -1168,29 +1169,27 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
               <div className="p-3 border rounded-md space-y-4 bg-background/50">
                   <div className="flex items-center gap-2">
-                       <Popover>
+                       <Popover onOpenChange={saveSelection}>
                             <PopoverTrigger asChild>
-                               <Button size="icon" variant="outline" disabled={!isTextSelected}><PaletteIcon/></Button>
+                               <Button size="icon" variant="outline" disabled={!isToolbarActive}><PaletteIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent onMouseDown={(e) => e.preventDefault()}>
                                 <Label>Color de Texto</Label>
-                                <ColorPickerAdvanced color={localTextColor} setColor={setLocalTextColor} />
-                                <Button className="w-full mt-2" onClick={() => handleExecCommand('foreColor', localTextColor)}>Aplicar</Button>
+                                <ColorPickerAdvanced color={"#000000"} setColor={(c) => handleExecCommand('foreColor', c)} />
                             </PopoverContent>
                        </Popover>
-                        <Popover>
+                        <Popover onOpenChange={saveSelection}>
                             <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" disabled={!isTextSelected}><Highlighter/></Button>
+                                <Button size="icon" variant="outline" disabled={!isToolbarActive}><Highlighter/></Button>
                             </PopoverTrigger>
                              <PopoverContent onMouseDown={(e) => e.preventDefault()}>
                                 <Label>Color de Resaltado</Label>
-                                <ColorPickerAdvanced color={localHighlightColor} setColor={setLocalHighlightColor} />
-                                <Button className="w-full mt-2" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>Aplicar</Button>
+                                <ColorPickerAdvanced color={"#FFFF00"} setColor={(c) => handleExecCommand('hiliteColor', c)} />
                             </PopoverContent>
                         </Popover>
-                        <Popover>
+                        <Popover onOpenChange={saveSelection}>
                              <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" disabled={!isTextSelected}><LinkIcon/></Button>
+                                <Button size="icon" variant="outline" disabled={!isToolbarActive}><LinkIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent className="space-y-2" onMouseDown={(e) => e.preventDefault()}>
                                 <Label>URL del Hipervínculo</Label>
