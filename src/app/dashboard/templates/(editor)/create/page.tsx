@@ -128,10 +128,11 @@ const columnOptions = [
 const popularEmojis = Array.from(new Set([
     '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
     '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
-    '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
-    '📊', '💻', '📱', '🎯', '📣', '✍️', '😎', '😮', '🤯', '🙏',
-    '💪', '🎉', '🎊', '🎈', '▶️', '➡️', '⬅️', '⬆️', '⬇️'
-  ]));
+    '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸', '📊',
+    '💻', '📱', '🎯', '📣', '✍️', '😎', '😮', '🤯', '🙏', '💪',
+    '🎊', '🎈', '▶️', '➡️', '⬅️', '⬆️', '⬇️', '⚠️', '❌', '⭕️',
+    '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷'
+]));
   
 const googleFonts = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
@@ -1027,7 +1028,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }) => {
     const { toast } = useToast();
     const [fragmentToDelete, setFragmentToDelete] = useState<string | null>(null);
-    const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
+    const [activeLinkEditor, setActiveLinkEditor] = useState<string | null>(null);
 
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'text') {
         return <div className="text-center text-muted-foreground p-4 text-sm">Selecciona un bloque de Texto para ver sus opciones.</div>;
@@ -1140,7 +1141,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: "Enlace añadido",
             description: "La URL se ha añadido al texto seleccionado.",
-            style: { backgroundColor: '#00CB07', color: 'white' }
+            className: 'bg-[#00CB07] border-none text-white',
         });
     };
 
@@ -1149,7 +1150,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: 'Símbolo Copiado',
             description: `"${symbol}" ha sido copiado al portapapeles.`,
-            style: { backgroundColor: '#00CB07', color: 'white' }
+            className: 'bg-[#00CB07] border-none text-white',
         });
     };
     
@@ -1175,16 +1176,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Estilos Globales del Bloque</h3>
                  <div className="space-y-2">
                     <Label>Alineación General</Label>
-                    <Select value={globalStyles.textAlign} onValueChange={(v) => updateBlockPayload('textAlign', v as TextAlign)}>
-                        <SelectTrigger>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="left">Izquierda</SelectItem>
-                            <SelectItem value="center">Centro</SelectItem>
-                            <SelectItem value="right">Derecha</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="grid grid-cols-3 gap-2">
+                        <Button variant={globalStyles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'left')}><AlignLeft/></Button>
+                        <Button variant={globalStyles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'center')}><AlignCenter/></Button>
+                        <Button variant={globalStyles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBlockPayload('textAlign', 'right')}><AlignRight/></Button>
+                    </div>
                  </div>
                  <div className="space-y-2">
                     <Label>Tamaño de Fuente General</Label>
@@ -1240,14 +1236,18 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                     </PopoverContent>
                                 </Popover>
 
-                                <Popover onOpenChange={setIsLinkPopoverOpen} open={isLinkPopoverOpen}>
+                                <Popover open={activeLinkEditor === fragment.id} onOpenChange={(open) => setActiveLinkEditor(open ? fragment.id : null)}>
                                     <PopoverTrigger asChild>
                                         <Button variant="outline" size="sm" className="p-2 h-auto">
                                             {fragment.link ? <Link2Off size={16} onClick={() => handleSetLink(fragment.id, '')} /> : <LinkIcon size={16} />}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 p-2">
-                                        <LinkPopoverContent initialUrl={fragment.link || ''} onAccept={(url) => handleSetLink(fragment.id, url)} onOpenChange={setIsLinkPopoverOpen} />
+                                         <LinkPopoverContent 
+                                            initialUrl={fragment.link || ''} 
+                                            onAccept={(url) => handleSetLink(fragment.id, url)}
+                                            onOpenChange={(open) => !open && setActiveLinkEditor(null)}
+                                        />
                                     </PopoverContent>
                                 </Popover>
 
@@ -2753,4 +2753,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
