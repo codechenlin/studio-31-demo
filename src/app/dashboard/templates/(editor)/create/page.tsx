@@ -185,9 +185,6 @@ interface TextBlock extends BaseBlock {
             fontFamily: string;
             fontSize: number;
             textAlign: TextAlign;
-            fontWeight: 'normal' | 'bold';
-            fontStyle: 'normal' | 'italic';
-            textDecoration: 'none' | 'underline' | 'line-through';
         }
     }
 }
@@ -913,7 +910,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     return (
         <div className="space-y-4">
             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
                 <Label>Añadir Texto</Label>
                 <Input
                     value={element.payload.text}
@@ -1129,9 +1126,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         fontFamily: styles.fontFamily,
                         fontSize: `${styles.fontSize}px`,
                         textAlign: styles.textAlign,
-                        fontWeight: styles.fontWeight,
-                        fontStyle: styles.fontStyle,
-                        textDecoration: styles.textDecoration,
                     }}
                 />
             </div>
@@ -1243,10 +1237,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <div className="space-y-3">
                  <Label>Estilos</Label>
                  <div className="grid grid-cols-4 gap-2">
-                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
-                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
+                    <Toggle onPressedChange={() => handleExecCommand('bold')}><Bold/></Toggle>
+                    <Toggle onPressedChange={() => handleExecCommand('italic')}><Italic/></Toggle>
+                    <Toggle onPressedChange={() => handleExecCommand('underline')}><Underline/></Toggle>
+                    <Toggle onPressedChange={() => handleExecCommand('strikethrough')}><Strikethrough/></Toggle>
                  </div>
             </div>
 
@@ -1702,9 +1696,6 @@ export default function CreateTemplatePage() {
                     fontFamily: 'Roboto',
                     fontSize: 16,
                     textAlign: 'left',
-                    fontWeight: 'normal',
-                    fontStyle: 'normal',
-                    textDecoration: 'none',
                 }
             },
         };
@@ -1885,22 +1876,17 @@ export default function CreateTemplatePage() {
   };
 
   const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
+    const { color, fontFamily, fontSize, textAlign } = block.payload.styles;
     const style: React.CSSProperties = {
         color: color || '#333333',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 16}px`,
         textAlign: textAlign || 'left',
-        fontWeight: fontWeight || 'normal',
-        fontStyle: fontStyle || 'normal',
-        textDecoration: textDecoration || 'none',
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         width: '100%',
         padding: '8px',
     };
-    // This is a special property for contentEditable divs
-    (style as any)['-webkit-user-modify'] = 'read-write-plaintext-only';
     return style;
   };
 
