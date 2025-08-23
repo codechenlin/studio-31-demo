@@ -83,6 +83,8 @@ import {
   Link2Off,
   Palette as PaletteIcon,
   Sparkles,
+  CaseSensitive,
+  Eraser,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -127,7 +129,8 @@ const popularEmojis = Array.from(new Set([
     '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
     '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
     '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
-    '📊', '💻', '📱', '🎯', '📣', '✍️'
+    '📊', '💻', '📱', '🎯', '📣', '✍️', '😎', '😮', '🤯', '🙏',
+    '💪', '🎉', '🎊', '🎈', '▶️', '➡️', '⬅️', '⬆️', '⬇️'
   ]));
   
 const googleFonts = [
@@ -184,6 +187,7 @@ interface TextFragment {
         strikethrough?: boolean;
         color?: string;
         highlight?: string;
+        fontFamily?: string;
     };
 }
 
@@ -191,6 +195,10 @@ interface TextBlock extends BaseBlock {
     type: 'text';
     payload: {
         fragments: TextFragment[];
+        globalStyles: {
+            textAlign: TextAlign;
+            fontSize: number;
+        }
     }
 }
 
@@ -995,13 +1003,19 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const LinkPopoverContent = ({ initialUrl, onAccept }: { initialUrl: string; onAccept: (url: string) => void }) => {
+const LinkPopoverContent = ({ initialUrl, onAccept, onOpenChange }: { initialUrl: string; onAccept: (url: string) => void, onOpenChange: (open: boolean) => void }) => {
     const [url, setUrl] = useState(initialUrl);
+
+    const handleAccept = () => {
+        onAccept(url);
+        onOpenChange(false);
+    };
+
     return (
         <div className="space-y-2">
             <Label className="text-xs">URL del enlace</Label>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
-            <Button size="sm" className="w-full" onClick={() => onAccept(url)}>Aceptar</Button>
+            <Button size="sm" className="w-full" onClick={handleAccept}>Aceptar</Button>
         </div>
     );
 };
@@ -1012,6 +1026,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
     const { toast } = useToast();
+    const [fragmentToDelete, setFragmentToDelete] = useState<string | null>(null);
+    const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
 
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'text') {
         return <div className="text-center text-muted-foreground p-4 text-sm">Selecciona un bloque de Texto para ver sus opciones.</div>;
@@ -1026,6 +1042,22 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     const element = getElement();
     if (!element) return null;
+
+    const updateBlockPayload = (key: keyof TextBlock['payload']['globalStyles'], value: any) => {
+         setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const newGlobalStyles = { ...block.payload.globalStyles, [key]: value };
+                    return { ...block, payload: { ...block.payload, globalStyles: newGlobalStyles } };
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
+    }
 
     const updateFragment = (fragmentId: string, newProps: Partial<TextFragment> | { styles: Partial<TextFragment['styles']> }) => {
         setCanvasContent(prev => prev.map(row => {
@@ -1074,20 +1106,26 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }));
     };
     
-    const handleRemoveFragment = (fragmentId: string) => {
+    const confirmDeleteFragment = (fragmentId: string) => {
+        setFragmentToDelete(fragmentId);
+    };
+
+    const handleDeleteFragment = () => {
+        if (!fragmentToDelete) return;
         setCanvasContent(prev => prev.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
                 const newBlocks = col.blocks.map(block => {
                     if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    const fragments = block.payload.fragments.filter(f => f.id !== fragmentId);
+                    const fragments = block.payload.fragments.filter(f => f.id !== fragmentToDelete);
                     return { ...block, payload: { ...block.payload, fragments } };
                 });
                 return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         }));
+        setFragmentToDelete(null);
     };
     
     const handleToggleStyle = (fragmentId: string, style: 'bold' | 'italic' | 'underline' | 'strikethrough') => {
@@ -1102,8 +1140,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: "Enlace añadido",
             description: "La URL se ha añadido al texto seleccionado.",
-            className: 'text-white',
-            style: { backgroundColor: '#00CB07' }
+            style: { backgroundColor: '#00CB07', color: 'white' }
         });
     };
 
@@ -1112,15 +1149,55 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         toast({
             title: 'Símbolo Copiado',
             description: `"${symbol}" ha sido copiado al portapapeles.`,
-            className: 'text-white',
-            style: { backgroundColor: '#00CB07' }
+            style: { backgroundColor: '#00CB07', color: 'white' }
         });
     };
+    
+    const { globalStyles } = element.payload;
 
     return (
         <div className="space-y-4">
+             <Dialog open={!!fragmentToDelete} onOpenChange={(isOpen) => !isOpen && setFragmentToDelete(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Confirmar Eliminación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar este fragmento de texto? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setFragmentToDelete(null)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={handleDeleteFragment}>Sí, eliminar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Estilos Globales del Bloque</h3>
+                 <div className="space-y-2">
+                    <Label>Alineación General</Label>
+                    <Select value={globalStyles.textAlign} onValueChange={(v) => updateBlockPayload('textAlign', v as TextAlign)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="left">Izquierda</SelectItem>
+                            <SelectItem value="center">Centro</SelectItem>
+                            <SelectItem value="right">Derecha</SelectItem>
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <div className="space-y-2">
+                    <Label>Tamaño de Fuente General</Label>
+                    <Slider 
+                        value={[globalStyles.fontSize]} 
+                        min={8} max={72} 
+                        onValueChange={(v) => updateBlockPayload('fontSize', v[0])}
+                    />
+                 </div>
+            </div>
+            <Separator className="bg-border/20" />
             <div>
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Editor de Contenido de Texto</h3>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Editor de Fragmentos de Texto</h3>
                 <p className="text-xs text-muted-foreground mt-1">Añade y estiliza fragmentos de texto individuales.</p>
             </div>
             <ScrollArea className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
@@ -1133,6 +1210,15 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 className="w-full bg-background"
                                 rows={2}
                             />
+                             <div className="space-y-2">
+                                <Label className="text-xs">Fuente</Label>
+                                <Select value={fragment.styles.fontFamily || 'Roboto'} onValueChange={v => updateFragment(fragment.id, { styles: { ...fragment.styles, fontFamily: v } })}>
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {googleFonts.map(font => <SelectItem key={font} value={font} style={{ fontFamily: font }}>{font}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="flex flex-wrap gap-1 items-center">
                                 <Toggle size="sm" pressed={fragment.styles.bold} onPressedChange={() => handleToggleStyle(fragment.id, 'bold')}><Bold /></Toggle>
                                 <Toggle size="sm" pressed={fragment.styles.italic} onPressedChange={() => handleToggleStyle(fragment.id, 'italic')}><Italic /></Toggle>
@@ -1146,22 +1232,26 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><Highlighter size={16} /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.highlight || '#ffffff'} setColor={(c) => updateFragment(fragment.id, { styles: { ...fragment.styles, highlight: c } })} /></PopoverContent>
-                                </Popover>
-
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" size="sm" className="p-2 h-auto">
-                                            <LinkIcon size={16} />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-2">
-                                        <LinkPopoverContent initialUrl={fragment.link || ''} onAccept={(url) => handleSetLink(fragment.id, url)} />
+                                    <PopoverContent className="w-auto p-0 border-none">
+                                        <div className="p-2">
+                                            <ColorPickerAdvanced color={fragment.styles.highlight || '#ffffff'} setColor={(c) => updateFragment(fragment.id, { styles: { ...fragment.styles, highlight: c } })} />
+                                            <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => updateFragment(fragment.id, { styles: { ...fragment.styles, highlight: undefined } })}><Eraser className="mr-2"/>Eliminar Resaltado</Button>
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
 
+                                <Popover onOpenChange={setIsLinkPopoverOpen} open={isLinkPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="sm" className="p-2 h-auto">
+                                            {fragment.link ? <Link2Off size={16} onClick={() => handleSetLink(fragment.id, '')} /> : <LinkIcon size={16} />}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2">
+                                        <LinkPopoverContent initialUrl={fragment.link || ''} onAccept={(url) => handleSetLink(fragment.id, url)} onOpenChange={setIsLinkPopoverOpen} />
+                                    </PopoverContent>
+                                </Popover>
 
-                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto size-8" onClick={() => handleRemoveFragment(fragment.id)}><Trash2 className="size-4" /></Button>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto size-8" onClick={() => confirmDeleteFragment(fragment.id)}><Trash2 className="size-4" /></Button>
                             </div>
                         </div>
                     ))}
@@ -1174,7 +1264,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <div>
                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles />Símbolos Rápidos</h3>
                  <div className="grid grid-cols-8 gap-1 mt-2">
-                    {popularEmojis.slice(0, 16).map(emoji => (
+                    {popularEmojis.map(emoji => (
                         <TooltipProvider key={emoji}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -1633,6 +1723,7 @@ export default function CreateTemplatePage() {
             type: 'text',
             payload: {
                 fragments: [{ id: `frag_${Date.now()}`, text: 'Este es un párrafo de texto. ', styles: {} }],
+                globalStyles: { textAlign: 'left', fontSize: 16 }
             },
         };
     } else if (blockType === 'emoji-static') {
@@ -1811,7 +1902,7 @@ export default function CreateTemplatePage() {
     };
   };
 
-  const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
+ const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
     const style: React.CSSProperties = {};
     if (fragment.styles.bold) style.fontWeight = 'bold';
     if (fragment.styles.italic) style.fontStyle = 'italic';
@@ -1823,6 +1914,7 @@ export default function CreateTemplatePage() {
     }
     if (fragment.styles.color) style.color = fragment.styles.color;
     if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
+    if(fragment.styles.fontFamily) style.fontFamily = fragment.styles.fontFamily;
     return style;
   };
 
@@ -1863,7 +1955,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 const textBlock = block as TextBlock;
                 return (
-                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: textBlock.payload.globalStyles.textAlign, fontSize: `${textBlock.payload.globalStyles.fontSize}px` }}>
                         {textBlock.payload.fragments.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
                             const props = fragment.link ? { href: fragment.link, target: '_blank', rel: 'noopener noreferrer', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
@@ -2661,3 +2753,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
