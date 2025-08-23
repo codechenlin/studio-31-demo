@@ -185,6 +185,9 @@ interface TextBlock extends BaseBlock {
             fontFamily: string;
             fontSize: number;
             textAlign: TextAlign;
+            fontWeight: 'normal' | 'bold';
+            fontStyle: 'normal' | 'italic';
+            textDecoration: 'none' | 'underline' | 'line-through';
         }
     }
 }
@@ -1001,7 +1004,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     const saveSelection = () => {
       if (window.getSelection && window.getSelection()!.rangeCount > 0) {
-        selectionRef.current = window.getSelection()!.getRangeAt(0);
+        const selection = window.getSelection();
+        if (contentEditableRef.current?.contains(selection!.anchorNode)) {
+            selectionRef.current = selection!.getRangeAt(0);
+        }
       }
     };
     
@@ -1119,6 +1125,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
                     onMouseUp={saveSelection}
                     onKeyUp={saveSelection}
+                    onFocus={saveSelection}
+                    onBlur={() => { selectionRef.current = null; }}
                     dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                     style={{
@@ -1126,6 +1134,9 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         fontFamily: styles.fontFamily,
                         fontSize: `${styles.fontSize}px`,
                         textAlign: styles.textAlign,
+                        fontWeight: styles.fontWeight,
+                        fontStyle: styles.fontStyle,
+                        textDecoration: styles.textDecoration,
                     }}
                 />
             </div>
@@ -1148,10 +1159,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 border-none">
                             <div className="p-4 bg-card rounded-md shadow-lg">
-                                <HexColorPicker color={localTextColor} onChange={(color) => {
-                                    setLocalTextColor(color);
-                                    handleExecCommand('foreColor', color);
-                                }} />
+                                <HexColorPicker color={localTextColor} onChange={setLocalTextColor} />
+                                <Button className="w-full mt-4" onClick={() => handleExecCommand('foreColor', localTextColor)}>
+                                    Aceptar
+                                </Button>
                             </div>
                         </PopoverContent>
                     </Popover>
@@ -1169,10 +1180,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0 border-none">
                             <div className="p-4 bg-card rounded-md shadow-lg">
-                                <HexColorPicker color={localHighlightColor} onChange={(color) => {
-                                    setLocalHighlightColor(color);
-                                    handleExecCommand('hiliteColor', color);
-                                }} />
+                                <HexColorPicker color={localHighlightColor} onChange={setLocalHighlightColor} />
+                                 <Button className="w-full mt-4" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>
+                                    Aceptar
+                                </Button>
                             </div>
                         </PopoverContent>
                     </Popover>
@@ -1223,7 +1234,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
 
             <Separator className="bg-border/20"/>
-
+            
             <div className="space-y-3">
                 <Label>Fuente</Label>
                 <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
@@ -1237,10 +1248,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <div className="space-y-3">
                  <Label>Estilos</Label>
                  <div className="grid grid-cols-4 gap-2">
-                    <Toggle onPressedChange={() => handleExecCommand('bold')}><Bold/></Toggle>
-                    <Toggle onPressedChange={() => handleExecCommand('italic')}><Italic/></Toggle>
-                    <Toggle onPressedChange={() => handleExecCommand('underline')}><Underline/></Toggle>
-                    <Toggle onPressedChange={() => handleExecCommand('strikethrough')}><Strikethrough/></Toggle>
+                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
+                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
 
@@ -1696,6 +1707,9 @@ export default function CreateTemplatePage() {
                     fontFamily: 'Roboto',
                     fontSize: 16,
                     textAlign: 'left',
+                    fontWeight: 'normal',
+                    fontStyle: 'normal',
+                    textDecoration: 'none',
                 }
             },
         };
@@ -1876,12 +1890,15 @@ export default function CreateTemplatePage() {
   };
 
   const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign } = block.payload.styles;
+    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
     const style: React.CSSProperties = {
         color: color || '#333333',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 16}px`,
         textAlign: textAlign || 'left',
+        fontWeight: fontWeight || 'normal',
+        fontStyle: fontStyle || 'normal',
+        textDecoration: textDecoration || 'none',
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         width: '100%',
@@ -1929,7 +1946,7 @@ export default function CreateTemplatePage() {
                 return (
                     <div 
                         style={getTextStyle(textBlock)}
-                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html }}
+                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html.replace(/\n/g, '<br />') }}
                     >
                     </div>
                 );
@@ -2779,3 +2796,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
