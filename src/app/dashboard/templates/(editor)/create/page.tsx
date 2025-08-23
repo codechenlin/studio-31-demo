@@ -765,7 +765,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updatePayload('textAlign', align);
     };
     
-    const { background } = element.payload.styles;
+    const { background, borderRadius } = element.payload.styles;
     
     const setBgType = (type: 'solid' | 'gradient') => {
         updateStyle('background', {
@@ -834,6 +834,19 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <Button variant={element.payload.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter/></Button>
                     <Button variant={element.payload.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => setTextAlign('right')}><AlignRight/></Button>
                  </div>
+            </div>
+            <Separator className="bg-border/20"/>
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Radio del Borde</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[borderRadius || 0]}
+                      max={40} 
+                      step={1} 
+                      onValueChange={(value) => updateStyle('borderRadius', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{borderRadius || 0}px</span>
+                </div>
             </div>
             <Separator className="bg-border/20"/>
             <div className="space-y-4">
@@ -1944,19 +1957,27 @@ export default function CreateTemplatePage() {
 
   const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
     const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration, highlight } = block.payload.styles;
-    return {
+    const style: React.CSSProperties = {
         color: color || '#000000',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 32}px`,
-        textAlign: textAlign || 'left',
         fontWeight: fontWeight || 'normal',
         fontStyle: fontStyle || 'normal',
         textDecoration: textDecoration || 'none',
-        backgroundColor: highlight || 'transparent',
-        width: '100%',
         padding: '8px',
         wordBreak: 'break-word',
     };
+    const containerStyle: React.CSSProperties = {
+      textAlign: textAlign || 'left',
+      width: '100%',
+    };
+
+    if(highlight) {
+      style.backgroundColor = highlight;
+      style.display = 'inline'; // This makes the background only wrap the text
+    }
+
+    return { ...style, ...containerStyle };
   };
 
  const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
@@ -2004,9 +2025,12 @@ export default function CreateTemplatePage() {
              switch(block.type) {
               case 'heading':
                 const headingBlock = block as HeadingBlock;
+                const {textAlign, ...textStyles} = getHeadingStyle(headingBlock);
                 return (
-                  <div style={getHeadingStyle(headingBlock)}>
-                    {headingBlock.payload.text}
+                  <div style={{ textAlign }}>
+                    <span style={textStyles}>
+                      {headingBlock.payload.text}
+                    </span>
                   </div>
                 );
               case 'text':
