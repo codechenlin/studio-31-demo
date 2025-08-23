@@ -998,12 +998,9 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const { toast } = useToast();
     const contentEditableRef = useRef<HTMLDivElement>(null);
     const selectionRef = useRef<Range | null>(null);
-    const toolbarRef = useRef<HTMLDivElement>(null);
-
+    
     const [localTextColor, setLocalTextColor] = useState("#000000");
     const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
-    
-    // States for special editing tools
     const [linkUrl, setLinkUrl] = useState('');
     const [openInNewTab, setOpenInNewTab] = useState(true);
 
@@ -1051,6 +1048,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             selectionRef.current = selection.getRangeAt(0).cloneRange();
+        } else {
+            selectionRef.current = null;
         }
       } catch (error) {
         console.warn("Could not save selection.", error);
@@ -1083,7 +1082,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         const range = selectionRef.current;
         const selectedText = range.toString();
 
-        // If selection is collapsed, don't create an empty link
         if (range.collapsed && selectedText.length === 0) return;
 
         const a = document.createElement('a');
@@ -1093,14 +1091,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
         a.style.color = 'hsl(var(--primary))';
         a.style.textDecoration = 'underline';
-        a.style.textDecorationStyle = 'dotted';
         
         try {
-            // Check if the selection is already a link
             let parentElement = range.startContainer.parentElement;
             while (parentElement && parentElement !== contentEditableRef.current) {
                 if (parentElement.tagName === 'A') {
-                    // It's already a link, just update it
                     (parentElement as HTMLAnchorElement).href = linkUrl;
                      if (openInNewTab) {
                         parentElement.target = '_blank';
@@ -1115,38 +1110,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
             range.surroundContents(a);
         } catch (e) {
-            console.warn("Could not wrap content in link, applying link via execCommand as fallback.", e);
             document.execCommand('createLink', false, linkUrl);
         }
         handleTextChange();
     }
     
-    const handleMouseUp = () => {
-        const selection = window.getSelection();
-        if (toolbarRef.current) {
-            const buttons = toolbarRef.current.querySelectorAll('button');
-            const isDisabled = !selection || selection.isCollapsed;
-            
-            buttons.forEach(button => {
-                if (isDisabled) {
-                    button.setAttribute('disabled', 'true');
-                    button.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    button.removeAttribute('disabled');
-                    button.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            });
-        }
-
-        if (selection && !selection.isCollapsed) {
-            saveSelection();
-        }
-    };
-    
-    useEffect(() => {
-        handleMouseUp(); // Set initial state
-    }, []);
-
     const copySymbol = (symbol: string) => {
         navigator.clipboard.writeText(symbol);
         toast({
@@ -1191,8 +1159,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={handleTextChange}
-                    onMouseUp={handleMouseUp}
-                    onKeyUp={handleMouseUp}
+                    onMouseUp={saveSelection}
+                    onKeyUp={saveSelection}
                     dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                     style={{
@@ -1209,11 +1177,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles/>Funciones Especiales</h3>
               <p className="text-xs text-muted-foreground -mt-2">Selecciona texto en el editor de arriba para activar estas opciones.</p>
 
-              <div ref={toolbarRef} className="p-3 border rounded-md space-y-4 bg-background/50">
+              <div className="p-3 border rounded-md space-y-4 bg-background/50">
                   <div className="flex items-center gap-2">
                        <Popover>
                             <PopoverTrigger asChild>
-                               <Button size="icon" variant="outline"><PaletteIcon/></Button>
+                               <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><PaletteIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Texto</Label>
@@ -1223,7 +1191,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                        </Popover>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline"><Highlighter/></Button>
+                                <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><Highlighter/></Button>
                             </PopoverTrigger>
                              <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Resaltado</Label>
@@ -1233,7 +1201,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         </Popover>
                         <Popover>
                              <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline"><LinkIcon/></Button>
+                                <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><LinkIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent className="space-y-2" onMouseDown={(e) => e.preventDefault()}>
                                 <Label>URL del Hipervínculo</Label>
@@ -2818,3 +2786,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
