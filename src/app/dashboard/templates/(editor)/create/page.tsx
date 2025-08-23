@@ -994,15 +994,19 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         return block?.type === 'text' ? block as TextBlock : null;
     }
     const element = getElement();
-    if(!element) return null;
-    
-    const contentEditableRef = useRef<HTMLDivElement>(null);
-    const [linkColor, setLinkColor] = useState("#0000EE");
-    const [highlightColor, setHighlightColor] = useState("#FFFF00");
+
+    const [localTextColor, setLocalTextColor] = useState("#0000EE");
+    const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
+    const [isTextColorPickerOpen, setIsTextColorPickerOpen] = useState(false);
+    const [isHighlightColorPickerOpen, setIsHighlightColorPickerOpen] = useState(false);
+
     const [linkUrl, setLinkUrl] = useState("");
     const [linkNewWindow, setLinkNewWindow] = useState(true);
+    const contentEditableRef = useRef<HTMLDivElement>(null);
+    
+    if(!element) return null;
 
-    const updatePayload = (key: keyof TextBlock['payload'], value: any) => {
+    const handleTextChange = (newText: string) => {
         const newCanvasContent = canvasContent.map(row => {
           if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
           if (row.type !== 'columns') return row;
@@ -1010,7 +1014,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             if (col.id === (selectedElement as { columnId: string }).columnId) {
                 const newBlocks = col.blocks.map(block => {
                     if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, [key]: value }};
+                        return { ...block, payload: { ...block.payload, text: newText }};
                     }
                     return block;
                 })
@@ -1021,12 +1025,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
-    }
-    
-    const handleTextChange = (newText: string) => {
-        updatePayload('text', newText);
     };
-
+    
     const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
         const newCanvasContent = canvasContent.map(row => {
           if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
@@ -1047,12 +1047,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
-    
+
     const handleExecCommand = (command: string, value?: string) => {
         document.execCommand(command, false, value);
-        if(contentEditableRef.current) {
-            handleTextChange(contentEditableRef.current.innerHTML);
-        }
+        // We don't update the state here immediately to prevent re-renders
+        // The final state will be saved when the popover closes or contenteditable blurs.
     };
     
     const handleLink = () => {
@@ -1097,6 +1096,12 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
     };
 
+    const handleColorChangeComplete = () => {
+        if(contentEditableRef.current) {
+            handleTextChange(contentEditableRef.current.innerHTML);
+        }
+    };
+
     const { styles } = element.payload;
 
     return (
@@ -1111,6 +1116,15 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
                     dangerouslySetInnerHTML={{ __html: element.payload.text }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    style={{
+                        color: styles.color,
+                        fontFamily: styles.fontFamily,
+                        fontSize: `${styles.fontSize}px`,
+                        textAlign: styles.textAlign,
+                        fontWeight: styles.fontWeight,
+                        fontStyle: styles.fontStyle,
+                        textDecoration: styles.textDecoration,
+                    }}
                 />
             </div>
             
@@ -1121,11 +1135,51 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 
                 <div className="space-y-2">
                     <Label>Color de texto seleccionado</Label>
-                    <ColorPickerAdvanced color={linkColor} setColor={(color) => { setLinkColor(color); handleExecCommand('foreColor', color); }} />
+                    <Popover open={isTextColorPickerOpen} onOpenChange={(isOpen) => {
+                        setIsTextColorPickerOpen(isOpen);
+                        if (!isOpen) handleColorChangeComplete();
+                    }}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: localTextColor }} />
+                                    <div className="flex-1 truncate">{localTextColor}</div>
+                                </div>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 border-none">
+                            <div className="p-4 bg-card rounded-md shadow-lg">
+                                <HexColorPicker color={localTextColor} onChange={(color) => {
+                                    setLocalTextColor(color);
+                                    handleExecCommand('foreColor', color);
+                                }} />
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
                 <div className="space-y-2">
                     <Label>Resaltado de texto seleccionado</Label>
-                    <ColorPickerAdvanced color={highlightColor} setColor={(color) => { setHighlightColor(color); handleExecCommand('hiliteColor', color); }} />
+                    <Popover open={isHighlightColorPickerOpen} onOpenChange={(isOpen) => {
+                        setIsHighlightColorPickerOpen(isOpen);
+                        if (!isOpen) handleColorChangeComplete();
+                    }}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: localHighlightColor }} />
+                                    <div className="flex-1 truncate">{localHighlightColor}</div>
+                                </div>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 border-none">
+                            <div className="p-4 bg-card rounded-md shadow-lg">
+                                <HexColorPicker color={localHighlightColor} onChange={(color) => {
+                                    setLocalHighlightColor(color);
+                                    handleExecCommand('hiliteColor', color);
+                                }} />
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
 
                 <div className="space-y-2">
@@ -1843,9 +1897,6 @@ export default function CreateTemplatePage() {
         width: '100%',
         padding: '8px',
     };
-     // This is a bit of a hack for email client compatibility
-    // `dangerouslySetInnerHTML` will be used to render the text with links and styles
-    // But we still apply base styles to the container div
     return style;
   };
 
