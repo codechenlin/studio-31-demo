@@ -842,7 +842,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <div className="flex items-center gap-2">
                   <Slider 
                       value={[borderRadius || 0]}
-                      max={40} 
+                      max={20} 
                       step={1} 
                       onValueChange={(value) => updateStyle('borderRadius', value[0])}
                   />
@@ -2028,7 +2028,7 @@ export default function CreateTemplatePage() {
                 const headingBlock = block as HeadingBlock;
                 const {textAlign, ...textStyles} = getHeadingStyle(headingBlock);
                 return (
-                  <div style={{ textAlign }}>
+                  <div style={{ textAlign: textAlign as TextAlign }}>
                     <span style={textStyles}>
                       {headingBlock.payload.text}
                     </span>
