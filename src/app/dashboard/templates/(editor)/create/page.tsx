@@ -130,12 +130,6 @@ const popularEmojis = Array.from(new Set([
     '📊', '💻', '📱', '🎯', '📣', '✍️'
   ]));
   
-const insertableSymbols = [
-  '©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', '☆',
-  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°',
-  '§', 'µ', '¶', '·', '•', '±', '‰', '¼', '½', '¾', '¹', '²', '³', 'æ', 'Æ'
-];
-
 const googleFonts = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
   "Slabo 27px", "Raleway", "PT Sans", "Merriweather", "Noto Sans", "Poppins",
@@ -178,17 +172,32 @@ interface HeadingBlock extends BaseBlock {
     }
 }
 
+// New TextBlock structure
+interface TextFragment {
+    id: string;
+    text: string;
+    link?: string;
+    styles: {
+        bold?: boolean;
+        italic?: boolean;
+        underline?: boolean;
+        color?: string;
+        highlight?: string;
+    };
+}
+
 interface TextBlock extends BaseBlock {
     type: 'text';
     payload: {
-        html: string;
-        styles: {
+        fragments: TextFragment[];
+        globalStyles: {
             fontFamily: string;
             fontSize: number;
             textAlign: TextAlign;
         }
     }
 }
+
 
 interface ButtonBlock extends BaseBlock {
     type: 'button';
@@ -995,15 +1004,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    const { toast } = useToast();
-    const contentEditableRef = useRef<HTMLDivElement>(null);
-    const selectionRef = useRef<Range | null>(null);
-    
-    const [localTextColor, setLocalTextColor] = useState("#000000");
-    const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
-    const [linkUrl, setLinkUrl] = useState('');
-    const [openInNewTab, setOpenInNewTab] = useState(true);
-
     if (selectedElement?.type !== 'primitive') return null;
 
     const getElement = () => {
@@ -1014,268 +1014,179 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         return block?.type === 'text' ? block as TextBlock : null;
     }
     const element = getElement();
-
-    const updateBlockHtml = (newHtml: string) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id === selectedElement.rowId && row.type === 'columns') {
-            const newColumns = row.payload.columns.map(col => {
-              if (col.id === selectedElement.columnId) {
-                  const newBlocks = col.blocks.map(block => {
-                      if (block.id === selectedElement.primitiveId) {
-                          return { ...block, payload: { ...block.payload, html: newHtml } };
-                      }
-                      return block;
-                  });
-                  return { ...col, blocks: newBlocks };
-              }
-              return col;
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-          }
-          return row;
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    };
-
-    const handleTextChange = () => {
-        if (contentEditableRef.current) {
-            updateBlockHtml(contentEditableRef.current.innerHTML);
-        }
-    };
-    
-    const saveSelection = () => {
-      try {
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0) {
-            selectionRef.current = selection.getRangeAt(0).cloneRange();
-        } else {
-            selectionRef.current = null;
-        }
-      } catch (error) {
-        console.warn("Could not save selection.", error);
-        selectionRef.current = null;
-      }
-    };
-
-    const restoreSelection = () => {
-        if (selectionRef.current) {
-            const selection = window.getSelection();
-            if (selection) {
-                selection.removeAllRanges();
-                selection.addRange(selectionRef.current);
-            }
-        }
-    };
-    
-    const handleExecCommand = (command: string, value?: string) => {
-        restoreSelection();
-        document.execCommand(command, false, value);
-        handleTextChange();
-        contentEditableRef.current?.focus();
-    };
-
-    const handleLink = () => {
-        restoreSelection();
-        const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0 || !selectionRef.current) return;
-
-        const range = selectionRef.current;
-        const selectedText = range.toString();
-
-        if (range.collapsed && selectedText.length === 0) return;
-
-        const a = document.createElement('a');
-        a.href = linkUrl;
-        if (openInNewTab) {
-            a.target = '_blank';
-        }
-        a.style.color = 'hsl(var(--primary))';
-        a.style.textDecoration = 'underline';
-        
-        try {
-            let parentElement = range.startContainer.parentElement;
-            while (parentElement && parentElement !== contentEditableRef.current) {
-                if (parentElement.tagName === 'A') {
-                    (parentElement as HTMLAnchorElement).href = linkUrl;
-                     if (openInNewTab) {
-                        parentElement.target = '_blank';
-                    } else {
-                        parentElement.removeAttribute('target');
-                    }
-                    handleTextChange();
-                    return;
-                }
-                parentElement = parentElement.parentElement;
-            }
-
-            range.surroundContents(a);
-        } catch (e) {
-            document.execCommand('createLink', false, linkUrl);
-        }
-        handleTextChange();
-    }
-    
-    const copySymbol = (symbol: string) => {
-        navigator.clipboard.writeText(symbol);
-        toast({
-            title: "¡Símbolo copiado!",
-            description: "Listo para pegar.",
-            className: 'text-white border-none',
-            style: { backgroundColor: '#00CB07' }
-        });
-    };
-    
     if (!element) return null;
-    const { styles } = element.payload;
 
-     const updateGlobalStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id === selectedElement.rowId && row.type === 'columns') {
+    const updateFragment = (fragmentId: string, newProps: Partial<TextFragment>) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
-              if (col.id === selectedElement.columnId) {
-                  const newBlocks = col.blocks.map(block => {
-                      if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                          return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
-                      }
-                      return block;
-                  });
-                  return {...col, blocks: newBlocks};
-              }
-              return col;
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const newFragments = block.payload.fragments.map(frag => 
+                        frag.id === fragmentId ? { ...frag, ...newProps } : frag
+                    );
+                    return { ...block, payload: { ...block.payload, fragments: newFragments } };
+                });
+                return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
-          }
-          return row;
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        }));
+    };
+    
+    const updateFragmentStyle = (fragmentId: string, styleKey: keyof TextFragment['styles'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const newFragments = block.payload.fragments.map(frag => 
+                        frag.id === fragmentId ? { ...frag, styles: { ...frag.styles, [styleKey]: value } } : frag
+                    );
+                    return { ...block, payload: { ...block.payload, fragments: newFragments } };
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
+    };
+
+    const addFragment = () => {
+        const newFragment: TextFragment = {
+            id: `frag_${Date.now()}`,
+            text: 'Nuevo texto. ',
+            styles: {},
+        };
+         setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    return { ...block, payload: { ...block.payload, fragments: [...block.payload.fragments, newFragment] }};
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
     }
+
+    const removeFragment = (fragmentId: string) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const newFragments = block.payload.fragments.filter(frag => frag.id !== fragmentId);
+                    return { ...block, payload: { ...block.payload, fragments: newFragments } };
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
+    }
+
+    const updateGlobalStyle = (styleKey: keyof TextBlock['payload']['globalStyles'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const newGlobalStyles = { ...block.payload.globalStyles, [styleKey]: value };
+                    return { ...block, payload: { ...block.payload, globalStyles: newGlobalStyles }};
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
+    };
+    
+    const { fragments, globalStyles } = element.payload;
 
     return (
-        <>
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido Principal</h3>
-                 <div
-                    ref={contentEditableRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onBlur={handleTextChange}
-                    onMouseUp={saveSelection}
-                    onKeyUp={saveSelection}
-                    dangerouslySetInnerHTML={{ __html: element.payload.html }}
-                    className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
-                    style={{
-                        fontFamily: styles.fontFamily,
-                        fontSize: `${styles.fontSize}px`,
-                        textAlign: styles.textAlign,
-                        wordBreak: 'break-word',
-                    }}
-                />
+        <div className="space-y-4">
+            <div>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
+                <p className="text-xs text-muted-foreground mt-1">Añade y edita fragmentos de texto. Cada fragmento puede tener su propio estilo.</p>
             </div>
-            <Separator className="bg-border/20"/>
-            
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles/>Funciones Especiales</h3>
-              <p className="text-xs text-muted-foreground -mt-2">Selecciona texto en el editor de arriba para activar estas opciones.</p>
+            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                {fragments.map((fragment, index) => (
+                    <div key={fragment.id} className="p-3 border rounded-lg bg-background/30 space-y-3">
+                        <Textarea 
+                          value={fragment.text}
+                          onChange={(e) => updateFragment(fragment.id, { text: e.target.value })}
+                          className="w-full bg-background"
+                          rows={2}
+                        />
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <Toggle size="sm" pressed={fragment.styles.bold} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'bold', p)}><Bold/></Toggle>
+                            <Toggle size="sm" pressed={fragment.styles.italic} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'italic', p)}><Italic/></Toggle>
+                            <Toggle size="sm" pressed={fragment.styles.underline} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'underline', p)}><Underline/></Toggle>
+                             <Popover>
+                                <PopoverTrigger asChild><Button variant="outline" size="sm"><PaletteIcon/></Button></PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><HexColorPicker color={fragment.styles.color || '#000000'} onChange={(c) => updateFragmentStyle(fragment.id, 'color', c)}/></PopoverContent>
+                            </Popover>
+                             <Popover>
+                                <PopoverTrigger asChild><Button variant="outline" size="sm"><Highlighter/></Button></PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><HexColorPicker color={fragment.styles.highlight || '#FFFFFF'} onChange={(c) => updateFragmentStyle(fragment.id, 'highlight', c)}/></PopoverContent>
+                            </Popover>
+                             <Popover>
+                                <PopoverTrigger asChild><Button variant="outline" size="sm"><LinkIcon/></Button></PopoverTrigger>
+                                <PopoverContent>
+                                    <div className="space-y-2">
+                                        <Label>URL del enlace</Label>
+                                        <Input value={fragment.link || ''} onChange={(e) => updateFragment(fragment.id, { link: e.target.value })} placeholder="https://ejemplo.com" />
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto" onClick={() => removeFragment(fragment.id)}><Trash2 className="size-4"/></Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <Button variant="outline" className="w-full" onClick={addFragment}><PlusCircle className="mr-2"/>Añadir Fragmento de Texto</Button>
 
-              <div className="p-3 border rounded-md space-y-4 bg-background/50">
-                  <div className="flex items-center gap-2">
-                       <Popover>
-                            <PopoverTrigger asChild>
-                               <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><PaletteIcon/></Button>
-                            </PopoverTrigger>
-                            <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
-                                <Label>Color de Texto</Label>
-                                <ColorPickerAdvanced color={localTextColor} setColor={setLocalTextColor} />
-                                <Button className="w-full mt-2" onClick={() => handleExecCommand('foreColor', localTextColor)}>Aceptar</Button>
-                            </PopoverContent>
-                       </Popover>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><Highlighter/></Button>
-                            </PopoverTrigger>
-                             <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
-                                <Label>Color de Resaltado</Label>
-                                <ColorPickerAdvanced color={localHighlightColor} setColor={setLocalHighlightColor} />
-                                <Button className="w-full mt-2" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>Aceptar</Button>
-                            </PopoverContent>
-                        </Popover>
-                        <Popover>
-                             <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" onMouseDown={(e) => e.preventDefault()}><LinkIcon/></Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="space-y-2" onMouseDown={(e) => e.preventDefault()}>
-                                <Label>URL del Hipervínculo</Label>
-                                <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://ejemplo.com"/>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="new-tab-check" checked={openInNewTab} onCheckedChange={(c) => setOpenInNewTab(!!c)}/>
-                                    <label htmlFor="new-tab-check" className="text-sm font-medium">Abrir en nueva pestaña</label>
-                                </div>
-                                <Button className="w-full" onClick={handleLink}>Aplicar Enlace</Button>
-                            </PopoverContent>
-                        </Popover>
-                  </div>
-              </div>
-            </div>
-            
             <Separator className="bg-border/20"/>
+
             <div className="space-y-3">
-                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Smile/>Símbolos para copiar</h3>
-                 <div className="grid grid-cols-8 gap-1 p-2 border rounded-md bg-background/50">
-                    {insertableSymbols.map(symbol => (
-                        <TooltipProvider key={symbol}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button 
-                                        onClick={() => copySymbol(symbol)}
-                                        className="text-lg p-1 rounded-md hover:bg-accent transition-colors aspect-square flex items-center justify-center"
-                                    >
-                                        {symbol}
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Copiar '{symbol}'</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ))}
-                 </div>
-            </div>
-            <Separator className="bg-border/20"/>
-            <div className="space-y-3">
-                <Label>Fuente (Global)</Label>
-                <Select value={styles.fontFamily} onValueChange={(f) => updateGlobalStyle('fontFamily', f)}>
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><LayoutGrid />Estilos Globales</h3>
+                <Label>Fuente</Label>
+                 <Select value={globalStyles.fontFamily} onValueChange={(f) => updateGlobalStyle('fontFamily', f)}>
                     <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
                     <SelectContent>
                       {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
-            <Separator className="bg-border/20"/>
-            <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Alineación (Global)</h3>
+             <div className="space-y-4">
+                <Label>Alineación</Label>
                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','right')}><AlignRight/></Button>
+                    <Button variant={globalStyles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={globalStyles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={globalStyles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','right')}><AlignRight/></Button>
                  </div>
             </div>
-            <Separator className="bg-border/20"/>
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente (Global)</h3>
+             <div className="space-y-4">
+                <Label>Tamaño de Fuente</Label>
                 <div className="flex items-center gap-2">
                   <Slider 
-                      value={[styles.fontSize]}
+                      value={[globalStyles.fontSize]}
                       max={48}
                       min={10}
                       step={1} 
                       onValueChange={(value) => updateGlobalStyle('fontSize', value[0])}
                   />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                  <span className="text-xs text-muted-foreground w-12 text-right">{globalStyles.fontSize}px</span>
                 </div>
             </div>
-        </>
-    )
-}
+
+        </div>
+    );
+};
+
 
 const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
@@ -1693,8 +1604,8 @@ export default function CreateTemplatePage() {
             id: `text_${Date.now()}`,
             type: 'text',
             payload: {
-                html: '<p>Este es un párrafo de texto. Puedes editarlo aquí. Selecciona un fragmento para ver las opciones de edición avanzada.</p>',
-                styles: {
+                fragments: [{ id: `frag_${Date.now()}`, text: 'Este es un párrafo de texto. ', styles: {} }],
+                globalStyles: {
                     fontFamily: 'Roboto',
                     fontSize: 16,
                     textAlign: 'left',
@@ -1877,9 +1788,19 @@ export default function CreateTemplatePage() {
     };
   };
 
+  const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
+    const style: React.CSSProperties = {};
+    if (fragment.styles.bold) style.fontWeight = 'bold';
+    if (fragment.styles.italic) style.fontStyle = 'italic';
+    if (fragment.styles.underline) style.textDecoration = 'underline';
+    if (fragment.styles.color) style.color = fragment.styles.color;
+    if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
+    return style;
+  };
+
   const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { fontFamily, fontSize, textAlign } = block.payload.styles;
-    const style: React.CSSProperties = {
+    const { fontFamily, fontSize, textAlign } = block.payload.globalStyles;
+    return {
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 16}px`,
         textAlign: textAlign || 'left',
@@ -1888,7 +1809,6 @@ export default function CreateTemplatePage() {
         width: '100%',
         padding: '8px',
     };
-    return style;
   };
 
   const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
@@ -1928,10 +1848,16 @@ export default function CreateTemplatePage() {
               case 'text':
                 const textBlock = block as TextBlock;
                 return (
-                    <div 
-                        style={getTextStyle(textBlock)}
-                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html }}
-                    >
+                    <div style={getTextStyle(textBlock)}>
+                        {textBlock.payload.fragments.map(fragment => {
+                            const El = fragment.link ? 'a' : 'span';
+                            const props = fragment.link ? { href: fragment.link, target: '_blank', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
+                            return (
+                                <El key={fragment.id} {...props}>
+                                    <span style={getFragmentStyle(fragment)}>{fragment.text}</span>
+                                </El>
+                            );
+                        })}
                     </div>
                 );
               case 'emoji-static':
@@ -2786,5 +2712,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-    
