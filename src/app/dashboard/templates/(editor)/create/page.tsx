@@ -181,6 +181,7 @@ interface TextFragment {
         bold?: boolean;
         italic?: boolean;
         underline?: boolean;
+        strikethrough?: boolean;
         color?: string;
         highlight?: string;
     };
@@ -1004,7 +1005,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    if (selectedElement?.type !== 'primitive') return null;
+    const { toast } = useToast();
+
+    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'text') {
+        return <div className="text-center text-muted-foreground p-4 text-sm">Selecciona un bloque de Texto para ver sus opciones.</div>;
+    }
 
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -1016,16 +1021,25 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const element = getElement();
     if (!element) return null;
 
-    const updateFragment = (fragmentId: string, newProps: Partial<TextFragment>) => {
+    const updateFragment = (fragmentId: string, newProps: Partial<TextFragment> | { styles: Partial<TextFragment['styles']> }) => {
         setCanvasContent(prev => prev.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
+                
                 const newBlocks = col.blocks.map(block => {
                     if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    const newFragments = block.payload.fragments.map(frag => 
-                        frag.id === fragmentId ? { ...frag, ...newProps } : frag
-                    );
+
+                    const newFragments = block.payload.fragments.map(frag => {
+                        if (frag.id === fragmentId) {
+                            if ('styles' in newProps) {
+                                return { ...frag, styles: { ...frag.styles, ...newProps.styles } };
+                            }
+                            return { ...frag, ...newProps };
+                        }
+                        return frag;
+                    });
                     return { ...block, payload: { ...block.payload, fragments: newFragments } };
                 });
                 return { ...col, blocks: newBlocks };
@@ -1034,69 +1048,19 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }));
     };
     
-    const updateFragmentStyle = (fragmentId: string, styleKey: keyof TextFragment['styles'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-            const newColumns = row.payload.columns.map(col => {
-                if (col.id !== selectedElement.columnId) return col;
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    const newFragments = block.payload.fragments.map(frag => 
-                        frag.id === fragmentId ? { ...frag, styles: { ...frag.styles, [styleKey]: value } } : frag
-                    );
-                    return { ...block, payload: { ...block.payload, fragments: newFragments } };
-                });
-                return { ...col, blocks: newBlocks };
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
-    };
-
-    const addFragment = () => {
+    const handleAddFragment = () => {
         const newFragment: TextFragment = {
             id: `frag_${Date.now()}`,
-            text: 'Nuevo texto. ',
+            text: 'Nuevo texto... ',
             styles: {},
         };
-         setCanvasContent(prev => prev.map(row => {
-            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-            const newColumns = row.payload.columns.map(col => {
-                if (col.id !== selectedElement.columnId) return col;
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    return { ...block, payload: { ...block.payload, fragments: [...block.payload.fragments, newFragment] }};
-                });
-                return { ...col, blocks: newBlocks };
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
-    }
-
-    const removeFragment = (fragmentId: string) => {
         setCanvasContent(prev => prev.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
                 const newBlocks = col.blocks.map(block => {
                     if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    const newFragments = block.payload.fragments.filter(frag => frag.id !== fragmentId);
-                    return { ...block, payload: { ...block.payload, fragments: newFragments } };
-                });
-                return { ...col, blocks: newBlocks };
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
-    }
-
-    const updateGlobalStyle = (styleKey: keyof TextBlock['payload']['globalStyles'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-            const newColumns = row.payload.columns.map(col => {
-                if (col.id !== selectedElement.columnId) return col;
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
-                    const newGlobalStyles = { ...block.payload.globalStyles, [styleKey]: value };
-                    return { ...block, payload: { ...block.payload, globalStyles: newGlobalStyles }};
+                    return { ...block, payload: { ...block.payload, fragments: [...block.payload.fragments, newFragment] } };
                 });
                 return { ...col, blocks: newBlocks };
             });
@@ -1104,85 +1068,127 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }));
     };
     
-    const { fragments, globalStyles } = element.payload;
+    const handleRemoveFragment = (fragmentId: string) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id !== selectedElement.columnId) return col;
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id !== selectedElement.primitiveId || block.type !== 'text') return block;
+                    const fragments = block.payload.fragments.filter(f => f.id !== fragmentId);
+                    return { ...block, payload: { ...block.payload, fragments } };
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }));
+    };
+    
+    const handleToggleStyle = (fragmentId: string, style: 'bold' | 'italic' | 'underline' | 'strikethrough') => {
+        const fragment = element.payload.fragments.find(f => f.id === fragmentId);
+        if (fragment) {
+            updateFragment(fragmentId, { styles: { [style]: !fragment.styles[style] } });
+        }
+    };
+    
+    const handleSetLink = (fragmentId: string, url: string) => {
+        updateFragment(fragmentId, { link: url });
+        toast({
+            title: "Enlace añadido",
+            description: "La URL se ha añadido al texto seleccionado.",
+            className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
+            style: { backgroundColor: '#00CB07' }
+        });
+    };
+
+    const handleCopySymbol = (symbol: string) => {
+        navigator.clipboard.writeText(symbol);
+        toast({
+            title: 'Símbolo Copiado',
+            description: `"${symbol}" ha sido copiado al portapapeles.`,
+            className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
+            style: { backgroundColor: '#00CB07' }
+        });
+    };
 
     return (
         <div className="space-y-4">
             <div>
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
-                <p className="text-xs text-muted-foreground mt-1">Añade y edita fragmentos de texto. Cada fragmento puede tener su propio estilo.</p>
+                <p className="text-xs text-muted-foreground mt-1">Edita el texto y los estilos para cada fragmento.</p>
             </div>
-            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
-                {fragments.map((fragment, index) => (
-                    <div key={fragment.id} className="p-3 border rounded-lg bg-background/30 space-y-3">
-                        <Textarea 
-                          value={fragment.text}
-                          onChange={(e) => updateFragment(fragment.id, { text: e.target.value })}
-                          className="w-full bg-background"
-                          rows={2}
-                        />
-                        <div className="flex flex-wrap gap-2 items-center">
-                            <Toggle size="sm" pressed={fragment.styles.bold} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'bold', p)}><Bold/></Toggle>
-                            <Toggle size="sm" pressed={fragment.styles.italic} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'italic', p)}><Italic/></Toggle>
-                            <Toggle size="sm" pressed={fragment.styles.underline} onPressedChange={(p) => updateFragmentStyle(fragment.id, 'underline', p)}><Underline/></Toggle>
-                             <Popover>
-                                <PopoverTrigger asChild><Button variant="outline" size="sm"><PaletteIcon/></Button></PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><HexColorPicker color={fragment.styles.color || '#000000'} onChange={(c) => updateFragmentStyle(fragment.id, 'color', c)}/></PopoverContent>
-                            </Popover>
-                             <Popover>
-                                <PopoverTrigger asChild><Button variant="outline" size="sm"><Highlighter/></Button></PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><HexColorPicker color={fragment.styles.highlight || '#FFFFFF'} onChange={(c) => updateFragmentStyle(fragment.id, 'highlight', c)}/></PopoverContent>
-                            </Popover>
-                             <Popover>
-                                <PopoverTrigger asChild><Button variant="outline" size="sm"><LinkIcon/></Button></PopoverTrigger>
-                                <PopoverContent>
-                                    <div className="space-y-2">
-                                        <Label>URL del enlace</Label>
-                                        <Input value={fragment.link || ''} onChange={(e) => updateFragment(fragment.id, { link: e.target.value })} placeholder="https://ejemplo.com" />
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto" onClick={() => removeFragment(fragment.id)}><Trash2 className="size-4"/></Button>
+            <ScrollArea className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-3">
+                    {element.payload.fragments.map(fragment => (
+                        <div key={fragment.id} className="p-3 border rounded-lg bg-background/30 space-y-3">
+                            <Textarea
+                                value={fragment.text}
+                                onChange={(e) => updateFragment(fragment.id, { text: e.target.value })}
+                                className="w-full bg-background"
+                                rows={2}
+                            />
+                            <div className="flex flex-wrap gap-1 items-center">
+                                <Toggle size="sm" pressed={fragment.styles.bold} onPressedChange={() => handleToggleStyle(fragment.id, 'bold')}><Bold /></Toggle>
+                                <Toggle size="sm" pressed={fragment.styles.italic} onPressedChange={() => handleToggleStyle(fragment.id, 'italic')}><Italic /></Toggle>
+                                <Toggle size="sm" pressed={fragment.styles.underline} onPressedChange={() => handleToggleStyle(fragment.id, 'underline')}><Underline /></Toggle>
+                                <Toggle size="sm" pressed={fragment.styles.strikethrough} onPressedChange={() => handleToggleStyle(fragment.id, 'strikethrough')}><Strikethrough /></Toggle>
+                                
+                                <Popover>
+                                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><PaletteIcon size={16} /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.color || '#000000'} setColor={(c) => updateFragment(fragment.id, { styles: { color: c } })} /></PopoverContent>
+                                </Popover>
+                                
+                                <Popover>
+                                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><Highlighter size={16} /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 border-none"><ColorPickerAdvanced color={fragment.styles.highlight || '#ffffff'} setColor={(c) => updateFragment(fragment.id, { styles: { highlight: c } })} /></PopoverContent>
+                                </Popover>
+
+                                <Popover>
+                                    <PopoverTrigger asChild><Button variant="outline" size="sm" className="p-2 h-auto"><LinkIcon size={16} /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2">
+                                        {(popoverProps) => {
+                                            const [url, setUrl] = useState(fragment.link || '');
+                                            return (
+                                              <div className="space-y-2">
+                                                <Label className="text-xs">URL del enlace</Label>
+                                                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ejemplo.com" className="h-8" />
+                                                <Button size="sm" className="w-full" onClick={() => {
+                                                    handleSetLink(fragment.id, url);
+                                                    if ('onOpenChange' in popoverProps) {
+                                                        (popoverProps as { onOpenChange: (open: boolean) => void }).onOpenChange(false);
+                                                    }
+                                                }}>Aceptar</Button>
+                                              </div>
+                                            );
+                                        }}
+                                    </PopoverContent>
+                                </Popover>
+
+                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive ml-auto size-8" onClick={() => handleRemoveFragment(fragment.id)}><Trash2 className="size-4" /></Button>
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
-            <Button variant="outline" className="w-full" onClick={addFragment}><PlusCircle className="mr-2"/>Añadir Fragmento de Texto</Button>
-
-            <Separator className="bg-border/20"/>
-
-            <div className="space-y-3">
-                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><LayoutGrid />Estilos Globales</h3>
-                <Label>Fuente</Label>
-                 <Select value={globalStyles.fontFamily} onValueChange={(f) => updateGlobalStyle('fontFamily', f)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
-                    <SelectContent>
-                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-             <div className="space-y-4">
-                <Label>Alineación</Label>
-                 <div className="grid grid-cols-3 gap-2">
-                    <Button variant={globalStyles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={globalStyles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={globalStyles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateGlobalStyle('textAlign','right')}><AlignRight/></Button>
+                    ))}
+                </div>
+            </ScrollArea>
+            <Button variant="outline" className="w-full" onClick={handleAddFragment}><PlusCircle className="mr-2" />Añadir Fragmento de Texto</Button>
+            
+            <Separator className="bg-border/20" />
+            
+            <div>
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles />Símbolos Rápidos</h3>
+                 <div className="grid grid-cols-8 gap-1 mt-2">
+                    {popularEmojis.slice(0, 16).map(emoji => (
+                        <TooltipProvider key={emoji}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleCopySymbol(emoji)}>{emoji}</Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
                  </div>
             </div>
-             <div className="space-y-4">
-                <Label>Tamaño de Fuente</Label>
-                <div className="flex items-center gap-2">
-                  <Slider 
-                      value={[globalStyles.fontSize]}
-                      max={48}
-                      min={10}
-                      step={1} 
-                      onValueChange={(value) => updateGlobalStyle('fontSize', value[0])}
-                  />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{globalStyles.fontSize}px</span>
-                </div>
-            </div>
-
         </div>
     );
 };
@@ -1458,6 +1464,31 @@ function ThemeToggle() {
     </div>
   );
 }
+
+function getSelectedBlockType(selectedElement: SelectedElement, canvasContent: CanvasBlock[]): StaticPrimitiveBlockType | InteractiveBlockType | 'column' | 'wrapper' | null {
+    if (!selectedElement) return null;
+
+    switch (selectedElement.type) {
+        case 'column':
+            return 'column';
+        case 'wrapper':
+            return 'wrapper';
+        case 'wrapper-primitive': {
+            const wrapper = canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined;
+            const block = wrapper?.payload.blocks.find(b => b.id === selectedElement.primitiveId);
+            return block?.type || null;
+        }
+        case 'primitive': {
+            const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
+            const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+            const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+            return block?.type || null;
+        }
+        default:
+            return null;
+    }
+}
+
 
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -1793,6 +1824,7 @@ export default function CreateTemplatePage() {
     if (fragment.styles.bold) style.fontWeight = 'bold';
     if (fragment.styles.italic) style.fontStyle = 'italic';
     if (fragment.styles.underline) style.textDecoration = 'underline';
+    if (fragment.styles.strikethrough) style.textDecoration = 'line-through';
     if (fragment.styles.color) style.color = fragment.styles.color;
     if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
     return style;
@@ -1851,7 +1883,7 @@ export default function CreateTemplatePage() {
                     <div style={getTextStyle(textBlock)}>
                         {textBlock.payload.fragments.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
-                            const props = fragment.link ? { href: fragment.link, target: '_blank', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
+                            const props = fragment.link ? { href: fragment.link, target: '_blank', rel: 'noopener noreferrer', style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } } : {};
                             return (
                                 <El key={fragment.id} {...props}>
                                     <span style={getFragmentStyle(fragment)}>{fragment.text}</span>
@@ -1996,41 +2028,6 @@ export default function CreateTemplatePage() {
     return style;
   };
   
-  const getSelectedBlockType = () => {
-      if(!selectedElement) return null;
-
-      const getRow = () => {
-        if ('rowId' in selectedElement && selectedElement.rowId) return canvasContent.find(r => r.id === selectedElement.rowId);
-        if ('wrapperId' in selectedElement && selectedElement.wrapperId) return canvasContent.find(r => r.id === selectedElement.wrapperId);
-        return null;
-      }
-      const row = getRow();
-      
-      if(row?.type === 'wrapper' && selectedElement.type === 'wrapper-primitive'){
-         const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
-         return block?.type;
-      }
-      
-      if (row?.type === 'columns' && selectedElement.type === 'primitive') {
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type;
-      }
-      return null;
-  }
-  
-  const blockTypeNames: Record<StaticPrimitiveBlockType | InteractiveBlockType, string> = {
-      heading: 'título',
-      text: 'texto',
-      image: 'imagen',
-      button: 'botón',
-      separator: 'separador',
-      youtube: 'video de Youtube',
-      timer: 'contador',
-      'emoji-static': 'emoji',
-      html: 'HTML',
-      'emoji-interactive': 'emoji interactivo'
-  }
   
   const handleOpenImageModal = () => {
     if (selectedElement?.type === 'wrapper') {
@@ -2347,26 +2344,8 @@ export default function CreateTemplatePage() {
          </header>
          <Separator className="bg-border/20" />
          <ScrollArea className="flex-1 custom-scrollbar">
-            <div className="p-4 space-y-4">
-              { selectedElement?.type === 'primitive' && (
-                <Button 
-                    variant="outline" 
-                    className="w-full justify-start border-destructive text-destructive hover:bg-destructive hover:text-white"
-                    onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
-                >
-                    Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
-                </Button>
-              )}
-               { selectedElement?.type === 'wrapper-primitive' && (
-                <Button 
-                    variant="outline" 
-                    className="w-full justify-start border-destructive text-destructive hover:bg-destructive hover:text-white"
-                    onClick={() => promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId)}
-                >
-                    Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
-                </Button>
-              )}
-
+            <div className="p-4 space-y-6">
+              
               { (selectedElement?.type === 'column') && (
                 <>
                  <BackgroundEditor 
@@ -2391,19 +2370,19 @@ export default function CreateTemplatePage() {
                     onOpenImageModal={handleOpenImageModal}
                  />
               )}
-              { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
+              { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
+               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
+               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
                   <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-              { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
+              { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
                   <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-               { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType() === 'emoji-interactive' && (
+               { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
                   <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               
