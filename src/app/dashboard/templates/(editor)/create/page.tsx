@@ -2838,39 +2838,53 @@ export default function CreateTemplatePage() {
     if (!selectedElement) return null;
 
     let title = "Editor de Estilos";
-    let handleDelete = () => {};
+    let blockName = '';
 
-    switch (selectedElement.type) {
-      case 'column':
-        title = "Editor de Columna";
-        handleDelete = () => promptDeleteItem(selectedElement.rowId, selectedElement.columnId);
-        break;
-      case 'wrapper':
-        title = "Editor de Contenedor";
-        handleDelete = () => promptDeleteItem(selectedElement.wrapperId);
-        break;
-      case 'primitive':
-      case 'wrapper-primitive':
-        const blockType = getSelectedBlockType(selectedElement, canvasContent);
-        if (blockType) {
-            const blockName = [...columnContentBlocks, ...wrapperContentBlocks].find(b => b.id === blockType)?.name || "Bloque";
-            title = `Editor de ${blockName}`;
+    const blockType = getSelectedBlockType(selectedElement, canvasContent);
+    
+    if (blockType) {
+        const foundBlock = [...columnContentBlocks, ...wrapperContentBlocks].find(b => b.id === blockType);
+        if (foundBlock) {
+             blockName = `Bloque ${foundBlock.name.toLowerCase()}`;
+        } else if (blockType === 'column') {
+             blockName = 'Columna';
+        } else if (blockType === 'wrapper') {
+            blockName = 'Contenedor';
         }
-        handleDelete = () => selectedElement.type === 'primitive' 
-            ? promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)
-            : promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId);
-        break;
     }
 
+    const handleDelete = () => {
+        switch (selectedElement.type) {
+            case 'column':
+                promptDeleteItem(selectedElement.rowId, selectedElement.columnId);
+                break;
+            case 'wrapper':
+                promptDeleteItem(selectedElement.wrapperId);
+                break;
+            case 'primitive':
+                promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId);
+                break;
+            case 'wrapper-primitive':
+                promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId);
+                break;
+        }
+    };
+    
+    if (!blockName) return null;
+
     return (
-        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-4 flex items-center justify-between">
-            <h2 className="font-semibold text-lg">{title}</h2>
-            <Button variant="destructive" size="icon" onClick={handleDelete} className="size-8">
+        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-4 flex flex-col justify-center">
+             <Button 
+                variant="outline" 
+                onClick={handleDelete}
+                className="w-full justify-between text-[#F00000] border-[#F00000] hover:bg-[#F00000] hover:text-white"
+            >
+                <span className="capitalize">{blockName}</span>
                 <Trash2 className="size-4" />
             </Button>
         </header>
     );
-  };
+};
 
 
   return (
@@ -3321,6 +3335,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
