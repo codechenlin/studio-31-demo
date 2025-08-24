@@ -91,6 +91,7 @@ import {
   Cloud,
   Leaf,
   Droplet,
+  Layers,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -2307,11 +2308,13 @@ export default function CreateTemplatePage() {
       }
       case 'drops': {
         path = `M0,0`;
+        const dropHeight = height * 0.9;
+        const dropWidth = segmentWidth * 0.6;
         for (let i = 0; i < frequency; i++) {
-          const startX = i * segmentWidth;
-          const midX = startX + segmentWidth / 2;
-          const endX = startX + segmentWidth;
-          path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${height * 0.9} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
+            const startX = i * segmentWidth + (segmentWidth - dropWidth) / 2;
+            const midX = startX + dropWidth / 2;
+            const endX = startX + dropWidth;
+            path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${dropHeight} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
         }
         break;
       }
@@ -2326,23 +2329,25 @@ export default function CreateTemplatePage() {
         break;
       }
       case 'leaves': {
-        path = `M0,${height/2}`;
+         path = '';
+         const leafHeight = height * 0.8;
+         const leafWidth = segmentWidth * 0.8;
         for (let i = 0; i < frequency; i++) {
-          const startX = i * segmentWidth;
-          const midX = startX + segmentWidth / 2;
-          const endX = startX + segmentWidth;
+          const startX = i * segmentWidth + (segmentWidth - leafWidth) / 2;
+          const midX = startX + leafWidth / 2;
+          const endX = startX + leafWidth;
           const midY = height / 2;
-          path += ` M${startX},${midY} Q${midX},${midY - height/2} ${endX},${midY} Q${midX},${midY + height/2} ${startX},${midY} Z`;
+          path += ` M${startX},${midY} Q${midX},${midY - leafHeight/2} ${endX},${midY} Q${midX},${midY + leafHeight/2} ${startX},${midY} Z`;
         }
         break;
       }
       case 'scallops': {
-        path = 'M0,0';
+        path = `M0,${height}`;
         for (let i = 0; i < frequency; i++) {
-            const startX = i * segmentWidth;
-            const endX = startX + segmentWidth;
-            const midX = startX + segmentWidth / 2;
-            path += ` L${startX},0 A${segmentWidth/2},${height} 0 0,0 ${endX},0`;
+          const startX = i * segmentWidth;
+          const endX = startX + segmentWidth;
+          const midX = startX + segmentWidth / 2;
+          path += ` L${startX},${height} Q${midX},0 ${endX},${height}`;
         }
         path += ' Z';
         break;
@@ -2417,21 +2422,38 @@ export default function CreateTemplatePage() {
         height: `${thickness}px`,
         borderRadius: `${borderRadius}px`,
         width: '100%',
-        backgroundColor: style === 'solid' ? color : undefined,
-        backgroundImage: style !== 'solid' ? 
-            (style === 'dotted' ? `radial-gradient(circle, ${color} ${thickness / 2}px, transparent ${thickness / 2}px)`
-            : `linear-gradient(to right, ${color} 60%, transparent 40%)`)
-            : undefined,
-        backgroundSize: style !== 'solid' ?
-            (style === 'dotted' ? `${thickness * 2}px ${thickness * 2}px`
-            : `${thickness * 4}px ${thickness}px`)
-            : undefined,
+        backgroundColor: style === 'solid' ? color : 'transparent',
+        backgroundImage: style !== 'solid' ? `linear-gradient(to right, ${color} ${style === 'dashed' ? '60%' : '100%'}, transparent ${style === 'dashed' ? '40%' : '0%'})` : undefined,
+        backgroundSize: style === 'dotted' ? `${thickness * 2}px ${thickness}px` : (style === 'dashed' ? `${thickness * 3}px ${thickness}px` : undefined),
         backgroundRepeat: 'repeat-x',
     };
 
+    const containerStyle: React.CSSProperties = {
+        height: `${block.payload.height}px`,
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        padding: `0 ${borderRadius}px`
+    };
+
+    if (style === 'dotted') {
+        const dotStyle = {
+            width: `${thickness}px`,
+            height: `${thickness}px`,
+            backgroundColor: color,
+            borderRadius: '50%',
+        };
+        const dotCount = Math.floor(100 / (thickness/5)); // Approximation
+        return (
+            <div style={{...containerStyle, justifyContent: 'space-between', padding: `0 ${thickness/2}px` }}>
+                {Array.from({length: dotCount}).map((_, i) => <div key={i} style={dotStyle}/>)}
+            </div>
+        )
+    }
+
     return (
-        <div style={{ height: `${block.payload.height}px`, display: 'flex', alignItems: 'center', width: '100%' }}>
-            <div style={lineStyle} />
+        <div style={containerStyle}>
+            <div style={lineStyle}></div>
         </div>
     );
 };
@@ -2843,7 +2865,7 @@ export default function CreateTemplatePage() {
     const blockType = getSelectedBlockType(selectedElement, canvasContent);
     
     if (blockType) {
-        const foundBlock = [...columnContentBlocks, ...wrapperContentBlocks].find(b => b.id === blockType);
+        const foundBlock = [...columnContentBlocks, ...wrapperContentBlocks, ...mainContentBlocks].find(b => b.id === blockType);
         if (foundBlock) {
              blockName = `Bloque ${foundBlock.name.toLowerCase()}`;
         } else if (blockType === 'column') {
@@ -2856,7 +2878,8 @@ export default function CreateTemplatePage() {
     const handleDelete = () => {
         switch (selectedElement.type) {
             case 'column':
-                promptDeleteItem(selectedElement.rowId, selectedElement.columnId);
+                // Cannot delete a single column, should delete the row
+                promptDeleteItem(selectedElement.rowId);
                 break;
             case 'wrapper':
                 promptDeleteItem(selectedElement.wrapperId);
@@ -2873,7 +2896,7 @@ export default function CreateTemplatePage() {
     if (!blockName) return null;
 
     return (
-        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-4 flex flex-col justify-center">
+        <div className="mb-4">
              <Button 
                 variant="outline" 
                 onClick={handleDelete}
@@ -2882,7 +2905,7 @@ export default function CreateTemplatePage() {
                 <span className="capitalize">{blockName}</span>
                 <Trash2 className="size-4" />
             </Button>
-        </header>
+        </div>
     );
 };
 
@@ -3028,11 +3051,17 @@ export default function CreateTemplatePage() {
       </main>
 
       <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
-         <StyleEditorHeader />
-         <Separator className="bg-border/20" />
+        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
+            <Tabs defaultValue="style" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="style"><PaletteIcon className="mr-2"/>Estilo</TabsTrigger>
+                    <TabsTrigger value="layers"><Layers className="mr-2"/>Capas</TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </header>
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-6">
-              
+              <StyleEditorHeader />
               { (selectedElement?.type === 'column') && (
                 <>
                  <BackgroundEditor 
@@ -3335,6 +3364,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
