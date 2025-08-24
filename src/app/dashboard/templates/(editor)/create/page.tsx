@@ -2335,11 +2335,13 @@ export default function CreateTemplatePage() {
       }
       case 'clouds': {
         const cloudWidth = segmentWidth * 0.8;
+        const startY = height * 0.6;
+        const cloudHeight = height * 0.4; // Max height of the cloud part
         for (let i = 0; i < frequency; i++) {
           const startX = i * segmentWidth + segmentWidth * 0.1;
-          const y = height * 0.6;
-          const r = cloudWidth * 0.2;
-          path += ` M${startX},${y} A${r},${r} 0 0,1 ${startX + r},${y-r*0.8} A${r*1.5},${r*1.5} 0 0,1 ${startX + cloudWidth - r},${y-r*0.8} A${r},${r} 0 0,1 ${startX + cloudWidth},${y} Z`;
+          const r1 = Math.min(cloudWidth * 0.2, cloudHeight * 0.5);
+          const r2 = Math.min(cloudWidth * 0.3, cloudHeight * 0.8);
+          path += ` M${startX},${startY} A${r1},${r1} 0 0,1 ${startX + r1},${startY-r1*0.8} A${r2},${r2} 0 0,1 ${startX + cloudWidth - r1},${startY-r1*0.8} A${r1},${r1} 0 0,1 ${startX + cloudWidth},${startY} Z`;
         }
         break;
       }
