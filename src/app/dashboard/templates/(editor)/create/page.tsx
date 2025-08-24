@@ -93,6 +93,7 @@ import {
   Droplet,
   Layers,
   PlayCircle,
+  Clock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -288,6 +289,12 @@ interface YouTubeBlock extends BaseBlock {
         videoId: string | null;
         title: string;
         showTitle: boolean;
+        duration: {
+            hours: string;
+            minutes: string;
+            seconds: string;
+        },
+        showDuration: boolean;
         link: {
             openInNewTab: boolean;
         };
@@ -1895,6 +1902,11 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updateStyle('border', { ...element.payload.styles.border, [key]: value });
     }
 
+    const updateDuration = (unit: 'hours' | 'minutes' | 'seconds', value: string) => {
+        const numericValue = value.replace(/[^0-9]/g, '').slice(0, 2);
+        updatePayload('duration', { ...element.payload.duration, [unit]: numericValue });
+    };
+
     const handleUrlChange = (newUrl: string) => {
         let videoId: string | null = null;
         try {
@@ -1909,6 +1921,9 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
         updatePayload('url', newUrl);
         updatePayload('videoId', videoId);
+        if (videoId) {
+            updatePayload('link', { ...element.payload.link, url: newUrl });
+        }
     };
     
     const { border } = element.payload.styles;
@@ -1929,28 +1944,6 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             )}
         </div>
 
-        <div className="space-y-2">
-            <Label>Título del Video (Opcional)</Label>
-            <Input
-                value={element.payload.title}
-                onChange={(e) => updatePayload('title', e.target.value)}
-                placeholder="Título personalizado aquí..."
-                className="bg-transparent border-border/50"
-            />
-        </div>
-        
-        <div className="flex items-center space-x-2">
-            <Checkbox
-                id={`yt-show-title-${element.id}`}
-                checked={element.payload.showTitle}
-                onCheckedChange={(checked) => updatePayload('showTitle', !!checked)}
-            />
-            <label htmlFor={`yt-show-title-${element.id}`} className="text-sm font-medium leading-none">
-                Mostrar título en el video
-            </label>
-        </div>
-
-
         <div className="flex items-center space-x-2">
             <Checkbox
                 id={`yt-new-tab-${element.id}`}
@@ -1964,6 +1957,52 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 Abrir en una nueva pestaña
             </label>
         </div>
+
+        <Separator className="bg-border/20"/>
+
+        <div className="space-y-2">
+            <Label>Título del Video (Opcional)</Label>
+            <Input
+                value={element.payload.title}
+                onChange={(e) => updatePayload('title', e.target.value)}
+                placeholder="Título personalizado aquí..."
+                className="bg-transparent border-border/50"
+            />
+             <div className="flex items-center space-x-2 pt-1">
+                <Checkbox
+                    id={`yt-show-title-${element.id}`}
+                    checked={element.payload.showTitle}
+                    onCheckedChange={(checked) => updatePayload('showTitle', !!checked)}
+                />
+                <label htmlFor={`yt-show-title-${element.id}`} className="text-sm font-medium leading-none">
+                    Mostrar título en el video
+                </label>
+            </div>
+        </div>
+
+        <Separator className="bg-border/20" />
+
+        <div className="space-y-2">
+            <Label>Duración del Video (Opcional)</Label>
+            <div className="flex items-center gap-2">
+                <Input type="text" placeholder="HH" value={element.payload.duration.hours} onChange={e => updateDuration('hours', e.target.value)} className="w-14 text-center"/>
+                <span>:</span>
+                <Input type="text" placeholder="MM" value={element.payload.duration.minutes} onChange={e => updateDuration('minutes', e.target.value)} className="w-14 text-center"/>
+                <span>:</span>
+                <Input type="text" placeholder="SS" value={element.payload.duration.seconds} onChange={e => updateDuration('seconds', e.target.value)} className="w-14 text-center"/>
+            </div>
+            <div className="flex items-center space-x-2 pt-1">
+                <Checkbox
+                    id={`yt-show-duration-${element.id}`}
+                    checked={element.payload.showDuration}
+                    onCheckedChange={(checked) => updatePayload('showDuration', !!checked)}
+                />
+                <label htmlFor={`yt-show-duration-${element.id}`} className="text-sm font-medium leading-none">
+                    Mostrar duración en el video
+                </label>
+            </div>
+        </div>
+
 
         <Separator className="bg-border/20"/>
         
@@ -2320,8 +2359,15 @@ export default function CreateTemplatePage() {
                 videoId: null,
                 title: '',
                 showTitle: false,
+                duration: {
+                    hours: '',
+                    minutes: '',
+                    seconds: '',
+                },
+                showDuration: false,
                 link: {
-                  openInNewTab: false
+                  url: '',
+                  openInNewTab: false,
                 },
                 styles: {
                     playButtonType: 'default',
@@ -2792,7 +2838,7 @@ export default function CreateTemplatePage() {
                     );
                 case 'youtube': {
                     const youtubeBlock = block as YouTubeBlock;
-                    const { videoId, styles, url, link, title, showTitle } = youtubeBlock.payload;
+                    const { videoId, styles, link, title, showTitle, duration, showDuration } = youtubeBlock.payload;
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
@@ -2802,9 +2848,9 @@ export default function CreateTemplatePage() {
 
                     const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
                     
-                    const WrapperComponent = url && videoId ? 'a' : 'div';
-                    const wrapperProps = url && videoId ? {
-                        href: url,
+                    const WrapperComponent = link.url && videoId ? 'a' : 'div';
+                    const wrapperProps = link.url && videoId ? {
+                        href: link.url,
                         target: link.openInNewTab ? '_blank' : '_self',
                         rel: "noopener noreferrer"
                     } : {};
@@ -2822,6 +2868,20 @@ export default function CreateTemplatePage() {
                         }
                     }
 
+                    const formatDuration = () => {
+                        const { hours, minutes, seconds } = duration;
+                        if (!minutes) return null; // Minutes are required
+
+                        const parts = [];
+                        if (hours && hours !== '00') parts.push(hours);
+                        parts.push(minutes.padStart(2, '0'));
+                        if (seconds && seconds !== '00') parts.push(seconds.padStart(2, '0'));
+
+                        return parts.join(':');
+                    };
+
+                    const displayDuration = showDuration ? formatDuration() : null;
+
                     return (
                         <div className="p-2">
                            <div 
@@ -2838,7 +2898,7 @@ export default function CreateTemplatePage() {
                                 style={{
                                   borderRadius: `${styles.borderRadius - styles.borderWidth}px`,
                                   overflow: 'hidden',
-                                  cursor: (url && videoId) ? 'pointer' : 'default',
+                                  cursor: (link.url && videoId) ? 'pointer' : 'default',
                                 }}
                             >
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
@@ -2854,6 +2914,11 @@ export default function CreateTemplatePage() {
                                 {showTitle && title && (
                                     <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/80 to-transparent">
                                         <p className="text-sm font-semibold truncate">{title}</p>
+                                    </div>
+                                )}
+                                {displayDuration && (
+                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-sm">
+                                        {displayDuration}
                                     </div>
                                 )}
                             </WrapperComponent>
@@ -3692,12 +3757,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
