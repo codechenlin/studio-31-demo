@@ -296,6 +296,7 @@ interface YouTubeBlock extends BaseBlock {
         },
         showDuration: boolean;
         link: {
+            url: string,
             openInNewTab: boolean;
         };
         styles: {
@@ -1919,10 +1920,15 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         } catch (error) {
             // Invalid URL format
         }
-        updatePayload('url', newUrl);
-        updatePayload('videoId', videoId);
-        if (videoId) {
+
+        if(videoId) {
+            updatePayload('url', newUrl);
+            updatePayload('videoId', videoId);
             updatePayload('link', { ...element.payload.link, url: newUrl });
+        } else {
+            updatePayload('url', newUrl);
+            updatePayload('videoId', null);
+            updatePayload('link', { ...element.payload.link, url: '' });
         }
     };
     
@@ -2849,7 +2855,7 @@ export default function CreateTemplatePage() {
                     const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
                     
                     const WrapperComponent = link.url && videoId ? 'a' : 'div';
-                    const wrapperProps = link.url && videoId ? {
+                    const wrapperProps = (link.url && videoId) ? {
                         href: link.url,
                         target: link.openInNewTab ? '_blank' : '_self',
                         rel: "noopener noreferrer"
@@ -2870,16 +2876,27 @@ export default function CreateTemplatePage() {
 
                     const formatDuration = () => {
                         const { hours, minutes, seconds } = duration;
-                        if (!minutes && !hours && !seconds) return null;
+                        
+                        const h = parseInt(hours || '0', 10);
+                        const m = parseInt(minutes || '0', 10);
+                        const s = parseInt(seconds || '0', 10);
+
+                        if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
 
                         const parts = [];
-                        if (hours && hours !== '00') parts.push(hours);
-                        parts.push(minutes ? minutes.padStart(2, '0') : '00');
-                        if (seconds) parts.push(seconds.padStart(2, '0'));
+                        if (h > 0) parts.push(h.toString());
+                        
+                        if(h > 0 || m > 0) {
+                           parts.push(m.toString().padStart(h > 0 ? 2 : 1, '0'));
+                        }
+                        
+                        if (s > 0 || m > 0 || h > 0) {
+                             parts.push(s.toString().padStart(2, '0'));
+                        }
 
                         if (parts.length === 0) return null;
-                        if (parts.length === 1) return `0:${parts[0]}`; // Handle only minutes case
-
+                        if(parts.length === 1) return `0:${parts[0].padStart(2,'0')}`;
+                        
                         return parts.join(':');
                     };
 
@@ -2920,7 +2937,7 @@ export default function CreateTemplatePage() {
                                     </div>
                                 )}
                                 {displayDuration && (
-                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-sm">
+                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-md">
                                         {displayDuration}
                                     </div>
                                 )}
@@ -3264,7 +3281,6 @@ export default function CreateTemplatePage() {
     const handleDelete = () => {
         switch (selectedElement.type) {
             case 'column':
-                // Cannot delete a single column, should delete the row
                 promptDeleteItem(selectedElement.rowId);
                 break;
             case 'wrapper':
@@ -3286,7 +3302,7 @@ export default function CreateTemplatePage() {
         <Button
           variant="outline"
           onClick={handleDelete}
-          className="w-full justify-between text-[#F00000] border-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-white dark:hover:bg-[#F00000] dark:border-[#F00000]"
+          className="w-full justify-between text-[#F00000] border-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white dark:hover:bg-[#F00000] dark:border-[#F00000]"
         >
           <span className="capitalize">{blockName}</span>
           <Trash2 className="size-4" />
