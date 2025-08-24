@@ -2932,7 +2932,7 @@ export default function CreateTemplatePage() {
                                     }}
                                 />
                                 {showTitle && title && (
-                                    <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/80 to-transparent">
+                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/80 to-transparent">
                                         <p className="text-sm font-semibold truncate">{title}</p>
                                     </div>
                                 )}
@@ -3298,7 +3298,7 @@ export default function CreateTemplatePage() {
     if (!blockName) return null;
 
     return (
-       <div className="mb-4">
+      <div className="mb-4">
         <Button
           variant="outline"
           onClick={handleDelete}
