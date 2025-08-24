@@ -2266,17 +2266,17 @@ export default function CreateTemplatePage() {
   };
 
   const generateWavePath = (waveCount: number, width: number, height: number): string => {
-    if (width === 0) return '';
-    const amplitude = 20;
+    if (width === 0 || height === 0) return '';
+    const amplitude = height / 2;
     const frequency = waveCount;
     const segments = 50; 
     const segmentWidth = width / segments;
     
-    let path = `M0,${height / 2}`;
+    let path = `M0,${amplitude}`;
     
     for (let i = 0; i <= segments; i++) {
         const x = i * segmentWidth;
-        const y = height / 2 + amplitude * Math.sin((i / segments) * frequency * Math.PI);
+        const y = amplitude + (amplitude * 0.8) * Math.sin((i / segments) * frequency * Math.PI);
         path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
     }
     
@@ -2286,15 +2286,25 @@ export default function CreateTemplatePage() {
   
   const WavesSeparator = ({ block }: { block: SeparatorBlock }) => {
     const ref = useRef<SVGSVGElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const [dimensions, setDimensions] = useState({ width: 0, height: block.payload.height });
     const { background, waveCount } = block.payload.waves;
 
     useEffect(() => {
+        const observer = new ResizeObserver(entries => {
+            if (entries[0]) {
+                const { width, height } = entries[0].contentRect;
+                setDimensions({ width, height });
+            }
+        });
         if (ref.current) {
-            const { width, height } = ref.current.getBoundingClientRect();
-            setDimensions({ width, height });
+            observer.observe(ref.current);
         }
-    }, [ref, block.payload.height]); // Re-calculate on height change
+        return () => {
+            if (ref.current) {
+                observer.unobserve(ref.current);
+            }
+        };
+    }, []);
 
     const pathData = generateWavePath(waveCount, dimensions.width, dimensions.height);
 
@@ -2303,7 +2313,8 @@ export default function CreateTemplatePage() {
             return background.color1;
         }
         if (background.type === 'gradient') {
-            return `url(#wave-gradient-${block.id})`;
+             if (background.direction === 'radial') return `url(#wave-gradient-radial-${block.id})`;
+            return `url(#wave-gradient-linear-${block.id})`;
         }
         return 'none';
     };
@@ -2312,11 +2323,11 @@ export default function CreateTemplatePage() {
         <svg ref={ref} width="100%" height="100%" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
             {background.type === 'gradient' && (
                 <defs>
-                    <linearGradient id={`wave-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                    <linearGradient id={`wave-gradient-linear-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
                         <stop offset="0%" stopColor={background.color1} />
                         <stop offset="100%" stopColor={background.color2} />
                     </linearGradient>
-                    <radialGradient id={`wave-gradient-${block.id}-radial`}>
+                    <radialGradient id={`wave-gradient-radial-${block.id}`}>
                         <stop offset="0%" stopColor={background.color1} />
                         <stop offset="100%" stopColor={background.color2} />
                     </radialGradient>
@@ -2327,6 +2338,30 @@ export default function CreateTemplatePage() {
     );
   }
 
+    const getLineStyle = (linePayload: SeparatorBlock['payload']['line']): React.CSSProperties => {
+        const style: React.CSSProperties = {
+            height: `${linePayload.thickness}px`,
+            backgroundColor: linePayload.color,
+            borderRadius: `${linePayload.borderRadius}px`,
+            width: '100%',
+        };
+
+        if (linePayload.style === 'dotted') {
+            style.backgroundImage = `radial-gradient(circle, ${linePayload.color} ${linePayload.thickness / 2}px, transparent ${linePayload.thickness / 2}px)`;
+            style.backgroundSize = `${linePayload.thickness * 2}px ${linePayload.thickness * 2}px`;
+            style.backgroundColor = 'transparent';
+        }
+
+        if (linePayload.style === 'dashed') {
+            style.backgroundImage = `linear-gradient(to right, ${linePayload.color} 60%, transparent 40%)`;
+            style.backgroundSize = `${linePayload.thickness * 4}px ${linePayload.thickness}px`;
+            style.backgroundRepeat = 'repeat-x';
+            style.backgroundColor = 'transparent';
+        }
+
+        return style;
+    };
+  
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
 
@@ -2396,19 +2431,12 @@ export default function CreateTemplatePage() {
                     const separatorBlock = block as SeparatorBlock;
                     const { payload } = separatorBlock;
                     return (
-                        <div style={{ height: `${payload.height}px`, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0' }}>
+                        <div style={{ height: `${payload.height}px`, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {payload.style === 'line' && (
-                                <div style={{
-                                    height: '100%',
-                                    width: '100%',
-                                    borderTopStyle: payload.line.style,
-                                    borderTopWidth: `${payload.line.thickness}px`,
-                                    borderTopColor: payload.line.color,
-                                    borderRadius: `${payload.line.borderRadius}px`
-                                }} />
+                                <div style={getLineStyle(payload.line)} />
                             )}
                             {payload.style === 'waves' && (
-                               <WavesSeparator block={separatorBlock} />
+                               <div className="w-full h-full"><WavesSeparator block={separatorBlock} /></div>
                             )}
                             {payload.style === 'dots' && (
                                 <div className="flex justify-around items-center w-full">
