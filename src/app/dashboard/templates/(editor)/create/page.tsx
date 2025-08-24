@@ -160,7 +160,7 @@ type TextAlign = 'left' | 'center' | 'right';
 type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
-type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'clouds';
+type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
 
 interface BaseBlock {
   id: string;
@@ -1757,13 +1757,13 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 <SelectItem value="drops"><Droplet className="inline-block mr-2" />Gotas</SelectItem>
                                 <SelectItem value="zigzag"><Minus className="inline-block mr-2" />Zigzag</SelectItem>
                                 <SelectItem value="leaves"><Leaf className="inline-block mr-2" />Hojas</SelectItem>
-                                <SelectItem value="clouds"><Cloud className="inline-block mr-2" />Nubes</SelectItem>
+                                <SelectItem value="scallops"><Cloud className="inline-block mr-2" />Vieiras</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label>Frecuencia</Label>
-                        <Slider value={[payload.shapes.frequency]} min={1} max={20} step={1} onValueChange={v => updateSubPayload('shapes', 'frequency', v[0])}/>
+                        <Label>Frecuencia de las Olas</Label>
+                        <Slider value={[payload.shapes.frequency]} min={1} max={50} step={1} onValueChange={v => updateSubPayload('shapes', 'frequency', v[0])}/>
                     </div>
                      <Tabs value={payload.shapes.background.type} onValueChange={(v) => updateShapesBackground('type', v)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
@@ -2290,10 +2290,10 @@ export default function CreateTemplatePage() {
     width: number,
     height: number
   ): string => {
-    if (width === 0 || height === 0) return "";
-    let path = "";
+    if (width === 0 || height <= 0) return "";
+    let path = `M0,${height}`;
     const segmentWidth = width / frequency;
-
+  
     switch (type) {
       case 'waves': {
         const amplitude = height / 2;
@@ -2306,6 +2306,7 @@ export default function CreateTemplatePage() {
         break;
       }
       case 'drops': {
+        path = `M0,0`;
         for (let i = 0; i < frequency; i++) {
           const startX = i * segmentWidth;
           const midX = startX + segmentWidth / 2;
@@ -2315,40 +2316,41 @@ export default function CreateTemplatePage() {
         break;
       }
       case 'zigzag': {
-        path = `M0,${height / 4}`;
+        path = `M0,${height / 2}`;
         for (let i = 0; i < frequency * 2; i++) {
-          const x = ((i + 1) / (frequency * 2)) * width;
-          const y = i % 2 === 0 ? height * 0.75 : height * 0.25;
-          path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+            const x = ((i + 0.5) / (frequency * 2)) * width;
+            const y = i % 2 === 0 ? 0 : height;
+            path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
         }
+        path += ` L${width},${height/2}`;
         break;
       }
       case 'leaves': {
+        path = `M0,${height/2}`;
         for (let i = 0; i < frequency; i++) {
           const startX = i * segmentWidth;
           const midX = startX + segmentWidth / 2;
           const endX = startX + segmentWidth;
           const midY = height / 2;
-          path += ` M${startX},${midY} Q${midX},${height * 0.1} ${endX},${midY} Q${midX},${height * 0.9} ${startX},${midY} Z`;
+          path += ` M${startX},${midY} Q${midX},${midY - height/2} ${endX},${midY} Q${midX},${midY + height/2} ${startX},${midY} Z`;
         }
         break;
       }
-      case 'clouds': {
-        const cloudWidth = segmentWidth * 0.8;
-        const startY = height * 0.6;
-        const cloudHeight = height * 0.4; // Max height of the cloud part
+      case 'scallops': {
+        path = 'M0,0';
         for (let i = 0; i < frequency; i++) {
-          const startX = i * segmentWidth + segmentWidth * 0.1;
-          const r1 = Math.min(cloudWidth * 0.2, cloudHeight * 0.5);
-          const r2 = Math.min(cloudWidth * 0.3, cloudHeight * 0.8);
-          path += ` M${startX},${startY} A${r1},${r1} 0 0,1 ${startX + r1},${startY-r1*0.8} A${r2},${r2} 0 0,1 ${startX + cloudWidth - r1},${startY-r1*0.8} A${r1},${r1} 0 0,1 ${startX + cloudWidth},${startY} Z`;
+            const startX = i * segmentWidth;
+            const endX = startX + segmentWidth;
+            const midX = startX + segmentWidth / 2;
+            path += ` L${startX},0 A${segmentWidth/2},${height} 0 0,0 ${endX},0`;
         }
+        path += ' Z';
         break;
       }
     }
     return path;
   };
-
+  
   
   const ShapesSeparator = ({ block }: { block: SeparatorBlock }) => {
     const ref = useRef<SVGSVGElement>(null);
@@ -2415,19 +2417,17 @@ export default function CreateTemplatePage() {
         height: `${thickness}px`,
         borderRadius: `${borderRadius}px`,
         width: '100%',
+        backgroundColor: style === 'solid' ? color : undefined,
+        backgroundImage: style !== 'solid' ? 
+            (style === 'dotted' ? `radial-gradient(circle, ${color} ${thickness / 2}px, transparent ${thickness / 2}px)`
+            : `linear-gradient(to right, ${color} 60%, transparent 40%)`)
+            : undefined,
+        backgroundSize: style !== 'solid' ?
+            (style === 'dotted' ? `${thickness * 2}px ${thickness * 2}px`
+            : `${thickness * 4}px ${thickness}px`)
+            : undefined,
+        backgroundRepeat: 'repeat-x',
     };
-
-    if (style === 'solid') {
-        lineStyle.backgroundColor = color;
-    } else if (style === 'dotted') {
-        lineStyle.backgroundImage = `radial-gradient(circle, ${color} ${thickness / 2}px, transparent ${thickness / 2}px)`;
-        lineStyle.backgroundSize = `${thickness * 2}px ${thickness * 2}px`;
-        lineStyle.backgroundRepeat = 'repeat-x';
-    } else if (style === 'dashed') {
-        lineStyle.backgroundImage = `linear-gradient(to right, ${color} 60%, transparent 40%)`;
-        lineStyle.backgroundSize = `${thickness * 4}px ${thickness}px`;
-        lineStyle.backgroundRepeat = 'repeat-x';
-    }
 
     return (
         <div style={{ height: `${block.payload.height}px`, display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -2634,7 +2634,7 @@ export default function CreateTemplatePage() {
     
     if (backgroundImage) {
         style.backgroundImage = `url(${backgroundImage.url})`;
-        style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit;
+        style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit,
         style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`,
         style.backgroundRepeat = 'no-repeat';
     }
@@ -3291,4 +3291,4 @@ export default function CreateTemplatePage() {
   );
 }
 
-    
+
