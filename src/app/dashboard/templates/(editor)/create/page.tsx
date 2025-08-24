@@ -286,13 +286,20 @@ interface YouTubeBlock extends BaseBlock {
     payload: {
         url: string;
         videoId: string | null;
+        title: string;
+        showTitle: boolean;
         link: {
             openInNewTab: boolean;
         };
         styles: {
             playButtonType: 'default' | 'brand';
             borderRadius: number;
-            borderColor: string;
+            border: {
+                type: 'solid' | 'gradient';
+                color1: string;
+                color2?: string;
+                direction?: GradientDirection;
+            };
             borderWidth: number;
         }
     }
@@ -1884,6 +1891,10 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updatePayload('link', { ...element.payload.link, [key]: value });
     }
 
+    const updateBorder = (key: string, value: any) => {
+        updateStyle('border', { ...element.payload.styles.border, [key]: value });
+    }
+
     const handleUrlChange = (newUrl: string) => {
         let videoId: string | null = null;
         try {
@@ -1900,6 +1911,8 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updatePayload('videoId', videoId);
     };
     
+    const { border } = element.payload.styles;
+
     return (
       <div className="space-y-4">
         <div className="space-y-2">
@@ -1915,6 +1928,28 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <p className="text-xs text-destructive">URL de YouTube no válida.</p>
             )}
         </div>
+
+        <div className="space-y-2">
+            <Label>Título del Video (Opcional)</Label>
+            <Input
+                value={element.payload.title}
+                onChange={(e) => updatePayload('title', e.target.value)}
+                placeholder="Título personalizado aquí..."
+                className="bg-transparent border-border/50"
+            />
+        </div>
+        
+        <div className="flex items-center space-x-2">
+            <Checkbox
+                id={`yt-show-title-${element.id}`}
+                checked={element.payload.showTitle}
+                onCheckedChange={(checked) => updatePayload('showTitle', !!checked)}
+            />
+            <label htmlFor={`yt-show-title-${element.id}`} className="text-sm font-medium leading-none">
+                Mostrar título en el video
+            </label>
+        </div>
+
 
         <div className="flex items-center space-x-2">
             <Checkbox
@@ -1959,7 +1994,43 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
              <div className="space-y-2">
                 <Label>Color del Borde</Label>
-                <ColorPickerAdvanced color={element.payload.styles.borderColor} setColor={(c) => updateStyle('borderColor', c)} />
+                 <Tabs value={border.type} onValueChange={(v) => updateBorder('type', v)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="solid">Sólido</TabsTrigger>
+                        <TabsTrigger value="gradient">Degradado</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                <div className="space-y-3 pt-2">
+                    <Label>Color 1</Label>
+                    <ColorPickerAdvanced color={border.color1} setColor={(c) => updateBorder('color1', c)} />
+                </div>
+                {border.type === 'gradient' && (
+                    <>
+                    <div className="space-y-3">
+                        <Label>Color 2</Label>
+                        <ColorPickerAdvanced color={border.color2 || '#3357FF'} setColor={(c) => updateBorder('color2', c)} />
+                    </div>
+                    <div className="space-y-3">
+                        <Label>Dirección del Degradado</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBorder('direction', 'vertical')}><ArrowDown /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Vertical</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBorder('direction', 'horizontal')}><ArrowRight /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Horizontal</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBorder('direction', 'radial')}><Sun className="size-4" /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Radial</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                    </>
+                )}
             </div>
              <div className="space-y-2">
                 <Label>Radio del Borde</Label>
@@ -2247,13 +2318,20 @@ export default function CreateTemplatePage() {
             payload: {
                 url: '',
                 videoId: null,
+                title: '',
+                showTitle: false,
                 link: {
                   openInNewTab: false
                 },
                 styles: {
                     playButtonType: 'default',
                     borderRadius: 12,
-                    borderColor: '#000000',
+                    border: {
+                        type: 'solid',
+                        color1: '#000000',
+                        color2: '#ffffff',
+                        direction: 'vertical'
+                    },
                     borderWidth: 0,
                 }
             }
@@ -2470,7 +2548,7 @@ export default function CreateTemplatePage() {
     let path = "";
   
     switch (type) {
-      case 'waves': {
+       case 'waves': {
         const amplitude = height / 2;
         path = `M0,${amplitude}`;
         for (let i = 0; i <= frequency * 2; i++) {
@@ -2714,7 +2792,7 @@ export default function CreateTemplatePage() {
                     );
                 case 'youtube': {
                     const youtubeBlock = block as YouTubeBlock;
-                    const { videoId, styles, url, link } = youtubeBlock.payload;
+                    const { videoId, styles, url, link, title, showTitle } = youtubeBlock.payload;
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
@@ -2731,14 +2809,34 @@ export default function CreateTemplatePage() {
                         rel: "noopener noreferrer"
                     } : {};
 
+                    const { border } = styles;
+                    let borderStyle: React.CSSProperties = {};
+                    if(border.type === 'solid') {
+                        borderStyle.background = border.color1;
+                    } else if (border.type === 'gradient') {
+                         if (border.direction === 'radial') {
+                          borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
+                        } else {
+                          const angle = border.direction === 'horizontal' ? 'to right' : 'to bottom';
+                          borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+                        }
+                    }
+
                     return (
-                        <div className="relative w-full aspect-video p-2">
-                             <WrapperComponent
+                        <div className="p-2">
+                           <div 
+                            style={{
+                                ...borderStyle,
+                                borderRadius: `${styles.borderRadius}px`,
+                                padding: `${styles.borderWidth}px`
+                            }}
+                            className="w-full h-full"
+                           >
+                            <WrapperComponent
                                 {...wrapperProps}
-                                className="block w-full h-full relative"
+                                className="block w-full h-full relative aspect-video"
                                 style={{
-                                  borderRadius: `${styles.borderRadius}px`,
-                                  boxShadow: `0 0 0 ${styles.borderWidth}px ${styles.borderColor}`,
+                                  borderRadius: `${styles.borderRadius - styles.borderWidth}px`,
                                   overflow: 'hidden',
                                   cursor: (url && videoId) ? 'pointer' : 'default',
                                 }}
@@ -2753,7 +2851,13 @@ export default function CreateTemplatePage() {
                                         backgroundSize: '20%',
                                     }}
                                 />
+                                {showTitle && title && (
+                                    <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/80 to-transparent">
+                                        <p className="text-sm font-semibold truncate">{title}</p>
+                                    </div>
+                                )}
                             </WrapperComponent>
+                           </div>
                         </div>
                     );
                 }
@@ -3074,7 +3178,6 @@ export default function CreateTemplatePage() {
   const StyleEditorHeader = () => {
     if (!selectedElement) return null;
 
-    let title = "Editor de Estilos";
     let blockName = '';
 
     const blockType = getSelectedBlockType(selectedElement, canvasContent);
@@ -3589,6 +3692,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
