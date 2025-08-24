@@ -2073,7 +2073,7 @@ export default function CreateTemplatePage() {
                         color2: '#3357FF',
                         direction: 'vertical'
                     },
-                    frequency: 3,
+                    frequency: 5,
                 },
                 dots: {
                     size: 4,
@@ -2295,52 +2295,54 @@ export default function CreateTemplatePage() {
     const segmentWidth = width / frequency;
 
     switch (type) {
-        case 'waves':
-            const amplitude = height / 2;
-            path = `M0,${amplitude}`;
-            for (let i = 0; i <= frequency * 2; i++) {
-                const x = (i / (frequency * 2)) * width;
-                const y = amplitude + (amplitude * 0.8) * Math.sin((i / frequency) * Math.PI);
-                path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
-            }
-            break;
-        case 'drops':
-            for (let i = 0; i < frequency; i++) {
-                const startX = i * segmentWidth;
-                const midX = startX + segmentWidth / 2;
-                const endX = startX + segmentWidth;
-                path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${height * 0.9} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
-            }
-            break;
-        case 'zigzag':
-            path = `M0,${height/2}`;
-            for (let i = 0; i < frequency * 2; i++) {
-                const x = ((i + 1) / (frequency * 2)) * width;
-                const y = i % 2 === 0 ? height * 0.1 : height * 0.9;
-                path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
-            }
-            break;
-        case 'leaves':
-             for (let i = 0; i < frequency; i++) {
-                const startX = i * segmentWidth;
-                const midX = startX + segmentWidth / 2;
-                const endX = startX + segmentWidth;
-                const midY = height / 2;
-                path += ` M${startX},${midY} Q${midX},${height * 0.1} ${endX},${midY} Q${midX},${height * 0.9} ${startX},${midY} Z`;
-            }
-            break;
-        case 'clouds':
-            const cloudWidth = segmentWidth * 0.8;
-            for (let i = 0; i < frequency; i++) {
-                const startX = i * segmentWidth + segmentWidth * 0.1;
-                const y = height * 0.6;
-                const r = cloudWidth * 0.2;
-                path += ` M${startX},${y}
-                          A${r},${r} 0 0,1 ${startX + r},${y-r}
-                          A${r*1.5},${r*1.5} 0 0,1 ${startX + cloudWidth - r},${y-r}
-                          A${r},${r} 0 0,1 ${startX + cloudWidth},${y} Z`;
-            }
-            break;
+      case 'waves': {
+        const amplitude = height / 2;
+        path = `M0,${amplitude}`;
+        for (let i = 0; i <= frequency * 2; i++) {
+          const x = (i / (frequency * 2)) * width;
+          const y = amplitude + (amplitude * 0.8) * Math.sin((i / frequency) * Math.PI);
+          path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+        }
+        break;
+      }
+      case 'drops': {
+        for (let i = 0; i < frequency; i++) {
+          const startX = i * segmentWidth;
+          const midX = startX + segmentWidth / 2;
+          const endX = startX + segmentWidth;
+          path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${height * 0.9} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
+        }
+        break;
+      }
+      case 'zigzag': {
+        path = `M0,${height / 4}`;
+        for (let i = 0; i < frequency * 2; i++) {
+          const x = ((i + 1) / (frequency * 2)) * width;
+          const y = i % 2 === 0 ? height * 0.75 : height * 0.25;
+          path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+        }
+        break;
+      }
+      case 'leaves': {
+        for (let i = 0; i < frequency; i++) {
+          const startX = i * segmentWidth;
+          const midX = startX + segmentWidth / 2;
+          const endX = startX + segmentWidth;
+          const midY = height / 2;
+          path += ` M${startX},${midY} Q${midX},${height * 0.1} ${endX},${midY} Q${midX},${height * 0.9} ${startX},${midY} Z`;
+        }
+        break;
+      }
+      case 'clouds': {
+        const cloudWidth = segmentWidth * 0.8;
+        for (let i = 0; i < frequency; i++) {
+          const startX = i * segmentWidth + segmentWidth * 0.1;
+          const y = height * 0.6;
+          const r = cloudWidth * 0.2;
+          path += ` M${startX},${y} A${r},${r} 0 0,1 ${startX + r},${y-r*0.8} A${r*1.5},${r*1.5} 0 0,1 ${startX + cloudWidth - r},${y-r*0.8} A${r},${r} 0 0,1 ${startX + cloudWidth},${y} Z`;
+        }
+        break;
+      }
     }
     return path;
   };
@@ -2404,28 +2406,33 @@ export default function CreateTemplatePage() {
     );
   }
 
-    const getLineStyle = (linePayload: SeparatorBlock['payload']['line']): React.CSSProperties => {
-        const style: React.CSSProperties = {
-            height: `${linePayload.thickness}px`,
-            borderRadius: `${linePayload.borderRadius}px`,
-            width: '100%',
-        };
-
-        if (linePayload.style === 'solid') {
-            style.backgroundColor = linePayload.color;
-        } else if (linePayload.style === 'dotted') {
-            style.backgroundImage = `radial-gradient(circle, ${linePayload.color} ${linePayload.thickness / 2}px, transparent ${linePayload.thickness / 2}px)`;
-            style.backgroundSize = `${linePayload.thickness * 2}px ${linePayload.thickness * 2}px`;
-            style.backgroundColor = 'transparent';
-        } else if (linePayload.style === 'dashed') {
-            style.backgroundImage = `linear-gradient(to right, ${linePayload.color} 60%, transparent 40%)`;
-            style.backgroundSize = `${linePayload.thickness * 4}px ${linePayload.thickness}px`;
-            style.backgroundRepeat = 'repeat-x';
-            style.backgroundColor = 'transparent';
-        }
-
-        return style;
+   const LineSeparator = ({ block }: { block: SeparatorBlock }) => {
+    const { thickness, borderRadius, color, style } = block.payload.line;
+    
+    const lineStyle: React.CSSProperties = {
+        height: `${thickness}px`,
+        borderRadius: `${borderRadius}px`,
+        width: '100%',
     };
+
+    if (style === 'solid') {
+        lineStyle.backgroundColor = color;
+    } else if (style === 'dotted') {
+        lineStyle.backgroundImage = `radial-gradient(circle, ${color} ${thickness / 2}px, transparent ${thickness / 2}px)`;
+        lineStyle.backgroundSize = `${thickness * 2}px ${thickness * 2}px`;
+        lineStyle.backgroundRepeat = 'repeat-x';
+    } else if (style === 'dashed') {
+        lineStyle.backgroundImage = `linear-gradient(to right, ${color} 60%, transparent 40%)`;
+        lineStyle.backgroundSize = `${thickness * 4}px ${thickness}px`;
+        lineStyle.backgroundRepeat = 'repeat-x';
+    }
+
+    return (
+        <div style={{ height: `${block.payload.height}px`, display: 'flex', alignItems: 'center', width: '100%' }}>
+            <div style={lineStyle} />
+        </div>
+    );
+};
   
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -2496,15 +2503,14 @@ export default function CreateTemplatePage() {
                     const separatorBlock = block as SeparatorBlock;
                     const { payload } = separatorBlock;
                     return (
-                        <div style={{ height: `${payload.height}px`, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {payload.style === 'line' && (
-                                <div style={getLineStyle(payload.line)} />
-                            )}
+                        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {payload.style === 'invisible' && <div style={{ height: `${payload.height}px` }} />}
+                            {payload.style === 'line' && <LineSeparator block={separatorBlock} />}
                             {payload.style === 'shapes' && (
-                               <div className="w-full h-full"><ShapesSeparator block={separatorBlock} /></div>
+                               <div className="w-full h-full" style={{ height: `${payload.height}px` }}><ShapesSeparator block={separatorBlock} /></div>
                             )}
                             {payload.style === 'dots' && (
-                                <div className="flex justify-around items-center w-full">
+                                <div className="flex justify-around items-center w-full" style={{ height: `${payload.height}px` }}>
                                     {Array.from({ length: payload.dots.count }).map((_, i) => (
                                         <div key={i} style={{
                                             width: `${payload.dots.size}px`,
@@ -3282,3 +3288,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
