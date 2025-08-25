@@ -94,6 +94,10 @@ import {
   Layers,
   PlayCircle,
   Clock,
+  Globe,
+  RefreshCw,
+  MessageSquare,
+  CalendarIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -103,6 +107,8 @@ import { HexColorPicker } from 'react-colorful';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 
 const mainContentBlocks = [
@@ -153,6 +159,12 @@ const googleFonts = [
   "Lobster", "Anton", "Passion One", "Josefin Sans", "Exo 2", "Cabin"
 ];
 
+const timezones = [
+    "UTC", "GMT", "US/Eastern", "US/Central", "US/Mountain", "US/Pacific",
+    "Europe/London", "Europe/Berlin", "Europe/Paris", "Europe/Moscow",
+    "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney"
+];
+
 // --- STATE MANAGEMENT TYPES ---
 type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
 type InteractiveBlockType = 'emoji-interactive';
@@ -164,6 +176,7 @@ type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
+type TimerEndAction = 'stop' | 'restart' | 'message';
 
 interface BaseBlock {
   id: string;
@@ -313,6 +326,30 @@ interface YouTubeBlock extends BaseBlock {
     }
 }
 
+interface TimerBlock extends BaseBlock {
+    type: 'timer';
+    payload: {
+        endDate: string; // ISO string
+        timezone: string;
+        design: 'digital' | 'analog' | 'minimalist';
+        endAction: {
+            type: TimerEndAction;
+            message: string;
+        };
+        styles: {
+            fontFamily: string;
+            numberColor: string;
+            borderRadius: number;
+            background: {
+                type: 'solid' | 'gradient';
+                color1: string;
+                color2: string;
+                direction: GradientDirection;
+            };
+        }
+    }
+}
+
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -324,7 +361,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -2090,6 +2127,150 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     );
 };
 
+const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive') return null;
+
+    const getElement = (): TimerBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'timer' ? block as TimerBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+
+    const updatePayload = (key: keyof TimerBlock['payload'], value: any) => {
+         setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            return {
+                ...row,
+                payload: { ...row.payload, columns: row.payload.columns.map(col => {
+                    if (col.id !== selectedElement.columnId) return col;
+                    return { ...col, blocks: col.blocks.map(block => {
+                        if (block.id !== selectedElement.primitiveId || block.type !== 'timer') return block;
+                        return { ...block, payload: { ...block.payload, [key]: value } };
+                    }) };
+                }) }
+            };
+        }));
+    };
+
+    const updateStyle = (key: keyof TimerBlock['payload']['styles'], value: any) => {
+        updatePayload('styles', { ...element.payload.styles, [key]: value });
+    }
+    const updateEndAction = (key: keyof TimerBlock['payload']['endAction'], value: any) => {
+        updatePayload('endAction', { ...element.payload.endAction, [key]: value });
+    }
+    const updateBackground = (key: string, value: any) => {
+        updateStyle('background', { ...element.payload.styles.background, [key]: value });
+    }
+
+    const { styles, endDate, timezone, design, endAction } = element.payload;
+
+    return (
+        <div className="space-y-4">
+            <div>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Timer/>Configuración del Contador</h3>
+            </div>
+            <div className="space-y-2">
+                <Label>Fecha y Hora de Finalización</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {endDate ? format(new Date(endDate), "PPP HH:mm:ss") : <span>Seleccionar fecha</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={new Date(endDate)} onSelect={(d) => updatePayload('endDate', d?.toISOString() || '')} initialFocus />
+                    </PopoverContent>
+                </Popover>
+            </div>
+             <div className="space-y-2">
+                <Label>Zona Horaria</Label>
+                <Select value={timezone} onValueChange={(v) => updatePayload('timezone', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {timezones.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div>
+                <h3 className="text-sm font-medium text-foreground/80">Diseño</h3>
+                <Tabs value={design} onValueChange={(v) => updatePayload('design', v)} className="w-full mt-2">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="digital">Digital</TabsTrigger>
+                        <TabsTrigger value="analog">Analógico</TabsTrigger>
+                        <TabsTrigger value="minimalist">Minimalista</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+
+             <div className="space-y-2">
+                <Label>Fuente de los Números</Label>
+                <Select value={styles.fontFamily} onValueChange={(v) => updateStyle('fontFamily', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {googleFonts.map(font => <SelectItem key={font} value={font} style={{ fontFamily: font }}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
+                <Label>Color de los Números</Label>
+                <ColorPickerAdvanced color={styles.numberColor} setColor={(c) => updateStyle('numberColor', c)} />
+            </div>
+
+            <div className="space-y-2">
+                <Label>Radio del Borde</Label>
+                <Slider value={[styles.borderRadius]} max={30} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+            </div>
+
+            <div className="space-y-2">
+                <Label>Fondo</Label>
+                <Tabs value={styles.background.type} onValueChange={(v) => updateBackground('type', v)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
+                </Tabs>
+                <div className="space-y-2 pt-2">
+                    <Label>Color 1</Label><ColorPickerAdvanced color={styles.background.color1} setColor={c => updateBackground('color1', c)} />
+                </div>
+                {styles.background.type === 'gradient' &&
+                    <div className="space-y-2 pt-2"><Label>Color 2</Label><ColorPickerAdvanced color={styles.background.color2} setColor={c => updateBackground('color2', c)} /></div>
+                }
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles/>Acción al Finalizar</h3>
+                 <Select value={endAction.type} onValueChange={(v) => updateEndAction('type', v)}>
+                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="stop"><XCircle className="inline-block mr-2" />Detener en 00</SelectItem>
+                        <SelectItem value="restart"><RefreshCw className="inline-block mr-2" />Reiniciar</SelectItem>
+                        <SelectItem value="message"><MessageSquare className="inline-block mr-2" />Mostrar Mensaje</SelectItem>
+                    </SelectContent>
+                </Select>
+                {endAction.type === 'message' && (
+                    <div className="mt-2 space-y-2">
+                        <Label>Mensaje a mostrar</Label>
+                        <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
 function ThemeToggle() {
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
@@ -2383,6 +2564,30 @@ export default function CreateTemplatePage() {
                         direction: 'vertical'
                     },
                     borderWidth: 0,
+                }
+            }
+        };
+    } else if (blockType === 'timer') {
+         const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        newBlock = {
+            id: `timer_${Date.now()}`,
+            type: 'timer',
+            payload: {
+                endDate: tomorrow.toISOString(),
+                timezone: 'UTC',
+                design: 'digital',
+                endAction: { type: 'stop', message: '¡La oferta ha terminado!' },
+                styles: {
+                    fontFamily: 'Roboto',
+                    numberColor: '#FFFFFF',
+                    borderRadius: 8,
+                    background: {
+                        type: 'solid',
+                        color1: '#1a1a1a',
+                        color2: '#000000',
+                        direction: 'vertical'
+                    },
                 }
             }
         };
@@ -2851,7 +3056,7 @@ export default function CreateTemplatePage() {
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
-                    const playButtonSize = { lg: 'w-16 h-12', md: 'w-14 h-10', sm: 'w-12 h-9' };
+                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-14 h-10', sm: 'w-12 h-9' };
                     const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-xs px-2 pt-1 pb-0' };
                     const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
 
@@ -2946,6 +3151,10 @@ export default function CreateTemplatePage() {
                         </div>
                     );
                 }
+              case 'timer': {
+                 const timerBlock = block as TimerBlock;
+                 return <TimerComponent block={timerBlock} />;
+              }
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -3092,6 +3301,112 @@ export default function CreateTemplatePage() {
         }) as CanvasBlock[]
     );
     setIsImageModalOpen(false);
+  }
+
+  const TimerComponent = ({ block }: { block: TimerBlock }) => {
+    const { endDate, timezone, design, endAction, styles } = block.payload;
+    const calculateTimeLeft = useCallback(() => {
+        const end = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
+        const now = new Date();
+        const difference = end.getTime() - now.getTime();
+        
+        let timeLeft = {};
+        if (difference > 0) {
+            timeLeft = {
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60),
+            };
+        }
+        return timeLeft;
+    }, [endDate, timezone]);
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
+    const [isFinished, setIsFinished] = useState(false);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const newTimeLeft = calculateTimeLeft();
+            if (Object.keys(newTimeLeft).length === 0) {
+                setIsFinished(true);
+                clearInterval(timer);
+            } else {
+                setTimeLeft(newTimeLeft);
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [calculateTimeLeft, endDate, timezone]);
+
+    if (isFinished && endAction.type === 'message') {
+        return (
+            <div className="p-4 text-center">
+                <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
+            </div>
+        );
+    }
+    
+    const timeData = [
+      { label: 'Días', value: isFinished ? 0 : timeLeft.days },
+      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours },
+      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes },
+      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds },
+    ];
+    
+    const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
+
+    const baseStyle: React.CSSProperties = {
+        borderRadius: `${styles.borderRadius}px`,
+        color: styles.numberColor,
+        fontFamily: styles.fontFamily,
+    };
+    if (styles.background.type === 'solid') {
+        baseStyle.backgroundColor = styles.background.color1;
+    } else {
+        baseStyle.backgroundImage = `linear-gradient(${styles.background.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.background.color1}, ${styles.background.color2})`;
+    }
+
+    if (design === 'analog') {
+        return (
+            <div className="flex justify-center items-center gap-2 p-2">
+                {timeData.map(unit => (
+                    <div key={unit.label} className="flex flex-col items-center">
+                        <div className="relative w-20 h-20">
+                             <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <circle className="stroke-current text-muted/20" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent" />
+                                <circle
+                                    className="stroke-current text-primary"
+                                    strokeWidth="8"
+                                    cx="50" cy="50" r="40" fill="transparent"
+                                    strokeDasharray={2 * Math.PI * 40}
+                                    strokeDashoffset={2 * Math.PI * 40 * (1 - (unit.value || 0) / (unit.label === 'Días' ? 365 : unit.label === 'Horas' ? 24 : 60))}
+                                    transform="rotate(-90 50 50)"
+                                    strokeLinecap="round"
+                                />
+                                <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
+                                    {String(unit.value || 0).padStart(2, '0')}
+                                </text>
+                             </svg>
+                        </div>
+                         <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+
+    return (
+        <div className={cn("flex justify-center items-center gap-2 p-4", design === 'minimalist' && 'gap-1')}>
+            {timeData.map(unit => (
+                 <div key={unit.label} className={cn("flex flex-col items-center", design === 'minimalist' && 'flex-row gap-1')}>
+                    <div style={baseStyle} className={cn("flex items-center justify-center p-2", design !== 'minimalist' && 'w-16 h-16 text-3xl font-bold', design === 'minimalist' && 'bg-transparent text-xl font-semibold p-0')}>
+                        {String(unit.value || 0).padStart(2, '0')}
+                    </div>
+                     <p className={cn("text-xs mt-1", design === 'minimalist' && 'mt-0 text-lg')} style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{design === 'minimalist' ? unit.label.charAt(0) : unit.label}</p>
+                 </div>
+            ))}
+        </div>
+    );
   }
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -3510,6 +3825,9 @@ export default function CreateTemplatePage() {
                   )}
                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
                       <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
+                      <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                   )}
                   
                   { !selectedElement && (
