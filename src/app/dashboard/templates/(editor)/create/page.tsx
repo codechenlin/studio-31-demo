@@ -99,6 +99,7 @@ import {
   MessageSquare,
   CalendarIcon,
   CheckIcon,
+  XCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -161,10 +162,8 @@ const googleFonts = [
 ];
 
 const timezones = [
-    // General
     "UTC - Coordinated Universal Time",
     "GMT - Greenwich Mean Time",
-    // Americas
     "America/New_York - USA (East)",
     "America/Chicago - USA (Central)",
     "America/Denver - USA (Mountain)",
@@ -188,9 +187,9 @@ const timezones = [
     "America/Asuncion - Paraguay",
     "America/Montevideo - Uruguay",
     "America/Godthab - Greenland",
-    // Europe & Africa
     "Europe/London - United Kingdom",
     "Europe/Madrid - Spain",
+    "Europe/Barcelona - Spain",
     "Europe/Berlin - Germany",
     "Europe/Paris - France",
     "Europe/Rome - Italy",
@@ -202,7 +201,6 @@ const timezones = [
     "Africa/Cairo - Egypt",
     "Africa/Nairobi - Kenya",
     "Africa/Lagos - Nigeria",
-    // Asia & Australia
     "Asia/Tokyo - Japan",
     "Asia/Shanghai - China",
     "Asia/Dubai - UAE",
@@ -215,7 +213,8 @@ const timezones = [
     "Asia/Jakarta - Indonesia",
     "Asia/Manila - Philippines",
     "Asia/Kuala_Lumpur - Malaysia",
-    "Asia/Hong_Kong - Hong Kong"
+    "Asia/Hong_Kong - Hong Kong",
+    "Asia/Beijing - China"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -2183,11 +2182,18 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     );
 };
 
-const DateTimePicker = ({ initialDate, onAccept }: { initialDate: string, onAccept: (date: Date) => void }) => {
+const DateTimePickerModal = ({ isOpen, onOpenChange, initialDate, onAccept, title, description }: { isOpen: boolean, onOpenChange: (open: boolean) => void, initialDate: string, onAccept: (date: Date) => void, title: string, description: string }) => {
     const [date, setDate] = useState<Date | undefined>(new Date(initialDate));
-    const [hours, setHours] = useState(new Date(initialDate).getHours());
-    const [minutes, setMinutes] = useState(new Date(initialDate).getMinutes());
+    const [hours, setHours] = useState(() => new Date(initialDate).getHours());
+    const [minutes, setMinutes] = useState(() => new Date(initialDate).getMinutes());
   
+    useEffect(() => {
+        const initial = new Date(initialDate);
+        setDate(initial);
+        setHours(initial.getHours());
+        setMinutes(initial.getMinutes());
+    }, [initialDate, isOpen]);
+
     const handleAccept = () => {
       if (date) {
         const newDate = new Date(date);
@@ -2195,42 +2201,86 @@ const DateTimePicker = ({ initialDate, onAccept }: { initialDate: string, onAcce
         newDate.setMinutes(minutes);
         newDate.setSeconds(0);
         onAccept(newDate);
+        onOpenChange(false);
       }
     };
   
     return (
-      <div className="space-y-4">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          initialFocus
-        />
-        <div className="flex items-center justify-center gap-2 p-2 border-t">
-          <Input
-            type="number"
-            min="0"
-            max="23"
-            value={hours.toString().padStart(2, '0')}
-            onChange={(e) => setHours(Math.max(0, Math.min(23, parseInt(e.target.value, 10) || 0)))}
-            className="w-16 text-center"
-          />
-          <span>:</span>
-          <Input
-            type="number"
-            min="0"
-            max="59"
-            value={minutes.toString().padStart(2, '0')}
-            onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))}
-            className="w-16 text-center"
-          />
-        </div>
-        <div className="p-2 border-t">
-          <Button onClick={handleAccept} className="w-full"><CheckIcon className="mr-2"/>Aceptar</Button>
-        </div>
-      </div>
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col items-center">
+                     <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                    />
+                    <div className="flex items-center justify-center gap-2 p-2 border-t w-full">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={hours.toString().padStart(2, '0')}
+                        onChange={(e) => setHours(Math.max(0, Math.min(23, parseInt(e.target.value, 10) || 0)))}
+                        className="w-20 text-center"
+                      />
+                      <span className="font-bold">:</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={minutes.toString().padStart(2, '0')}
+                        onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)))}
+                        className="w-20 text-center"
+                      />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                    <Button onClick={handleAccept}><CheckIcon className="mr-2"/>Aceptar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
-  };
+};
+
+const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onAccept: (tz: string) => void, currentValue: string }) => {
+    const [selectedValue, setSelectedValue] = useState(currentValue);
+
+    const handleAccept = () => {
+        onAccept(selectedValue);
+        onOpenChange(false);
+    }
+
+    return (
+         <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+                 <DialogHeader>
+                    <DialogTitle>Seleccionar Zona Horaria</DialogTitle>
+                    <DialogDescription>Elige la zona horaria para tu contador.</DialogDescription>
+                </DialogHeader>
+                <Select onValueChange={setSelectedValue} defaultValue={selectedValue}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent position="popper" className="max-h-80">
+                        {timezones.map(tz => {
+                           const [zone, ...countryParts] = tz.split(' - ');
+                           const country = countryParts.join(' - ');
+                           return <SelectItem key={zone} value={zone}>{zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}</SelectItem>
+                        })}
+                    </SelectContent>
+                </Select>
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                    <Button onClick={handleAccept}>Aceptar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
@@ -2239,6 +2289,10 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }) => {
     const { toast } = useToast();
     if (selectedElement?.type !== 'primitive') return null;
+    
+    const [isDateTimePickerOpen, setIsDateTimePickerOpen] = useState(false);
+    const [isSecondaryPickerOpen, setIsSecondaryPickerOpen] = useState(false);
+    const [isTimezonePickerOpen, setIsTimezonePickerOpen] = useState(false);
 
     const getElement = (): TimerBlock | null => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -2300,6 +2354,9 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
     };
 
+    const handleTimezoneAccept = (tz: string) => {
+        updatePayload('timezone', tz);
+    };
 
     const { styles, endDate, timezone, design, endAction } = element.payload;
     const tomorrow = new Date(endDate);
@@ -2307,34 +2364,54 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
+             <DateTimePickerModal 
+                isOpen={isDateTimePickerOpen}
+                onOpenChange={setIsDateTimePickerOpen}
+                initialDate={endDate}
+                onAccept={(d) => handleDateAccept(d)}
+                title="Establecer Fecha de Finalización"
+                description="Selecciona la fecha y hora exactas en que terminará la cuenta regresiva."
+            />
+            <TimezonePickerModal 
+                isOpen={isTimezonePickerOpen}
+                onOpenChange={setIsTimezonePickerOpen}
+                currentValue={timezone}
+                onAccept={handleTimezoneAccept}
+            />
+            <DateTimePickerModal 
+                isOpen={isSecondaryPickerOpen}
+                onOpenChange={setIsSecondaryPickerOpen}
+                initialDate={endAction.secondaryEndDate || new Date(tomorrow).toISOString()}
+                onAccept={(d) => {
+                    if (new Date(d) <= new Date(endDate)) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Fecha Inválida',
+                            description: 'La segunda fecha debe ser posterior a la primera.'
+                        })
+                    } else {
+                        handleDateAccept(d, true)
+                    }
+                }}
+                title="Establecer Segundo Contador"
+                description="Elige la fecha y hora para la segunda cuenta regresiva."
+            />
             <div>
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Timer/>Configuración del Contador</h3>
             </div>
             <div className="space-y-2">
                 <Label>Fecha y Hora de Finalización</Label>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? format(new Date(endDate), "PPP, HH:mm") : <span>Seleccionar fecha</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <DateTimePicker initialDate={endDate} onAccept={(d) => handleDateAccept(d)} />
-                    </PopoverContent>
-                </Popover>
+                <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsDateTimePickerOpen(true)}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(new Date(endDate), "PPP, HH:mm") : <span>Seleccionar fecha</span>}
+                </Button>
             </div>
              <div className="space-y-2">
                 <Label>Zona Horaria</Label>
-                <Select value={timezone} onValueChange={(v) => updatePayload('timezone', v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent side="bottom">
-                        {timezones.map(tz => {
-                           const [zone, ...country] = tz.split(' - ');
-                           return <SelectItem key={zone} value={zone}>{zone} {country.length > 0 && <span className="text-muted-foreground ml-2">- {country.join(' - ')}</span>}</SelectItem>
-                        })}
-                    </SelectContent>
-                </Select>
+                <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
+                     <Globe className="mr-2 h-4 w-4" />
+                     {timezone}
+                </Button>
             </div>
             <div className="space-y-2">
                 <Label>Tamaño Global</Label>
@@ -2427,7 +2504,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <Select value={endAction.type} onValueChange={(v) => updateEndAction('type', v)}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="stop"><X className="inline-block mr-2" />Detener en 00</SelectItem>
+                        <SelectItem value="stop"><XCircle className="inline-block mr-2" />Detener en 00</SelectItem>
                         <SelectItem value="secondary_countdown"><RefreshCw className="inline-block mr-2" />Segundo Contador</SelectItem>
                         <SelectItem value="message"><MessageSquare className="inline-block mr-2" />Mostrar Mensaje</SelectItem>
                     </SelectContent>
@@ -2458,30 +2535,10 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 {endAction.type === 'secondary_countdown' && (
                     <div className="mt-2 space-y-2">
                         <Label>Segunda Fecha de Finalización</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {endAction.secondaryEndDate ? format(new Date(endAction.secondaryEndDate), "PPP, HH:mm") : <span>Seleccionar fecha</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                 <DateTimePicker 
-                                    initialDate={endAction.secondaryEndDate || new Date(tomorrow).toISOString()} 
-                                    onAccept={(d) => {
-                                        if (new Date(d) <= new Date(endDate)) {
-                                            toast({
-                                                variant: 'destructive',
-                                                title: 'Fecha Inválida',
-                                                description: 'La segunda fecha debe ser posterior a la primera.'
-                                            })
-                                        } else {
-                                            handleDateAccept(d, true)
-                                        }
-                                    }}
-                                />
-                            </PopoverContent>
-                        </Popover>
+                         <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsSecondaryPickerOpen(true)}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {endAction.secondaryEndDate ? format(new Date(endAction.secondaryEndDate), "PPP, HH:mm") : <span>Seleccionar fecha</span>}
+                        </Button>
                         <p className="text-xs text-muted-foreground">La segunda fecha debe ser posterior a la primera fecha de finalización.</p>
                     </div>
                 )}
@@ -3281,7 +3338,7 @@ export default function CreateTemplatePage() {
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
-                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-14 h-10', sm: 'w-12 h-9' };
+                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9' };
                     const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-xs px-2 pt-1 pb-0' };
                     const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
 
@@ -3541,16 +3598,11 @@ export default function CreateTemplatePage() {
         if (!targetDate) return {};
         
         try {
-             // Create a date object from the ISO string. This is implicitly UTC.
             const end = new Date(targetDate);
-            // Get the current time as a UTC timestamp
             const now = new Date();
 
-            // Find the offset for the target timezone in milliseconds
-            const timezoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - new Date(now.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
-            
-            // Adjust the 'now' timestamp to be relative to the target timezone
-            const nowInTimezone = new Date(now.getTime() + timezoneOffset);
+            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
+            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
 
             const difference = end.getTime() - nowInTimezone.getTime();
 
@@ -3633,51 +3685,53 @@ export default function CreateTemplatePage() {
             const end = new Date(targetDate!);
             const start = initialStartDateRef.current;
             const totalDuration = end.getTime() - start.getTime();
+            if(totalDuration <= 0) return 1;
 
             const daysLeft = timeUnits.days || 0;
             const hoursLeft = timeUnits.hours || 0;
             const minutesLeft = timeUnits.minutes || 0;
             const secondsLeft = timeUnits.seconds || 0;
 
+            const secondsRemaining = (daysLeft * 86400) + (hoursLeft * 3600) + (minutesLeft * 60) + secondsLeft;
+            const progress = (secondsRemaining * 1000) / totalDuration;
+            
             switch (unit) {
-                case 'Días': {
-                   if (totalDuration <= 0) return 0;
-                   const secondsRemaining = (daysLeft * 86400) + (hoursLeft * 3600) + (minutesLeft * 60) + secondsLeft;
-                   return (secondsRemaining * 1000) / totalDuration;
-                }
-                case 'Horas': return hoursLeft / 23;
-                case 'Minutos': return minutesLeft / 59;
-                case 'Segundos': return secondsLeft / 59;
+                case 'Días': return progress > 1 ? 1 : progress;
+                case 'Horas': return (hoursLeft / 23);
+                case 'Minutos': return (minutesLeft / 59);
+                case 'Segundos': return (secondsLeft / 59);
                 default: return 0;
             }
         };
 
         const { background } = styles;
-
+        const gradientId = `analog-grad-${block.id}`;
+        
         return (
             <div className="flex justify-center items-center gap-2 p-2" style={{ transform: `scale(${styles.scale})` }}>
+                 <svg width="0" height="0" className="absolute">
+                  <defs>
+                     {background.type === 'gradient' && (
+                        <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2 || background.color1} />
+                        </linearGradient>
+                     )}
+                  </defs>
+                </svg>
                 {timeData.map(unit => (
                     <div key={unit.label} className="flex flex-col items-center">
                         <div className="relative w-20 h-20">
                              <svg className="w-full h-full" viewBox="0 0 100 100">
-                                {background.type === 'gradient' && (
-                                    <defs>
-                                        <linearGradient id={`gradient-analog-${block.id}-${unit.label}`} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
-                                            <stop offset="0%" stopColor={background.color1} />
-                                            <stop offset="100%" stopColor={background.color2 || background.color1} />
-                                        </linearGradient>
-                                    </defs>
-                                )}
                                 <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
                                 <circle
-                                    className="stroke-current"
                                     strokeWidth={styles.strokeWidth}
                                     cx="50" cy="50" r="40" fill="transparent"
                                     strokeDasharray={2 * Math.PI * 40}
                                     strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
                                     transform="rotate(-90 50 50)"
                                     strokeLinecap="round"
-                                    stroke={background.type === 'gradient' ? `url(#gradient-analog-${block.id}-${unit.label})` : background.color1}
+                                    stroke={background.type === 'gradient' ? `url(#${gradientId})` : background.color1}
                                 />
                                 <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
                                     {String(unit.value || 0).padStart(2, '0')}
@@ -4439,5 +4493,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-    
