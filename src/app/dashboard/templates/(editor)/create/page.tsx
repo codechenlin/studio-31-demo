@@ -138,7 +138,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -166,7 +166,7 @@ const timezones = [
     // Americas
     "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", // USA
     "America/Toronto", "America/Vancouver", // Canada
-    "America/Mexico_City", "America/Cancun", // Mexico
+    "America/Mexico_City", "America/Cancun", "America/Chihuahua", "America/Tijuana", // Mexico
     "America/Bogota", // Colombia
     "America/Caracas", // Venezuela
     "America/Lima", // Peru
@@ -178,12 +178,16 @@ const timezones = [
     "America/Santiago", // Chile
     "America/Asuncion", // Paraguay
     "America/Montevideo", // Uruguay
+    "America/Godthab", // Greenland
     // Europe
     "Europe/London", "Europe/Madrid", "Europe/Berlin", "Europe/Paris", "Europe/Rome", "Europe/Moscow",
+    "Europe/Oslo", "Europe/Stockholm", "Europe/Zurich",
     // Africa
     "Africa/Johannesburg", "Africa/Cairo", "Africa/Nairobi", "Africa/Lagos",
     // Asia & Australia
-    "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney"
+    "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney", "Asia/Singapore",
+    "Asia/Kamchatka", "Asia/Omsk", "Asia/Kolkata", "Pacific/Auckland", "Asia/Jakarta",
+    "Asia/Manila", "Asia/Kuala_Lumpur", "Asia/Hong_Kong"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -2273,9 +2277,33 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <div className="space-y-2 pt-2">
                     <Label>Color 1</Label><ColorPickerAdvanced color={styles.background.color1} setColor={c => updateBackground('color1', c)} />
                 </div>
-                {styles.background.type === 'gradient' &&
-                    <div className="space-y-2 pt-2"><Label>Color 2</Label><ColorPickerAdvanced color={styles.background.color2} setColor={c => updateBackground('color2', c)} /></div>
-                }
+                {styles.background.type === 'gradient' && (
+                  <>
+                    <div className="space-y-2 pt-2">
+                      <Label>Color 2</Label>
+                      <ColorPickerAdvanced color={styles.background.color2} setColor={c => updateBackground('color2', c)} />
+                    </div>
+                    <div className="space-y-3">
+                        <Label>Dirección del Degradado</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.background.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBackground('direction', 'vertical')}><ArrowDown /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Vertical</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.background.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBackground('direction', 'horizontal')}><ArrowRight /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Horizontal</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.background.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => updateBackground('direction', 'radial')}><Sun className="size-4" /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Radial</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                  </>
+                )}
             </div>
 
             <Separator className="bg-border/20"/>
@@ -2296,8 +2324,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
                           <div className="pt-2">
                             <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                            <ScrollArea className="h-24 w-full rounded-md border p-2 mt-1">
-                                <div className="grid grid-cols-6 gap-1">
+                            <ScrollArea className="h-40 w-full rounded-md border p-2 mt-1">
+                                <div className="grid grid-cols-8 gap-1">
                                 {popularEmojis.map(emoji => (
                                     <TooltipProvider key={emoji}>
                                         <Tooltip>
@@ -2957,14 +2985,17 @@ export default function CreateTemplatePage() {
         <svg ref={ref} width="100%" height={`${block.payload.height}px`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
             {background.type === 'gradient' && (
                 <defs>
-                    <linearGradient id={`shape-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
-                        <stop offset="0%" stopColor={background.color1} />
-                        <stop offset="100%" stopColor={background.color2} />
-                    </linearGradient>
-                    <radialGradient id={`shape-gradient-${block.id}`}>
-                        <stop offset="0%" stopColor={background.color1} />
-                        <stop offset="100%" stopColor={background.color2} />
-                    </radialGradient>
+                    {background.direction === 'radial' ? (
+                         <radialGradient id={`shape-gradient-${block.id}`}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2} />
+                        </radialGradient>
+                    ) : (
+                        <linearGradient id={`shape-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2} />
+                        </linearGradient>
+                    )}
                 </defs>
             )}
             <path d={pathData} fill={getFill()} stroke="none" />
@@ -3099,8 +3130,8 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                        default: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
-                        classic: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64" fill="none"><rect width="90" height="64" rx="18" fill="red" fill-opacity="0.9"/><path d="M60 32L36 45.8564L36 18.1436L60 32Z" fill="white"/></svg>`,
+                        default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill="#FF0000" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
+                        classic: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#212121" fill-opacity="0.8"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
@@ -3157,7 +3188,7 @@ export default function CreateTemplatePage() {
                             className="w-full h-full"
                            >
                             <div
-                                className="w-full h-full relative aspect-video"
+                                className="w-full h-full relative aspect-video bg-black/5"
                                 style={{
                                   borderRadius: `${styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0}px`,
                                   overflow: 'hidden',
@@ -3177,7 +3208,7 @@ export default function CreateTemplatePage() {
                                         target={link.url && videoId ? (link.openInNewTab ? '_blank' : '_self') : undefined} 
                                         rel="noopener noreferrer"
                                         className={cn(
-                                          "block bg-center bg-no-repeat bg-contain", 
+                                          "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110", 
                                           playButtonSize[sizeVariant],
                                           link.url && videoId ? "cursor-pointer" : "cursor-default"
                                         )}
@@ -3411,10 +3442,10 @@ export default function CreateTemplatePage() {
     }
     
     const timeData = [
-      { label: 'Días', value: isFinished ? 0 : timeLeft.days },
-      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours },
-      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes },
-      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds },
+      { label: 'Días', value: isFinished ? 0 : timeLeft.days, symbol: 'D' },
+      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours, symbol: 'H' },
+      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes, symbol: 'M' },
+      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds, symbol: 'S' },
     ];
     
     const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
@@ -3427,40 +3458,59 @@ export default function CreateTemplatePage() {
     if (styles.background.type === 'solid') {
         baseStyle.backgroundColor = styles.background.color1;
     } else {
-        baseStyle.backgroundImage = `linear-gradient(${styles.background.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.background.color1}, ${styles.background.color2})`;
+        const {direction, color1, color2} = styles.background;
+        if(direction === 'radial') {
+             baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+        } else {
+            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+            baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
     }
 
     if (design === 'analog') {
-      const startDateTime = new Date(startDate.toLocaleString('en-US', { timeZone: timezone }));
-      const endDateTime = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
-      const totalDuration = endDateTime.getTime() - startDateTime.getTime();
+        const startDateTime = new Date(startDate.toLocaleString('en-US', { timeZone: timezone }));
+        const endDateTime = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
+        const totalDuration = endDateTime.getTime() - startDateTime.getTime();
 
-      const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-        if (!timeUnits.days && !timeUnits.hours && !timeUnits.minutes && !timeUnits.seconds) return 0;
+        const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+            if (isFinished) return 0;
 
-        switch (unit) {
-          case 'Días':
-             const currentRemaining = (timeUnits.days || 0) * 86400 + (timeUnits.hours || 0) * 3600 + (timeUnits.minutes || 0) * 60 + (timeUnits.seconds || 0);
-             return totalDuration > 0 ? (currentRemaining * 1000) / totalDuration : 0;
-          case 'Horas':
-            return (timeUnits.hours || 0) / 24;
-          case 'Minutos':
-            return (timeUnits.minutes || 0) / 60;
-          case 'Segundos':
-            return (timeUnits.seconds || 0) / 60;
-          default:
-            return 0;
-        }
-      };
+            const daysLeft = timeUnits.days || 0;
+            const hoursLeft = timeUnits.hours || 0;
+            const minutesLeft = timeUnits.minutes || 0;
+            const secondsLeft = timeUnits.seconds || 0;
 
-      const analogColor = styles.background.color1;
+            switch (unit) {
+                case 'Días': {
+                   if (totalDuration <= 0) return 1;
+                   const secondsRemaining = (daysLeft * 86400) + (hoursLeft * 3600) + (minutesLeft * 60) + secondsLeft;
+                   return (secondsRemaining * 1000) / totalDuration;
+                }
+                case 'Horas':
+                    return hoursLeft / 23;
+                case 'Minutos':
+                    return minutesLeft / 59;
+                case 'Segundos':
+                    return secondsLeft / 59;
+                default:
+                    return 0;
+            }
+        };
 
-      return (
+        return (
             <div className="flex justify-center items-center gap-2 p-2">
                 {timeData.map(unit => (
                     <div key={unit.label} className="flex flex-col items-center">
                         <div className="relative w-20 h-20">
-                             <svg className="w-full h-full" viewBox="0 0 100 100">
+                            <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <defs>
+                                    {styles.background.type === 'gradient' && (
+                                        <linearGradient id={`gradient-${block.id}-${unit.label}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
+                                            <stop offset="0%" stopColor={styles.background.color1} />
+                                            <stop offset="100%" stopColor={styles.background.color2} />
+                                        </linearGradient>
+                                    )}
+                                </defs>
                                 <circle className="stroke-current text-muted/20" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent" />
                                 <circle
                                     className="stroke-current"
@@ -3470,28 +3520,77 @@ export default function CreateTemplatePage() {
                                     strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
                                     transform="rotate(-90 50 50)"
                                     strokeLinecap="round"
-                                    style={{ color: analogColor }}
+                                    stroke={styles.background.type === 'gradient' ? `url(#gradient-${block.id}-${unit.label})` : styles.background.color1}
                                 />
                                 <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
                                     {String(unit.value || 0).padStart(2, '0')}
                                 </text>
-                             </svg>
+                            </svg>
                         </div>
-                         <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
+                        <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
                     </div>
                 ))}
             </div>
-        )
+        );
+    }
+    
+    if (design === 'minimalist') {
+      return (
+        <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily }}>
+            {timeData.map((unit, index) => (
+                <React.Fragment key={unit.label}>
+                    <div className="flex flex-col items-center">
+                         <div className="relative h-20 w-20">
+                            <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id={`gradient-minimalist-${block.id}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
+                                        <stop offset="0%" stopColor={styles.background.color1} />
+                                        <stop offset="100%" stopColor={styles.background.color2} />
+                                    </linearGradient>
+                                     <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--ai-track))" strokeWidth="3" />
+                                <path
+                                    d={`M 50,5 A 45,45 0 1,1 49.99,5`}
+                                    fill="none"
+                                    stroke={styles.background.type === 'gradient' ? `url(#gradient-minimalist-${block.id})` : styles.background.color1}
+                                    strokeWidth="5"
+                                    strokeLinecap="round"
+                                    style={{
+                                        filter: `url(#glow-${block.id})`,
+                                        strokeDasharray: 2 * Math.PI * 45,
+                                        strokeDashoffset: 2 * Math.PI * 45 * (1 - ((unit.value || 0) / (unit.label === 'Días' ? 365 : unit.label === 'Horas' ? 24 : 60))),
+                                        transition: 'stroke-dashoffset 1s linear',
+                                    }}
+                                    transform="rotate(-90 50 50)"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                               <span className="text-4xl font-light" style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
+                               <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{unit.label}</span>
+                            </div>
+                        </div>
+                    </div>
+                </React.Fragment>
+            ))}
+        </div>
+    );
     }
 
     return (
         <div className={cn("flex justify-center items-center gap-2 p-4", design === 'minimalist' && 'gap-1')}>
             {timeData.map(unit => (
                  <div key={unit.label} className={cn("flex flex-col items-center", design === 'minimalist' && 'flex-row gap-1')}>
-                    <div style={baseStyle} className={cn("flex items-center justify-center p-2", design !== 'minimalist' && 'w-16 h-16 text-3xl font-bold', design === 'minimalist' && 'bg-transparent text-xl font-semibold p-0')}>
+                    <div style={baseStyle} className={cn("flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold")}>
                         {String(unit.value || 0).padStart(2, '0')}
                     </div>
-                     <p className={cn("text-xs mt-1", design === 'minimalist' && 'mt-0 text-lg')} style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{design === 'minimalist' ? unit.label.charAt(0) : unit.label}</p>
+                     <p className={cn("text-xs mt-1")} style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
                  </div>
             ))}
         </div>
@@ -4183,4 +4282,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
