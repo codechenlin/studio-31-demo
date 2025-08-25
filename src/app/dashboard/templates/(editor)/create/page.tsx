@@ -100,6 +100,7 @@ import {
   CalendarIcon,
   CheckIcon,
   XCircle,
+  Search as SearchIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -173,7 +174,7 @@ const timezones = [
     "America/Mexico_City - Mexico",
     "America/Cancun - Mexico",
     "America/Chihuahua - Mexico",
-    "America/Tijuana - Mexico",
+    "America/Tijuana - Mexico (Baja California)",
     "America/Bogota - Colombia",
     "America/Caracas - Venezuela",
     "America/Lima - Peru",
@@ -2188,10 +2189,12 @@ const DateTimePickerModal = ({ isOpen, onOpenChange, initialDate, onAccept, titl
     const [minutes, setMinutes] = useState(() => new Date(initialDate).getMinutes());
   
     useEffect(() => {
-        const initial = new Date(initialDate);
-        setDate(initial);
-        setHours(initial.getHours());
-        setMinutes(initial.getMinutes());
+        if (isOpen) {
+            const initial = new Date(initialDate);
+            setDate(initial);
+            setHours(initial.getHours());
+            setMinutes(initial.getMinutes());
+        }
     }, [initialDate, isOpen]);
 
     const handleAccept = () => {
@@ -2250,11 +2253,21 @@ const DateTimePickerModal = ({ isOpen, onOpenChange, initialDate, onAccept, titl
 
 const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onAccept: (tz: string) => void, currentValue: string }) => {
     const [selectedValue, setSelectedValue] = useState(currentValue);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredTimezones = timezones.filter(tz => tz.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleAccept = () => {
         onAccept(selectedValue);
         onOpenChange(false);
     }
+
+    useEffect(() => {
+        if(isOpen) {
+            setSelectedValue(currentValue);
+            setSearchTerm('');
+        }
+    }, [isOpen, currentValue])
 
     return (
          <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -2263,16 +2276,33 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
                     <DialogTitle>Seleccionar Zona Horaria</DialogTitle>
                     <DialogDescription>Elige la zona horaria para tu contador.</DialogDescription>
                 </DialogHeader>
-                <Select onValueChange={setSelectedValue} defaultValue={selectedValue}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent position="popper" className="max-h-80">
-                        {timezones.map(tz => {
+                <div className="relative">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Buscar zona horaria..." 
+                        className="pl-10" 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <ScrollArea className="h-72">
+                    <div className="pr-4">
+                        {filteredTimezones.map(tz => {
                            const [zone, ...countryParts] = tz.split(' - ');
                            const country = countryParts.join(' - ');
-                           return <SelectItem key={zone} value={zone}>{zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}</SelectItem>
+                           return (
+                             <Button
+                                key={zone}
+                                variant={selectedValue === zone ? "secondary" : "ghost"}
+                                className="w-full justify-start mb-1"
+                                onClick={() => setSelectedValue(zone)}
+                              >
+                                {zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}
+                              </Button>
+                           )
                         })}
-                    </SelectContent>
-                </Select>
+                    </div>
+                </ScrollArea>
                  <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
                     <Button onClick={handleAccept}>Aceptar</Button>
@@ -2451,13 +2481,13 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
 
             <div className="space-y-2">
-                <Label>{design === 'analog' ? 'Grosor de la Barra' : 'Radio del Borde'}</Label>
+                 <Label>{design === 'minimalist' ? 'Grosor de la Barra' : (design === 'analog' ? 'Grosor de la Barra' : 'Radio del Borde')}</Label>
                 <Slider 
-                  value={[design === 'analog' ? styles.strokeWidth : styles.borderRadius]} 
-                  max={design === 'analog' ? 15 : 30}
-                  min={design === 'analog' ? 2 : 0}
+                  value={[design === 'minimalist' ? styles.strokeWidth : (design === 'analog' ? styles.strokeWidth : styles.borderRadius)]}
+                  max={design === 'minimalist' ? 10 : (design === 'analog' ? 15 : 30)}
+                  min={design === 'minimalist' ? 1 : (design === 'analog' ? 2 : 0)}
                   step={1}
-                  onValueChange={(v) => updateStyle(design === 'analog' ? 'strokeWidth' : 'borderRadius', v[0])} />
+                  onValueChange={(v) => updateStyle(design === 'minimalist' ? 'strokeWidth' : (design === 'analog' ? 'strokeWidth' : 'borderRadius'), v[0])} />
             </div>
 
             <div className="space-y-2">
@@ -3333,8 +3363,8 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                        default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill="#FF0000" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
-                        classic: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#212121" fill-opacity="0.8"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                      default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill="#FF0000" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
+                      classic: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#212121" fill-opacity="0.8"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
@@ -3692,11 +3722,10 @@ export default function CreateTemplatePage() {
             const minutesLeft = timeUnits.minutes || 0;
             const secondsLeft = timeUnits.seconds || 0;
 
-            const secondsRemaining = (daysLeft * 86400) + (hoursLeft * 3600) + (minutesLeft * 60) + secondsLeft;
-            const progress = (secondsRemaining * 1000) / totalDuration;
+            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
             
             switch (unit) {
-                case 'Días': return progress > 1 ? 1 : progress;
+                case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : 0;
                 case 'Horas': return (hoursLeft / 23);
                 case 'Minutos': return (minutesLeft / 59);
                 case 'Segundos': return (secondsLeft / 59);
@@ -3712,7 +3741,7 @@ export default function CreateTemplatePage() {
                  <svg width="0" height="0" className="absolute">
                   <defs>
                      {background.type === 'gradient' && (
-                        <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                         <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
                             <stop offset="0%" stopColor={background.color1} />
                             <stop offset="100%" stopColor={background.color2 || background.color1} />
                         </linearGradient>
@@ -3745,53 +3774,90 @@ export default function CreateTemplatePage() {
         );
     }
     
-    if (design === 'minimalist') {
+     if (design === 'minimalist') {
+      const r = 45;
+      const c = 2 * Math.PI * r;
+      const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+          if (isFinished) return 0;
+          const end = new Date(targetDate!);
+          const start = initialStartDateRef.current;
+          const totalDuration = end.getTime() - start.getTime();
+          if(totalDuration <= 0) return 1;
+
+          const daysLeft = timeUnits.days || 0;
+          const hoursLeft = timeUnits.hours || 0;
+          const minutesLeft = timeUnits.minutes || 0;
+          const secondsLeft = timeUnits.seconds || 0;
+
+          const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+          
+          switch (unit) {
+              case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : 0;
+              case 'Horas': return (hoursLeft / 23);
+              case 'Minutos': return (minutesLeft / 59);
+              case 'Segundos': return (secondsLeft / 59);
+              default: return 0;
+          }
+      };
+
+      const pathLength = 360;
+      const strokeDashoffset = (1 - getProgress('Días')) * pathLength;
+      
+      const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+          const progress = getProgress(unit);
+          const totalLength = 320; // 4 * 80 for a square of 80x80
+          return totalLength * (1 - progress);
+      };
+
       return (
-        <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
-            {timeData.map((unit) => (
-                <React.Fragment key={unit.label}>
-                    <div className="flex flex-col items-center">
-                         <div className="relative h-20 w-20">
-                            <svg className="w-full h-full" viewBox="0 0 100 100">
-                                <defs>
-                                    <linearGradient id={`gradient-minimalist-${block.id}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
-                                        <stop offset="0%" stopColor={styles.background.color1} />
-                                        <stop offset="100%" stopColor={styles.background.color2 || styles.background.color1} />
-                                    </linearGradient>
-                                     <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                                        <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur"/>
-                                            <feMergeNode in="SourceGraphic"/>
-                                        </feMerge>
-                                    </filter>
-                                </defs>
-                                <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--ai-track))" strokeWidth="3" />
-                                <path
-                                    d={`M 50,5 A 45,45 0 1,1 49.99,5`}
-                                    fill="none"
-                                    stroke={styles.background.type === 'gradient' ? `url(#gradient-minimalist-${block.id})` : styles.background.color1}
-                                    strokeWidth="5"
-                                    strokeLinecap="round"
-                                    style={{
-                                        filter: `url(#glow-${block.id})`,
-                                        strokeDasharray: 2 * Math.PI * 45,
-                                        strokeDashoffset: 2 * Math.PI * 45 * (1 - ((unit.value || 0) / (unit.label === 'Días' ? 365 : unit.label === 'Horas' ? 24 : 60))),
-                                        transition: 'stroke-dashoffset 1s linear',
-                                    }}
-                                    transform="rotate(-90 50 50)"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                               <span className="text-4xl font-light" style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
-                               <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{unit.label}</span>
-                            </div>
-                        </div>
-                    </div>
-                </React.Fragment>
-            ))}
-        </div>
-    );
+          <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
+              {timeData.map((unit) => (
+                  <div key={unit.label} className="relative flex flex-col items-center w-24 h-24">
+                      <svg className="w-full h-full" viewBox="0 0 100 100">
+                          <defs>
+                              <linearGradient id={`gradient-minimalist-${block.id}-${unit.label}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
+                                  <stop offset="0%" stopColor={styles.background.color1} />
+                                  <stop offset="100%" stopColor={styles.background.color2 || styles.background.color1} />
+                              </linearGradient>
+                              <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                                  <feMerge>
+                                      <feMergeNode in="coloredBlur"/>
+                                      <feMergeNode in="SourceGraphic"/>
+                                  </feMerge>
+                              </filter>
+                          </defs>
+                           <path
+                              d="M 10,10 H 90 V 90 H 10 Z"
+                              fill="none"
+                              stroke="hsl(var(--ai-track))"
+                              strokeWidth={styles.strokeWidth}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                          />
+                          <path
+                              d="M 10,10 H 90 V 90 H 10 Z"
+                              fill="none"
+                              stroke={`url(#gradient-minimalist-${block.id}-${unit.label})`}
+                              strokeWidth={styles.strokeWidth}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeDasharray={320}
+                              strokeDashoffset={getPathForUnit(unit.label as any)}
+                              style={{
+                                  filter: `url(#glow-${block.id})`,
+                                  transition: 'stroke-dashoffset 1s linear',
+                              }}
+                          />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                         <span className="text-4xl font-light" style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
+                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{unit.label}</span>
+                      </div>
+                  </div>
+              ))}
+          </div>
+      );
     }
 
     return (
