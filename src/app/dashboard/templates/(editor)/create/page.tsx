@@ -163,58 +163,58 @@ const googleFonts = [
 ];
 
 const timezones = [
-    "UTC - Coordinated Universal Time",
-    "GMT - Greenwich Mean Time",
-    "America/New_York - USA (East)",
-    "America/Chicago - USA (Central)",
-    "America/Denver - USA (Mountain)",
-    "America/Los_Angeles - USA (Pacific)",
-    "America/Toronto - Canada",
-    "America/Vancouver - Canada",
-    "America/Mexico_City - Mexico",
-    "America/Cancun - Mexico",
-    "America/Chihuahua - Mexico",
-    "America/Tijuana - Mexico (Baja California)",
-    "America/Bogota - Colombia",
-    "America/Caracas - Venezuela",
-    "America/Lima - Peru",
-    "America/La_Paz - Bolivia",
-    "America/El_Salvador - El Salvador",
-    "America/Guatemala - Guatemala",
-    "America/Sao_Paulo - Brazil",
-    "America/Bahia - Brazil",
-    "America/Argentina/Buenos_Aires - Argentina",
-    "America/Santiago - Chile",
-    "America/Asuncion - Paraguay",
-    "America/Montevideo - Uruguay",
-    "America/Godthab - Greenland",
-    "Europe/London - United Kingdom",
-    "Europe/Madrid - Spain",
-    "Europe/Barcelona - Spain",
-    "Europe/Berlin - Germany",
-    "Europe/Paris - France",
-    "Europe/Rome - Italy",
-    "Europe/Moscow - Russia",
-    "Europe/Oslo - Norway",
-    "Europe/Stockholm - Sweden",
-    "Europe/Zurich - Switzerland",
-    "Africa/Johannesburg - South Africa",
-    "Africa/Cairo - Egypt",
-    "Africa/Nairobi - Kenya",
-    "Africa/Lagos - Nigeria",
-    "Asia/Shanghai - China",
-    "Asia/Tokyo - Japan",
-    "Asia/Dubai - UAE",
-    "Australia/Sydney - Australia (East)",
-    "Asia/Singapore - Singapore",
-    "Asia/Kamchatka - Russia",
-    "Asia/Omsk - Russia",
-    "Asia/Kolkata - India",
-    "Pacific/Auckland - New Zealand",
-    "Asia/Jakarta - Indonesia",
-    "Asia/Manila - Philippines",
-    "Asia/Kuala_Lumpur - Malaysia",
-    "Asia/Hong_Kong - Hong Kong",
+    { value: "Etc/UTC", label: "UTC - Coordinated Universal Time" },
+    { value: "Etc/GMT", label: "GMT - Greenwich Mean Time" },
+    { value: "America/New_York", label: "USA (East) - America/New_York" },
+    { value: "America/Chicago", label: "USA (Central) - America/Chicago" },
+    { value: "America/Denver", label: "USA (Mountain) - America/Denver" },
+    { value: "America/Los_Angeles", label: "USA (Pacific) - America/Los_Angeles" },
+    { value: "America/Toronto", label: "Canada - America/Toronto" },
+    { value: "America/Vancouver", label: "Canada - America/Vancouver" },
+    { value: "America/Mexico_City", label: "Mexico - America/Mexico_City" },
+    { value: "America/Cancun", label: "Mexico - America/Cancun" },
+    { value: "America/Chihuahua", label: "Mexico - America/Chihuahua" },
+    { value: "America/Tijuana", label: "Mexico (Baja California) - America/Tijuana" },
+    { value: "America/Bogota", label: "Colombia - America/Bogota" },
+    { value: "America/Caracas", label: "Venezuela - America/Caracas" },
+    { value: "America/Lima", label: "Peru - America/Lima" },
+    { value: "America/La_Paz", label: "Bolivia - America/La_Paz" },
+    { value: "America/El_Salvador", label: "El Salvador - America/El_Salvador" },
+    { value: "America/Guatemala", label: "Guatemala - America/Guatemala" },
+    { value: "America/Sao_Paulo", label: "Brazil - America/Sao_Paulo" },
+    { value: "America/Bahia", label: "Brazil - America/Bahia" },
+    { value: "America/Argentina/Buenos_Aires", label: "Argentina - America/Argentina/Buenos_Aires" },
+    { value: "America/Santiago", label: "Chile - America/Santiago" },
+    { value: "America/Asuncion", label: "Paraguay - America/Asuncion" },
+    { value: "America/Montevideo", label: "Uruguay - America/Montevideo" },
+    { value: "America/Godthab", label: "Greenland - America/Godthab" },
+    { value: "Europe/London", label: "United Kingdom - Europe/London" },
+    { value: "Europe/Madrid", label: "Spain - Europe/Madrid" },
+    { value: "Europe/Barcelona", label: "Spain - Europe/Barcelona" },
+    { value: "Europe/Berlin", label: "Germany - Europe/Berlin" },
+    { value: "Europe/Paris", label: "France - Europe/Paris" },
+    { value: "Europe/Rome", label: "Italy - Europe/Rome" },
+    { value: "Europe/Moscow", label: "Russia - Europe/Moscow" },
+    { value: "Europe/Oslo", label: "Norway - Europe/Oslo" },
+    { value: "Europe/Stockholm", label: "Sweden - Europe/Stockholm" },
+    { value: "Europe/Zurich", label: "Switzerland - Europe/Zurich" },
+    { value: "Africa/Johannesburg", label: "South Africa - Africa/Johannesburg" },
+    { value: "Africa/Cairo", label: "Egypt - Africa/Cairo" },
+    { value: "Africa/Nairobi", label: "Kenya - Africa/Nairobi" },
+    { value: "Africa/Lagos", label: "Nigeria - Africa/Lagos" },
+    { value: "Asia/Shanghai", label: "China - Asia/Shanghai" },
+    { value: "Asia/Tokyo", label: "Japan - Asia/Tokyo" },
+    { value: "Asia/Dubai", label: "UAE - Asia/Dubai" },
+    { value: "Australia/Sydney", label: "Australia (East) - Australia/Sydney" },
+    { value: "Asia/Singapore", label: "Singapore - Asia/Singapore" },
+    { value: "Asia/Kamchatka", label: "Russia - Asia/Kamchatka" },
+    { value: "Asia/Omsk", label: "Russia - Asia/Omsk" },
+    { value: "Asia/Kolkata", label: "India - Asia/Kolkata" },
+    { value: "Pacific/Auckland", label: "New Zealand - Pacific/Auckland" },
+    { value: "Asia/Jakarta", label: "Indonesia - Asia/Jakarta" },
+    { value: "Asia/Manila", label: "Philippines - Asia/Manila" },
+    { value: "Asia/Kuala_Lumpur", label: "Malaysia - Asia/Kuala_Lumpur" },
+    { value: "Asia/Hong_Kong", label: "Hong Kong - Asia/Hong_Kong" },
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -2255,7 +2255,7 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
     const [selectedValue, setSelectedValue] = useState(currentValue);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredTimezones = timezones.filter(tz => tz.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredTimezones = timezones.filter(tz => tz.label.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const handleAccept = () => {
         onAccept(selectedValue);
@@ -2287,21 +2287,18 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
                 </div>
                 <ScrollArea className="h-72">
                     <div className="pr-4">
-                        {filteredTimezones.map(tz => {
-                           const [zone, ...countryParts] = tz.split(' - ');
-                           const country = countryParts.join(' - ');
-                           return (
+                        {filteredTimezones.map(tz => (
                              <Button
-                                key={zone}
+                                key={tz.value}
                                 variant="ghost"
-                                className={cn("w-full justify-between mb-1", selectedValue === zone && "bg-muted")}
-                                onClick={() => setSelectedValue(zone)}
+                                className={cn("w-full justify-between mb-1", selectedValue === tz.value && "bg-muted")}
+                                onClick={() => setSelectedValue(tz.value)}
                               >
-                                <span className="text-left flex-1">{zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}</span>
-                                {selectedValue === zone && <div className="size-2 rounded-full" style={{backgroundColor: '#00CB07', boxShadow: '0 0 6px #00CB07'}}/>}
+                                <span className="text-left flex-1">{tz.label}</span>
+                                {selectedValue === tz.value && <div className="size-2 rounded-full" style={{backgroundColor: '#00CB07', boxShadow: '0 0 6px #00CB07'}}/>}
                               </Button>
                            )
-                        })}
+                        )}
                     </div>
                 </ScrollArea>
                  <DialogFooter>
@@ -2385,11 +2382,12 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
     };
 
-    const handleTimezoneAccept = (tz: string) => {
-        updatePayload('timezone', tz);
+    const handleTimezoneAccept = (tzValue: string) => {
+        updatePayload('timezone', tzValue);
+        const tzLabel = timezones.find(tz => tz.value === tzValue)?.label || tzValue;
         toast({
             title: "¡Zona Horaria Actualizada!",
-            description: `El contador ahora corre en el tiempo del mundo real para: ${tz}.`,
+            description: `El contador ahora corre en el tiempo del mundo real para: ${tzLabel}.`,
             className: 'bg-[#00CB07] border-none text-white',
         });
     };
@@ -2397,6 +2395,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const { styles, endDate, timezone, design, endAction } = element.payload;
     const tomorrow = new Date(endDate);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const currentTimezoneLabel = timezones.find(tz => tz.value === timezone)?.label || timezone;
 
     return (
         <div className="space-y-4">
@@ -2446,7 +2446,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Zona Horaria</Label>
                 <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
-                     {timezone}
+                     {currentTimezoneLabel}
                 </Button>
             </div>
             <div className="space-y-2">
@@ -2726,17 +2726,18 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                 <div className="flex flex-wrap justify-center items-center gap-1 p-1">
                     <svg width="0" height="0" className="absolute">
                         <defs>
-                            {background.type === 'gradient' && background.direction === 'radial' ? (
+                            {background.type === 'gradient' && (
+                                <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : (background.direction === 'vertical' ? 'rotate(0)' : undefined)}>
+                                    <stop offset="0%" stopColor={background.color1} />
+                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
+                                </linearGradient>
+                            )}
+                             {background.type === 'gradient' && background.direction === 'radial' && (
                                 <radialGradient id={`${gradientId}-radial`}>
                                     <stop offset="0%" stopColor={background.color1} />
                                     <stop offset="100%" stopColor={background.color2 || background.color1} />
                                 </radialGradient>
-                            ) : background.type === 'gradient' ? (
-                                <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                                    <stop offset="0%" stopColor={background.color1} />
-                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
-                                </linearGradient>
-                            ) : null}
+                            )}
                         </defs>
                     </svg>
                     {timeData.map(unit => (
@@ -2751,9 +2752,9 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                                         strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
                                         transform="rotate(-90 50 50)"
                                         strokeLinecap="round"
-                                        stroke={background.type === 'gradient' 
-                                            ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
-                                            : background.color1
+                                        stroke={background.type === 'solid' 
+                                          ? background.color1 
+                                          : (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
                                         }
                                     />
                                     <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
@@ -3151,7 +3152,7 @@ export default function CreateTemplatePage() {
                 type: 'timer',
                 payload: {
                     endDate: defaultEndDate.toISOString(),
-                    timezone: 'UTC - Coordinated Universal Time',
+                    timezone: 'Etc/UTC',
                     design: 'minimalist',
                     endAction: { type: 'stop', message: '¡La oferta ha terminado!' },
                     styles: {
@@ -4448,3 +4449,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
