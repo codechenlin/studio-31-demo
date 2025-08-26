@@ -99,8 +99,8 @@ import {
   MessageSquare,
   CalendarIcon,
   CheckIcon,
+  Search as SearchIcon,
   XCircle,
-  Search as SearchIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3265,6 +3265,319 @@ export default function CreateTemplatePage() {
         </div>
     );
 };
+
+  const TimerComponent = ({ block, colCount }: { block: TimerBlock; colCount: number }) => {
+    const { endDate, timezone, design, endAction, styles } = block.payload;
+    const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
+    const [isFinished, setIsFinished] = useState(false);
+  
+    const targetDate = currentStage === 'primary' ? endDate : endAction.secondaryEndDate;
+    const initialStartDateRef = useRef(new Date());
+  
+    const calculateTimeLeft = useCallback(() => {
+      if (!targetDate) return {};
+      try {
+        const end = new Date(targetDate);
+        const now = new Date();
+  
+        const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+        const timeZoneOffset = nowInTimezone.getTime() - now.getTime();
+        const adjustedEnd = new Date(end.getTime() - timeZoneOffset);
+  
+        const difference = adjustedEnd.getTime() - now.getTime();
+  
+        if (difference > 0) {
+          return {
+            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+            minutes: Math.floor((difference / 1000 / 60) % 60),
+            seconds: Math.floor((difference / 1000) % 60),
+          };
+        }
+      } catch (e) {
+        console.error("Invalid time zone specified:", e);
+      }
+      return {};
+    }, [targetDate, timezone]);
+  
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
+  
+    useEffect(() => {
+      setIsFinished(false);
+      setCurrentStage('primary');
+      initialStartDateRef.current = new Date();
+    }, [endDate, endAction.secondaryEndDate]);
+  
+    useEffect(() => {
+      const timer = setInterval(() => {
+        const newTimeLeft = calculateTimeLeft();
+        if (Object.keys(newTimeLeft).length === 0) {
+          if (currentStage === 'primary' && endAction.type === 'secondary_countdown' && endAction.secondaryEndDate) {
+            setCurrentStage('secondary');
+          } else {
+            setIsFinished(true);
+            clearInterval(timer);
+          }
+        } else {
+          setTimeLeft(newTimeLeft);
+        }
+      }, 1000);
+      return () => clearInterval(timer);
+    }, [calculateTimeLeft, currentStage, endAction]);
+  
+    if (isFinished && endAction.type === 'message') {
+      return (
+        <div className="p-4 text-center w-full flex justify-center">
+          <div style={{ transform: `scale(${styles.scale})` }}>
+            <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
+          </div>
+        </div>
+      );
+    }
+  
+    const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
+  
+    const timeData = [
+      { label: 'Días', value: timeUnits.days },
+      { label: 'Horas', value: timeUnits.hours },
+      { label: 'Minutos', value: timeUnits.minutes },
+      { label: 'Segundos', value: timeUnits.seconds },
+    ];
+  
+    const renderDigital = () => {
+      const baseStyle: React.CSSProperties = {
+        borderRadius: `${styles.borderRadius}px`,
+        color: styles.numberColor,
+        fontFamily: styles.fontFamily,
+      };
+      if (styles.background.type === 'solid') {
+        baseStyle.backgroundColor = styles.background.color1;
+      } else {
+        const { direction, color1, color2 } = styles.background;
+        if (direction === 'radial') {
+          baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+        } else {
+          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+          baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
+      }
+  
+      return (
+        <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
+          {timeData.map(unit => (
+            <div key={unit.label} className="flex flex-col items-center">
+              <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
+                {String(unit.value || 0).padStart(2, '0')}
+              </div>
+              <p className="text-xs mt-1" style={{ color: styles.numberColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+     const renderAnalog = () => {
+        const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+            if (isFinished) return 0;
+            const end = new Date(targetDate!);
+            const start = initialStartDateRef.current;
+            const totalDuration = end.getTime() - start.getTime();
+            if(totalDuration <= 0) return 1;
+
+            const daysLeft = timeUnits.days || 0;
+            const hoursLeft = timeUnits.hours || 0;
+            const minutesLeft = timeUnits.minutes || 0;
+            const secondsLeft = timeUnits.seconds || 0;
+            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+            
+            switch (unit) {
+                case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0);
+                case 'Horas': return (hoursLeft / 23);
+                case 'Minutos': return (minutesLeft / 59);
+                case 'Segundos': return (secondsLeft / 59);
+                default: return 0;
+            }
+        };
+
+        const { background } = styles;
+        const gradientId = `analog-grad-${block.id}`;
+        
+        return (
+            <div className="flex flex-wrap justify-center items-center gap-1 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
+                 <svg width="0" height="0" className="absolute">
+                    <defs>
+                        {background.type === 'gradient' && (
+                            <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                                <stop offset="0%" stopColor={background.color1} />
+                                <stop offset="100%" stopColor={background.color2 || background.color1} />
+                            </linearGradient>
+                        )}
+                        {background.type === 'gradient' && background.direction === 'radial' && (
+                             <radialGradient id={`${gradientId}-radial`}>
+                                <stop offset="0%" stopColor={background.color1} />
+                                <stop offset="100%" stopColor={background.color2 || background.color1} />
+                            </radialGradient>
+                        )}
+                  </defs>
+                </svg>
+                {timeData.map(unit => (
+                    <div key={unit.label} className="flex flex-col items-center flex-shrink-0" style={{width: '6em', height: '7em'}}>
+                        <div className="relative w-full h-[6em]">
+                             <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
+                                <circle
+                                    strokeWidth={styles.strokeWidth}
+                                    cx="50" cy="50" r="40" fill="transparent"
+                                    strokeDasharray={2 * Math.PI * 40}
+                                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
+                                    transform="rotate(-90 50 50)"
+                                    strokeLinecap="round"
+                                    stroke={background.type === 'gradient' 
+                                        ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
+                                        : background.color1
+                                    }
+                                />
+                                <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
+                                    {String(unit.value || 0).padStart(2, '0')}
+                                </text>
+                            </svg>
+                        </div>
+                        <p className="text-[0.75em] -mt-[0.5em]" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+  
+    const renderMinimalist = () => {
+        const sizeClasses = {
+          1: 'w-[4.5em] h-[4.5em]',
+          2: 'w-[4em] h-[4em]',
+          3: 'w-[3.5em] h-[3.5em]',
+          4: 'w-[3em] h-[3em]'
+        };
+        const textSizeClasses = {
+            1: 'text-[1.5em]',
+            2: 'text-[1.25em]',
+            3: 'text-[1em]',
+            4: 'text-[0.8em]'
+        }
+        const labelSizeClasses = {
+            1: 'text-[0.6em]',
+            2: 'text-[0.5em]',
+            3: 'text-[0.45em]',
+            4: 'text-[0.4em]'
+        }
+
+        const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+          if (isFinished) return 320;
+          const end = new Date(targetDate!);
+          const start = initialStartDateRef.current;
+          const totalDuration = end.getTime() - start.getTime();
+          if (totalDuration <= 0) return 0;
+  
+          const daysLeft = timeUnits.days || 0;
+          const hoursLeft = timeUnits.hours || 0;
+          const minutesLeft = timeUnits.minutes || 0;
+          const secondsLeft = timeUnits.seconds || 0;
+  
+          const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+          let progress = 0;
+  
+          switch (unit) {
+            case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0); break;
+            case 'Horas': progress = hoursLeft / 23; break;
+            case 'Minutos': progress = minutesLeft / 59; break;
+            case 'Segundos': progress = secondsLeft / 59; break;
+          }
+          return 320 * (1 - progress);
+        };
+  
+        const pathD = "M 10,10 H 90 V 90 H 10 Z";
+        const { background } = styles;
+        const gradientId = `minimalist-grad-${block.id}`;
+  
+        return (
+          <div className="flex flex-wrap justify-center items-end p-1 w-full" style={{ fontSize: `${styles.scale * 16}px` }}>
+            <div className="flex justify-center items-end flex-wrap gap-1" style={{ fontFamily: styles.fontFamily }}>
+              <svg width="0" height="0" className="absolute">
+                <defs>
+                  {background.type === 'gradient' && (
+                     <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                        <stop offset="0%" stopColor={background.color1} />
+                        <stop offset="100%" stopColor={background.color2 || background.color1} />
+                    </linearGradient>
+                  )}
+                  {background.type === 'gradient' && background.direction === 'radial' && (
+                        <radialGradient id={`${gradientId}-radial`}>
+                        <stop offset="0%" stopColor={background.color1} />
+                        <stop offset="100%" stopColor={background.color2 || background.color1} />
+                        </radialGradient>
+                  )}
+                  <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+              </svg>
+              {timeData.map((unit) => (
+                <div key={unit.label} className={cn("relative flex flex-col items-center flex-shrink-0", sizeClasses[colCount as keyof typeof sizeClasses] || 'w-[3em] h-[3em]')}>
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="hsl(var(--ai-track))"
+                      strokeWidth={styles.strokeWidth}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      rx="8"
+                    />
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
+                      strokeWidth={styles.strokeWidth}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      rx="8"
+                      strokeDasharray={320}
+                      strokeDashoffset={getPathForUnit(unit.label as any)}
+                      style={{
+                        filter: `url(#glow-${block.id})`,
+                        transition: 'stroke-dashoffset 1s linear',
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className={cn("font-light", textSizeClasses[colCount as keyof typeof textSizeClasses] || 'text-xs')} style={{ color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                    <span className={cn("uppercase tracking-widest text-muted-foreground", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')}>{unit.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
+  
+    const renderContent = () => {
+      switch (design) {
+        case 'analog': return renderAnalog();
+        case 'minimalist': return renderMinimalist();
+        case 'digital':
+        default:
+          return renderDigital();
+      }
+    };
+  
+    return (
+        <div className="w-full h-full flex justify-center items-center overflow-hidden">
+          {renderContent()}
+        </div>
+      );
+  };
   
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string, colCount: number) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -3273,7 +3586,7 @@ export default function CreateTemplatePage() {
        <div 
         key={block.id}
         className={cn(
-            "group/primitive relative w-full",
+            "group/primitive relative w-full overflow-hidden",
             isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
@@ -3366,8 +3679,9 @@ export default function CreateTemplatePage() {
                       classic: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
                     };
                     
-                    const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
+                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
                     const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9', xs: 'w-12 h-9' };
+
                     const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-sm p-2', xs: 'text-xs px-2 pt-1 pb-0' };
                     const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs', xs: 'text-xs' };
 
@@ -3615,288 +3929,7 @@ export default function CreateTemplatePage() {
     setIsImageModalOpen(false);
   }
 
- const TimerComponent = ({ block, colCount }: { block: TimerBlock, colCount: number }) => {
-    const { endDate, timezone, design, endAction, styles } = block.payload;
-    const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
-    const [isFinished, setIsFinished] = useState(false);
 
-    const targetDate = currentStage === 'primary' ? endDate : endAction.secondaryEndDate;
-    const initialStartDateRef = useRef(new Date());
-
-    const calculateTimeLeft = useCallback(() => {
-        if (!targetDate) return {};
-        
-        try {
-            const end = new Date(targetDate);
-            const now = new Date();
-            
-            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
-            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
-
-            const difference = end.getTime() - nowInTimezone.getTime();
-
-            if (difference > 0) {
-                return {
-                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                    minutes: Math.floor((difference / 1000 / 60) % 60),
-                    seconds: Math.floor((difference / 1000) % 60),
-                };
-            }
-        } catch (e) {
-            console.error("Invalid time zone specified:", e);
-        }
-        return {};
-    }, [targetDate, timezone]);
-
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-
-    useEffect(() => {
-        setIsFinished(false);
-        setCurrentStage('primary');
-        initialStartDateRef.current = new Date();
-    }, [endDate, endAction.secondaryEndDate]);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const newTimeLeft = calculateTimeLeft();
-            if (Object.keys(newTimeLeft).length === 0) {
-                if (currentStage === 'primary' && endAction.type === 'secondary_countdown' && endAction.secondaryEndDate) {
-                    setCurrentStage('secondary');
-                } else {
-                    setIsFinished(true);
-                    clearInterval(timer);
-                }
-            } else {
-                setTimeLeft(newTimeLeft);
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [calculateTimeLeft, currentStage, endAction]);
-
-    if (isFinished && endAction.type === 'message') {
-        return (
-          <div className="p-4 text-center w-full flex justify-center">
-            <div style={{ transform: `scale(${styles.scale})` }}>
-              <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
-            </div>
-          </div>
-        );
-    }
-    
-    const timeData = [
-      { label: 'Días', value: isFinished ? 0 : timeLeft.days },
-      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours },
-      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes },
-      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds },
-    ];
-    
-    const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
-
-    const baseStyle: React.CSSProperties = {
-        borderRadius: `${styles.borderRadius}px`,
-        color: styles.numberColor,
-        fontFamily: styles.fontFamily,
-    };
-    if (styles.background.type === 'solid') {
-        baseStyle.backgroundColor = styles.background.color1;
-    } else {
-        const {direction, color1, color2} = styles.background;
-        if(direction === 'radial') {
-             baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
-        } else {
-            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-            baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
-        }
-    }
-    
-    const renderAnalog = () => {
-        const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-            if (isFinished) return 0;
-            const end = new Date(targetDate!);
-            const start = initialStartDateRef.current;
-            const totalDuration = end.getTime() - start.getTime();
-            if(totalDuration <= 0) return 1;
-
-            const daysLeft = timeUnits.days || 0;
-            const hoursLeft = timeUnits.hours || 0;
-            const minutesLeft = timeUnits.minutes || 0;
-            const secondsLeft = timeUnits.seconds || 0;
-
-            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-            
-            switch (unit) {
-                case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : 0;
-                case 'Horas': return (hoursLeft / 23);
-                case 'Minutos': return (minutesLeft / 59);
-                case 'Segundos': return (secondsLeft / 59);
-                default: return 0;
-            }
-        };
-
-        const { background } = styles;
-        const gradientId = `analog-grad-${block.id}`;
-        
-        return (
-            <div className="flex justify-center items-center gap-2 p-2" style={{ transform: `scale(${styles.scale})` }}>
-                 <svg width="0" height="0" className="absolute">
-                  <defs>
-                     {background.type === 'gradient' && (
-                       <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2 || background.color1} />
-                        </linearGradient>
-                     )}
-                  </defs>
-                </svg>
-                {timeData.map(unit => (
-                    <div key={unit.label} className="flex flex-col items-center">
-                        <div className="relative w-20 h-20">
-                             <svg className="w-full h-full" viewBox="0 0 100 100">
-                                <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
-                                <circle
-                                    strokeWidth={styles.strokeWidth}
-                                    cx="50" cy="50" r="40" fill="transparent"
-                                    strokeDasharray={2 * Math.PI * 40}
-                                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
-                                    transform="rotate(-90 50 50)"
-                                    strokeLinecap="round"
-                                    stroke={background.type === 'gradient' ? `url(#${gradientId})` : background.color1}
-                                />
-                                <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
-                                    {String(unit.value || 0).padStart(2, '0')}
-                                </text>
-                            </svg>
-                        </div>
-                        <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-    
-    const renderMinimalist = () => {
-        const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
-        const sizeStyles = {
-          lg: { container: 'w-24 h-24', number: 'text-4xl', label: 'text-[10px]' },
-          md: { container: 'w-20 h-20', number: 'text-2xl', label: 'text-[8px]' },
-          sm: { container: 'w-12 h-12', number: 'text-base', label: 'text-[7px]' },
-          xs: { container: 'w-10 h-10', number: 'text-xs', label: 'text-[6px]' },
-        };
-        const currentSize = sizeStyles[sizeVariant];
-  
-        const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-            if (isFinished) return 320;
-            const end = new Date(targetDate!);
-            const start = initialStartDateRef.current;
-            const totalDuration = end.getTime() - start.getTime();
-            if(totalDuration <= 0) return 0;
-  
-            const daysLeft = timeUnits.days || 0;
-            const hoursLeft = timeUnits.hours || 0;
-            const minutesLeft = timeUnits.minutes || 0;
-            const secondsLeft = timeUnits.seconds || 0;
-  
-            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-            let progress = 0;
-            
-            switch (unit) {
-                case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : 0; break;
-                case 'Horas': progress = (hoursLeft / 23); break;
-                case 'Minutos': progress = (minutesLeft / 59); break;
-                case 'Segundos': progress = (secondsLeft / 59); break;
-            }
-            return 320 * (1 - progress);
-        };
-  
-        const pathD = "M 10,10 H 90 V 90 H 10 Z";
-  
-        return (
-          <div className="flex justify-center items-end p-2 w-full">
-            <div className="flex justify-center items-end gap-2" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
-              {timeData.map((unit) => (
-                  <div key={unit.label} className={cn("relative flex flex-col items-center", currentSize.container)}>
-                      <svg className="w-full h-full" viewBox="0 0 100 100">
-                          <defs>
-                              <linearGradient id={`gradient-minimalist-${block.id}-${unit.label}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
-                                  <stop offset="0%" stopColor={styles.background.color1} />
-                                  <stop offset="100%" stopColor={styles.background.color2 || styles.background.color1} />
-                              </linearGradient>
-                              <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-                                  <feMerge>
-                                      <feMergeNode in="coloredBlur"/>
-                                      <feMergeNode in="SourceGraphic"/>
-                                  </feMerge>
-                              </filter>
-                          </defs>
-                           <path
-                              d={pathD}
-                              fill="none"
-                              stroke="hsl(var(--ai-track))"
-                              strokeWidth={styles.strokeWidth}
-                              strokeLinejoin="round"
-                              strokeLinecap="round"
-                              rx="8"
-                          />
-                          <path
-                              d={pathD}
-                              fill="none"
-                              stroke={`url(#gradient-minimalist-${block.id}-${unit.label})`}
-                              strokeWidth={styles.strokeWidth}
-                              strokeLinejoin="round"
-                              strokeLinecap="round"
-                              rx="8"
-                              strokeDasharray={320}
-                              strokeDashoffset={getPathForUnit(unit.label as any)}
-                              style={{
-                                  filter: `url(#glow-${block.id})`,
-                                  transition: 'stroke-dashoffset 1s linear',
-                              }}
-                          />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                         <span className={cn("font-light", currentSize.number)} style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
-                         <span className={cn("uppercase tracking-widest text-muted-foreground", currentSize.label)}>{unit.label}</span>
-                      </div>
-                  </div>
-              ))}
-            </div>
-          </div>
-        );
-      }
-
-    const renderDigital = () => {
-        return (
-             <div className="flex justify-center items-center gap-2 p-4" style={{ transform: `scale(${styles.scale})` }}>
-                {timeData.map(unit => (
-                     <div key={unit.label} className="flex flex-col items-center">
-                        <div style={baseStyle} className="flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold">
-                            {String(unit.value || 0).padStart(2, '0')}
-                        </div>
-                         <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
-                     </div>
-                ))}
-            </div>
-        )
-    }
-
-    const renderContent = () => {
-        switch (design) {
-            case 'analog': return renderAnalog();
-            case 'minimalist': return renderMinimalist();
-            case 'digital':
-            default:
-                return renderDigital();
-        }
-    }
-
-    return (
-      <div className="w-full flex justify-center items-center">
-        {renderContent()}
-      </div>
-    );
-  }
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
