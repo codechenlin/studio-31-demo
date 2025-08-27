@@ -152,7 +152,7 @@ const popularEmojis = Array.from(new Set([
     '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷', '▪️', '▫️', '▲', '▼',
     '←', '↑', '→', '↓', '↔️', '↕️', '↩️', '↪️', '➕', '➖',
     '➗', '✖️', '💲', '💶', '💷', '💴', '🔒', '🔓', '🔑', '🔔',
-    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏'
+    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏', '💯', '✅', '✔️', '☑️'
 ]));
   
 const googleFonts = [
@@ -2778,77 +2778,75 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     }
   
     const renderMinimalist = () => {
-        const containerStyle: React.CSSProperties = {
-            fontSize: `${styles.scale * 16}px`, // Global scale applied here
-        };
-
-        const { background } = styles;
-        const gradientId = `minimalist-grad-${block.id}`;
-        
-        return (
-            <div className="w-full flex justify-center items-center overflow-hidden" style={containerStyle}>
-              <div className="flex justify-center items-center flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
-                <svg width="0" height="0" className="absolute">
-                  <defs>
-                    {background.type === 'gradient' && (
-                       <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                          <stop offset="0%" stopColor={background.color1} />
-                          <stop offset="100%" stopColor={background.color2 || background.color1} />
-                      </linearGradient>
-                    )}
-                    {background.type === 'gradient' && background.direction === 'radial' && (
-                          <radialGradient id={`${gradientId}-radial`}>
-                          <stop offset="0%" stopColor={background.color1} />
-                          <stop offset="100%" stopColor={background.color2 || background.color1} />
-                          </radialGradient>
-                    )}
-                    <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                      <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                </svg>
-                {timeData.map((unit) => (
-                  <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: '4.5em', height: '4.5em' }}>
-                     <svg className="w-full h-full" viewBox="0 0 120 120">
-                      <path
-                        d="M 10,10 H 110 V 110 H 10 Z"
-                        fill="none"
-                        stroke="hsl(var(--ai-track))"
-                        strokeWidth={styles.strokeWidth}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        rx="8"
-                      />
-                      <path
-                        d="M 10,10 H 110 V 110 H 10 Z"
-                        fill="none"
-                        stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
-                        strokeWidth={styles.strokeWidth}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        rx="8"
-                        strokeDasharray={400}
-                        strokeDashoffset={0}
-                        style={{
-                          filter: `url(#glow-${block.id})`,
-                          transition: 'stroke-dashoffset 1s linear',
-                        }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-light" style={{ fontSize: '1.1em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                      <p className={cn("uppercase tracking-widest text-muted-foreground pt-0.5")} style={{color: styles.labelColor, fontSize: '0.5em', paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
+      const containerStyle: React.CSSProperties = {
+        fontSize: `${styles.scale * 14}px`, // Adjusted base size
       };
+    
+      const { background } = styles;
+      const gradientId = `minimalist-grad-${block.id}`;
+      
+      return (
+        <div className="w-full flex justify-center items-center overflow-hidden" style={containerStyle}>
+          <div className="flex justify-center items-center flex-wrap gap-x-1 gap-y-2 p-1" style={{ fontFamily: styles.fontFamily }}>
+            <svg width="0" height="0" className="absolute">
+              <defs>
+                {background.type === 'gradient' && (
+                  <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                    <stop offset="0%" stopColor={background.color1} />
+                    <stop offset="100%" stopColor={background.color2 || background.color1} />
+                  </linearGradient>
+                )}
+                {background.type === 'gradient' && background.direction === 'radial' && (
+                  <radialGradient id={`${gradientId}-radial`}>
+                    <stop offset="0%" stopColor={background.color1} />
+                    <stop offset="100%" stopColor={background.color2 || background.color1} />
+                  </radialGradient>
+                )}
+                <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+            {timeData.map((unit) => (
+              <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: '4.5em', height: '4.5em' }}>
+                <svg className="w-full h-full" viewBox="0 0 120 120">
+                  <path
+                    d="M 10,10 H 110 V 110 H 10 Z"
+                    fill="none"
+                    stroke="hsl(var(--ai-track))"
+                    strokeWidth={styles.strokeWidth}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 10,10 H 110 V 110 H 10 Z"
+                    fill="none"
+                    stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
+                    strokeWidth={styles.strokeWidth}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeDasharray={400}
+                    strokeDashoffset={0}
+                    style={{
+                      filter: `url(#glow-${block.id})`,
+                      transition: 'stroke-dashoffset 1s linear',
+                    }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="font-light" style={{ fontSize: '1.2em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                  <p className={cn("uppercase tracking-widest text-muted-foreground pt-1.5")} style={{color: styles.labelColor, fontSize: '0.6em', paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
   
     const renderContent = () => {
       switch (design) {
@@ -2861,7 +2859,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     };
   
     return (
-      <div className="w-full h-full flex justify-center items-center overflow-hidden">
+      <div className="w-full h-full flex justify-center items-center">
         {renderContent()}
       </div>
     );
@@ -4416,4 +4414,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
