@@ -26,8 +26,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, toastType, viewportName, ...props }) {
-        const isEmojiCopy = toastType === 'emoji-copy';
+      {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">
@@ -42,11 +41,6 @@ export function Toaster() {
         )
       })}
       <ToastViewport />
-      {/* Viewport for specific toasts */}
-       <ToastViewport
-        name="emoji-copy"
-        className="fixed bottom-0 left-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:flex-col-reverse md:max-w-[420px]"
-      />
     </ToastProvider>
   )
 }

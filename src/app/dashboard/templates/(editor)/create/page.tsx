@@ -101,6 +101,7 @@ import {
   CheckIcon,
   Search as SearchIcon,
   XCircle,
+  ClipboardCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -2323,10 +2324,11 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
     )
 }
 
-const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenCopyModal }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
+  onOpenCopyModal: (emoji: string) => void;
 }) => {
     // This is a complete reconstruction of the TimerEditor component.
     const { toast } = useToast();
@@ -2400,13 +2402,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     
     const handleInsertEmoji = (emoji: string) => {
         navigator.clipboard.writeText(emoji);
-        toast({
-            title: "¡Símbolo Copiado!",
-            description: `El emoji "${emoji}" está en tu portapapeles, listo para usarse.`,
-            className: 'bg-[#00CB07] border-none text-white',
-            duration: 3000,
-            toastType: 'emoji-copy'
-        });
+        onOpenCopyModal(emoji);
         setIsEmojiModalOpen(false);
     };
 
@@ -2486,9 +2482,9 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Zona Horaria</Label>
                  <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
-                     <span>Seleccionar Zona Horaria</span>
+                     <span className="truncate">Seleccionar Zona Horaria</span>
                 </Button>
-                <p className="text-xs text-muted-foreground break-words">Actual: <span className="font-medium text-foreground truncate">{currentTimezoneLabel}</span></p>
+                <p className="text-xs text-muted-foreground">Actual: <span className="font-medium text-foreground truncate">{currentTimezoneLabel}</span></p>
             </div>
             <div className="space-y-2">
                 <Label>Tamaño Global</Label>
@@ -2814,7 +2810,7 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
   const renderMinimalist = () => {
     const { background } = styles;
     const gradientId = `minimalist-grad-${block.id}`;
-    const pathLength = 400; // M 10,10 H 110 V 110 H 10 Z = 100+100+100+100 = 400
+    const pathLength = 400;
     return (
         <div className="w-full flex justify-center items-center" style={{ fontSize: `${styles.scale * 14}px` }}>
             <div className="flex justify-center items-center flex-wrap gap-x-1 gap-y-2 p-1" style={{ fontFamily: styles.fontFamily }}>
@@ -2980,6 +2976,9 @@ export default function CreateTemplatePage() {
     positionY: 50,
     zoom: 100,
   });
+  
+  const [isCopySuccessModalOpen, setIsCopySuccessModalOpen] = useState(false);
+  const [copiedEmoji, setCopiedEmoji] = useState('');
   
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -3671,7 +3670,7 @@ export default function CreateTemplatePage() {
                case 'html': {
                     const htmlBlock = block as HtmlBlock;
                     return (
-                        <div className="p-2 w-full aspect-video">
+                        <div className="p-2 w-full h-full min-h-[150px]">
                             <iframe
                                 srcDoc={htmlBlock.payload.htmlContent}
                                 sandbox="allow-scripts allow-same-origin"
@@ -3737,6 +3736,11 @@ export default function CreateTemplatePage() {
     setIsResizing(false);
     setResizingWrapperId(null);
   }, []);
+  
+  const handleOpenCopyModal = (emoji: string) => {
+    setCopiedEmoji(emoji);
+    setIsCopySuccessModalOpen(true);
+  };
 
   useEffect(() => {
     if (isResizing) {
@@ -4248,7 +4252,7 @@ export default function CreateTemplatePage() {
                       <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                   )}
                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
-                      <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                      <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
                   )}
                    { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'html' && (
                       <HtmlEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -4389,6 +4393,25 @@ export default function CreateTemplatePage() {
             </ScrollArea>
         </DialogContent>
       </Dialog>
+      
+       <Dialog open={isCopySuccessModalOpen} onOpenChange={setIsCopySuccessModalOpen}>
+          <DialogContent className="sm:max-w-sm bg-card/80 backdrop-blur-sm">
+              <DialogHeader>
+                  <DialogTitle className="flex flex-col items-center text-center gap-2">
+                      <div className="p-3 bg-green-500/20 rounded-full border-4 border-green-500/30">
+                          <ClipboardCheck className="size-8 text-green-500"/>
+                      </div>
+                      ¡Símbolo en el Portapapeles!
+                  </DialogTitle>
+                  <DialogDescription className="text-center pt-2">
+                     El emoji <span className="font-bold text-lg">{copiedEmoji}</span> está listo para que lo pegues donde quieras.
+                  </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                  <Button className="w-full" onClick={() => setIsCopySuccessModalOpen(false)}>Entendido</Button>
+              </DialogFooter>
+          </DialogContent>
+       </Dialog>
 
       <Dialog open={isActionSelectorModalOpen} onOpenChange={setIsActionSelectorModalOpen}>
           <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
@@ -4518,3 +4541,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
