@@ -2451,7 +2451,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Zona Horaria</Label>
                 <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
-                     {currentTimezoneLabel}
+                     <span className="truncate">{currentTimezoneLabel}</span>
                 </Button>
             </div>
             <div className="space-y-2">
@@ -2560,7 +2560,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
                           <div className="pt-2">
                             <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                             <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-1 custom-scrollbar">
+                            <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-1 custom-scrollbar">
                                 <div className="grid grid-cols-8 gap-1">
                                 {popularEmojis.map(emoji => (
                                     <TooltipProvider key={emoji}>
@@ -2778,99 +2778,78 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     }
   
     const renderMinimalist = () => {
-        const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-          if (isFinished) return 320;
-          const end = new Date(targetDate!);
-          const start = initialStartDateRef.current;
-          const totalDuration = end.getTime() - start.getTime();
-          if (totalDuration <= 0) return 0;
-  
-          const daysLeft = timeUnits.days || 0;
-          const hoursLeft = timeUnits.hours || 0;
-          const minutesLeft = timeUnits.minutes || 0;
-          const secondsLeft = timeUnits.seconds || 0;
-  
-          const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-          let progress = 0;
-  
-          switch (unit) {
-            case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0); break;
-            case 'Horas': progress = hoursLeft / 23; break;
-            case 'Minutos': progress = minutesLeft / 59; break;
-            case 'Segundos': progress = secondsLeft / 59; break;
-          }
-          return 320 * (1 - progress);
-        };
-  
+        const sizeVariant = colCount <= 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
+        const containerSizes = { lg: '6em', md: '4.5em', sm: '3.5em', xs: '2.8em' };
+        const fontSizes = { lg: '1.5em', md: '1.1em', sm: '0.9em', xs: '0.7em' };
+        const labelSizes = { lg: '0.6em', md: '0.5em', sm: '0.45em', xs: '0.4em' };
+        const labelPadding = { lg: 'pt-1', md: 'pt-0.5', sm: 'pt-0.5', xs: 'pt-0' };
+
         const { background } = styles;
         const gradientId = `minimalist-grad-${block.id}`;
         
-        const fontSize = `${styles.scale * 1}em`;
-        const baseSize = 4 * styles.scale; 
-
         return (
-          <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize }}>
-            <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
-              <svg width="0" height="0" className="absolute">
-                <defs>
-                  {background.type === 'gradient' && (
-                     <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                        <stop offset="0%" stopColor={background.color1} />
-                        <stop offset="100%" stopColor={background.color2 || background.color1} />
-                    </linearGradient>
-                  )}
-                  {background.type === 'gradient' && background.direction === 'radial' && (
-                        <radialGradient id={`${gradientId}-radial`}>
-                        <stop offset="0%" stopColor={background.color1} />
-                        <stop offset="100%" stopColor={background.color2 || background.color1} />
-                        </radialGradient>
-                  )}
-                  <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-              </svg>
-              {timeData.map((unit) => (
-                <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: `${baseSize}em`, height: `${baseSize}em` }}>
-                   <svg className="w-full h-full" viewBox="0 0 120 120">
-                    <path
-                      d="M 10,10 H 110 V 110 H 10 Z"
-                      fill="none"
-                      stroke="hsl(var(--ai-track))"
-                      strokeWidth={styles.strokeWidth}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                      rx="8"
-                    />
-                    <path
-                      d="M 10,10 H 110 V 110 H 10 Z"
-                      fill="none"
-                      stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
-                      strokeWidth={styles.strokeWidth}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                      rx="8"
-                      strokeDasharray={400}
-                      strokeDashoffset={getPathForUnit(unit.label as any) * (400/320)}
-                      style={{
-                        filter: `url(#glow-${block.id})`,
-                        transition: 'stroke-dashoffset 1s linear',
-                      }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="font-light" style={{ fontSize: `${baseSize * 0.35}em`, color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                    <p className="uppercase tracking-widest text-muted-foreground pt-1" style={{color: styles.labelColor, fontSize: `${baseSize * 0.15}em`, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+            <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize: `${styles.scale * 16}px` }}>
+              <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
+                <svg width="0" height="0" className="absolute">
+                  <defs>
+                    {background.type === 'gradient' && (
+                       <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                          <stop offset="0%" stopColor={background.color1} />
+                          <stop offset="100%" stopColor={background.color2 || background.color1} />
+                      </linearGradient>
+                    )}
+                    {background.type === 'gradient' && background.direction === 'radial' && (
+                          <radialGradient id={`${gradientId}-radial`}>
+                          <stop offset="0%" stopColor={background.color1} />
+                          <stop offset="100%" stopColor={background.color2 || background.color1} />
+                          </radialGradient>
+                    )}
+                    <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                      <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                </svg>
+                {timeData.map((unit) => (
+                  <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: containerSizes[sizeVariant], height: containerSizes[sizeVariant] }}>
+                     <svg className="w-full h-full" viewBox="0 0 120 120">
+                      <path
+                        d="M 10,10 H 110 V 110 H 10 Z"
+                        fill="none"
+                        stroke="hsl(var(--ai-track))"
+                        strokeWidth={styles.strokeWidth}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        rx="8"
+                      />
+                      <path
+                        d="M 10,10 H 110 V 110 H 10 Z"
+                        fill="none"
+                        stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
+                        strokeWidth={styles.strokeWidth}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        rx="8"
+                        strokeDasharray={400}
+                        strokeDashoffset={0}
+                        style={{
+                          filter: `url(#glow-${block.id})`,
+                          transition: 'stroke-dashoffset 1s linear',
+                        }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="font-light" style={{ fontSize: fontSizes[sizeVariant], color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                      <p className={cn("uppercase tracking-widest text-muted-foreground", labelPadding[sizeVariant])} style={{color: styles.labelColor, fontSize: labelSizes[sizeVariant], paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        );
+          );
       };
   
     const renderContent = () => {
@@ -2884,10 +2863,10 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     };
   
     return (
-        <div className="w-full h-full flex justify-center items-center overflow-hidden">
-          {renderContent()}
-        </div>
-      );
+      <div className="w-full h-full flex justify-center items-center overflow-hidden">
+        {renderContent()}
+      </div>
+    );
 });
 TimerComponent.displayName = 'TimerComponent';
 
