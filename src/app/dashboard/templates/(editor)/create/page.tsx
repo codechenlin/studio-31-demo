@@ -405,7 +405,15 @@ interface TimerBlock extends BaseBlock {
             };
             strokeWidth: number;
             scale: number;
+            minimalistLabelSize: number;
         }
+    }
+}
+
+interface HtmlBlock extends BaseBlock {
+    type: 'html';
+    payload: {
+        htmlContent: string;
     }
 }
 
@@ -420,7 +428,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | HtmlBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -2396,6 +2404,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             title: "¡Símbolo Copiado!",
             description: `El emoji "${emoji}" está en tu portapapeles, listo para usarse.`,
             className: 'bg-[#00CB07] border-none text-white',
+            duration: 3000,
+            toastType: 'emoji-copy'
         });
         setIsEmojiModalOpen(false);
     };
@@ -2474,7 +2484,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
              <div className="space-y-2">
                 <Label>Zona Horaria</Label>
-                <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
+                 <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
                      <span>Seleccionar Zona Horaria</span>
                 </Button>
@@ -2530,6 +2540,17 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   step={1}
                   onValueChange={(v) => updateStyle(design === 'minimalist' ? 'strokeWidth' : (design === 'analog' ? 'strokeWidth' : 'borderRadius'), v[0])} />
             </div>
+
+            {design === 'minimalist' && (
+                <div className="space-y-2">
+                    <Label>Tamaño del Texto</Label>
+                    <Slider
+                        value={[styles.minimalistLabelSize]}
+                        min={0.5} max={1} step={0.05}
+                        onValueChange={(v) => updateStyle('minimalistLabelSize', v[0])}
+                    />
+                </div>
+             )}
 
             <div className="space-y-2">
                 <Label>Fondo</Label>
@@ -2619,10 +2640,11 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
     try {
       const end = new Date(targetDate);
       const now = new Date();
+      // Directly use the valid IANA timezone identifier
       const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
       const timeZoneOffset = nowInTimezone.getTime() - now.getTime();
-      const correctedEnd = new Date(end.getTime() - timeZoneOffset);
-      const difference = correctedEnd.getTime() - now.getTime();
+      const correctedNow = new Date(now.getTime() + timeZoneOffset);
+      const difference = end.getTime() - correctedNow.getTime();
 
       if (difference > 0) {
         return {
@@ -2633,7 +2655,6 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
         };
       }
     } catch (e) {
-      // Fallback for invalid timezone
       console.error("Invalid time zone specified:", timezone);
     }
     return {};
@@ -2837,7 +2858,7 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
                         </svg>
                         <div className="z-10 flex flex-col items-center justify-center">
                              <span className="font-light" style={{ fontSize: '1.5em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                             <p className="uppercase tracking-widest text-muted-foreground pt-[0.25em]" style={{color: styles.labelColor, fontSize: '0.6em' }}>{unit.label}</p>
+                             <p className="uppercase tracking-widest text-muted-foreground pt-1" style={{color: styles.labelColor, fontSize: `${styles.minimalistLabelSize * 0.6}em` }}>{unit.label}</p>
                         </div>
                     </div>
                 ))}
@@ -2864,6 +2885,63 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
   );
 });
 TimerComponent.displayName = 'TimerComponent';
+
+
+const HtmlEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if(selectedElement?.type !== 'primitive') return null;
+
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'html' ? block as HtmlBlock : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updatePayload = (key: keyof HtmlBlock['payload'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'html') {
+                        return { ...block, payload: { ...block.payload, [key]: value }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Code/> Código HTML Personalizado</h3>
+        <p className="text-xs text-muted-foreground">Pega tu código HTML a continuación. El contenido se renderizará dentro de un contenedor seguro en tu correo electrónico.</p>
+        <Textarea
+          value={element.payload.htmlContent}
+          onChange={(e) => updatePayload('htmlContent', e.target.value)}
+          placeholder='<div style="padding: 10px; background: lightblue;">\n  <p>¡Hola desde HTML!</p>\n</div>'
+          className="w-full bg-background/50 border-border/50 min-h-[200px] font-mono text-xs"
+        />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-md">
+            <AlertTriangle className="size-8 text-amber-500 shrink-0"/>
+            <span>Por seguridad y compatibilidad, algunos scripts y estilos complejos podrían ser eliminados o no funcionar en todos los clientes de correo.</span>
+        </div>
+      </div>
+    );
+};
 
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -3122,8 +3200,19 @@ export default function CreateTemplatePage() {
                     styles: {
                         fontFamily: 'Roboto', numberColor: isDarkMode ? '#FFFFFF' : '#000000', labelColor: isDarkMode ? '#999999' : '#666666',
                         borderRadius: 15, background: { type: 'gradient', color1: '#AD00EC', color2: '#0018EC', direction: 'vertical' },
-                        strokeWidth: 4, scale: 1
+                        strokeWidth: 4, scale: 1, minimalistLabelSize: 1
                     }
+                }
+            };
+            break;
+        case 'html':
+            newBlock = {
+                ...basePayload,
+                type: 'html',
+                payload: {
+                    htmlContent: `<div style="display:flex; align-items:center; justify-content:center; height:100%; border:2px dashed #333; border-radius: 8px; padding: 1rem; color: #555; text-align:center;">
+    <p>¡Pega tu código HTML en la barra de estilo!</p>
+</div>`
                 }
             };
             break;
@@ -3138,7 +3227,7 @@ export default function CreateTemplatePage() {
                   return { ...col, blocks: [...col.blocks, newBlock] };
               }
               return col;
-          });
+          }));
           return { ...row, payload: { ...row.payload, columns: newColumns } };
       }));
 
@@ -3579,6 +3668,19 @@ export default function CreateTemplatePage() {
                  const timerBlock = block as TimerBlock;
                  return <TimerComponent block={timerBlock} />;
               }
+               case 'html': {
+                    const htmlBlock = block as HtmlBlock;
+                    return (
+                        <div className="p-2 w-full aspect-video">
+                            <iframe
+                                srcDoc={htmlBlock.payload.htmlContent}
+                                sandbox="allow-scripts allow-same-origin"
+                                className="w-full h-full border-0"
+                                title="HTML Content Preview"
+                            />
+                        </div>
+                    );
+                }
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -4147,6 +4249,9 @@ export default function CreateTemplatePage() {
                   )}
                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
                       <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'html' && (
+                      <HtmlEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                   )}
                   
                   { !selectedElement && (

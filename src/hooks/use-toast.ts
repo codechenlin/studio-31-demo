@@ -1,3 +1,4 @@
+
 "use client"
 
 // Inspired by react-hot-toast library
@@ -16,6 +17,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  toastType?: string
 }
 
 const actionTypes = {
@@ -161,6 +163,7 @@ function toast({ ...props }: Toast) {
       onOpenChange: (open) => {
         if (!open) dismiss()
       },
+       viewportName: props.toastType === 'emoji-copy' ? 'emoji-copy' : undefined,
     },
   })
 
