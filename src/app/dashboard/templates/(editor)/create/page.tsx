@@ -2320,6 +2320,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
+    // This is a complete reconstruction of the TimerEditor component.
     const { toast } = useToast();
     if (selectedElement?.type !== 'primitive') return null;
     
@@ -2390,7 +2391,12 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     };
     
     const handleInsertEmoji = (emoji: string) => {
-        updateEndAction('message', element.payload.endAction.message + emoji);
+        navigator.clipboard.writeText(emoji);
+        toast({
+            title: "¡Símbolo Copiado!",
+            description: `El emoji "${emoji}" está en tu portapapeles, listo para usarse.`,
+            className: 'bg-[#00CB07] border-none text-white',
+        });
         setIsEmojiModalOpen(false);
     };
 
@@ -2438,6 +2444,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
                     <DialogHeader>
                         <DialogTitle>Seleccionar Símbolo Rápido</DialogTitle>
+                        <DialogDescription>Haz clic en un símbolo para copiarlo a tu portapapeles.</DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-2">
                         <div className="grid grid-cols-8 gap-1">
@@ -2447,7 +2454,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                         <TooltipTrigger asChild>
                                             <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleInsertEmoji(emoji)}>{emoji}</Button>
                                         </TooltipTrigger>
-                                        <TooltipContent><p>Insertar "{emoji}"</p></TooltipContent>
+                                        <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             ))}
@@ -2471,7 +2478,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                      <Globe className="mr-2 h-4 w-4" />
                      <span>Seleccionar Zona Horaria</span>
                 </Button>
-                <p className="text-xs text-muted-foreground break-words">Actual: <span className="font-medium text-foreground">{currentTimezoneLabel}</span></p>
+                <p className="text-xs text-muted-foreground break-words">Actual: <span className="font-medium text-foreground truncate">{currentTimezoneLabel}</span></p>
             </div>
             <div className="space-y-2">
                 <Label>Tamaño Global</Label>
@@ -2612,12 +2619,9 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
     try {
       const end = new Date(targetDate);
       const now = new Date();
-
-      // This is a robust way to get time in a specific timezone
       const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
       const timeZoneOffset = nowInTimezone.getTime() - now.getTime();
       const correctedEnd = new Date(end.getTime() - timeZoneOffset);
-
       const difference = correctedEnd.getTime() - now.getTime();
 
       if (difference > 0) {
@@ -2629,7 +2633,8 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
         };
       }
     } catch (e) {
-      // Fallback for invalid timezone, though list should prevent this
+      // Fallback for invalid timezone
+      console.error("Invalid time zone specified:", timezone);
     }
     return {};
   }, [targetDate, timezone]);
@@ -2675,6 +2680,28 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
     { label: 'Minutos', value: timeUnits.minutes },
     { label: 'Segundos', value: timeUnits.seconds },
   ];
+  
+  const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+      if (isFinished) return 0;
+      const end = new Date(targetDate!);
+      const start = initialStartDateRef.current;
+      const totalDuration = end.getTime() - start.getTime();
+      if (totalDuration <= 0) return 1;
+
+      const daysLeft = timeUnits.days || 0;
+      const hoursLeft = timeUnits.hours || 0;
+      const minutesLeft = timeUnits.minutes || 0;
+      const secondsLeft = timeUnits.seconds || 0;
+      const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+
+      switch (unit) {
+        case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0);
+        case 'Horas': return (hoursLeft / 23);
+        case 'Minutos': return (minutesLeft / 59);
+        case 'Segundos': return (secondsLeft / 59);
+        default: return 0;
+      }
+  };
 
   const renderDigital = () => {
     const baseStyle: React.CSSProperties = {
@@ -2711,28 +2738,6 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
   }
 
   const renderAnalog = () => {
-    const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-      if (isFinished) return 0;
-      const end = new Date(targetDate!);
-      const start = initialStartDateRef.current;
-      const totalDuration = end.getTime() - start.getTime();
-      if (totalDuration <= 0) return 1;
-
-      const daysLeft = timeUnits.days || 0;
-      const hoursLeft = timeUnits.hours || 0;
-      const minutesLeft = timeUnits.minutes || 0;
-      const secondsLeft = timeUnits.seconds || 0;
-      const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-
-      switch (unit) {
-        case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0);
-        case 'Horas': return (hoursLeft / 23);
-        case 'Minutos': return (minutesLeft / 59);
-        case 'Segundos': return (secondsLeft / 59);
-        default: return 0;
-      }
-    };
-
     const { background } = styles;
     const gradientId = `analog-grad-${block.id}`;
 
@@ -2786,10 +2791,29 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
   }
 
   const renderMinimalist = () => {
+    const { background } = styles;
+    const gradientId = `minimalist-grad-${block.id}`;
+    const pathLength = 400; // M 10,10 H 110 V 110 H 10 Z = 100+100+100+100 = 400
     return (
         <div className="w-full flex justify-center items-center" style={{ fontSize: `${styles.scale * 14}px` }}>
             <div className="flex justify-center items-center flex-wrap gap-x-1 gap-y-2 p-1" style={{ fontFamily: styles.fontFamily }}>
-                {timeData.map((unit, index) => (
+                <svg width="0" height="0" className="absolute">
+                  <defs>
+                    {background.type === 'gradient' && (
+                        <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : (background.direction === 'vertical' ? 'rotate(0)' : undefined)}>
+                          <stop offset="0%" stopColor={background.color1} />
+                          <stop offset="100%" stopColor={background.color2 || background.color1} />
+                        </linearGradient>
+                      )}
+                      {background.type === 'gradient' && background.direction === 'radial' && (
+                        <radialGradient id={`${gradientId}-radial`}>
+                          <stop offset="0%" stopColor={background.color1} />
+                          <stop offset="100%" stopColor={background.color2 || background.color1} />
+                        </radialGradient>
+                      )}
+                  </defs>
+                </svg>
+                {timeData.map((unit) => (
                     <div key={unit.label} className="relative flex flex-col items-center justify-center flex-shrink-0" style={{ width: '5em', height: '5em' }}>
                         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 120 120">
                             <path
@@ -2800,17 +2824,27 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
                                 strokeLinejoin="round"
                                 strokeLinecap="round"
                             />
+                            <path
+                                d="M 10,10 H 110 V 110 H 10 Z"
+                                fill="none"
+                                stroke={background.type === 'solid' ? background.color1 : (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)}
+                                strokeWidth={styles.strokeWidth}
+                                strokeLinejoin="round"
+                                strokeLinecap="round"
+                                strokeDasharray={pathLength}
+                                strokeDashoffset={pathLength * (1 - getProgress(unit.label as any))}
+                            />
                         </svg>
                         <div className="z-10 flex flex-col items-center justify-center">
                              <span className="font-light" style={{ fontSize: '1.5em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                             <p className="uppercase tracking-widest text-muted-foreground" style={{color: styles.labelColor, fontSize: '0.6em', paddingTop: '0.25em'}}>{unit.label}</p>
+                             <p className="uppercase tracking-widest text-muted-foreground pt-[0.25em]" style={{color: styles.labelColor, fontSize: '0.6em' }}>{unit.label}</p>
                         </div>
                     </div>
                 ))}
             </div>
         </div>
     );
-};
+  };
 
 
   const renderContent = () => {
@@ -4379,4 +4413,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
