@@ -134,6 +134,7 @@ const columnContentBlocks = [
 ];
 
 const wrapperContentBlocks = [
+   { name: "Titulo", icon: Heading1, id: 'heading-interactive' },
    { name: "Emoji Interactivo", icon: Smile, id: 'emoji-interactive' },
 ];
 
@@ -224,7 +225,7 @@ const timezones = [
 
 // --- STATE MANAGEMENT TYPES ---
 type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static';
-type InteractiveBlockType = 'emoji-interactive';
+type InteractiveBlockType = 'emoji-interactive' | 'heading-interactive';
 
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
@@ -424,8 +425,30 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
+interface InteractiveHeadingBlock extends BaseBlock {
+    type: 'heading-interactive';
+    payload: {
+        name: string;
+        text: string;
+        x: number;
+        y: number;
+        scale: number;
+        rotate: number;
+        styles: {
+            color: string;
+            fontFamily: string;
+            fontSize: number;
+            textAlign: TextAlign;
+            fontWeight: 'normal' | 'bold';
+            fontStyle: 'normal' | 'italic';
+            textDecoration: 'none' | 'underline' | 'line-through';
+            highlight?: string;
+        }
+    }
+}
+
 type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock;
-type InteractivePrimitiveBlock = InteractiveEmojiBlock;
+type InteractivePrimitiveBlock = InteractiveEmojiBlock | InteractiveHeadingBlock;
 
 
 interface Column {
@@ -1716,6 +1739,205 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
   )
 }
 
+const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if(selectedElement?.type !== 'wrapper-primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'heading-interactive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.wrapperId);
+        if (row?.type !== 'wrapper') return null;
+        const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'heading-interactive' ? block as InteractiveHeadingBlock : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updatePayload = (key: keyof Omit<InteractiveHeadingBlock['payload'], 'styles'>, value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== selectedElement.wrapperId || row.type !== 'wrapper') return row;
+          const newBlocks = row.payload.blocks.map(block => {
+              if (block.id === selectedElement.primitiveId && block.type === 'heading-interactive') {
+                  return { ...block, payload: { ...block.payload, [key]: value }};
+              }
+              return block;
+          })
+          return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+
+    const updateStyle = (key: keyof InteractiveHeadingBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== selectedElement.wrapperId || row.type !== 'wrapper') return row;
+          const newBlocks = row.payload.blocks.map(block => {
+              if (block.id === selectedElement.primitiveId && block.type === 'heading-interactive') {
+                  return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+              }
+              return block;
+          })
+          return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+    
+    const { styles } = element.payload;
+
+    const toggleDecoration = (decoration: 'underline' | 'line-through') => {
+        const currentDecoration = styles.textDecoration;
+        if (currentDecoration === decoration) {
+            updateStyle('textDecoration', 'none');
+        } else {
+            updateStyle('textDecoration', decoration);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
+                <Label>Añadir Texto</Label>
+                <Input
+                    value={element.payload.text}
+                    onChange={(e) => updatePayload('text', e.target.value)}
+                    placeholder="Tu título aquí..."
+                    className="bg-transparent border-border/50"
+                />
+            </div>
+            <div className="space-y-3">
+                <Label>Color del Texto</Label>
+                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
+            </div>
+
+            <div className="space-y-3">
+                <Label>Resaltado del Texto</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                         <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-4 w-4 rounded-full border border-border"
+                              style={{ backgroundColor: styles.highlight || 'transparent' }}
+                            />
+                            <div className="flex-1 truncate">{styles.highlight ? styles.highlight.toUpperCase() : 'Ninguno'}</div>
+                          </div>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 border-none">
+                        <div className="p-2">
+                             <ColorPickerAdvanced color={styles.highlight || '#ffff00'} setColor={(c) => updateStyle('highlight', c)} />
+                             <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => updateStyle('highlight', undefined)}><Eraser className="mr-2"/>Eliminar Resaltado</Button>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
+
+            <div className="space-y-3">
+                <Label>Fuente</Label>
+                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
+                    <SelectContent>
+                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            <div className="space-y-3">
+                 <Label>Estilos</Label>
+                 <div className="grid grid-cols-4 gap-2">
+                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
+                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
+                    <Toggle 
+                      pressed={styles.textDecoration === 'underline'} 
+                      onPressedChange={() => toggleDecoration('underline')}
+                    >
+                      <Underline/>
+                    </Toggle>
+                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={() => toggleDecoration('line-through')}><Strikethrough/></Toggle>
+                 </div>
+            </div>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.fontSize]}
+                      max={100}
+                      min={12}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                </div>
+            </div>
+             <Separator className="bg-border/20"/>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Move />Posición</h3>
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4" /> Eje X</Label>
+                   <Slider
+                      value={[element.payload.x]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={(value) => updatePayload('x', value[0])}
+                    />
+                </div>
+                <div className="space-y-3">
+                   <Label className="flex items-center gap-2"><ArrowUpDown className="size-4" /> Eje Y</Label>
+                   <Slider
+                      value={[element.payload.y]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={(value) => updatePayload('y', value[0])}
+                    />
+                </div>
+              </div>
+              <Separator className="bg-border/20"/>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><RotateCw />Rotación</h3>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[element.payload.rotate]}
+                    min={-180}
+                    max={180}
+                    step={1}
+                    onValueChange={(value) => updatePayload('rotate', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-16 text-right">{element.payload.rotate}°</span>
+                </div>
+              </div>
+               <Separator className="bg-border/20"/>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Scale />Escala</h3>
+                 <div className="flex items-center gap-2">
+                    <Slider
+                      value={[element.payload.scale]}
+                      min={0.1}
+                      max={5}
+                      step={0.1}
+                      onValueChange={(value) => updatePayload('scale', value[0])}
+                    />
+                    <span className="text-xs text-muted-foreground w-16 text-right">x{element.payload.scale.toFixed(1)}</span>
+                </div>
+              </div>
+        </div>
+    )
+}
+
+
 const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -2895,8 +3117,8 @@ export default function CreateTemplatePage() {
 
   const handlePublish = () => {
     toast({
-      title: "¡Plantilla Publicada!",
-      description: "Tu nueva plantilla está lista para ser usada.",
+      title: "¡Plantilla Guardada!",
+      description: "Tu plantilla ha sido guardada exitosamente.",
       className: 'bg-gradient-to-r from-[#00CE07] to-[#A6EE00] border-none text-white',
     })
   };
@@ -3131,13 +3353,48 @@ export default function CreateTemplatePage() {
   };
   
   const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
-    if (!activeContainer || activeContainer.type !== 'wrapper') return;
+    if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
     
     if (type === 'emoji-interactive') {
         setIsEmojiSelectorOpen(true);
-    }
+    } else if (type === 'heading-interactive') {
+         const wrapperElement = wrapperRefs.current[activeContainer.id];
+         if (!wrapperElement) return;
 
-    setIsWrapperBlockSelectorOpen(false);
+         const rect = wrapperElement.getBoundingClientRect();
+         const xPercent = (clickPosition.x / rect.width) * 100;
+         const yPercent = (clickPosition.y / rect.height) * 100;
+
+         const newBlock: InteractiveHeadingBlock = {
+            id: `iheading_${Date.now()}`,
+            type: 'heading-interactive',
+            payload: {
+                name: `Titulo-${Math.floor(Math.random() * 1000)}`,
+                text: 'Título Interactivo',
+                x: xPercent, y: yPercent, scale: 1, rotate: 0,
+                styles: {
+                    color: isDarkMode ? '#FFFFFF' : '#000000',
+                    fontFamily: 'Roboto',
+                    fontSize: 32,
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontStyle: 'normal',
+                    textDecoration: 'none'
+                }
+            }
+         };
+
+         setCanvasContent(canvasContent.map(row => {
+            if (row.id === activeContainer.id && row.type === 'wrapper') {
+                return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
+            }
+            return row;
+         }));
+
+        setIsWrapperBlockSelectorOpen(false);
+        setClickPosition(null);
+        setActiveContainer(null);
+    }
   };
 
   const handleSelectEmojiForWrapper = (emoji: string) => {
@@ -3270,7 +3527,7 @@ export default function CreateTemplatePage() {
     }
   }
 
-  const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
+  const getHeadingStyle = (block: HeadingBlock | InteractiveHeadingBlock): React.CSSProperties => {
       const { styles } = block.payload;
       const style: React.CSSProperties = {
           color: styles.color,
@@ -3729,7 +3986,7 @@ export default function CreateTemplatePage() {
       
       const handleWrapperClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
-        if (target.closest('.interactive-emoji')) return;
+        if (target.closest('.interactive-primitive')) return;
 
         setActionTargetWrapperId(block.id);
 
@@ -3779,32 +4036,61 @@ export default function CreateTemplatePage() {
           >
             <div className="w-full h-full relative">
               {block.payload.blocks.map((b, bIndex) => {
-                if (b.type === 'emoji-interactive') {
                   const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === b.id;
-                  return (
-                      <div
-                        key={b.id}
-                        className={cn(
-                          "interactive-emoji absolute text-4xl cursor-pointer select-none", 
-                          isSelected ? "ring-2 ring-accent z-10 p-2" : ""
-                        )}
-                        style={{
-                           left: `${b.payload.x}%`,
-                           top: `${b.payload.y}%`,
-                           transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
-                           fontSize: '48px',
-                           zIndex: bIndex,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
-                        }}
-                      >
-                       {b.payload.emoji}
-                      </div>
-                  )
-                }
-                return null;
+                  
+                  const commonStyles: React.CSSProperties = {
+                       left: `${b.payload.x}%`,
+                       top: `${b.payload.y}%`,
+                       transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
+                       zIndex: bIndex,
+                  };
+                  
+                  if (b.type === 'emoji-interactive') {
+                    return (
+                        <div
+                          key={b.id}
+                          className={cn(
+                            "interactive-primitive absolute text-4xl cursor-pointer select-none", 
+                            isSelected ? "ring-2 ring-accent z-10 p-2" : ""
+                          )}
+                          style={{
+                             ...commonStyles,
+                             fontSize: '48px',
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
+                          }}
+                        >
+                         {b.payload.emoji}
+                        </div>
+                    )
+                  } else if (b.type === 'heading-interactive') {
+                    const headingBlock = b as InteractiveHeadingBlock;
+                    const {textAlign, ...textStyles} = getHeadingStyle(headingBlock);
+                    
+                    return (
+                        <div
+                          key={b.id}
+                          className={cn(
+                            "interactive-primitive absolute cursor-pointer select-none",
+                            isSelected ? "ring-2 ring-accent z-10" : ""
+                          )}
+                          style={commonStyles}
+                           onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
+                          }}
+                        >
+                            <div style={{ textAlign: textAlign as TextAlign }}>
+                                <span style={textStyles}>
+                                  {headingBlock.payload.text}
+                                </span>
+                            </div>
+                        </div>
+                    )
+                  }
+                  return null;
               })}
             </div>
             <div 
@@ -3951,6 +4237,7 @@ const LayerPanel = () => {
     );
 
     const reorderLayers = (wrapperId: string, fromIndex: number, toIndex: number) => {
+        if (toIndex < 0 || toIndex >= selectedWrapper!.payload.blocks.length) return;
         setCanvasContent(prev => prev.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
                 const newBlocks = Array.from(row.payload.blocks);
@@ -3974,7 +4261,7 @@ const LayerPanel = () => {
                 title: "¡Nombre en uso!",
                 description: "Cada capa debe tener un identificador único en el lienzo. Por favor, elige otro nombre.",
                 variant: 'destructive',
-                style: { backgroundColor: '#F00000' }
+                style: { backgroundColor: '#F00000', color: 'white' }
             });
             return;
         }
@@ -4002,7 +4289,6 @@ const LayerPanel = () => {
         );
     }
     
-    // The visual list is reversed so the top item in UI is the front-most layer (last in array)
     const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
 
     return (
@@ -4014,7 +4300,7 @@ const LayerPanel = () => {
              <div className="space-y-1">
                 {blocksInVisualOrder.map((block, visualIndex) => {
                     const originalIndex = selectedWrapper.payload.blocks.length - 1 - visualIndex;
-                    const Icon = Smile; // Hardcoded for now
+                    const Icon = wrapperContentBlocks.find(b => b.id === block.type)?.icon || Smile;
                     const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
 
                     return (
@@ -4024,12 +4310,12 @@ const LayerPanel = () => {
                             "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
                             isSelected ? "bg-primary/20" : "hover:bg-muted/50"
                           )}
-                          onClick={() => {
-                             if(isSelected) {
-                               setSelectedElement(null);
-                             } else {
-                               setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
-                             }
+                           onClick={() => {
+                            if (isSelected) {
+                                setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
+                            } else {
+                                setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
+                            }
                           }}
                         >
                           <div className="p-1.5 bg-muted rounded-md">
@@ -4049,14 +4335,17 @@ const LayerPanel = () => {
                           )}
                           
                           <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="size-6" onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id)}}>
-                                <Pencil className="size-3"/>
+                             <Button
+                                variant="ghost" size="icon" className="size-7 rounded-full group/edit-btn"
+                                onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
+                            >
+                                <Pencil className="size-4 text-muted-foreground transition-colors group-hover/edit-btn:text-primary" />
                             </Button>
                             <div className="flex flex-col">
-                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === 0} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}}>
+                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === 0} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}}>
                                     <ChevronUp className="size-3"/>
                                 </Button>
-                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === blocksInVisualOrder.length - 1} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}}>
+                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === blocksInVisualOrder.length - 1} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}}>
                                     <ChevronDown className="size-3"/>
                                 </Button>
                             </div>
@@ -4174,15 +4463,15 @@ const LayerPanel = () => {
             </TooltipProvider>
              <ThemeToggle />
           </div>
-          <div className="flex items-center gap-4">
-               <div className="group rounded-md p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:bg-gradient-to-r hover:from-publish-hover-start hover:to-publish-hover-end transition-all duration-300">
+           <div className="flex items-center gap-4">
+                 <div className="group rounded-md p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:from-transparent hover:to-transparent transition-all duration-300">
                   <Button 
-                    className="bg-card/80 dark:bg-card/80 hover:bg-transparent text-white dark:hover:text-transparent hover:text-white" 
+                    className="bg-card/80 dark:bg-card/80 text-white hover:bg-transparent hover:text-black dark:hover:text-black hover:border-[#00EF10] border-2 border-transparent"
                     onClick={handlePublish}
                   >
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white group-hover:from-[#00CE07] group-hover:to-[#A6EE00]">
-                      <Rocket className="mr-2 inline-block"/>
-                      Publicar
+                    <Rocket className="mr-2 text-white group-hover:text-black dark:group-hover:text-black"/>
+                    <span className="text-white group-hover:text-black dark:group-hover:text-black">
+                        Guardar
                     </span>
                   </Button>
               </div>
@@ -4256,6 +4545,9 @@ const LayerPanel = () => {
                         )}
                         { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
                             <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading-interactive' && (
+                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
                             <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
