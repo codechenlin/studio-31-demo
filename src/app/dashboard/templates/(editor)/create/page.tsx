@@ -2895,7 +2895,7 @@ export default function CreateTemplatePage() {
     toast({
       title: "¡Plantilla Publicada!",
       description: "Tu nueva plantilla está lista para ser usada.",
-      className: 'bg-[#00CB07] border-none text-white',
+      className: 'bg-gradient-to-r from-[#00CE07] to-[#A6EE00] border-none text-white',
     })
   };
 
@@ -4092,7 +4092,7 @@ const LayerPanel = () => {
              <ThemeToggle />
           </div>
           <div className="flex items-center gap-4">
-               <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors hover:bg-gradient-to-r hover:from-publish-hover-start hover:to-publish-hover-end">
+               <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-publish-hover-start to-publish-hover-end transition-colors">
                   <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground" onClick={handlePublish}>
                       <Rocket className="mr-2"/> Publicar
                   </Button>
@@ -4118,80 +4118,78 @@ const LayerPanel = () => {
       </main>
 
       <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
-         <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
-            <Tabs defaultValue="style" className="w-full">
+        <Tabs defaultValue="style" className="w-full flex flex-col h-full">
+            <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="style"><PaletteIcon className="mr-2"/>Estilo</TabsTrigger>
                     <TabsTrigger value="layers"><Layers className="mr-2"/>Capas</TabsTrigger>
                 </TabsList>
-            </Tabs>
-        </header>
-         <ScrollArea className="flex-1 custom-scrollbar">
-           <Tabs defaultValue="style" className="w-full">
-              <TabsContent value="style">
-                 <div className="p-4 space-y-6">
-                  <StyleEditorHeader />
-                  { (selectedElement?.type === 'column') && (
-                    <>
-                     <BackgroundEditor 
-                        selectedElement={selectedElement} 
-                        canvasContent={canvasContent} 
-                        setCanvasContent={setCanvasContent}
-                        onOpenImageModal={handleOpenImageModal}
-                     />
-                        <Separator className="bg-border/20" />
-                        <ColumnDistributionEditor 
-                            selectedElement={selectedElement}
-                            canvasContent={canvasContent}
+            </header>
+            <ScrollArea className="flex-1 custom-scrollbar">
+                <TabsContent value="style">
+                    <div className="p-4 space-y-6">
+                        <StyleEditorHeader />
+                        { (selectedElement?.type === 'column') && (
+                        <>
+                        <BackgroundEditor 
+                            selectedElement={selectedElement} 
+                            canvasContent={canvasContent} 
                             setCanvasContent={setCanvasContent}
+                            onOpenImageModal={handleOpenImageModal}
                         />
-                    </>
-                  )}
-                   { (selectedElement?.type === 'wrapper') && (
-                     <BackgroundEditor 
-                        selectedElement={selectedElement} 
-                        canvasContent={canvasContent} 
-                        setCanvasContent={setCanvasContent}
-                        onOpenImageModal={handleOpenImageModal}
-                     />
-                  )}
-                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
-                      <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
-                      <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
-                      <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
-                      <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                   { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
-                      <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
-                      <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
-                      <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
-                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
-                      <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
-                  )}
-                  
-                  { !selectedElement && (
-                     <div className="text-center text-muted-foreground p-4 text-sm">
-                        Selecciona un elemento en el lienzo para ver sus opciones de estilo.
-                     </div>
-                  )}
-              </div>
-              </TabsContent>
-              <TabsContent value="layers">
-                  <LayerPanel />
-              </TabsContent>
-           </Tabs>
-         </ScrollArea>
+                            <Separator className="bg-border/20" />
+                            <ColumnDistributionEditor 
+                                selectedElement={selectedElement}
+                                canvasContent={canvasContent}
+                                setCanvasContent={setCanvasContent}
+                            />
+                        </>
+                        )}
+                        { (selectedElement?.type === 'wrapper') && (
+                        <BackgroundEditor 
+                            selectedElement={selectedElement} 
+                            canvasContent={canvasContent} 
+                            setCanvasContent={setCanvasContent}
+                            onOpenImageModal={handleOpenImageModal}
+                        />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
+                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
+                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
+                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
+                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
+                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
+                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
+                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
+                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
+                        )}
+                        
+                        { !selectedElement && (
+                            <div className="text-center text-muted-foreground p-4 text-sm">
+                                Selecciona un elemento en el lienzo para ver sus opciones de estilo.
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="layers">
+                    <LayerPanel />
+                </TabsContent>
+            </ScrollArea>
+        </Tabs>
       </aside>
 
        <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
