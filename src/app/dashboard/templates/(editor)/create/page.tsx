@@ -3331,7 +3331,8 @@ export default function CreateTemplatePage() {
   const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
     
-    setIsWrapperBlockSelectorOpen(false); // Close the selector first
+    setIsActionSelectorModalOpen(false);
+    setIsWrapperBlockSelectorOpen(false);
 
     if (type === 'emoji-interactive') {
         setIsEmojiSelectorOpen(true);
@@ -3514,13 +3515,10 @@ export default function CreateTemplatePage() {
           fontStyle: styles.fontStyle,
           padding: '8px',
           wordBreak: 'break-word',
+          whiteSpace: 'nowrap',
           ...interactiveStyles,
       };
-
-      if ('text' in block.payload && typeof block.payload.text === 'string') {
-          style.whiteSpace = 'nowrap';
-      }
-
+      
       if (styles.highlight) {
           style.backgroundColor = styles.highlight;
       }
@@ -4295,7 +4293,7 @@ const LayerPanel = () => {
                             "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
                             isSelected ? "bg-primary/20" : "hover:bg-muted/50"
                           )}
-                          onClick={() => {
+                           onClick={() => {
                             if (isSelected) {
                                 setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
                             } else {
@@ -4313,31 +4311,25 @@ const LayerPanel = () => {
                                 onBlur={(e) => handleRename(block.id, e.target.value)}
                                 onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
                                 autoFocus
-                                className="h-7 text-sm"
+                                className="h-7 text-sm flex-1 min-w-0"
                             />
                           ) : (
                              <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
                           )}
                           
-                          <div className="flex items-center ml-auto">
+                          <div className="flex items-center ml-auto opacity-100 transition-opacity">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
-                                className="p-1 rounded-md"
+                                className="group/button p-1 rounded-md bg-transparent hover:bg-[#1700E6] transition-colors"
                               >
-                                  <div className="size-6 flex items-center justify-center rounded-full border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
-                                     <Pencil className="size-3"/>
-                                  </div>
+                                <Pencil className="size-4 text-white group-hover/button:text-white transition-colors"/>
                               </button>
                               <div className="flex flex-col ml-1">
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30 p-0.5 rounded-md">
-                                      <div className="size-5 flex items-center justify-center rounded-md border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
-                                          <ChevronUp className="size-4"/>
-                                      </div>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="group/button disabled:opacity-30 p-0.5 rounded-md bg-transparent hover:bg-[#AD00EC] transition-colors">
+                                      <ChevronUp className="size-4 text-white group-hover/button:text-white transition-colors"/>
                                   </button>
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30 p-0.5 rounded-md">
-                                      <div className="size-5 flex items-center justify-center rounded-md border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
-                                         <ChevronDown className="size-4"/>
-                                      </div>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="group/button disabled:opacity-30 p-0.5 rounded-md bg-transparent hover:bg-[#AD00EC] transition-colors">
+                                      <ChevronDown className="size-4 text-white group-hover/button:text-white transition-colors"/>
                                   </button>
                               </div>
                           </div>
@@ -4414,7 +4406,7 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
-             <div className="mt-auto pb-2">
+            <div className="mt-auto pb-2">
                 <Link href="/dashboard" className="group relative flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border-2 border-transparent hover:border-purple-400/50 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
                     <div className="absolute top-0 left-[-100%] h-full w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-all duration-500 group-hover:left-0"></div>
                     <LayoutDashboard className="size-7 mb-1 z-10"/>
@@ -4467,13 +4459,12 @@ const LayerPanel = () => {
           </div>
            <div className="flex items-center gap-4">
                 <Button 
-                    className="group bg-gradient-to-r from-publish-normal-start to-publish-normal-end text-white dark:text-white hover:bg-none hover:bg-transparent hover:border-2 hover:border-[#00EF10] dark:hover:bg-transparent dark:hover:border-[#00EF10] transition-all duration-300"
                     onClick={handlePublish}
+                    className="group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]"
                 >
-                    <Rocket className="mr-2 text-white dark:text-white group-hover:text-[#00EF10] dark:group-hover:text-black transition-colors"/>
-                    <span className="text-white dark:text-white group-hover:text-[#00EF10] dark:group-hover:text-black transition-colors">
-                        Publicar
-                    </span>
+                    <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <Rocket className="mr-2"/>
+                    Guardar
                 </Button>
             </div>
         </header>
@@ -4723,8 +4714,8 @@ const LayerPanel = () => {
       </Dialog>
 
       <Dialog open={isActionSelectorModalOpen} onOpenChange={(open) => {
-          setIsActionSelectorModalOpen(open);
-          if (!open) {
+          if(!open) {
+            setIsActionSelectorModalOpen(false);
             setClickPosition(null);
             setActiveContainer(null);
           }
@@ -4856,12 +4847,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
-
-
-
-
-    
-
-    
-

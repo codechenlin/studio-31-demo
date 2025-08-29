@@ -134,3 +134,14 @@ body {
     scrollbar-color: hsl(var(--primary)) hsl(var(--muted) / 0.2);
   }
 }
+
+@layer utilities {
+    @keyframes spin-slow {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    .animate-spin-slow {
+        animation: spin-slow 3s linear infinite;
+    }
+}
