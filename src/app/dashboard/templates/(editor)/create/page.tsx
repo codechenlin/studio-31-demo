@@ -102,7 +102,8 @@ import {
   ClipboardCheck,
   Code,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  LayoutDashboard,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -4863,3 +4864,4 @@ const LayerPanel = () => {
     
 
     
+
