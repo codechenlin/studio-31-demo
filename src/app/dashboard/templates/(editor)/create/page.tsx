@@ -4407,11 +4407,11 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-               <div className="w-full h-[4px] animated-separator-2" />
-               <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full items-center justify-center overflow-hidden rounded-lg p-4 text-sm font-semibold text-white transition-all duration-300">
+               <div className="w-full h-[4px] animated-separator-2 mb-2" />
+               <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
                   <div className="ai-core-border-animation"></div>
-                  <LayoutDashboard className="size-5 mr-2 z-10"/>
-                  <span className="z-10">regresar al menu principal</span>
+                  <LayoutDashboard className="size-7 mb-1 z-10"/>
+                  <span className="z-10 text-xs text-center">Regresar al Menú Principal</span>
               </Link>
             </div>
         </div>
