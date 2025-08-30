@@ -4231,6 +4231,16 @@ const LayerPanel = () => {
 
     const handleRename = (blockId: string, newName: string) => {
         if (!selectedWrapper) return;
+        
+        if (newName.length > 20) {
+            toast({
+                title: "Límite de caracteres",
+                description: "El nombre no puede exceder los 20 caracteres.",
+                variant: 'destructive',
+            });
+            return;
+        }
+
         const trimmedName = newName.trim();
         if (trimmedName === '') {
             setEditingBlockId(null);
@@ -4311,6 +4321,7 @@ const LayerPanel = () => {
                                         onBlur={(e) => handleRename(block.id, e.target.value)}
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
                                         autoFocus
+                                        maxLength={20}
                                         className="h-7 text-sm flex-1 min-w-0"
                                     />
                                 ) : (
@@ -4419,10 +4430,10 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="w-full h-[4px] animated-separator-2 mb-2" />
-                <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
-                    <div className="ai-core-border-animation"></div>
-                    <div className="ai-core"></div>
+                <div className="w-full h-[4px] animated-separator mb-2" />
+                <Link href="/dashboard" className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
+                    <div className="animated-border-2"></div>
+                    <div className="ai-core-2"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
                         <LayoutDashboard className="size-7 mb-1"/>
                         <span className="text-xs text-center font-bold">Regresar al Menú Principal</span>
