@@ -144,19 +144,13 @@ body {
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
-     @keyframes energy-separator-stream {
+    @keyframes energy-separator-stream {
       0% {
         background-position: -100% 50%;
       }
       100% {
         background-position: 200% 50%;
       }
-    }
-    .animated-separator {
-        background: linear-gradient(to right, transparent, #E18700, #FFAB00, #E18700, transparent);
-        background-size: 50% 100%;
-        background-repeat: no-repeat;
-        animation: energy-separator-stream 4s linear infinite;
     }
     .animated-separator-2 {
       background: linear-gradient(to right, transparent, #1700E6, #009AFF, #1700E6, transparent);
@@ -176,33 +170,74 @@ body {
       }
     }
     
-    .ai-core-button {
-      background: linear-gradient(to right, #AD00EC, #1700E6);
-    }
-
-    .ai-core-button:hover {
-      background: #00CB07;
+     @keyframes ai-core-pulse {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0.6;
+        filter: blur(5px);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.9;
+        filter: blur(8px);
+      }
     }
     
-    .ai-core-border-animation::before {
+    .ai-core-button {
+        background: rgba(10, 5, 20, 0.7);
+        border: 1px solid rgba(173, 0, 236, 0.2);
+        backdrop-filter: blur(4px);
+    }
+
+    .ai-core-button:hover .ai-core {
+        animation-duration: 0.5s;
+        background: radial-gradient(circle, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5) 80%);
+    }
+
+    .ai-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.3) 80%);
+        border-radius: 50%;
+        z-index: 0;
+        animation: ai-core-pulse 2s infinite ease-in-out;
+    }
+    
+    .ai-core-border-animation {
       content: '';
       position: absolute;
-      width: 120%;
-      height: 120%;
-      top: -10%;
-      left: -10%;
+      width: calc(100% + 4px);
+      height: calc(100% + 4px);
+      top: -2px;
+      left: -2px;
       background-image: conic-gradient(
-        transparent,
-        transparent,
+        from var(--angle, 0deg),
+        transparent 0%,
+        transparent 60%,
         #00F0FF,
         #A6FF00,
         #00F0FF,
-        transparent,
-        transparent
+        transparent 90%,
+        transparent 100%
       );
-      animation: glow-stream 4s linear infinite;
+      animation: glow-stream 2s linear infinite;
       z-index: 0;
       border-radius: inherit;
-      filter: blur(5px);
+      filter: blur(3px);
+    }
+
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    @keyframes glow-stream {
+      to {
+        --angle: 360deg;
+      }
     }
 }

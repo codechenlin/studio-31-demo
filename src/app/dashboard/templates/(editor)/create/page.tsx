@@ -4207,7 +4207,6 @@ const LayerPanel = () => {
     const { toast } = useToast();
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
     const [tempName, setTempName] = useState('');
-    const [isDarkMode] = useState(true); // Assuming dark mode for style decisions
 
     const selectedWrapper = canvasContent.find(
       (block): block is WrapperBlock =>
@@ -4420,12 +4419,13 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-               <div className="w-full h-[4px] animated-separator mb-2" />
-               <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
-                    <div className="animated-border"></div>
+                <div className="w-full h-[4px] animated-separator-2 mb-2" />
+                <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
+                    <div className="ai-core-border-animation"></div>
+                    <div className="ai-core"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
                         <LayoutDashboard className="size-7 mb-1"/>
-                        <span className="text-xs text-center">Regresar al Menú Principal</span>
+                        <span className="text-xs text-center font-bold">Regresar al Menú Principal</span>
                     </div>
                 </Link>
             </div>
