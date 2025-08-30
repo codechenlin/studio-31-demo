@@ -144,4 +144,31 @@ body {
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
+     @keyframes border-stream {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+    .animated-border {
+      @apply absolute top-0 left-0 w-full h-full rounded-lg z-0;
+      background: linear-gradient(to right, #E18700, #FFAB00, #E18700);
+      background-size: 200% 100%;
+      animation: border-stream 3s linear infinite;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      -webkit-mask-composite: xor;
+      padding: 2px;
+    }
+    .animated-separator {
+        background: linear-gradient(to right, #E18700, #FFAB00, #E18700);
+        background-size: 200% 100%;
+        animation: border-stream 3s linear infinite reverse;
+    }
 }

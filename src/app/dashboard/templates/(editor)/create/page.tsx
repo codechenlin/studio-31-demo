@@ -4406,6 +4406,14 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
+             <div className="mt-auto pb-2">
+                <div className="w-full h-[4px] animated-separator mb-2"></div>
+                <Link href="/dashboard" className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-lg p-2 text-sm font-semibold text-white transition-all duration-300 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:bg-[#00CB07]">
+                    <div className="animated-border"></div>
+                    <LayoutDashboard className="size-5 mr-2 z-10"/>
+                    <span className="z-10">regresar al menu principal</span>
+                </Link>
+            </div>
         </div>
       </aside>
 
