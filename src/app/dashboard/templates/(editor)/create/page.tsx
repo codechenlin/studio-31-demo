@@ -104,6 +104,7 @@ import {
   ChevronUp,
   ChevronDown,
   LayoutDashboard,
+  FileSignature,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -116,6 +117,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 
 const mainContentBlocks = [
@@ -3075,6 +3077,7 @@ TimerComponent.displayName = 'TimerComponent';
 
 
 export default function CreateTemplatePage() {
+  const router = useRouter();
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -3112,6 +3115,10 @@ export default function CreateTemplatePage() {
   });
   
   const [isCopySuccessModalOpen, setIsCopySuccessModalOpen] = useState(false);
+
+  // New states for the modals
+  const [isInitialNameModalOpen, setIsInitialNameModalOpen] = useState(false);
+  const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
   
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -3129,6 +3136,10 @@ export default function CreateTemplatePage() {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark', !isDarkMode);
   };
+
+  useEffect(() => {
+    setIsInitialNameModalOpen(true);
+  }, []);
   
   const ThemeToggle = () => (
     <TooltipProvider>
@@ -3824,8 +3835,13 @@ export default function CreateTemplatePage() {
   };
 
   const handleSaveTemplateName = () => {
-    setTemplateName(tempTemplateName);
-    setIsEditNameModalOpen(false);
+    if (isInitialNameModalOpen) {
+        setTemplateName(tempTemplateName || 'Mi Plantilla Increíble');
+        setIsInitialNameModalOpen(false);
+    } else {
+        setTemplateName(tempTemplateName);
+        setIsEditNameModalOpen(false);
+    }
   };
   
   // --- Wrapper Resize Logic ---
@@ -4234,7 +4250,7 @@ const LayerPanel = () => {
         
         if (newName.length > 20) {
             toast({
-                title: "Límite de caracteres",
+                title: "Límite de caracteres excedido",
                 description: "El nombre no puede exceder los 20 caracteres.",
                 variant: 'destructive',
             });
@@ -4422,7 +4438,7 @@ const LayerPanel = () => {
             </Dialog>
             {mainContentBlocks.slice(1).map(block => (
                <Card 
-                key={block.id}
+                key={block.id} 
                 onClick={() => handleBlockClick(block.id as BlockType)}
                 className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
@@ -4432,15 +4448,18 @@ const LayerPanel = () => {
               </Card>
             ))}
              <div className="mt-auto pb-2 space-y-2">
-                <div className="w-full h-[4px] animated-separator mb-2" />
-                <Link href="/dashboard" className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button hover:bg-green-500/10">
-                    <div className="ai-core-border-animation"></div>
+                <div className="w-full h-[4px] animated-separator mb-2" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties} />
+                <button
+                    onClick={() => setIsConfirmExitModalOpen(true)}
+                    className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button hover:bg-[#00CB07]/10"
+                >
+                    <div className="ai-core-border-animation" style={{"--start-color": "#00F0FF", "--end-color": "#A6FF00"} as React.CSSProperties}></div>
                     <div className="ai-core"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
                         <LayoutDashboard className="size-7 mb-1"/>
                         <span className="text-xs text-center font-bold">Regresar al Menú Principal</span>
                     </div>
-                </Link>
+                </button>
             </div>
         </div>
       </aside>
@@ -4873,6 +4892,76 @@ const LayerPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+       
+       {/* Initial Name Modal */}
+       <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+             <div className="flex justify-center pb-4">
+                <FileSignature className="size-12 text-primary" />
+             </div>
+            <DialogTitle className="text-center text-xl">¡Inicia tu Obra Maestra!</DialogTitle>
+            <DialogDescription className="text-center">
+              Dale un nombre a tu nueva plantilla para comenzar a dar vida a tus ideas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={tempTemplateName}
+              onChange={(e) => setTempTemplateName(e.target.value)}
+              placeholder="Ej: Newsletter de Bienvenida"
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button type="button" style={{backgroundColor: '#F00000'}} onClick={() => router.push('/dashboard')}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleSaveTemplateName}>
+              Guardar y Empezar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Exit Modal */}
+       <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
+        <DialogContent className="sm:max-w-lg bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+             <div className="flex justify-center pb-4">
+                <AlertTriangle className="size-12 text-amber-400" />
+             </div>
+            <DialogTitle className="text-center text-xl">¿Estás seguro de que quieres abandonar el editor?</DialogTitle>
+            <DialogDescription className="text-center">
+                Los cambios no guardados se perderán en el vacío digital.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
+                <div className="flex items-center gap-2">
+                    <Cloud className="size-4 text-green-400"/>
+                    <span>Último guardado a las 10:45 AM</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handlePublish}>Guardar ahora</Button>
+            </div>
+          </div>
+          <DialogFooter className="grid grid-cols-3 gap-2">
+             <Button type="button" style={{backgroundColor: '#F00000'}} onClick={() => setIsConfirmExitModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => router.push('/dashboard')}>
+              Si, salir
+            </Button>
+            <Button type="button" onClick={() => {
+                handlePublish();
+                router.push('/dashboard');
+            }}>
+              Guardar y Salir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

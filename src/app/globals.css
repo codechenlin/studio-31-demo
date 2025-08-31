@@ -136,6 +136,12 @@ body {
 }
 
 @layer utilities {
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
     @keyframes spin-slow {
         to {
             transform: rotate(360deg);
@@ -144,6 +150,7 @@ body {
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
+
     @keyframes energy-separator-stream {
       0% {
         background-position: -100% 50%;
@@ -153,7 +160,7 @@ body {
       }
     }
     .animated-separator {
-      background: linear-gradient(to right, transparent, #1700E6, #009AFF, #1700E6, transparent);
+      background: linear-gradient(to right, transparent, var(--start-color, #1700E6), var(--end-color, #009AFF), var(--start-color, #1700E6), transparent);
       background-size: 50% 100%;
       background-repeat: no-repeat;
       animation: energy-separator-stream 3s linear infinite;
@@ -182,8 +189,13 @@ body {
         background: rgba(10, 5, 20, 0.7);
         border: 1px solid rgba(173, 0, 236, 0.2);
         backdrop-filter: blur(4px);
+        transition: background-color 0.3s;
     }
 
+    .ai-core-button:hover {
+        background: rgba(0, 203, 7, 0.1);
+    }
+    
     .ai-core-button:hover .ai-core {
         animation-duration: 0.5s;
         background: radial-gradient(circle, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5) 80%);
@@ -198,15 +210,9 @@ body {
         background: radial-gradient(circle, hsl(var(--primary) / 0.3), hsl(var(--accent) / 0.3) 80%);
         border-radius: 50%;
         z-index: 0;
-        animation: ai-core-pulse 2s infinite ease-in-out;
+        animation: ai-core-pulse 4s infinite ease-in-out;
     }
     
-    @property --angle {
-      syntax: '<angle>';
-      initial-value: 0deg;
-      inherits: false;
-    }
-
     .ai-core-border-animation {
       content: '';
       position: absolute;
@@ -218,9 +224,9 @@ body {
         from var(--angle, 0deg),
         transparent 0%,
         transparent 60%,
-        #00F0FF,
-        #A6FF00,
-        #00F0FF,
+        var(--start-color, #00F0FF),
+        var(--end-color, #A6FF00),
+        var(--start-color, #00F0FF),
         transparent 90%,
         transparent 100%
       );
