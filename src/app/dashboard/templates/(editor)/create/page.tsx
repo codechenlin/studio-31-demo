@@ -4309,7 +4309,7 @@ const LayerPanel = () => {
         <div className="p-2 space-y-2">
              <div className="px-2 pb-2">
                  <h3 className="font-semibold flex items-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
-                 <p className="text-xs text-muted-foreground">Gestiona y reordena las capas de tu contenedor.</p>
+                 <p className="text-xs text-muted-foreground text-center">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de posicionamiento al frente y cuáles quedan atrás</p>
              </div>
              <div className="space-y-1">
                 {blocksInVisualOrder.map((block, visualIndex) => {
@@ -4452,7 +4452,7 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
-             <div className="mt-auto pb-2 space-y-2">
+            <div className="mt-auto pb-2 space-y-2">
                 <div className="w-full h-[4px] animated-separator" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties} />
                 <button
                     onClick={() => setIsConfirmExitModalOpen(true)}
@@ -4928,7 +4928,7 @@ const LayerPanel = () => {
             <Button 
                 type="button" 
                 onClick={handleSaveTemplateName}
-                className="hover:bg-[#00CB07] hover:text-white"
+                className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
             >
               Guardar y Empezar
             </Button>
@@ -4958,7 +4958,7 @@ const LayerPanel = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10]"
+                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10] hover:text-white"
                 >
                   Guardar ahora
                 </Button>
