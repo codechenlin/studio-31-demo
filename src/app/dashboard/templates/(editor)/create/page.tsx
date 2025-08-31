@@ -4254,6 +4254,7 @@ const LayerPanel = () => {
                 description: "El nombre no puede exceder los 20 caracteres.",
                 variant: 'destructive',
             });
+            setTempName(newName.substring(0, 20)); // Keep the truncated value for potential re-render
             return;
         }
 
@@ -4638,10 +4639,9 @@ const LayerPanel = () => {
       </Dialog>
 
       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
-          setIsWrapperBlockSelectorOpen(open);
-          if (!open) {
-              setClickPosition(null);
-              setActiveContainer(null);
+          if(!open) {
+            setClickPosition(null);
+            setActiveContainer(null);
           }
       }}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
@@ -4914,7 +4914,11 @@ const LayerPanel = () => {
             />
           </div>
           <DialogFooter className="sm:justify-between">
-            <Button type="button" style={{backgroundColor: '#F00000'}} onClick={() => router.push('/dashboard')}>
+             <Button
+              type="button"
+              onClick={() => router.push('/dashboard')}
+              className="bg-[#F00000] text-white hover:bg-[#A11C00]"
+            >
               Cancelar
             </Button>
             <Button type="button" onClick={handleSaveTemplateName}>
@@ -4942,23 +4946,24 @@ const LayerPanel = () => {
                     <Cloud className="size-4 text-green-400"/>
                     <span>Último guardado a las 10:45 AM</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handlePublish}>Guardar ahora</Button>
+                 <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePublish}
+                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:opacity-90"
+                >
+                  Guardar ahora
+                </Button>
             </div>
-          </div>
-          <DialogFooter className="grid grid-cols-3 gap-2">
-             <Button type="button" style={{backgroundColor: '#F00000'}} onClick={() => setIsConfirmExitModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" variant="destructive" onClick={() => router.push('/dashboard')}>
+             <Button
+              type="button"
+              variant="destructive"
+              onClick={() => router.push('/dashboard')}
+              className="w-full text-lg py-6 bg-[#F00000] hover:bg-[#A11C00]"
+            >
               Si, salir
             </Button>
-            <Button type="button" onClick={() => {
-                handlePublish();
-                router.push('/dashboard');
-            }}>
-              Guardar y Salir
-            </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
