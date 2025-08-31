@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
@@ -16,7 +17,14 @@ export function createClient() {
         signInWithPassword: async () => ({ error: { message: "Supabase not configured." } }),
         signUp: async () => ({ error: { message: "Supabase not configured." } }),
         resetPasswordForEmail: async () => ({ error: { message: "Supabase not configured." } }),
+        getUser: async () => ({ data: { user: null }, error: null }),
       },
+      storage: {
+        from: () => ({
+            upload: async () => ({ error: { message: "Supabase not configured." } }),
+            getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        })
+      }
       // You can mock other Supabase methods if your app uses them
     } as any;
   }
