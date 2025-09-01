@@ -3138,8 +3138,10 @@ export default function CreateTemplatePage() {
   const [selectedFile, setSelectedFile] = useState<FileObject | null>(null);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-  const [fileToRename, setFileToRename] = useState<FileObject | null>(null);
+  const [fileToRename, setFileToRename] = useState<{path: string, currentName: string} | null>(null);
   const [newFileName, setNewFileName] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -3149,6 +3151,17 @@ export default function CreateTemplatePage() {
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getSession = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    getSession();
+  }, []);
 
   const handlePublish = () => {
     startSaving(async () => {
@@ -4027,10 +4040,10 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file || !userId) return;
     setIsUploading(true);
 
-    const result = await uploadFile(file);
+    const result = await uploadFile(file, userId);
 
     if (result.success && result.publicUrl) {
         setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
@@ -4042,8 +4055,9 @@ export default function CreateTemplatePage() {
   };
 
   const fetchGalleryFiles = useCallback(async () => {
+    if (!userId) return;
     setIsGalleryLoading(true);
-    const result = await listFiles();
+    const result = await listFiles(userId);
     if (result.success && result.data) {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
@@ -4051,7 +4065,7 @@ export default function CreateTemplatePage() {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
     }
     setIsGalleryLoading(false);
-  }, [toast]);
+  }, [toast, userId]);
   
   useEffect(() => {
     if (isFileGalleryModalOpen) {
@@ -4060,10 +4074,10 @@ export default function CreateTemplatePage() {
   }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !userId) return;
     setIsUploading(true);
     try {
-        await Promise.all(Array.from(files).map(file => uploadFile(file)));
+        await Promise.all(Array.from(files).map(file => uploadFile(file, userId)));
         toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
     } catch (error: any) {
         toast({ title: 'Error en la subida', description: error.message, variant: 'destructive' });
@@ -4074,12 +4088,12 @@ export default function CreateTemplatePage() {
   };
   
   const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim()) {
+    if (!fileToRename || !newFileName.trim() || !userId) {
         setIsRenameModalOpen(false);
         return;
     }
     
-    const result = await renameFile(fileToRename.name, newFileName.trim());
+    const result = await renameFile(userId, fileToRename.path, newFileName.trim());
     if(result.success) {
       toast({ title: "Archivo renombrado" });
       fetchGalleryFiles();
@@ -4103,7 +4117,7 @@ export default function CreateTemplatePage() {
 
   const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFileToRename(file);
+    setFileToRename({ path: file.name, currentName: file.name.split('/').pop() || ''});
     setNewFileName(file.name.split('/').pop() || '');
     setIsRenameModalOpen(true);
   };
@@ -5281,7 +5295,7 @@ const LayerPanel = () => {
                       handlePublish();
                       toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
                   }}
-                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-[#00EF10] hover:text-white"
+                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00]"
                 >
                   Guardar ahora
                 </Button>

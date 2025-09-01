@@ -6,15 +6,15 @@ import { z } from 'zod';
 
 const BUCKET_NAME = 'template_backgrounds';
 
-export async function listFiles() {
+export async function listFiles(userId: string) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: userAuth } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { success: false, error: 'Usuario no autenticado.' };
+  if (!userAuth.user || userAuth.user.id !== userId) {
+    return { success: false, error: 'Usuario no autenticado o no autorizado.' };
   }
 
-  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(user.id, {
+  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(userId, {
     limit: 100,
     offset: 0,
     sortBy: { column: 'created_at', order: 'desc' },
@@ -28,11 +28,11 @@ export async function listFiles() {
   return { success: true, data: { files: data, supabaseUrl } };
 }
 
-export async function uploadFile(file: File) {
+export async function uploadFile(file: File, userId: string) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user || user.id !== userId) {
         return { success: false, error: 'Debes iniciar sesión para subir un archivo.' };
     }
 
@@ -52,17 +52,18 @@ export async function uploadFile(file: File) {
 }
 
 const renameFileSchema = z.object({
+  userId: z.string().uuid(),
   oldPath: z.string(),
   newName: z.string().min(1),
 });
 
-export async function renameFile(oldPath: string, newName: string) {
-    const validated = renameFileSchema.safeParse({ oldPath, newName });
+export async function renameFile(userId: string, oldPath: string, newName: string) {
+    const validated = renameFileSchema.safeParse({ userId, oldPath, newName });
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'No autenticado.' };
+    if (!user || user.id !== userId) return { success: false, error: 'No autenticado.' };
     
     if (!oldPath.startsWith(user.id)) {
       return { success: false, error: "Permiso denegado." };
