@@ -14,10 +14,12 @@ export async function listFiles(userId: string) {
     return { success: false, error: 'Usuario no autenticado o no autorizado.' };
   }
 
-  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(userId, {
+  // Listar archivos en la raíz del bucket para el usuario autenticado
+  const { data, error } = await supabase.storage.from(BUCKET_NAME).list('', {
     limit: 100,
     offset: 0,
     sortBy: { column: 'created_at', order: 'desc' },
+    // El filtrado por usuario se hace a través de RLS
   });
 
   if (error) {
@@ -25,7 +27,10 @@ export async function listFiles(userId: string) {
   }
   
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  return { success: true, data: { files: data, supabaseUrl } };
+  // Filtramos para asegurarnos que solo traemos los archivos del usuario correcto si RLS fallara
+  const userFiles = data.filter(file => file.owner === userId);
+
+  return { success: true, data: { files: userFiles, supabaseUrl } };
 }
 
 export async function uploadFile(file: File, userId: string) {
@@ -36,11 +41,13 @@ export async function uploadFile(file: File, userId: string) {
         return { success: false, error: 'Debes iniciar sesión para subir un archivo.' };
     }
 
-    const filePath = `${user.id}/${Date.now()}_${file.name}`;
+    const filePath = `${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+            // La información del propietario se añade automáticamente por Supabase
+        });
 
     if (uploadError) {
         return { success: false, error: uploadError.message };
@@ -52,28 +59,19 @@ export async function uploadFile(file: File, userId: string) {
 }
 
 const renameFileSchema = z.object({
-  userId: z.string().uuid(),
   oldPath: z.string(),
   newName: z.string().min(1),
 });
 
-export async function renameFile(userId: string, oldPath: string, newName: string) {
-    const validated = renameFileSchema.safeParse({ userId, oldPath, newName });
+export async function renameFile(oldPath: string, newName: string) {
+    const validated = renameFileSchema.safeParse({ oldPath, newName });
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) return { success: false, error: 'No autenticado.' };
+    if (!user) return { success: false, error: 'No autenticado.' };
     
-    if (!oldPath.startsWith(user.id)) {
-      return { success: false, error: "Permiso denegado." };
-    }
-
-    const pathParts = oldPath.split('/');
-    pathParts[pathParts.length - 1] = newName;
-    const newPath = pathParts.join('/');
-
-    const { error } = await supabase.storage.from(BUCKET_NAME).move(oldPath, newPath);
+    const { error } = await supabase.storage.from(BUCKET_NAME).move(oldPath, newName);
 
     if (error) {
         console.error("Supabase rename error:", error)
@@ -95,10 +93,6 @@ export async function deleteFile(filePath: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado.' };
     
-    if (!filePath.startsWith(user.id)) {
-      return { success: false, error: "Permiso denegado." };
-    }
-
     const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
     
     if (error) { 
