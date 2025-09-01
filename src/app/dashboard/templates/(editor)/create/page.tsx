@@ -3136,6 +3136,9 @@ export default function CreateTemplatePage() {
   const [galleryFiles, setGalleryFiles] = useState<FileObject[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileObject | null>(null);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [fileToRename, setFileToRename] = useState<FileObject | null>(null);
+  const [newFileName, setNewFileName] = useState('');
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -4055,22 +4058,34 @@ export default function CreateTemplatePage() {
   }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files || files.length === 0) return;
     setIsUploading(true);
-    await Promise.all(Array.from(files).map(file => uploadFile(file)));
-    setIsUploading(false);
-    fetchGalleryFiles(); // Refresh gallery
-    toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
+    try {
+        await Promise.all(Array.from(files).map(file => uploadFile(file)));
+        toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
+    } catch (error: any) {
+        toast({ title: 'Error en la subida', description: error.message, variant: 'destructive' });
+    } finally {
+        setIsUploading(false);
+        fetchGalleryFiles(); // Refresh gallery
+    }
   };
   
-  const handleRenameFile = async (filePath: string, newName: string) => {
-    const result = await renameFile(filePath, newName);
+  const handleRenameFile = async () => {
+    if (!fileToRename || !newFileName.trim()) {
+        setIsRenameModalOpen(false);
+        return;
+    }
+    
+    const result = await renameFile(fileToRename.name, newFileName.trim());
     if(result.success) {
       toast({ title: "Archivo renombrado" });
       fetchGalleryFiles();
     } else {
       toast({ title: "Error", description: result.error, variant: 'destructive' });
     }
+    setIsRenameModalOpen(false);
+    setFileToRename(null);
   };
 
   const handleDeleteFile = async (filePath: string) => {
@@ -4083,6 +4098,13 @@ export default function CreateTemplatePage() {
       toast({ title: "Error", description: result.error, variant: 'destructive' });
     }
   }
+
+  const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFileToRename(file);
+    setNewFileName(file.name.split('/').pop() || '');
+    setIsRenameModalOpen(true);
+  };
 
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -5046,6 +5068,29 @@ const LayerPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+       <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle>Renombrar Archivo</DialogTitle>
+            <DialogDescription>
+              Ingresa un nuevo nombre para tu archivo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              placeholder="Nuevo nombre..."
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleRenameFile}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isFileGalleryModalOpen} onOpenChange={setIsFileGalleryModalOpen}>
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-card/90 backdrop-blur-xl border-border/50">
@@ -5068,12 +5113,12 @@ const LayerPanel = () => {
                              <Button size="sm" className="mt-2" onClick={() => document.getElementById('gallery-file-input')?.click()}>Seleccionar Archivos</Button>
                              <Input id="gallery-file-input" type="file" multiple className="hidden" onChange={(e) => handleGalleryUpload(e.target.files)} />
                         </div>
-                        <Card className="flex-1 bg-background/50">
+                        <Card className="flex-1 bg-background/50 overflow-hidden">
                             <CardContent className="p-4 space-y-2">
                                 <h3 className="font-semibold mb-2">Detalles del Archivo</h3>
                                 {selectedFile ? (
                                     <div className="text-xs space-y-1 text-muted-foreground">
-                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name}</span></p>
+                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name.split('/').pop()}</span></p>
                                         <p><strong className="text-foreground">Tamaño:</strong> {(selectedFile.metadata.size / 1024).toFixed(2)} KB</p>
                                         <p><strong className="text-foreground">Tipo:</strong> {selectedFile.metadata.mimetype}</p>
                                         <p><strong className="text-foreground">Subido:</strong> {format(new Date(selectedFile.created_at), "PPP p")}</p>
@@ -5124,11 +5169,11 @@ const LayerPanel = () => {
                                                 onClick={() => setSelectedFile(file)}
                                                 className={cn("group relative overflow-hidden aspect-square border-2 hover:border-primary transition-all cursor-pointer", selectedFile?.id === file.id ? 'border-primary' : 'border-transparent')}
                                              >
-                                                 <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name} />
+                                                 <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name.split('/').pop() || 'gallery image'} />
                                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
                                                      <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
                                                       <div className="flex gap-1 mt-1">
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); const newName = prompt("Nuevo nombre:", file.name.split('/').pop()); if(newName) handleRenameFile(file.name, newName); }}><Pencil/></Button>
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil/></Button>
                                                           <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2/></Button>
                                                       </div>
                                                  </div>
