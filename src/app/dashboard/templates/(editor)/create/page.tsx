@@ -3151,19 +3151,17 @@ export default function CreateTemplatePage() {
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { toast } = useToast();
-
+  
   useEffect(() => {
-    const getSession = async () => {
+    const getUserId = async () => {
       const supabase = createClient();
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        toast({ title: "Error de autenticación", description: "No se pudo obtener la sesión del usuario.", variant: "destructive" });
-      } else {
-        setUserId(session.user.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
       }
     };
-    getSession();
-  }, [toast]);
+    getUserId();
+  }, []);
 
   const handlePublish = () => {
     startSaving(async () => {
@@ -4027,7 +4025,6 @@ export default function CreateTemplatePage() {
   
  const handleApplyBackgroundImage = () => {
     if (selectedElement?.type !== 'wrapper' || !imageModalState.url) return;
-
     setCanvasContent(prevCanvasContent => 
         prevCanvasContent.map(row => {
             if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
@@ -4042,14 +4039,14 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+    if (!file || !userId) return;
     setIsUploading(true);
 
-    const result = await uploadFile(file);
+    const result = await uploadFile(file, userId);
 
     if (result.success && result.publicUrl) {
       setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
-      toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
+      toast({ title: '¡Éxito!', description: 'Imagen subida. Ya puedes ajustarla.', className: 'bg-green-500 text-white' });
     } else {
       toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
     }
@@ -4064,16 +4061,17 @@ export default function CreateTemplatePage() {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
     } else {
-        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        toast({ title: 'Error al cargar galería', description: result.error, variant: 'destructive' });
+        setGalleryFiles([]);
     }
     setIsGalleryLoading(false);
   }, [userId, toast]);
   
   useEffect(() => {
-    if (isFileGalleryModalOpen) {
+    if (isFileGalleryModalOpen || userId) {
         fetchGalleryFiles();
     }
-  }, [isFileGalleryModalOpen, fetchGalleryFiles]);
+  }, [isFileGalleryModalOpen, userId, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
     if (!files || files.length === 0 || !userId) return;
@@ -4090,37 +4088,42 @@ export default function CreateTemplatePage() {
   };
   
   const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim()) {
+    if (!fileToRename || !newFileName.trim() || !userId) {
         setIsRenameModalOpen(false);
         return;
     }
     
-    const result = await renameFile(fileToRename.path, newFileName.trim());
+    const oldPath = `${userId}/${fileToRename.currentName}`;
+    const newPath = `${userId}/${newFileName.trim()}`;
+
+    const result = await renameFile(oldPath, newPath);
+
     if(result.success) {
       toast({ title: "Archivo renombrado" });
       fetchGalleryFiles();
     } else {
-      toast({ title: "Error", description: result.error, variant: 'destructive' });
+      toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
     }
     setIsRenameModalOpen(false);
     setFileToRename(null);
   };
 
   const handleDeleteFile = async (filePath: string) => {
+    if(!userId) return;
     const result = await deleteFile(filePath);
      if(result.success) {
       toast({ title: "Archivo eliminado" });
       fetchGalleryFiles();
       setSelectedFile(null);
     } else {
-      toast({ title: "Error", description: result.error, variant: 'destructive' });
+      toast({ title: "Error al eliminar", description: result.error, variant: 'destructive' });
     }
   }
 
   const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
     e.stopPropagation();
     const currentName = file.name.split('/').pop() || '';
-    setFileToRename({ path: file.name, currentName: currentName });
+    setFileToRename({ path: file.name, currentName });
     setNewFileName(currentName);
     setIsRenameModalOpen(true);
   };
@@ -4604,11 +4607,16 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-               <div className="relative h-px my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
+                <div className="relative h-px my-2">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div 
+                            className="w-full border-t border-dashed"
+                            style={{
+                                borderImage: 'linear-gradient(to right, transparent, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)), transparent) 1'
+                            }}
+                        />
+                    </div>
                 </div>
-              </div>
               <button
                   onClick={() => setIsConfirmExitModalOpen(true)}
                   className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"

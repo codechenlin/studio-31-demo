@@ -1,31 +1,16 @@
 
 'use server';
 
-import { createClient } from '@/lib/supabase/client'; // Keep this for potential client-side use
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
 
 const BUCKET_NAME = 'template_backgrounds';
 
-// This function should be used for all server-side Supabase actions
-async function getSupabaseServerClient() {
-    const cookieStore = cookies();
-    return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value
-                },
-            },
-        }
-    );
-}
-
 export async function listFiles(userId: string) {
-  const supabase = await getSupabaseServerClient();
+  if (!userId) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+  const supabase = createClient();
   
   const { data, error } = await supabase.storage.from(BUCKET_NAME).list(userId, {
     limit: 100,
@@ -38,14 +23,14 @@ export async function listFiles(userId: string) {
     return { success: false, error: error.message };
   }
   
-  // Return the base URL so client can construct the full path
   return { success: true, data: { files: data, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL! } };
 }
 
 export async function uploadFile(file: File, userId: string) {
-    const supabase = await getSupabaseServerClient();
-
-    // The user session is automatically handled by the server client from cookies
+    if (!userId) {
+        return { success: false, error: "Debes iniciar sesión para subir archivos." };
+    }
+    const supabase = createClient();
     const filePath = `${userId}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
@@ -53,30 +38,24 @@ export async function uploadFile(file: File, userId: string) {
         .upload(filePath, file);
 
     if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
         return { success: false, error: uploadError.message };
     }
 
     const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
-
     return { success: true, publicUrl: data.publicUrl };
 }
 
 const renameFileSchema = z.object({
-  oldPath: z.string(),
-  newName: z.string().min(1),
+  oldPath: z.string().min(1),
+  newPath: z.string().min(1),
 });
 
-export async function renameFile(oldPath: string, newName: string) {
-    const validated = renameFileSchema.safeParse({ oldPath, newName });
+export async function renameFile(oldPath: string, newPath: string) {
+    const validated = renameFileSchema.safeParse({ oldPath, newPath });
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
-    const supabase = await getSupabaseServerClient();
-    
-    const parts = oldPath.split('/');
-    const oldFileName = parts.pop();
-    const userIdFolder = parts.join('/');
-    const newPath = `${userIdFolder}/${newName}`;
-
+    const supabase = createClient();
     const { error } = await supabase.storage.from(BUCKET_NAME).move(oldPath, newPath);
 
     if (error) {
@@ -95,8 +74,7 @@ export async function deleteFile(filePath: string) {
     const validated = deleteFileSchema.safeParse({ filePath });
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
-    const supabase = await getSupabaseServerClient();
-    
+    const supabase = createClient();
     const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
     
     if (error) { 
