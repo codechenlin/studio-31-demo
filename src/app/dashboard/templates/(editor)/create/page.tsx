@@ -5085,6 +5085,12 @@ const LayerPanel = () => {
               onChange={(e) => setNewFileName(e.target.value)}
               placeholder="Nuevo nombre..."
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleRenameFile();
+                }
+              }}
             />
           </div>
           <DialogFooter>
@@ -5241,11 +5247,6 @@ const LayerPanel = () => {
                 type="button" 
                 onClick={() => {
                   handleSaveTemplateName();
-                  toast({
-                      title: "¡Plantilla Guardada!",
-                      description: "Tu obra maestra está a salvo en nuestra base de datos.",
-                      className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
-                  });
                 }}
                 className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
             >
@@ -5280,7 +5281,7 @@ const LayerPanel = () => {
                       handlePublish();
                       toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
                   }}
-                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-[#00EF10]"
+                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-[#00EF10] hover:text-white"
                 >
                   Guardar ahora
                 </Button>

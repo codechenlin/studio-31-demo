@@ -23,8 +23,9 @@ export async function listFiles() {
   if (error) {
     return { success: false, error: error.message };
   }
-
-  return { success: true, data: { files: data, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL! } };
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  return { success: true, data: { files: data, supabaseUrl } };
 }
 
 export async function uploadFile(file: File) {
@@ -93,7 +94,6 @@ export async function deleteFile(filePath: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado.' };
     
-    // Ensure user is deleting a file in their own folder
     if (!filePath.startsWith(user.id)) {
       return { success: false, error: "Permiso denegado." };
     }
