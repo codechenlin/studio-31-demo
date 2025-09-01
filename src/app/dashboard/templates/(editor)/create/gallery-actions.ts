@@ -19,10 +19,9 @@ async function getAuthenticatedClient() {
     return { supabase, session };
 }
 
-export async function listFiles() {
+export async function listFiles(userId: string) {
   try {
-    const { supabase, session } = await getAuthenticatedClient();
-    const userId = session.user.id;
+    const { supabase } = await getAuthenticatedClient();
 
     const { data, error } = await supabase.storage.from(BUCKET_NAME).list(userId, {
       limit: 100,
@@ -32,17 +31,17 @@ export async function listFiles() {
 
     if (error) throw error;
     
-    return { success: true, data: { files: data, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!, userId } };
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    return { success: true, data: { files: data, supabaseUrl } };
   } catch (error: any) {
     console.error("Error listing files:", error);
     return { success: false, error: error.message };
   }
 }
 
-export async function uploadFile(file: File) {
+export async function uploadFile(userId: string, file: File) {
     try {
-        const { supabase, session } = await getAuthenticatedClient();
-        const userId = session.user.id;
+        const { supabase } = await getAuthenticatedClient();
         const filePath = `${userId}/${Date.now()}_${file.name}`;
 
         const { error: uploadError } = await supabase.storage

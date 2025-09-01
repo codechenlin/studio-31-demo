@@ -3152,16 +3152,19 @@ export default function CreateTemplatePage() {
 
   const { toast } = useToast();
   
+  const getUserId = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+    } else {
+      toast({ title: 'Error de Autenticación', description: 'No se pudo obtener la sesión del usuario.', variant: 'destructive'});
+    }
+  }, [toast]);
+  
   useEffect(() => {
-    const getUserId = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      }
-    };
     getUserId();
-  }, []);
+  }, [getUserId]);
 
   const handlePublish = () => {
     startSaving(async () => {
@@ -4039,10 +4042,14 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file || !userId) return;
+    if (!file || !userId) {
+      toast({ title: 'Error', description: 'Usuario no autenticado.', variant: 'destructive'});
+      return;
+    };
+
     setIsUploading(true);
 
-    const result = await uploadFile(file);
+    const result = await uploadFile(userId, file);
 
     if (result.success && result.publicUrl) {
       setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
@@ -4054,8 +4061,9 @@ export default function CreateTemplatePage() {
   };
   
   const fetchGalleryFiles = useCallback(async () => {
+    if (!userId) return;
     setIsGalleryLoading(true);
-    const result = await listFiles();
+    const result = await listFiles(userId);
     if (result.success && result.data) {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
@@ -4064,7 +4072,7 @@ export default function CreateTemplatePage() {
         setGalleryFiles([]);
     }
     setIsGalleryLoading(false);
-  }, [toast]);
+  }, [userId, toast]);
   
   useEffect(() => {
     if (isFileGalleryModalOpen) {
@@ -4073,10 +4081,10 @@ export default function CreateTemplatePage() {
   }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !userId) return;
     setIsUploading(true);
     try {
-        await Promise.all(Array.from(files).map(file => uploadFile(file)));
+        await Promise.all(Array.from(files).map(file => uploadFile(userId, file)));
         toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
         await fetchGalleryFiles();
     } catch (error: any) {
@@ -4087,14 +4095,14 @@ export default function CreateTemplatePage() {
   };
   
   const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim()) {
+    if (!fileToRename || !newFileName.trim() || !userId) {
         setIsRenameModalOpen(false);
         return;
     }
     
     const { path, currentName } = fileToRename;
     const fileExt = currentName.split('.').pop();
-    const newPath = `${path.substring(0, path.lastIndexOf('/') + 1)}${newFileName.trim()}.${fileExt}`;
+    const newPath = `${userId}/${newFileName.trim()}.${fileExt}`;
 
     const result = await renameFile(path, newPath);
 
@@ -4123,8 +4131,8 @@ export default function CreateTemplatePage() {
 
   const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentName = file.name.split('/').pop() || '';
-    const nameWithoutExt = currentName.substring(0, currentName.lastIndexOf('.'));
+    const currentName = file.name || '';
+    const nameWithoutExt = currentName.substring(currentName.indexOf('/') + 1, currentName.lastIndexOf('.'));
     setFileToRename({ path: file.name, currentName });
     setNewFileName(nameWithoutExt);
     setIsRenameModalOpen(true);
@@ -4609,13 +4617,8 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-px my-2">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full animated-separator" style={{ '--start-color': 'hsl(var(--primary))', '--end-color': 'hsl(var(--accent))' } as React.CSSProperties} />
-                    </div>
-                     <div className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-background flex items-center justify-center rounded-full">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                    </div>
+                <div className="relative h-px w-full my-2 overflow-hidden bg-primary/20 rounded-full">
+                    <div className="animated-tech-separator h-full"/>
                 </div>
               <button
                   onClick={() => setIsConfirmExitModalOpen(true)}
@@ -4990,7 +4993,7 @@ const LayerPanel = () => {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
               <div className="space-y-4">
-                  <Tabs defaultValue="url" className="w-full">
+                  <Tabs defaultValue="upload" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="url">Desde URL</TabsTrigger>
                         <TabsTrigger value="upload">Cargar Archivo</TabsTrigger>

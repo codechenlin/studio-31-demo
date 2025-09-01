@@ -150,29 +150,34 @@ body {
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
-
-    @keyframes energy-separator-stream {
+    
+    @keyframes tech-scanner {
       0% {
-        background-position: -100% 50%;
+        transform: translateX(-100%);
+        opacity: 0.3;
+      }
+      50% {
+        transform: translateX(100%);
+        opacity: 1;
       }
       100% {
-        background-position: 200% 50%;
+        transform: translateX(200%);
+        opacity: 0.3;
       }
     }
-    .animated-separator {
-      background: linear-gradient(to right, transparent, var(--start-color, #1700E6), var(--end-color, #009AFF), var(--start-color, #1700E6), transparent);
-      background-size: 50% 100%;
-      background-repeat: no-repeat;
-      animation: energy-separator-stream 3s linear infinite;
-    }
-
-    @keyframes glow-stream {
-      to {
-        --angle: 360deg;
-      }
+    .animated-tech-separator::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent);
+      animation: tech-scanner 2.5s infinite linear;
+      box-shadow: 0 0 3px hsl(var(--primary));
     }
     
-     @keyframes ai-core-pulse {
+    @keyframes ai-core-pulse {
       0%, 100% {
         transform: translate(-50%, -50%) scale(0.9);
         opacity: 0.6;
