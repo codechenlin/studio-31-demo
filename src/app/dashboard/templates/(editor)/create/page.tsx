@@ -4042,7 +4042,7 @@ export default function CreateTemplatePage() {
     if (!file || !userId) return;
     setIsUploading(true);
 
-    const result = await uploadFile(file, userId);
+    const result = await uploadFile(file);
 
     if (result.success && result.publicUrl) {
       setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
@@ -4054,9 +4054,8 @@ export default function CreateTemplatePage() {
   };
   
   const fetchGalleryFiles = useCallback(async () => {
-    if (!userId) return;
     setIsGalleryLoading(true);
-    const result = await listFiles(userId);
+    const result = await listFiles();
     if (result.success && result.data) {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
@@ -4065,19 +4064,19 @@ export default function CreateTemplatePage() {
         setGalleryFiles([]);
     }
     setIsGalleryLoading(false);
-  }, [userId, toast]);
+  }, [toast]);
   
   useEffect(() => {
-    if (isFileGalleryModalOpen || userId) {
+    if (isFileGalleryModalOpen) {
         fetchGalleryFiles();
     }
-  }, [isFileGalleryModalOpen, userId, fetchGalleryFiles]);
+  }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !userId) return;
+    if (!files || files.length === 0) return;
     setIsUploading(true);
     try {
-        await Promise.all(Array.from(files).map(file => uploadFile(file, userId)));
+        await Promise.all(Array.from(files).map(file => uploadFile(file)));
         toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
         await fetchGalleryFiles();
     } catch (error: any) {
@@ -4088,15 +4087,16 @@ export default function CreateTemplatePage() {
   };
   
   const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim() || !userId) {
+    if (!fileToRename || !newFileName.trim()) {
         setIsRenameModalOpen(false);
         return;
     }
     
-    const oldPath = `${userId}/${fileToRename.currentName}`;
-    const newPath = `${userId}/${newFileName.trim()}`;
+    const { path, currentName } = fileToRename;
+    const fileExt = currentName.split('.').pop();
+    const newPath = `${path.substring(0, path.lastIndexOf('/') + 1)}${newFileName.trim()}.${fileExt}`;
 
-    const result = await renameFile(oldPath, newPath);
+    const result = await renameFile(path, newPath);
 
     if(result.success) {
       toast({ title: "Archivo renombrado" });
@@ -4109,7 +4109,8 @@ export default function CreateTemplatePage() {
   };
 
   const handleDeleteFile = async (filePath: string) => {
-    if(!userId) return;
+    if(!confirm('¿Estás seguro de que quieres eliminar este archivo? Esta acción no se puede deshacer.')) return;
+    
     const result = await deleteFile(filePath);
      if(result.success) {
       toast({ title: "Archivo eliminado" });
@@ -4123,8 +4124,9 @@ export default function CreateTemplatePage() {
   const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
     e.stopPropagation();
     const currentName = file.name.split('/').pop() || '';
+    const nameWithoutExt = currentName.substring(0, currentName.lastIndexOf('.'));
     setFileToRename({ path: file.name, currentName });
-    setNewFileName(currentName);
+    setNewFileName(nameWithoutExt);
     setIsRenameModalOpen(true);
   };
 
@@ -4609,12 +4611,10 @@ const LayerPanel = () => {
             <div className="mt-auto pb-2 space-y-2">
                 <div className="relative h-px my-2">
                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div 
-                            className="w-full border-t border-dashed"
-                            style={{
-                                borderImage: 'linear-gradient(to right, transparent, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)), transparent) 1'
-                            }}
-                        />
+                        <div className="w-full animated-separator" style={{ '--start-color': 'hsl(var(--primary))', '--end-color': 'hsl(var(--accent))' } as React.CSSProperties} />
+                    </div>
+                     <div className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-background flex items-center justify-center rounded-full">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
                     </div>
                 </div>
               <button
@@ -5207,7 +5207,7 @@ const LayerPanel = () => {
                                                      <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
                                                       <div className="flex gap-1 mt-1">
                                                           <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil className="size-3"/></Button>
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2 className="size-3"/></Button>
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.name);}}><Trash2 className="size-3"/></Button>
                                                       </div>
                                                  </div>
                                              </Card>
