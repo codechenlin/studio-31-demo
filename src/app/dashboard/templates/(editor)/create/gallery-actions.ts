@@ -4,7 +4,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-import { cookies } from 'next/headers';
 
 export type StorageFile = {
     name: string;
@@ -26,8 +25,7 @@ export type StorageFile = {
 const BUCKET_NAME = 'template_backgrounds';
 
 export async function listFiles() {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
 
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -61,8 +59,7 @@ export async function listFiles() {
 
 
 export async function uploadFile(formData: FormData) {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
     
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
@@ -108,8 +105,7 @@ const renameFileSchema = z.object({
   newName: z.string(),
 });
 export async function renameFile(input: z.infer<typeof renameFileSchema>) {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Usuario no autenticado.' };
     
@@ -137,8 +133,7 @@ const deleteFilesSchema = z.object({
   paths: z.array(z.string()),
 });
 export async function deleteFiles(input: z.infer<typeof deleteFilesSchema>) {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
      const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Usuario no autenticado.' };
 

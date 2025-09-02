@@ -3,6 +3,11 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { revalidatePath as nextRevalidatePath } from 'next/cache';
+
+export async function revalidatePath(path: string) {
+  nextRevalidatePath(path);
+}
 
 const saveTemplateSchema = z.object({
   name: z.string().min(1, 'El nombre de la plantilla es requerido.'),
