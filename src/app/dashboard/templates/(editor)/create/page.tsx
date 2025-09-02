@@ -130,6 +130,7 @@ import { saveTemplateAction } from './actions';
 import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const mainContentBlocks = [
@@ -4527,7 +4528,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         
         setIsRenaming(false);
         if (result.success) {
-            toast({ title: "Archivo renombrado", description: `"${renamingFile.name}" ahora es "${newName.trim()}".` });
+            toast({ title: "Archivo renombrado", description: `"${renamingFile.name.split('/').pop()}" ahora es "${newName.trim()}".` });
             setRenamingFile(null);
             setNewName('');
             await fetchFiles();
@@ -4777,7 +4778,7 @@ FileManagerModal.displayName = 'FileManagerModal';
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                 <div className="relative h-[3px] w-full my-2 overflow-hidden bg-transparent rounded-full">
+                <div className="relative h-[3px] w-full my-2 overflow-hidden rounded-full">
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -4834,7 +4835,6 @@ FileManagerModal.displayName = 'FileManagerModal';
                   </Tooltip>
               </div>
             </TooltipProvider>
-             <ThemeToggle />
           </div>
            <div className="flex items-center gap-4">
                 <TooltipProvider>
@@ -4849,6 +4849,7 @@ FileManagerModal.displayName = 'FileManagerModal';
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
+                <ThemeToggle />
                 <Button 
                     onClick={handlePublish}
                     disabled={isSaving}
