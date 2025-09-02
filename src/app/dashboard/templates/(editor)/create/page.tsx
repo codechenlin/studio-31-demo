@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
@@ -1350,7 +1351,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     if (!element) return null;
 
     const updateBlockPayload = (key: keyof TextBlock['payload']['globalStyles'], value: any) => {
-         const newCanvasContent = prev.map(row => {
+         const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
@@ -3119,6 +3120,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
     const [newName, setNewName] = useState('');
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [fileToDelete, setFileToDelete] = useState<string[] | null>(null);
+    const BUCKET_NAME = 'template_backgrounds';
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true);
@@ -3224,7 +3226,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
     };
     
     // Correctly construct the public URL
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
     
     const formatBytes = (bytes: number, decimals = 2) => {
         if (bytes === 0) return '0 Bytes';
@@ -3431,7 +3433,7 @@ export default function CreateTemplatePage() {
   const router = useRouter();
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-  const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
+  const [canvasContent, _setCanvasContent] = useState<CanvasBlock[]>([]);
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
   const [templateName, setTemplateName] = useState('Mi Plantilla Increíble');
   const [tempTemplateName, setTempTemplateName] = useState(templateName);
@@ -3490,8 +3492,8 @@ export default function CreateTemplatePage() {
 
   const { toast } = useToast();
   
-  const updateCanvasContent = useCallback((newContent: CanvasBlock[], recordHistory: boolean = true) => {
-    setCanvasContent(newContent);
+  const setCanvasContent = useCallback((newContent: CanvasBlock[], recordHistory: boolean = true) => {
+    _setCanvasContent(newContent);
     
     if(recordHistory) {
         const newHistory = history.slice(0, historyIndex + 1);
@@ -3504,7 +3506,7 @@ export default function CreateTemplatePage() {
       if (historyIndex > 0) {
           const newIndex = historyIndex - 1;
           setHistoryIndex(newIndex);
-          setCanvasContent(history[newIndex]);
+          _setCanvasContent(history[newIndex]);
           setSelectedElement(null);
       }
   };
@@ -3513,7 +3515,7 @@ export default function CreateTemplatePage() {
       if (historyIndex < history.length - 1) {
           const newIndex = historyIndex + 1;
           setHistoryIndex(newIndex);
-          setCanvasContent(history[newIndex]);
+          _setCanvasContent(history[newIndex]);
           setSelectedElement(null);
       }
   };
@@ -3597,7 +3599,7 @@ export default function CreateTemplatePage() {
                 }
             }
         };
-        updateCanvasContent([...canvasContent, newWrapper]);
+        setCanvasContent([...canvasContent, newWrapper]);
       }
   }
 
@@ -3615,7 +3617,7 @@ export default function CreateTemplatePage() {
         alignment: 50,
       }
     };
-    updateCanvasContent([...canvasContent, newColumnsBlock]);
+    setCanvasContent([...canvasContent, newColumnsBlock]);
     setIsColumnModalOpen(false);
   };
   
@@ -3758,7 +3760,7 @@ export default function CreateTemplatePage() {
           }));
           return { ...row, payload: { ...row.payload, columns: newColumns } };
       });
-      updateCanvasContent(newContent as CanvasBlock[]);
+      setCanvasContent(newContent as CanvasBlock[]);
       setIsColumnBlockSelectorOpen(false);
   };
   
@@ -3801,7 +3803,7 @@ export default function CreateTemplatePage() {
             }
             return row;
          });
-         updateCanvasContent(newContent as CanvasBlock[]);
+         setCanvasContent(newContent as CanvasBlock[]);
          setClickPosition(null);
          setActiveContainer(null);
     }
@@ -3839,7 +3841,7 @@ export default function CreateTemplatePage() {
         }
         return row;
      });
-     updateCanvasContent(newContent as CanvasBlock[]);
+     setCanvasContent(newContent as CanvasBlock[]);
      setIsEmojiSelectorOpen(false);
      setClickPosition(null);
      setActiveContainer(null);
@@ -3883,7 +3885,7 @@ export default function CreateTemplatePage() {
         newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
     }
 
-    updateCanvasContent(newCanvasContent as CanvasBlock[]);
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
     setSelectedElement(null);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
@@ -4255,7 +4257,7 @@ export default function CreateTemplatePage() {
     const item = newCanvasContent.splice(index, 1)[0];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     newCanvasContent.splice(newIndex, 0, item);
-    updateCanvasContent(newCanvasContent);
+    setCanvasContent(newCanvasContent);
   };
 
   const handleSaveTemplateName = () => {
@@ -4298,10 +4300,10 @@ export default function CreateTemplatePage() {
           }
           return block;
         });
-        updateCanvasContent(updatedCanvasContent as CanvasBlock[]);
+        setCanvasContent(updatedCanvasContent as CanvasBlock[]);
       }
     }
-  }, [isResizing, resizingWrapperId, canvasContent, updateCanvasContent]);
+  }, [isResizing, resizingWrapperId, canvasContent, setCanvasContent]);
   
   const handleMouseUpResize = useCallback(() => {
     setIsResizing(false);
@@ -4427,9 +4429,9 @@ export default function CreateTemplatePage() {
             }
             return row;
         })
-    updateCanvasContent(newContent as CanvasBlock[]);
+    setCanvasContent(newContent as CanvasBlock[]);
     setIsImageModalOpen(false);
-}, [selectedElement, imageModalState, toast, canvasContent, updateCanvasContent]);
+}, [selectedElement, imageModalState, toast, canvasContent, setCanvasContent]);
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
@@ -4702,7 +4704,7 @@ const LayerPanel = () => {
             }
             return row;
         });
-        updateCanvasContent(newContent as CanvasBlock[]);
+        setCanvasContent(newContent as CanvasBlock[]);
     };
 
     const handleRename = (blockId: string, newName: string) => {
@@ -4747,7 +4749,7 @@ const LayerPanel = () => {
             }
             return row;
         });
-        updateCanvasContent(newContent as CanvasBlock[]);
+        setCanvasContent(newContent as CanvasBlock[]);
         setEditingBlockId(null);
     }
     
@@ -4902,7 +4904,7 @@ const LayerPanel = () => {
                <Card 
                 key={block.id} 
                 onClick={() => handleBlockClick(block.id as BlockType)}
-                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
                 <block.icon className="size-8 text-[#00B0F0] transition-colors" />
                 <span className="text-sm font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
@@ -4910,7 +4912,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden" style={{ background: 'transparent' }}>
+                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-transparent">
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -5028,14 +5030,14 @@ const LayerPanel = () => {
                         <BackgroundEditor 
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
-                            setCanvasContent={updateCanvasContent}
+                            setCanvasContent={setCanvasContent}
                             onOpenImageModal={handleOpenImageModal}
                         />
                             <Separator className="bg-border/20" />
                             <ColumnDistributionEditor 
                                 selectedElement={selectedElement}
                                 canvasContent={canvasContent}
-                                setCanvasContent={updateCanvasContent}
+                                setCanvasContent={setCanvasContent}
                             />
                         </>
                         )}
@@ -5043,36 +5045,36 @@ const LayerPanel = () => {
                         <BackgroundEditor 
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
-                            setCanvasContent={updateCanvasContent}
+                            setCanvasContent={setCanvasContent}
                             onOpenImageModal={handleOpenImageModal}
                         />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
-                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
-                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
-                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
-                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
-                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading-interactive' && (
-                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
-                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
-                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
+                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
-                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
+                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
                         )}
                         
                         { !selectedElement && (
