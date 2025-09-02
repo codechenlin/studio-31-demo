@@ -154,11 +154,12 @@ body {
     @keyframes tech-scanner {
       0% {
         transform: translateX(-100%);
-        opacity: 0.8;
+      }
+      50% {
+        transform: translateX(100%);
       }
       100% {
-        transform: translateX(100%);
-        opacity: 0.8;
+        transform: translateX(-100%);
       }
     }
     
@@ -233,7 +234,6 @@ body {
         border-radius: 50%;
         z-index: 0;
         animation: ai-core-pulse 4s infinite ease-in-out;
-        animation-play-state: paused;
     }
     
     .ai-core-border-animation {
@@ -264,9 +264,6 @@ body {
       opacity: 1;
     }
     .ai-core-button .ai-core-border-animation {
-       animation-play-state: paused;
-    }
-     .ai-core-button:hover .ai-core-border-animation {
        animation-play-state: running;
     }
 }

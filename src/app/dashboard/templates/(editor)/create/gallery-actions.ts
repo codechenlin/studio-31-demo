@@ -46,7 +46,13 @@ export async function listFiles() {
         
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-        return { success: true, data: { files: data as StorageFile[], baseUrl: supabaseUrl }, error: null };
+        // Prepend user.id to the name of each file to create the full path
+        const filesWithFullPath = data.map(file => ({
+            ...file,
+            name: `${user.id}/${file.name}`
+        }));
+
+        return { success: true, data: { files: filesWithFullPath as StorageFile[], baseUrl: supabaseUrl }, error: null };
     } catch (error: any) {
         return { success: false, error: error.message, data: null };
     }
@@ -68,6 +74,7 @@ export async function uploadFile(input: { file: File }) {
     }
     
     const { file } = input;
+    // The path should be user_id/filename.png
     const filePath = `${user.id}/${Date.now()}_${file.name}`;
     
     try {
@@ -77,9 +84,18 @@ export async function uploadFile(input: { file: File }) {
 
         if (error) throw error;
         
-        const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+        // After successful upload, get the full file object to return
+        const { data: listData, error: listError } = await supabase.storage.from(BUCKET_NAME).list(user.id, {
+          search: data.path.split('/').pop()
+        });
 
-        return { success: true, data: { ...data, publicUrl: publicUrlData.publicUrl }, error: null };
+        if (listError || !listData || listData.length === 0) {
+            throw new Error(listError?.message || 'Could not retrieve uploaded file details.');
+        }
+
+        const newFile = { ...listData[0], name: `${user.id}/${listData[0].name}`};
+        
+        return { success: true, data: { uploadedFile: newFile }, error: null };
     } catch (error: any) {
         return { success: false, error: error.message, data: null };
     }
@@ -88,7 +104,7 @@ export async function uploadFile(input: { file: File }) {
 
 const renameFileSchema = z.object({
   oldPath: z.string(),
-  newPath: z.string(),
+  newName: z.string(),
 });
 export async function renameFile(input: z.infer<typeof renameFileSchema>) {
     const cookieStore = cookies();
@@ -99,14 +115,17 @@ export async function renameFile(input: z.infer<typeof renameFileSchema>) {
     const validatedInput = renameFileSchema.safeParse(input);
     if (!validatedInput.success) return { success: false, error: 'Datos de entrada inválidos.' };
 
-    const { oldPath, newPath } = validatedInput.data;
+    const { oldPath, newName } = validatedInput.data;
+    
+    // Construct the new path within the user's folder
+    const newPath = `${user.id}/${newName}`;
 
     try {
         const { data, error } = await supabase.storage
             .from(BUCKET_NAME)
             .move(oldPath, newPath);
         if (error) throw error;
-        return { success: true, data };
+        return { success: true, data: { ...data, newPath } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -137,4 +156,3 @@ export async function deleteFiles(input: z.infer<typeof deleteFilesSchema>) {
         return { success: false, error: error.message };
     }
 }
-

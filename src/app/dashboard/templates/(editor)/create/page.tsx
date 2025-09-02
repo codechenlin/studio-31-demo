@@ -3089,6 +3089,253 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
 TimerComponent.displayName = 'TimerComponent';
 
 
+const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+    const { toast } = useToast();
+    const [userId, setUserId] = useState<string | null>(null);
+    const [supabaseUrl, setSupabaseUrl] = useState<string>('');
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'images' | 'gifs'>('images');
+    const [isUploading, setIsUploading] = useState(false);
+    const [renamingFile, setRenamingFile] = useState<StorageFile | null>(null);
+    const [newName, setNewName] = useState('');
+
+    const fetchFiles = useCallback(async () => {
+        setIsLoading(true);
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            setUserId(session.user.id);
+            const result = await listFiles();
+            if (result.success && result.data) {
+                setFiles(result.data.files);
+                setSupabaseUrl(result.data.baseUrl);
+            } else {
+                toast({ title: "Error al cargar archivos", description: result.error, variant: 'destructive' });
+            }
+        }
+        setIsLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        if (open) {
+            fetchFiles();
+        }
+    }, [open, fetchFiles]);
+
+    const handleFileUpload = async (uploadedFiles: FileList | null) => {
+        if (!uploadedFiles || uploadedFiles.length === 0) return;
+        setIsUploading(true);
+        
+        const uploadPromises = Array.from(uploadedFiles).map(file => uploadFile({ file }));
+        const results = await Promise.all(uploadPromises);
+
+        let successCount = 0;
+        results.forEach((result, index) => {
+            if (result.success && result.data) {
+                successCount++;
+                setFiles(prev => [result.data.uploadedFile, ...prev]);
+            } else {
+                toast({ title: `Error al subir ${uploadedFiles[index].name}`, description: result.error, variant: 'destructive' });
+            }
+        });
+        
+        setIsUploading(false);
+        if (successCount > 0) {
+            toast({ title: "Subida Exitosa", description: `${successCount} archivo(s) subido(s) correctamente.` });
+        }
+    };
+
+    const handleRenameFile = async () => {
+        if (!renamingFile || !newName.trim() || !userId) return;
+        
+        const oldName = renamingFile.name.split('/').pop() || '';
+        const fileExtension = oldName.split('.').pop();
+        const newNameWithExt = `${newName.trim()}.${fileExtension}`;
+        
+        const result = await renameFile({ oldPath: renamingFile.name, newName: newNameWithExt });
+        
+        if (result.success && result.data) {
+            toast({ title: "Archivo renombrado", description: `"${oldName}" ahora es "${newNameWithExt}".` });
+            await fetchFiles(); // Refresh list to get new data
+            setRenamingFile(null);
+            setNewName('');
+        } else {
+            toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
+        }
+    };
+    
+    const handleDeleteFiles = async () => {
+        if (selectedFiles.length === 0) return;
+        const result = await deleteFiles({ paths: selectedFiles });
+        if(result.success) {
+            toast({title: "Archivos eliminados", description: `${selectedFiles.length} archivo(s) ha(n) sido eliminado(s).`});
+            setFiles(prev => prev.filter(f => !selectedFiles.includes(f.name)));
+            setSelectedFiles([]);
+        } else {
+            toast({ title: "Error al eliminar", description: result.error, variant: 'destructive'});
+        }
+    };
+
+    const toggleSelection = (fileName: string) => {
+        setSelectedFiles(prev => 
+            prev.includes(fileName) ? prev.filter(f => f !== fileName) : [...prev, fileName]
+        );
+    };
+
+    // Correctly construct the public URL
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
+    
+    const formatBytes = (bytes: number, decimals = 2) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    };
+
+    const filterAndSortFiles = (files: StorageFile[]) => {
+      return files
+        .filter(f => {
+            const fileName = f.name.split('/').pop()?.toLowerCase() || '';
+            const matchesSearch = fileName.includes(searchTerm.toLowerCase());
+            const isImage = /\.(png|jpg|jpeg|svg|webp)$/i.test(fileName);
+            const isGif = /\.gif$/i.test(fileName);
+            if (activeTab === 'images') return isImage && matchesSearch;
+            if (activeTab === 'gifs') return isGif && matchesSearch;
+            return false;
+        })
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    };
+
+    const displayedFiles = filterAndSortFiles(files);
+    
+    const selectedFileDetails = files.find(f => f.name === selectedFiles[0]);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-6xl h-[80vh] flex flex-col p-0 gap-0 bg-card/80 backdrop-blur-xl border-border/20">
+                <DialogHeader className="p-4 border-b border-border/20">
+                    <DialogTitle className="text-lg flex items-center gap-2"><LayoutGrid className="text-primary"/> Gestor de Archivos</DialogTitle>
+                </DialogHeader>
+                 {/* Rename Modal */}
+                 <Dialog open={!!renamingFile} onOpenChange={(isOpen) => !isOpen && setRenamingFile(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Renombrar Archivo</DialogTitle>
+                            <DialogDescription>Introduce el nuevo nombre para "{renamingFile?.name.split('/').pop()}".</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Input 
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                placeholder="Nuevo nombre de archivo (sin extensión)"
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleRenameFile()}
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setRenamingFile(null)}>Cancelar</Button>
+                            <Button onClick={handleRenameFile} disabled={!newName.trim()}>
+                                Guardar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <div className="flex-1 grid grid-cols-12 overflow-hidden">
+                    {/* Left Panel */}
+                    <div className="col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
+                        <div 
+                            onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); }}
+                            onDragOver={(e) => e.preventDefault()}
+                            className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center"
+                        >
+                            <UploadCloud className="mx-auto size-12 text-muted-foreground mb-2"/>
+                            <p className="text-sm text-muted-foreground mb-2">Arrastra y suelta o</p>
+                             <label htmlFor="file-upload" className="cursor-pointer">
+                                <Button asChild variant="outline" size="sm">
+                                  <span>Seleccionar Archivos</span>
+                                </Button>
+                                <input id="file-upload" type="file" className="hidden" multiple onChange={(e) => handleFileUpload(e.target.files)} accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml"/>
+                            </label>
+                             {isUploading && <p className="text-xs text-muted-foreground mt-2 animate-pulse">Subiendo...</p>}
+                        </div>
+                        
+                        <Separator />
+
+                        <div className="flex-1 space-y-2">
+                             <h3 className="font-semibold flex items-center gap-2"><Info className="text-primary"/>Detalles del Archivo</h3>
+                             {selectedFileDetails ? (
+                                <div className="text-xs space-y-2 text-muted-foreground">
+                                    <p className="font-semibold text-foreground break-all">{selectedFileDetails.name.split('/').pop()}</p>
+                                    <p>Tipo: {selectedFileDetails.metadata.mimetype}</p>
+                                    <p>Tamaño: {formatBytes(selectedFileDetails.metadata.size)}</p>
+                                    <a href={getFileUrl(selectedFileDetails)} target="_blank" rel="noreferrer" className="w-full">
+                                        <Button variant="outline" className="w-full mt-2">
+                                            <View className="mr-2"/>
+                                            Ver Original
+                                        </Button>
+                                    </a>
+                                </div>
+                             ) : (
+                                <div className="text-center text-xs text-muted-foreground pt-8">
+                                    <p>Selecciona un archivo para ver sus detalles.</p>
+                                </div>
+                             )}
+                        </div>
+                    </div>
+
+                    {/* Right Panel */}
+                    <div className="col-span-9 flex flex-col">
+                        <div className="p-4 border-b border-border/20 flex justify-between items-center">
+                            <div className="relative w-full max-w-sm">
+                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
+                                <Input placeholder="Buscar por nombre..." className="pl-10 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                            </div>
+                            <Button variant="destructive" size="sm" onClick={handleDeleteFiles} disabled={selectedFiles.length === 0}>
+                                <Trash2 className="mr-2"/>
+                                Eliminar ({selectedFiles.length})
+                            </Button>
+                        </div>
+                         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
+                           <TabsList className="m-4">
+                               <TabsTrigger value="images">Imágenes</TabsTrigger>
+                               <TabsTrigger value="gifs">GIFs</TabsTrigger>
+                           </TabsList>
+                           <ScrollArea className="flex-1">
+                                <div className="p-4 pt-0">
+                                   {isLoading ? (
+                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                           {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
+                                       </div>
+                                   ) : displayedFiles.length > 0 ? (
+                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                           {displayedFiles.map(file => (
+                                               <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
+                                                   <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
+                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop()?.split('.').slice(0, -1).join('.') || ''); }}><Pencil className="text-white"/></Button>
+                                                   </div>
+                                                   {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
+                                               </Card>
+                                           ))}
+                                       </div>
+                                   ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
+                               </div>
+                           </ScrollArea>
+                        </Tabs>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+});
+FileManagerModal.displayName = 'FileManagerModal';
+
 export default function CreateTemplatePage() {
   const router = useRouter();
   const [viewport, setViewport] = useState<Viewport>('desktop');
@@ -3136,6 +3383,7 @@ export default function CreateTemplatePage() {
   // Gallery Modal State
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   
+  const [userId, setUserId] = useState<string | null>(null);
 
 
   const [templateId, setTemplateId] = useState<string | null>(null);
@@ -3182,6 +3430,14 @@ export default function CreateTemplatePage() {
 
   useEffect(() => {
     setIsInitialNameModalOpen(true);
+    const getUserId = async () => {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if(session?.user) {
+            setUserId(session.user.id);
+        }
+    };
+    getUserId();
   }, []);
   
   const ThemeToggle = () => (
@@ -4024,8 +4280,9 @@ export default function CreateTemplatePage() {
         const result = await uploadFile({ file });
         setIsUploading(false);
 
-        if (result.success && result.data) {
-            publicUrl = result.data.publicUrl;
+        if (result.success && result.data?.uploadedFile) {
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${result.data.uploadedFile.name}`;
             toast({ title: '¡Éxito!', description: 'Imagen subida y aplicada como fondo.', className: 'bg-green-500 text-white' });
         } else {
             toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
@@ -4035,7 +4292,7 @@ export default function CreateTemplatePage() {
     
     if (selectedElement?.type !== 'wrapper' || !publicUrl) return;
 
-    const finalBgImageState = file ? { ...imageModalState, url: publicUrl } : imageModalState;
+    const finalBgImageState = { ...imageModalState, url: publicUrl };
 
     setCanvasContent(prevCanvasContent => 
         prevCanvasContent.map(row => {
@@ -4462,257 +4719,6 @@ const LayerPanel = () => {
     );
 };
 
-const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
-    const { toast } = useToast();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [supabaseUrl, setSupabaseUrl] = useState<string>('');
-    const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'images' | 'gifs'>('images');
-    const [isUploading, setIsUploading] = useState(false);
-    const [isRenaming, setIsRenaming] = useState(false);
-    const [renamingFile, setRenamingFile] = useState<StorageFile | null>(null);
-    const [newName, setNewName] = useState('');
-
-    const fetchFiles = useCallback(async () => {
-        setIsLoading(true);
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            setUserId(session.user.id);
-            const result = await listFiles();
-            if (result.success && result.data) {
-                setFiles(result.data.files);
-                setSupabaseUrl(result.data.baseUrl);
-            } else {
-                toast({ title: "Error al cargar archivos", description: result.error, variant: 'destructive' });
-            }
-        }
-        setIsLoading(false);
-    }, [toast]);
-
-    useEffect(() => {
-        if (open) {
-            fetchFiles();
-        }
-    }, [open, fetchFiles]);
-
-    const handleFileUpload = async (uploadedFiles: FileList | null) => {
-        if (!uploadedFiles || uploadedFiles.length === 0) return;
-        setIsUploading(true);
-        let successCount = 0;
-        
-        for (const file of Array.from(uploadedFiles)) {
-             const result = await uploadFile({ file });
-             if (result.success) {
-                successCount++;
-             } else {
-                 toast({ title: `Error al subir ${file.name}`, description: result.error, variant: 'destructive' });
-             }
-        }
-        
-        setIsUploading(false);
-        if (successCount > 0) {
-            toast({ title: "Subida Exitosa", description: `${successCount} archivo(s) subido(s) correctamente.` });
-            await fetchFiles(); // Refresh list
-        }
-    };
-
-    const handleRenameFile = async () => {
-        if (!renamingFile || !newName.trim()) return;
-        setIsRenaming(true);
-        
-        const result = await renameFile({ oldPath: renamingFile.name, newPath: `${userId}/${newName.trim()}` });
-        
-        setIsRenaming(false);
-        if (result.success) {
-            toast({ title: "Archivo renombrado", description: `"${renamingFile.name.split('/').pop()}" ahora es "${newName.trim()}".` });
-            setRenamingFile(null);
-            setNewName('');
-            await fetchFiles();
-        } else {
-            toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
-        }
-    };
-    
-    const handleDeleteFiles = async () => {
-        if (selectedFiles.length === 0) return;
-        const result = await deleteFiles({ paths: selectedFiles });
-        if(result.success) {
-            toast({title: "Archivos eliminados", description: `${selectedFiles.length} archivo(s) ha(n) sido eliminado(s).`});
-            setSelectedFiles([]);
-            await fetchFiles();
-        } else {
-            toast({ title: "Error al eliminar", description: result.error, variant: 'destructive'});
-        }
-    };
-
-    const toggleSelection = (fileName: string) => {
-        setSelectedFiles(prev => 
-            prev.includes(fileName) ? prev.filter(f => f !== fileName) : [...prev, fileName]
-        );
-    };
-
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
-    const formatBytes = (bytes: number, decimals = 2) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    };
-
-    const imageFiles = files.filter(f => !f.name.toLowerCase().endsWith('.gif') && (f.name.toLowerCase().includes(searchTerm.toLowerCase())));
-    const gifFiles = files.filter(f => f.name.toLowerCase().endsWith('.gif') && (f.name.toLowerCase().includes(searchTerm.toLowerCase())));
-    
-    const selectedFileDetails = files.find(f => f.name === selectedFiles[0]);
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl h-[80vh] flex flex-col p-0 gap-0 bg-card/80 backdrop-blur-xl border-border/20">
-                <DialogHeader className="p-4 border-b border-border/20">
-                    <DialogTitle className="text-lg flex items-center gap-2"><LayoutGrid className="text-primary"/> Gestor de Archivos</DialogTitle>
-                </DialogHeader>
-                 {/* Rename Modal */}
-                 <Dialog open={!!renamingFile} onOpenChange={() => setRenamingFile(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Renombrar Archivo</DialogTitle>
-                            <DialogDescription>Introduce el nuevo nombre para "{renamingFile?.name.split('/').pop()}".</DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <Input 
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="Nuevo nombre de archivo"
-                                autoFocus
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setRenamingFile(null)}>Cancelar</Button>
-                            <Button onClick={handleRenameFile} disabled={isRenaming}>
-                                {isRenaming && <RefreshCw className="mr-2 animate-spin"/>}
-                                Guardar
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    {/* Left Panel */}
-                    <div className="col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
-                        <div 
-                            onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); }}
-                            onDragOver={(e) => e.preventDefault()}
-                            className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center"
-                        >
-                            <UploadCloud className="mx-auto size-12 text-muted-foreground mb-2"/>
-                            <p className="text-sm text-muted-foreground mb-2">Arrastra y suelta o</p>
-                             <label htmlFor="file-upload" className="cursor-pointer">
-                                <Button asChild variant="outline" size="sm">
-                                  <span>Seleccionar Archivos</span>
-                                </Button>
-                                <input id="file-upload" type="file" className="hidden" multiple onChange={(e) => handleFileUpload(e.target.files)} />
-                            </label>
-                             {isUploading && <p className="text-xs text-muted-foreground mt-2 animate-pulse">Subiendo...</p>}
-                        </div>
-                        
-                        <Separator />
-
-                        <div className="flex-1 space-y-2">
-                             <h3 className="font-semibold flex items-center gap-2"><Info className="text-primary"/>Detalles del Archivo</h3>
-                             {selectedFileDetails ? (
-                                <div className="text-xs space-y-2 text-muted-foreground">
-                                    <p className="font-semibold text-foreground truncate">{selectedFileDetails.name.split('/').pop()}</p>
-                                    <p>Tipo: {selectedFileDetails.metadata.mimetype}</p>
-                                    <p>Tamaño: {formatBytes(selectedFileDetails.metadata.size)}</p>
-                                    <a href={getFileUrl(selectedFileDetails)} target="_blank" rel="noreferrer" className="w-full">
-                                        <Button variant="outline" className="w-full mt-2">
-                                            <View className="mr-2"/>
-                                            Ver Original
-                                        </Button>
-                                    </a>
-                                </div>
-                             ) : (
-                                <div className="text-center text-xs text-muted-foreground pt-8">
-                                    <p>Selecciona un archivo para ver sus detalles.</p>
-                                </div>
-                             )}
-                        </div>
-                    </div>
-
-                    {/* Right Panel */}
-                    <div className="col-span-9 flex flex-col">
-                        <div className="p-4 border-b border-border/20 flex justify-between items-center">
-                            <div className="relative w-full max-w-sm">
-                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
-                                <Input placeholder="Buscar por nombre..." className="pl-10 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
-                            </div>
-                            <Button variant="destructive" size="sm" onClick={handleDeleteFiles} disabled={selectedFiles.length === 0}>
-                                <Trash2 className="mr-2"/>
-                                Eliminar ({selectedFiles.length})
-                            </Button>
-                        </div>
-                         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-                           <TabsList className="m-4">
-                               <TabsTrigger value="images">Imágenes</TabsTrigger>
-                               <TabsTrigger value="gifs">GIFs</TabsTrigger>
-                           </TabsList>
-                           <ScrollArea className="flex-1">
-                               <TabsContent value="images" className="p-4 pt-0">
-                                   {isLoading ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                           {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
-                                       </div>
-                                   ) : imageFiles.length > 0 ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                           {imageFiles.map(file => (
-                                               <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
-                                                   <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
-                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop() || ''); }}><Pencil className="text-white"/></Button>
-                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); handleDeleteFiles(); }}><Trash2 className="text-white"/></Button>
-                                                   </div>
-                                                   {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
-                                               </Card>
-                                           ))}
-                                       </div>
-                                   ) : <p className="text-center text-muted-foreground py-16">No se encontraron imágenes.</p>}
-                               </TabsContent>
-                               <TabsContent value="gifs" className="p-4 pt-0">
-                                    {isLoading ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                           {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
-                                       </div>
-                                   ) : gifFiles.length > 0 ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                           {gifFiles.map(file => (
-                                                <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
-                                                   <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
-                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop() || ''); }}><Pencil className="text-white"/></Button>
-                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); handleDeleteFiles(); }}><Trash2 className="text-white"/></Button>
-                                                   </div>
-                                                   {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
-                                               </Card>
-                                           ))}
-                                       </div>
-                                   ) : <p className="text-center text-muted-foreground py-16">No se encontraron GIFs.</p>}
-                               </TabsContent>
-                           </ScrollArea>
-                        </Tabs>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    )
-});
-FileManagerModal.displayName = 'FileManagerModal';
-
-
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
@@ -4778,7 +4784,7 @@ FileManagerModal.displayName = 'FileManagerModal';
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden rounded-full">
+                <div className="relative h-[3px] w-full my-2 overflow-hidden rounded-full" style={{ background: '#00ADEC' }}>
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
