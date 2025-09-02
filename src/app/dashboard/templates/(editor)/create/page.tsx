@@ -105,7 +105,6 @@ import {
   ChevronDown,
   LayoutDashboard,
   FileSignature,
-  FileArchive,
   ImagePlay,
   FileImage,
   UploadCloud,
@@ -127,8 +126,6 @@ import { useRouter } from 'next/navigation';
 import { saveTemplateAction } from './actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { listFiles, uploadFile, renameFile, deleteFile } from './gallery-actions';
-import { type FileObject } from '@supabase/storage-js';
 
 
 const mainContentBlocks = [
@@ -3131,15 +3128,6 @@ export default function CreateTemplatePage() {
   const [isInitialNameModalOpen, setIsInitialNameModalOpen] = useState(false);
   const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
   
-  // State for File Gallery
-  const [isFileGalleryModalOpen, setIsFileGalleryModalOpen] = useState(false);
-  const [galleryFiles, setGalleryFiles] = useState<FileObject[]>([]);
-  const [supabaseUrl, setSupabaseUrl] = useState('');
-  const [selectedFile, setSelectedFile] = useState<FileObject | null>(null);
-  const [isGalleryLoading, setIsGalleryLoading] = useState(false);
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-  const [fileToRename, setFileToRename] = useState<{path: string, currentName: string} | null>(null);
-  const [newFileName, setNewFileName] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
 
 
@@ -4001,10 +3989,10 @@ export default function CreateTemplatePage() {
     
     // Override with background image if it exists
     if (backgroundImage && backgroundImage.url) {
-      style.backgroundImage = `url(${backgroundImage.url})`;
-      style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit;
-      style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`;
-      style.backgroundRepeat = 'no-repeat';
+      style.backgroundImage = `url(${backgroundImage.url})`,
+      style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit,
+      style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`,
+      style.backgroundRepeat = 'no-repeat'
     }
     
     return style;
@@ -4043,101 +4031,28 @@ export default function CreateTemplatePage() {
 
   const handleFileUpload = async (file: File) => {
     if (!file || !userId) {
-      toast({ title: 'Error', description: 'Usuario no autenticado.', variant: 'destructive'});
-      return;
-    };
-
-    setIsUploading(true);
-
-    const result = await uploadFile(userId, file);
-
-    if (result.success && result.publicUrl) {
-      setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
-      toast({ title: '¡Éxito!', description: 'Imagen subida. Ya puedes ajustarla.', className: 'bg-green-500 text-white' });
-    } else {
-      toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
-    }
-    setIsUploading(false);
-  };
-  
-  const fetchGalleryFiles = useCallback(async () => {
-    if (!userId) return;
-    setIsGalleryLoading(true);
-    const result = await listFiles(userId);
-    if (result.success && result.data) {
-        setGalleryFiles(result.data.files);
-        setSupabaseUrl(result.data.supabaseUrl);
-    } else {
-        toast({ title: 'Error al cargar galería', description: result.error, variant: 'destructive' });
-        setGalleryFiles([]);
-    }
-    setIsGalleryLoading(false);
-  }, [userId, toast]);
-  
-  useEffect(() => {
-    if (isFileGalleryModalOpen) {
-        fetchGalleryFiles();
-    }
-  }, [isFileGalleryModalOpen, fetchGalleryFiles]);
-
-  const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !userId) return;
-    setIsUploading(true);
-    try {
-        await Promise.all(Array.from(files).map(file => uploadFile(userId, file)));
-        toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
-        await fetchGalleryFiles();
-    } catch (error: any) {
-        toast({ title: 'Error en la subida', description: error.message, variant: 'destructive' });
-    } finally {
-        setIsUploading(false);
-    }
-  };
-  
-  const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim() || !userId) {
-        setIsRenameModalOpen(false);
+        toast({ title: 'Error de autenticación', description: 'No se pudo obtener el ID del usuario.', variant: 'destructive'});
         return;
     }
+
+    setIsUploading(true);
+    const supabase = createClient();
+    const filePath = `${userId}/${Date.now()}_${file.name}`;
     
-    const { path, currentName } = fileToRename;
-    const fileExt = currentName.split('.').pop();
-    const newPath = `${userId}/${newFileName.trim()}.${fileExt}`;
+    const { error } = await supabase.storage
+      .from('template_backgrounds')
+      .upload(filePath, file);
 
-    const result = await renameFile(path, newPath);
+    setIsUploading(false);
 
-    if(result.success) {
-      toast({ title: "Archivo renombrado" });
-      fetchGalleryFiles();
+    if (error) {
+        toast({ title: 'Error al subir', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
+        const { data } = supabase.storage.from('template_backgrounds').getPublicUrl(filePath);
+        setImageModalState(prev => ({...prev, url: data.publicUrl}));
+        toast({ title: '¡Éxito!', description: 'Imagen subida. Ya puedes ajustarla.', className: 'bg-green-500 text-white' });
     }
-    setIsRenameModalOpen(false);
-    setFileToRename(null);
   };
-
-  const handleDeleteFile = async (filePath: string) => {
-    if(!confirm('¿Estás seguro de que quieres eliminar este archivo? Esta acción no se puede deshacer.')) return;
-    
-    const result = await deleteFile(filePath);
-     if(result.success) {
-      toast({ title: "Archivo eliminado" });
-      fetchGalleryFiles();
-      setSelectedFile(null);
-    } else {
-      toast({ title: "Error al eliminar", description: result.error, variant: 'destructive' });
-    }
-  }
-
-  const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const currentName = file.name || '';
-    const nameWithoutExt = currentName.substring(currentName.indexOf('/') + 1, currentName.lastIndexOf('.'));
-    setFileToRename({ path: file.name, currentName });
-    setNewFileName(nameWithoutExt);
-    setIsRenameModalOpen(true);
-  };
-
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
@@ -4617,7 +4532,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-px w-full my-2 overflow-hidden bg-primary/20 rounded-full">
+                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-primary/20 rounded-full">
                     <div className="animated-tech-separator h-full"/>
                 </div>
               <button
@@ -4675,9 +4590,6 @@ const LayerPanel = () => {
               </div>
             </TooltipProvider>
              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setIsFileGalleryModalOpen(true)}>
-                <FileArchive />
-              </Button>
           </div>
            <div className="flex items-center gap-4">
                 <Button 
@@ -4994,10 +4906,9 @@ const LayerPanel = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
               <div className="space-y-4">
                   <Tabs defaultValue="upload" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="url">Desde URL</TabsTrigger>
                         <TabsTrigger value="upload">Cargar Archivo</TabsTrigger>
-                        <TabsTrigger value="gallery">Galería</TabsTrigger>
                     </TabsList>
                     <TabsContent value="url" className="mt-4 space-y-4">
                       <div className="space-y-2">
@@ -5024,12 +4935,6 @@ const LayerPanel = () => {
                          {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo imagen...</div>}
                        </div>
                     </TabsContent>
-                     <TabsContent value="gallery" className="mt-4 space-y-4">
-                        <Button className="w-full" variant="outline" onClick={() => { setIsImageModalOpen(false); setIsFileGalleryModalOpen(true);}}>
-                            <FileArchive className="mr-2"/>
-                            Abrir Galería de Archivos
-                        </Button>
-                     </TabsContent>
                   </Tabs>
                   <div className="space-y-2">
                       <Label>Ajuste de Imagen</Label>
@@ -5099,148 +5004,6 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
       
-       <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle>Renombrar Archivo</DialogTitle>
-            <DialogDescription>
-              Ingresa un nuevo nombre para tu archivo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              placeholder="Nuevo nombre..."
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleRenameFile();
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRenameModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleRenameFile}>Guardar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isFileGalleryModalOpen} onOpenChange={setIsFileGalleryModalOpen}>
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-card/90 backdrop-blur-xl border-border/50">
-                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-2xl"><FileArchive className="size-8 text-primary"/> Gestor de Archivos</DialogTitle>
-                    <DialogDescription>
-                        Gestiona, sube y selecciona tus imágenes y GIFs para usarlos en tus plantillas.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex-1 grid grid-cols-4 gap-4 overflow-hidden">
-                    <div className="col-span-1 flex flex-col gap-4">
-                        <div 
-                          className="p-4 rounded-lg bg-background/50 border border-dashed border-primary/30 flex flex-col items-center justify-center text-center"
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => { e.preventDefault(); handleGalleryUpload(e.dataTransfer.files); }}
-                        >
-                             <UploadCloud className="size-12 text-primary/70"/>
-                             <p className="font-semibold mt-2">Arrastra y suelta tus archivos</p>
-                             <p className="text-xs text-muted-foreground mt-1">o</p>
-                             <Button size="sm" className="mt-2" onClick={() => document.getElementById('gallery-file-input')?.click()}>Seleccionar Archivos</Button>
-                             <Input id="gallery-file-input" type="file" multiple className="hidden" onChange={(e) => handleGalleryUpload(e.target.files)} />
-                        </div>
-                        <Card className="flex-1 bg-background/50 overflow-hidden">
-                            <CardContent className="p-4 space-y-2">
-                                <h3 className="font-semibold mb-2">Detalles del Archivo</h3>
-                                {selectedFile ? (
-                                    <div className="text-xs space-y-1 text-muted-foreground">
-                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name.split('/').pop()}</span></p>
-                                        <p><strong className="text-foreground">Tamaño:</strong> {(selectedFile.metadata.size / 1024).toFixed(2)} KB</p>
-                                        <p><strong className="text-foreground">Tipo:</strong> {selectedFile.metadata.mimetype}</p>
-                                        <p><strong className="text-foreground">Subido:</strong> {format(new Date(selectedFile.created_at), "PPP p")}</p>
-                                        <Button size="sm" variant="outline" className="w-full mt-2" asChild>
-                                            <a href={`${supabaseUrl}/storage/v1/object/public/template_backgrounds/${selectedFile.name}`} target="_blank" rel="noopener noreferrer">
-                                                <View className="mr-2"/>
-                                                Ver Original
-                                            </a>
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground text-center pt-8">Selecciona un archivo para ver sus detalles.</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                     <div className="col-span-3 flex flex-col gap-4">
-                         <Tabs defaultValue="images" className="w-full">
-                            <div className="flex justify-between items-center pb-2 border-b border-border/50">
-                                <TabsList>
-                                    <TabsTrigger value="images"><FileImage className="mr-2"/>Imágenes</TabsTrigger>
-                                    <TabsTrigger value="gifs"><ImagePlay className="mr-2"/>GIFs</TabsTrigger>
-                                </TabsList>
-                                <div className="flex items-center gap-2">
-                                     <div className="relative">
-                                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
-                                        <Input placeholder="Buscar por nombre..." className="pl-10 h-9 w-48"/>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" size="sm" className="h-9"><ListFilter className="mr-2"/>Filtrar</Button>
-                                        </DropdownMenuTrigger>
-                                    </DropdownMenu>
-                                </div>
-                            </div>
-                            <TabsContent value="images" className="mt-4">
-                                <ScrollArea className="h-[calc(90vh-220px)]">
-                                 {isGalleryLoading ? <p>Cargando...</p> : galleryFiles.filter(f => !f.metadata.mimetype.includes('gif')).length === 0 ? (
-                                    <div className="text-center text-muted-foreground p-10">
-                                        <FileImage className="mx-auto size-16 mb-4"/>
-                                        <p>Aún no has subido ninguna imagen.</p>
-                                    </div>
-                                 ) : (
-                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
-                                         {galleryFiles.filter(f => !f.metadata.mimetype.includes('gif')).map((file) => (
-                                             <Card 
-                                                key={file.id} 
-                                                onClick={() => setSelectedFile(file)}
-                                                className={cn("group relative overflow-hidden aspect-square border-2 hover:border-primary transition-all cursor-pointer", selectedFile?.id === file.id ? 'border-primary' : 'border-transparent')}
-                                             >
-                                                 <img src={`${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name || 'gallery image'} />
-                                                 <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                                                     <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
-                                                      <div className="flex gap-1 mt-1">
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil className="size-3"/></Button>
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.name);}}><Trash2 className="size-3"/></Button>
-                                                      </div>
-                                                 </div>
-                                             </Card>
-                                         ))}
-                                     </div>
-                                 )}
-                                </ScrollArea>
-                            </TabsContent>
-                            <TabsContent value="gifs" className="mt-4">
-                               <div className="text-center text-muted-foreground p-10">
-                                   <ImagePlay className="mx-auto size-16 mb-4"/>
-                                   <p>Aún no has subido ningún GIF.</p>
-                               </div>
-                            </TabsContent>
-                         </Tabs>
-                     </div>
-                </div>
-                 <DialogFooter>
-                    <div className="w-full flex justify-between items-center">
-                        <div className="text-xs text-muted-foreground">
-                            <span>{galleryFiles.length} archivos totales</span>
-                        </div>
-                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setIsFileGalleryModalOpen(false)}>Cerrar</Button>
-                        </div>
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-       
        {/* Initial Name Modal */}
        <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
         <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">

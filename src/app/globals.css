@@ -154,15 +154,18 @@ body {
     @keyframes tech-scanner {
       0% {
         transform: translateX(-100%);
-        opacity: 0.3;
+        opacity: 0.6;
+        filter: drop-shadow(0 0 1.5px #1700E6);
       }
       50% {
         transform: translateX(100%);
         opacity: 1;
+        filter: drop-shadow(0 0 4px #009AFF);
       }
       100% {
         transform: translateX(200%);
-        opacity: 0.3;
+        opacity: 0.6;
+        filter: drop-shadow(0 0 1.5px #1700E6);
       }
     }
     .animated-tech-separator::after {
@@ -170,11 +173,10 @@ body {
       position: absolute;
       top: 0;
       left: 0;
-      width: 50%;
+      width: 40%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent);
-      animation: tech-scanner 2.5s infinite linear;
-      box-shadow: 0 0 3px hsl(var(--primary));
+      background: linear-gradient(90deg, transparent, #1700E6, #009AFF, transparent);
+      animation: tech-scanner 3s infinite linear;
     }
     
     @keyframes ai-core-pulse {
