@@ -1364,7 +1364,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
 
     const updateFragment = (fragmentId: string, newProps: Partial<TextFragment> | { styles: Partial<TextFragment['styles']> }) => {
@@ -1392,7 +1392,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
     
     const handleAddFragment = () => {
@@ -1413,7 +1413,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
     
     const confirmDeleteFragment = (fragmentId: string) => {
@@ -1435,7 +1435,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
         setFragmentToDelete(null);
     };
     
@@ -2006,7 +2006,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               }
           };
       });
-      setCanvasContent(newCanvasContent, true);
+      setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
     
     const updateSubPayload = (mainKey: 'line' | 'shapes' | 'dots', subKey: string, value: any) => {
@@ -2035,7 +2035,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 }
             };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const updateShapesBackground = (key: string, value: any) => {
@@ -2217,7 +2217,7 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               }
           };
       });
-      setCanvasContent(newCanvasContent, true);
+      setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const updateStyle = (key: keyof YouTubeBlock['payload']['styles'], value: any) => {
@@ -2585,7 +2585,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                 }) }
             };
         });
-        setCanvasContent(newCanvasContent, true);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const updateStyle = (key: keyof TimerBlock['payload']['styles'], value: any) => {
@@ -3496,12 +3496,13 @@ export default function CreateTemplatePage() {
 
   const { toast } = useToast();
   
-  const setCanvasContent = useCallback((newContent: CanvasBlock[], recordHistory: boolean = true) => {
-    _setCanvasContent(newContent);
+  const setCanvasContent = useCallback((newContent: CanvasBlock[] | ((prev: CanvasBlock[]) => CanvasBlock[]), recordHistory: boolean = true) => {
+    const newContentValue = typeof newContent === 'function' ? newContent(_setCanvasContent(prev => prev)) : newContent;
+    _setCanvasContent(newContentValue);
     
     if(recordHistory) {
         const newHistory = history.slice(0, historyIndex + 1);
-        setHistory([...newHistory, newContent]);
+        setHistory([...newHistory, newContentValue]);
         setHistoryIndex(newHistory.length);
     }
   }, [history, historyIndex]);
@@ -3603,7 +3604,7 @@ export default function CreateTemplatePage() {
                 }
             }
         };
-        setCanvasContent([...canvasContent, newWrapper]);
+        setCanvasContent(prev => [...prev, newWrapper]);
       }
   }
 
@@ -3621,7 +3622,7 @@ export default function CreateTemplatePage() {
         alignment: 50,
       }
     };
-    setCanvasContent([...canvasContent, newColumnsBlock]);
+    setCanvasContent(prev => [...prev, newColumnsBlock]);
     setIsColumnModalOpen(false);
   };
   
@@ -3754,7 +3755,7 @@ export default function CreateTemplatePage() {
               newBlock = { ...basePayload, type: 'text', payload: { text: `Contenido para ${type}` } };
       }
 
-      const newContent = canvasContent.map(row => {
+      setCanvasContent(prev => prev.map(row => {
           if (row.type !== 'columns') return row;
           const newColumns = row.payload.columns.map(col => {
               if (col.id === activeContainer?.id) {
@@ -3763,8 +3764,7 @@ export default function CreateTemplatePage() {
               return col;
           }));
           return { ...row, payload: { ...row.payload, columns: newColumns } };
-      });
-      setCanvasContent(newContent as CanvasBlock[]);
+      }));
       setIsColumnBlockSelectorOpen(false);
   };
   
@@ -3801,13 +3801,12 @@ export default function CreateTemplatePage() {
             }
          };
 
-         const newContent = canvasContent.map(row => {
+         setCanvasContent(prev => prev.map(row => {
             if (row.id === activeContainer.id && row.type === 'wrapper') {
                 return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
             }
             return row;
-         });
-         setCanvasContent(newContent as CanvasBlock[]);
+         }));
          setClickPosition(null);
          setActiveContainer(null);
     }
@@ -3836,7 +3835,7 @@ export default function CreateTemplatePage() {
         }
      };
 
-     const newContent = canvasContent.map(row => {
+     setCanvasContent(prev => prev.map(row => {
         if (row.id === activeContainer.id && row.type === 'wrapper') {
             return {
                 ...row,
@@ -3844,8 +3843,7 @@ export default function CreateTemplatePage() {
             }
         }
         return row;
-     });
-     setCanvasContent(newContent as CanvasBlock[]);
+     }));
      setIsEmojiSelectorOpen(false);
      setClickPosition(null);
      setActiveContainer(null);
@@ -3860,36 +3858,39 @@ export default function CreateTemplatePage() {
     if (!itemToDelete) return;
     const { rowId, colId, primId } = itemToDelete;
 
-    let newCanvasContent = [...canvasContent];
+    setCanvasContent(prev => {
+        let newCanvasContent = [...prev];
 
-    if (primId && colId) { // Deleting a primitive from a column
-        newCanvasContent = newCanvasContent.map(row => {
-            if (row.id === rowId && row.type === 'columns') {
-                const newCols = row.payload.columns.map(col => {
-                    if (col.id === colId) {
-                        return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
-                    }
-                    return col;
-                });
-                return { ...row, payload: { ...row.payload, columns: newCols } };
-            }
-            return row;
-        });
-    } else if (primId && !colId) { // Deleting a primitive from a wrapper
-         newCanvasContent = newCanvasContent.map(row => {
-            if (row.id === rowId && row.type === 'wrapper') {
-                const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
-                return { ...row, payload: { ...row.payload, blocks: newBlocks }};
-            }
-            return row;
-         });
-    } else if (colId) { // Deleting a column - not implemented, delete the whole row
-        newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
-    } else { // Deleting a row (ColumnsBlock or WrapperBlock)
-        newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
-    }
+        if (primId && colId) { // Deleting a primitive from a column
+            newCanvasContent = newCanvasContent.map(row => {
+                if (row.id === rowId && row.type === 'columns') {
+                    const newCols = row.payload.columns.map(col => {
+                        if (col.id === colId) {
+                            return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
+                        }
+                        return col;
+                    });
+                    return { ...row, payload: { ...row.payload, columns: newCols } };
+                }
+                return row;
+            });
+        } else if (primId && !colId) { // Deleting a primitive from a wrapper
+             newCanvasContent = newCanvasContent.map(row => {
+                if (row.id === rowId && row.type === 'wrapper') {
+                    const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
+                    return { ...row, payload: { ...row.payload, blocks: newBlocks }};
+                }
+                return row;
+             });
+        } else if (colId) { // Deleting a column - not implemented, delete the whole row
+            newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+        } else { // Deleting a row (ColumnsBlock or WrapperBlock)
+            newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+        }
 
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
+        return newCanvasContent;
+    });
+
     setSelectedElement(null);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
@@ -4257,11 +4258,13 @@ export default function CreateTemplatePage() {
   }
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
-    const newCanvasContent = [...canvasContent];
-    const item = newCanvasContent.splice(index, 1)[0];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    newCanvasContent.splice(newIndex, 0, item);
-    setCanvasContent(newCanvasContent);
+    setCanvasContent(prev => {
+        const newCanvasContent = [...prev];
+        const item = newCanvasContent.splice(index, 1)[0];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        newCanvasContent.splice(newIndex, 0, item);
+        return newCanvasContent;
+    });
   };
 
   const handleSaveTemplateName = () => {
@@ -4295,7 +4298,7 @@ export default function CreateTemplatePage() {
       const wrapperElement = document.getElementById(resizingWrapperId);
       if(wrapperElement){
         const newHeight = e.clientY - wrapperElement.getBoundingClientRect().top;
-        const updatedCanvasContent = canvasContent.map(block => {
+        setCanvasContent(prev => prev.map(block => {
           if (block.id === resizingWrapperId && block.type === 'wrapper') {
             return {
               ...block,
@@ -4303,11 +4306,10 @@ export default function CreateTemplatePage() {
             };
           }
           return block;
-        });
-        setCanvasContent(updatedCanvasContent as CanvasBlock[]);
+        }));
       }
     }
-  }, [isResizing, resizingWrapperId, canvasContent, setCanvasContent]);
+  }, [isResizing, resizingWrapperId, setCanvasContent]);
   
   const handleMouseUpResize = useCallback(() => {
     setIsResizing(false);
@@ -4427,17 +4429,16 @@ export default function CreateTemplatePage() {
 
     const finalBgImageState = { ...imageModalState, url: publicUrl };
 
-    const newContent = canvasContent.map(row => {
+    setCanvasContent(prev => prev.map(row => {
             if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
                 const currentStyles = row.payload.styles || {};
                 const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: finalBgImageState } };
                 return { ...row, payload: newPayload };
             }
             return row;
-        })
-    setCanvasContent(newContent as CanvasBlock[]);
+        }));
     setIsImageModalOpen(false);
-}, [selectedElement, imageModalState, toast, canvasContent, setCanvasContent]);
+}, [selectedElement, imageModalState, toast, setCanvasContent]);
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
@@ -4701,7 +4702,7 @@ const LayerPanel = () => {
     const reorderLayers = (wrapperId: string, fromIndex: number, toIndex: number) => {
         if (!selectedWrapper || toIndex < 0 || toIndex >= selectedWrapper.payload.blocks.length) return;
 
-        const newContent = canvasContent.map(row => {
+        setCanvasContent(prev => prev.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
                 const newBlocks = Array.from(row.payload.blocks);
                 const [movedItem] = newBlocks.splice(fromIndex, 1);
@@ -4709,8 +4710,7 @@ const LayerPanel = () => {
                 return { ...row, payload: { ...row.payload, blocks: newBlocks } };
             }
             return row;
-        });
-        setCanvasContent(newContent as CanvasBlock[]);
+        }));
     };
 
     const handleRename = (blockId: string, newName: string) => {
@@ -4743,7 +4743,7 @@ const LayerPanel = () => {
             return;
         }
 
-        const newContent = canvasContent.map(row => {
+        setCanvasContent(prev => prev.map(row => {
             if (row.id === selectedWrapper.id && row.type === 'wrapper') {
                 const newBlocks = row.payload.blocks.map(block => {
                     if (block.id === blockId) {
@@ -4754,8 +4754,7 @@ const LayerPanel = () => {
                 return { ...row, payload: { ...row.payload, blocks: newBlocks } };
             }
             return row;
-        });
-        setCanvasContent(newContent as CanvasBlock[]);
+        }));
         setEditingBlockId(null);
     }
     
@@ -5491,4 +5490,5 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
