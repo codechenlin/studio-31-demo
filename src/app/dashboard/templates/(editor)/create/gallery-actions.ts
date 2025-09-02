@@ -1,6 +1,5 @@
 
 'use server';
-export const revalidate = 0;
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
