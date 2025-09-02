@@ -59,10 +59,7 @@ export async function listFiles() {
 }
 
 
-const uploadFileSchema = z.object({
-  file: z.any(),
-});
-export async function uploadFile(input: { file: File }) {
+export async function uploadFile(formData: FormData) {
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
     
@@ -73,8 +70,11 @@ export async function uploadFile(input: { file: File }) {
         return { success: false, error: 'Usuario no autenticado.', data: null };
     }
     
-    const { file } = input;
-    // The path should be user_id/filename.png
+    const file = formData.get('file') as File;
+    if (!file) {
+        return { success: false, error: 'No se encontró ningún archivo.', data: null };
+    }
+
     const filePath = `${user.id}/${Date.now()}_${file.name}`;
     
     try {

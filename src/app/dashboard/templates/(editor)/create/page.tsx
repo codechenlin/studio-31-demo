@@ -3153,7 +3153,12 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         if (!uploadedFiles || uploadedFiles.length === 0) return;
         setIsUploading(true);
         
-        const uploadPromises = Array.from(uploadedFiles).map(file => uploadFile({ file }));
+        const uploadPromises = Array.from(uploadedFiles).map(file => {
+          const formData = new FormData();
+          formData.append('file', file);
+          return uploadFile(formData);
+        });
+
         const results = await Promise.all(uploadPromises);
 
         let successCount = 0;
@@ -4404,7 +4409,9 @@ export default function CreateTemplatePage() {
 
     if (file) {
         setIsUploading(true);
-        const result = await uploadFile({ file });
+        const formData = new FormData();
+        formData.append('file', file);
+        const result = await uploadFile(formData);
         setIsUploading(false);
 
         if (result.success && result.data?.uploadedFile) {
