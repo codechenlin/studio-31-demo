@@ -3089,7 +3089,7 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
 TimerComponent.displayName = 'TimerComponent';
 
 
-const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { open: boolean, onOpenChange: (open: boolean) => void, onSelectFile?: (file: StorageFile) => void }) => {
     const { toast } = useToast();
     const [userId, setUserId] = useState<string | null>(null);
     const [supabaseUrl, setSupabaseUrl] = useState<string>('');
@@ -3243,7 +3243,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl h-[80vh] flex flex-col p-0 gap-0 bg-card/80 backdrop-blur-xl border-border/20">
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0 bg-card/80 backdrop-blur-xl border-border/20">
                 <DialogHeader className="p-4 border-b border-border/20">
                     <DialogTitle className="text-lg flex items-center gap-2"><LayoutGrid className="text-primary"/> Gestor de Archivos</DialogTitle>
                 </DialogHeader>
@@ -3291,7 +3291,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
 
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
                     {/* Left Panel */}
-                    <div className="col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
+                    <div className="col-span-4 md:col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
                         <div 
                             onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); }}
                             onDragOver={(e) => e.preventDefault()}
@@ -3323,6 +3323,11 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                                             Ver Original
                                         </Button>
                                     </a>
+                                     {onSelectFile && (
+                                        <Button className="w-full mt-2 bg-green-600 hover:bg-green-700" onClick={() => onSelectFile(selectedFileDetails)}>
+                                            <CheckIcon className="mr-2"/> Usar Imagen
+                                        </Button>
+                                     )}
                                 </div>
                              ) : (
                                 <div className="text-center text-xs text-muted-foreground pt-8">
@@ -3333,7 +3338,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                     </div>
 
                     {/* Right Panel */}
-                    <div className="col-span-9 flex flex-col overflow-hidden">
+                    <div className="col-span-8 md:col-span-9 flex flex-col overflow-hidden">
                         <div className="p-4 border-b border-border/20 flex justify-between items-center gap-4 shrink-0">
                             <div className="relative w-full max-w-sm">
                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
@@ -3385,11 +3390,11 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                            <div className="flex-1 overflow-y-auto px-4 pb-4">
                                 <ScrollArea className="h-full custom-scrollbar pr-2">
                                    {isLoading ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                            {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
                                        </div>
                                    ) : displayedFiles.length > 0 ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                            {displayedFiles.map(file => (
                                                <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
@@ -3443,6 +3448,7 @@ export default function CreateTemplatePage() {
 
   // State for background image modal
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageModalSourceTab, setImageModalSourceTab] = useState<'url' | 'upload'>('upload');
   const [imageModalState, setImageModalState] = useState({
     url: '',
     fit: 'cover' as BackgroundFit,
@@ -3459,6 +3465,7 @@ export default function CreateTemplatePage() {
   
   // Gallery Modal State
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryMode, setGalleryMode] = useState<'view' | 'select'>('view');
   
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -3870,7 +3877,7 @@ export default function CreateTemplatePage() {
         }
 
         return newCanvasContent;
-    });
+    }, true);
 
     setSelectedElement(null);
     setIsDeleteModalOpen(false);
@@ -4425,6 +4432,15 @@ export default function CreateTemplatePage() {
     setIsImageModalOpen(false);
 }, [selectedElement, imageModalState, toast, setCanvasContent]);
 
+ const handleSelectFromGallery = (file: StorageFile) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+    
+    setImageModalState(prev => ({...prev, url: publicUrl}));
+    setIsGalleryOpen(false);
+    setIsImageModalOpen(true);
+};
+
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -4902,7 +4918,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden">
+                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-muted/10">
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -4964,7 +4980,7 @@ const LayerPanel = () => {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                           <Button variant="outline" size="icon" onClick={() => setIsGalleryOpen(true)}>
+                           <Button variant="outline" size="icon" onClick={() => { setGalleryMode('view'); setIsGalleryOpen(true); }}>
                                 <FileIcon />
                            </Button>
                         </TooltipTrigger>
@@ -5081,7 +5097,11 @@ const LayerPanel = () => {
         </Tabs>
       </aside>
 
-      <FileManagerModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} />
+      <FileManagerModal 
+        open={isGalleryOpen} 
+        onOpenChange={setIsGalleryOpen} 
+        onSelectFile={galleryMode === 'select' ? handleSelectFromGallery : undefined} 
+      />
 
        <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
@@ -5284,42 +5304,43 @@ const LayerPanel = () => {
           <DialogHeader>
             <DialogTitle>Gestionar Imagen de Fondo</DialogTitle>
             <DialogDescription>
-              Añade una URL o carga un archivo y ajusta la posición y el tamaño de tu imagen de fondo.
+              Añade una URL, carga un archivo o selecciona de tu galería para usarla como fondo.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
               <div className="space-y-4">
-                  <Tabs defaultValue="upload" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="url">Desde URL</TabsTrigger>
-                        <TabsTrigger value="upload">Cargar Archivo</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="url" className="mt-4 space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="image-url">URL de la Imagen</Label>
-                        <Input
-                          id="image-url"
-                          placeholder="https://example.com/image.png"
-                          value={imageModalState.url}
-                          onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })}
-                        />
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="upload" className="mt-4 space-y-4">
-                       <div className="space-y-2">
-                         <Label htmlFor="image-upload">Archivo Local</Label>
-                         <Input
-                           id="image-upload"
-                           type="file"
-                           accept="image/png, image/jpeg, image/gif, image/webp"
-                           onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])}
-                           disabled={isUploading}
-                           className="file:text-primary file:font-semibold"
-                         />
-                         {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo imagen...</div>}
-                       </div>
-                    </TabsContent>
-                  </Tabs>
+                  <div className="flex flex-col space-y-2">
+                     <button onClick={() => setImageModalSourceTab('url')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'url' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
+                        <p className="font-semibold">Desde URL</p>
+                        <p className="text-xs text-muted-foreground">Pega un enlace a una imagen existente en la web.</p>
+                     </button>
+                     <button onClick={() => setImageModalSourceTab('upload')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'upload' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
+                        <p className="font-semibold">Cargar Archivo</p>
+                        <p className="text-xs text-muted-foreground">Sube una imagen desde tu dispositivo.</p>
+                    </button>
+                     <Button variant="outline" className="w-full" onClick={() => { setGalleryMode('select'); setIsImageModalOpen(false); setIsGalleryOpen(true); }}>
+                        <LayoutGrid className="mr-2"/>
+                        Seleccionar de la Galería
+                    </Button>
+                  </div>
+                   <AnimatePresence>
+                    {imageModalSourceTab === 'url' && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                             <Label htmlFor="image-url">URL de la Imagen</Label>
+                             <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })}/>
+                        </motion.div>
+                    )}
+                    {imageModalSourceTab === 'upload' && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                             <Label htmlFor="image-upload">Archivo Local</Label>
+                             <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="file:text-primary file:font-semibold"/>
+                             {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
+                        </motion.div>
+                    )}
+                   </AnimatePresence>
+                  
+                  <Separator />
+
                   <div className="space-y-2">
                       <Label>Ajuste de Imagen</Label>
                       <Select
@@ -5475,6 +5496,7 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
 
