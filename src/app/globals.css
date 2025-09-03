@@ -153,20 +153,20 @@ body {
     
     @keyframes ping-pong-scanner {
       0% {
-        transform: translateX(-100%);
+        transform: translateX(-105%);
       }
       100% {
-        transform: translateX(100%);
+        transform: translateX(105%);
       }
     }
     
-    .ping-pong-scanner-line {
+    .tech-scanner {
         position: relative;
         overflow: hidden;
         background: transparent;
     }
 
-    .ping-pong-scanner-line::after {
+    .tech-scanner::after {
       content: '';
       position: absolute;
       top: 0;
@@ -174,7 +174,7 @@ body {
       width: 40%;
       height: 100%;
       background: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--accent)), transparent);
-      animation: ping-pong-scanner 3.5s infinite linear alternate;
+      animation: ping-pong-scanner 3s infinite linear alternate;
       filter: blur(2px);
     }
     

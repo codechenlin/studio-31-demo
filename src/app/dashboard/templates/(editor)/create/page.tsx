@@ -127,7 +127,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { saveTemplateAction, revalidatePath } from './actions';
+import { saveTemplateAction } from './actions';
 import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -3134,20 +3134,20 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
     const handleFileUpload = async (uploadedFiles: FileList | null) => {
         if (!uploadedFiles || uploadedFiles.length === 0) return;
         setIsUploading(true);
-
+    
         const uploadPromises = Array.from(uploadedFiles).map(file => {
             const formData = new FormData();
             formData.append('file', file);
             return uploadFile(formData);
         });
-
+    
         const results = await Promise.all(uploadPromises);
         
         const successfulUploads = results.filter(r => r.success);
-
+    
         if (successfulUploads.length > 0) {
             toast({ title: "Subida Exitosa", description: `${successfulUploads.length} archivo(s) subido(s) correctamente.` });
-            await fetchFiles(); // Refresh file list
+            await fetchFiles();
         }
         
         results.forEach((result, index) => {
@@ -3157,7 +3157,6 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
         });
         
         setIsUploading(false);
-        await revalidatePath('/dashboard/templates/create');
     };
 
     const handleRenameFile = async () => {
@@ -3363,31 +3362,16 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                             </div>
                         </div>
                         
-                        <div className="flex-1 flex flex-col overflow-y-hidden">
-                            <div className="grid grid-cols-2 gap-2 p-4 shrink-0">
-                                <button
-                                    onClick={() => setActiveTab('images')}
-                                    className={cn(
-                                        "p-3 rounded-lg border-2 transition-all duration-300",
-                                        activeTab === 'images' ? 'bg-primary/10 border-primary shadow-lg' : 'bg-muted/30 border-transparent hover:bg-muted/70'
-                                    )}
-                                >
-                                    <p className="font-semibold">Imágenes</p>
-                                    <p className="text-xs text-muted-foreground">{imageFiles.length} archivos</p>
-                                </button>
-                                 <button
-                                    onClick={() => setActiveTab('gifs')}
-                                    className={cn(
-                                        "p-3 rounded-lg border-2 transition-all duration-300",
-                                        activeTab === 'gifs' ? 'bg-primary/10 border-primary shadow-lg' : 'bg-muted/30 border-transparent hover:bg-muted/70'
-                                    )}
-                                >
-                                    <p className="font-semibold">GIFs</p>
-                                     <p className="text-xs text-muted-foreground">{gifFiles.length} archivos</p>
-                                </button>
+                         <div className="flex-1 flex flex-col overflow-y-auto">
+                            <div className="p-4 shrink-0">
+                                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'gifs')} className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="images">{`Imágenes (${imageFiles.length})`}</TabsTrigger>
+                                        <TabsTrigger value="gifs">{`GIFs (${gifFiles.length})`}</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             </div>
-                            <div className="flex-1 overflow-y-auto px-4 pb-4">
-                                <ScrollArea className="h-full pr-2">
+                            <ScrollArea className="flex-1 px-4 pb-4">
                                    {isLoading ? (
                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                            {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
@@ -3406,8 +3390,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                                            ))}
                                        </div>
                                    ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
-                                </ScrollArea>
-                            </div>
+                            </ScrollArea>
                         </div>
                     </div>
                 </div>
@@ -3456,7 +3439,6 @@ export default function CreateTemplatePage() {
   
   // Gallery Modal State
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [galleryMode, setGalleryMode] = useState<'view' | 'select'>('view');
   
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -4843,6 +4825,131 @@ const LayerPanel = () => {
     );
 };
 
+  type BackgroundSource = 'upload' | 'url' | 'gallery';
+
+  const BackgroundManagerModal = () => {
+    const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
+
+    return (
+       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="max-w-5xl w-[90vw] h-[85vh] flex flex-col p-0 gap-0 bg-zinc-900/80 border-zinc-700 backdrop-blur-xl text-white">
+            <div className="absolute inset-0 w-full h-full overflow-hidden -z-10">
+                {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className="particle" style={{
+                      '--x-start': `${Math.random() * 100}vw`,
+                      '--x-end': `${Math.random() * 100}vw`,
+                      '--size': `${Math.random() * 3 + 1}px`,
+                      '--duration': `${Math.random() * 5 + 5}s`,
+                      '--delay': `${Math.random() * -5}s`
+                    } as React.CSSProperties} />
+                ))}
+            </div>
+
+            <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
+                <DialogTitle className="flex items-center gap-2 text-lg"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
+            </DialogHeader>
+
+            <div className="p-4 border-b border-zinc-800 shrink-0">
+                <div className="grid grid-cols-3 gap-2">
+                    {(['upload', 'url', 'gallery'] as BackgroundSource[]).map(source => (
+                         <button 
+                            key={source}
+                            onClick={() => setActiveSource(source)}
+                            className={cn("flex items-center justify-center gap-2 p-3 rounded-lg border-2 text-sm font-semibold transition-all",
+                                activeSource === source ? 'bg-primary/20 border-primary' : 'bg-zinc-800/50 border-zinc-700 hover:bg-primary/10'
+                            )}
+                         >
+                            <div className={cn("size-2.5 rounded-full transition-all", activeSource === source ? "bg-[#00CB07] shadow-[0_0_8px_#00CB07]" : "bg-zinc-600")}/>
+                             <span className="capitalize">{source === 'upload' ? 'Cargar' : (source === 'url' ? 'Desde URL' : 'Galería')}</span>
+                         </button>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="flex-1 grid md:grid-cols-2 overflow-hidden">
+                <div className="flex flex-col">
+                    <ScrollArea className="flex-1 custom-scrollbar">
+                        <div className="p-4 space-y-4">
+                            {activeSource === 'upload' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-base"><UploadCloud/> Subir Archivo Local</Label>
+                                    <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="text-zinc-300 border-zinc-700 file:text-primary file:font-semibold"/>
+                                    {isUploading && <div className="flex items-center gap-2 text-sm text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
+                                </div>
+                            )}
+                            {activeSource === 'url' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-base"><LinkIcon/> URL de la Imagen</Label>
+                                    <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url || ''} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })} className="border-zinc-700 text-zinc-200"/>
+                                </div>
+                            )}
+                            {activeSource === 'gallery' && (
+                                <div>
+                                    <Label className="flex items-center gap-2 text-zinc-300 text-base"><LayoutGrid/> Seleccionar de la Galería</Label>
+                                    <p className="text-xs text-zinc-400 mb-2">Haz clic en el botón de abajo para abrir tu galería de archivos.</p>
+                                    <Button onClick={() => { setIsImageModalOpen(false); setIsGalleryOpen(true);}} className="w-full bg-primary/80 hover:bg-primary">
+                                        Abrir Galería
+                                    </Button>
+                                </div>
+                            )}
+                            <Separator className="bg-zinc-800"/>
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-zinc-200">Ajustes de la Imagen</h3>
+                                <div className="space-y-2">
+                                    <Label className="text-zinc-300">Ajuste</Label>
+                                    <Select value={imageModalState.fit} onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}>
+                                        <SelectTrigger className="border-zinc-700 text-zinc-200"><SelectValue/></SelectTrigger>
+                                        <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-zinc-300"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
+                                    <Slider value={[imageModalState.positionX]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-zinc-300"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
+                                    <Slider value={[imageModalState.positionY]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-zinc-300"><Expand className="size-4"/> Zoom (sólo con 'Auto')</Label>
+                                    <Slider value={[imageModalState.zoom]} min={10} max={300} onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })} disabled={imageModalState.fit !== 'auto'}/>
+                                </div>
+                            </div>
+                        </div>
+                    </ScrollArea>
+                </div>
+                
+                <div className="flex items-center justify-center bg-black/30 p-4 border-l border-zinc-800">
+                    <div className="w-full h-full rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
+                        {imageModalState.url ? (
+                            <div className="w-full h-full" style={{
+                                backgroundImage: `url(${imageModalState.url})`,
+                                backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                                backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
+                                backgroundRepeat: 'no-repeat',
+                            }} />
+                        ) : (
+                            <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
+                                <ImageIcon className="mx-auto size-16" />
+                                <p className="mt-4">Vista previa de la imagen</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <DialogFooter className="p-4 border-t border-zinc-800 shrink-0 bg-zinc-900/50">
+                <Button type="button" variant="outline" onClick={() => setIsImageModalOpen(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancelar</Button>
+                <Button onClick={() => handleApplyBackgroundImage()} disabled={!imageModalState.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
+                    {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : <CheckIcon className="mr-2"/>}
+                    Aplicar Imagen
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
@@ -4907,10 +5014,8 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
-            <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-muted/10">
-                    <div className="ping-pong-scanner-line h-full"/>
-                </div>
+             <div className="mt-auto pb-2 space-y-2">
+                <div className="relative h-[3px] w-full my-2 tech-scanner"/>
                 <button
                   onClick={() => setIsConfirmExitModalOpen(true)}
                   className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
@@ -4970,7 +5075,7 @@ const LayerPanel = () => {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                           <Button variant="outline" size="icon" onClick={() => { setGalleryMode('view'); setIsGalleryOpen(true); }}>
+                           <Button variant="outline" size="icon" onClick={() => { setIsGalleryOpen(true); }}>
                                 <FileIcon />
                            </Button>
                         </TooltipTrigger>
@@ -5090,8 +5195,9 @@ const LayerPanel = () => {
       <FileManagerModal 
         open={isGalleryOpen} 
         onOpenChange={setIsGalleryOpen} 
-        onSelectFile={galleryMode === 'select' ? handleSelectFromGallery : undefined} 
+        onSelectFile={handleSelectFromGallery} 
       />
+      <BackgroundManagerModal />
 
        <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
@@ -5289,113 +5395,6 @@ const LayerPanel = () => {
           </DialogContent>
       </Dialog>
       
-      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-5xl w-[90vw] h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/80 border-zinc-700 backdrop-blur-xl text-white">
-            {/* Animated Background */}
-            <div className="absolute inset-0 w-full h-full overflow-hidden -z-10">
-                {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="particle" />
-                ))}
-            </div>
-
-            <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
-                <DialogTitle className="flex items-center gap-2 text-lg"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
-                <DialogDescription className="text-zinc-400">
-                    Añade o ajusta una imagen de fondo para tu contenedor flexible.
-                </DialogDescription>
-            </DialogHeader>
-            
-            <div className="flex-1 grid md:grid-cols-[400px_1fr] overflow-hidden">
-                {/* Left Panel: Controls */}
-                <div className="flex flex-col border-r border-zinc-800">
-                    <div className="p-4 flex flex-col gap-2">
-                         <Button variant={imageModalState.fit === 'auto' ? "secondary" : "outline"} onClick={() => {setImageModalState({...imageModalState, fit: 'auto'})}} className="justify-start gap-2 futuristic-button"><UploadCloud/>Cargar</Button>
-                         <Button variant={imageModalState.fit === 'auto' ? "secondary" : "outline"} onClick={() => {setImageModalState({...imageModalState, fit: 'auto'})}} className="justify-start gap-2 futuristic-button"><LinkIcon/>Desde URL</Button>
-                         <Button variant={imageModalState.fit === 'auto' ? "secondary" : "outline"} onClick={() => { setGalleryMode('select'); setIsImageModalOpen(false); setIsGalleryOpen(true); }} className="justify-start gap-2 futuristic-button"><LayoutGrid/>Galería</Button>
-                    </div>
-
-                    <ScrollArea className="flex-1 custom-scrollbar">
-                        <div className="p-4 space-y-4">
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={imageModalState.fit}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="space-y-4"
-                                >
-                                    {imageModalState.fit === 'auto' && (
-                                        <div className="space-y-2">
-                                            <Label htmlFor="image-upload" className="text-zinc-300">Archivo Local</Label>
-                                            <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="text-zinc-300 border-zinc-700 file:text-primary file:font-semibold"/>
-                                            {isUploading && <div className="flex items-center gap-2 text-sm text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
-                                        </div>
-                                    )}
-                                    {imageModalState.fit === 'contain' && (
-                                        <div className="space-y-2">
-                                            <Label htmlFor="image-url" className="text-zinc-300">URL de la Imagen</Label>
-                                            <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value || '' })} className="border-zinc-700 text-zinc-200"/>
-                                        </div>
-                                    )}
-                                    <Separator className="bg-zinc-800"/>
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label className="text-zinc-300">Ajuste de Imagen</Label>
-                                            <Select value={imageModalState.fit} onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}>
-                                                <SelectTrigger className="border-zinc-700 text-zinc-200"><SelectValue placeholder="Seleccionar ajuste" /></SelectTrigger>
-                                                <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir (Cover)</SelectItem><SelectItem value="contain">Contener (Contain)</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label className="flex items-center gap-2 text-zinc-300"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
-                                            <Slider value={[imageModalState.positionX]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}/>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label className="flex items-center gap-2 text-zinc-300"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
-                                            <Slider value={[imageModalState.positionY]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}/>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label className="flex items-center gap-2 text-zinc-300"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
-                                            <Slider value={[imageModalState.zoom]} min={10} max={300} onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })} disabled={imageModalState.fit !== 'auto'}/>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </AnimatePresence>
-                        </div>
-                    </ScrollArea>
-                </div>
-                
-                {/* Right Panel: Preview */}
-                <div className="flex items-center justify-center bg-black/30 p-4">
-                    <div className="w-full h-full rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
-                        {imageModalState.url ? (
-                            <div className="w-full h-full" style={{
-                                backgroundImage: `url(${imageModalState.url})`,
-                                backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
-                                backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
-                                backgroundRepeat: 'no-repeat',
-                            }} />
-                        ) : (
-                            <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
-                                <ImageIcon className="mx-auto size-16" />
-                                <p className="mt-4">Vista previa de la imagen</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <DialogFooter className="p-4 border-t border-zinc-800 shrink-0 bg-zinc-900/50">
-                <Button type="button" variant="outline" onClick={() => setIsImageModalOpen(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancelar</Button>
-                <Button onClick={() => handleApplyBackgroundImage()} disabled={!imageModalState.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
-                    {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : <CheckIcon className="mr-2"/>}
-                    Aplicar Imagen
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
        {/* Initial Name Modal */}
        <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
         <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
@@ -5483,13 +5482,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
