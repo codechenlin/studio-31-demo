@@ -154,26 +154,25 @@ body {
     .tech-scanner {
         position: absolute;
         top: 0;
-        left: -10%;
-        width: 10%;
         height: 100%;
+        width: 10%;
         background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.8), transparent);
         animation: ping-pong-scanner 3s infinite ease-in-out;
         filter: blur(2px);
     }
-    
+
     @keyframes ping-pong-scanner {
       0% {
-        left: 10%;
-        opacity: 1;
+        left: -10%;
+        opacity: 0.5;
       }
       50% {
-        left: 80%;
+        left: 100%;
         opacity: 1;
       }
       100% {
-        left: 10%;
-        opacity: 1;
+        left: -10%;
+        opacity: 0.5;
       }
     }
 
