@@ -3438,8 +3438,8 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
 
     useEffect(() => {
         if (open) {
-            setInternalState(initialValue || initialImageModalState);
-            setActiveSource(initialValue?.url ? 'url' : 'upload');
+            setInternalState(initialValue ? { ...initialImageModalState, ...initialValue } : initialImageModalState);
+            setActiveSource(initialValue?.url ? 'gallery' : 'upload');
         }
     }, [open, initialValue]);
 
@@ -5263,10 +5263,6 @@ const LayerPanel = () => {
         </Tabs>
       </aside>
 
-      <FileManagerModal 
-        open={isGalleryOpen} 
-        onOpenChange={setIsGalleryOpen} 
-      />
       <BackgroundManagerModal 
         open={isImageModalOpen}
         onOpenChange={setIsImageModalOpen}
@@ -5556,3 +5552,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
