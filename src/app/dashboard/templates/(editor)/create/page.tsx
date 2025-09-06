@@ -114,6 +114,7 @@ import {
   File as FileIcon,
   PackageCheck,
   Info,
+  GalleryVertical,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3420,21 +3421,20 @@ const initialImageModalState: ImageModalState = {
 
 type BackgroundSource = 'upload' | 'url' | 'gallery';
 
+// REBUILT BackgroundManagerModal
 const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onApply: (state: WrapperStyles['backgroundImage']) => void;
+    onApply: (state?: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
     const [internalState, setInternalState] = useState<ImageModalState>(initialImageModalState);
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
-    const { toast } = useToast();
-    
-    // Gallery state
     const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
-    const [isGalleryLoading, setIsGalleryLoading] = useState(true);
-    const [supabaseUrl, setSupabaseUrl] = useState<string>('');
+    const [isGalleryLoading, setIsGalleryLoading] = useState(false);
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+    const { toast } = useToast();
 
     useEffect(() => {
         if (open) {
@@ -3454,13 +3454,13 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
         }
         setIsGalleryLoading(false);
     }, [toast]);
-    
+
     useEffect(() => {
-        if (open && activeSource === 'gallery') {
+        if (open && activeSource === 'gallery' && galleryFiles.length === 0) {
             fetchGalleryFiles();
         }
-    }, [open, activeSource, fetchGalleryFiles]);
-
+    }, [open, activeSource, galleryFiles.length, fetchGalleryFiles]);
+    
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -3479,68 +3479,20 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
         }
     };
-
+    
     const handleApply = () => {
-        if (!internalState.url) {
-            onApply(undefined);
-        } else {
-            onApply(internalState);
-        }
+        onApply(internalState.url ? internalState : undefined);
         onOpenChange(false);
     };
-    
+
     const handleGallerySelect = (file: StorageFile) => {
         if (supabaseUrl) {
             const publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
             setInternalState(prev => ({ ...prev, url: publicUrl }));
         }
     };
-
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
     
-    const renderSourceContent = () => {
-        switch(activeSource) {
-            case 'upload':
-                return (
-                    <div className="space-y-2">
-                        <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-sm"><UploadCloud/> Subir Archivo</Label>
-                        <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={handleFileChange} disabled={isUploading} className="text-zinc-300 text-xs border-zinc-700 file:text-primary file:font-semibold"/>
-                        {isUploading && <div className="flex items-center gap-2 text-xs text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
-                    </div>
-                );
-            case 'url':
-                 return (
-                    <div className="space-y-2">
-                        <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-sm"><LinkIcon/> URL de la Imagen</Label>
-                        <Input id="image-url" placeholder="https://example.com/image.png" value={internalState.url || ''} onChange={(e) => setInternalState({ ...internalState, url: e.target.value })} className="border-zinc-700 text-zinc-200 text-sm h-9"/>
-                    </div>
-                );
-            case 'gallery':
-                 return (
-                   <div className="h-full min-h-[150px] flex flex-col">
-                       <h3 className="text-sm font-semibold text-zinc-300 mb-2">Mi Galería</h3>
-                        {isGalleryLoading ? (
-                            <div className="grid grid-cols-4 gap-2">
-                                {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg bg-zinc-700" />)}
-                            </div>
-                        ) : galleryFiles.length > 0 ? (
-                            <ScrollArea className="flex-1 -mr-3 pr-3">
-                                <div className="grid grid-cols-4 gap-2">
-                                    {galleryFiles.map(file => (
-                                        <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
-                                            <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                            {internalState.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
-                                        </Card>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        ) : (
-                            <p className="text-center text-zinc-500 text-sm h-full flex items-center justify-center">Tu galería está vacía.</p>
-                        )}
-                   </div>
-                );
-        }
-    }
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
 
     return (
        <Dialog open={open} onOpenChange={onOpenChange}>
@@ -3548,32 +3500,62 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
             </DialogHeader>
-            
             <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                 {/* Left Panel - Controls */}
-                <div className="col-span-5 flex flex-col p-4 space-y-4 border-r border-zinc-800">
-                    <div className="flex justify-center items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
+                {/* Left Panel - Controls */}
+                <div className="col-span-5 flex flex-col p-4 space-y-4 border-r border-zinc-800 overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-center items-center gap-2 bg-black/20 p-1 rounded-lg border border-zinc-700">
                         {(['upload', 'url', 'gallery'] as BackgroundSource[]).map((source) => (
                              <button
                                 key={source}
                                 onClick={() => setActiveSource(source)}
-                                className="relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2"
-                            >
-                                {activeSource === source && (
-                                    <motion.div
-                                        layoutId="active-bg-source-pill"
-                                        className="absolute inset-0 bg-primary/80 rounded-md"
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
+                                className={cn("relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 futuristic-source-button",
+                                    activeSource === source && "active"
                                 )}
+                            >
                                 <div className={cn("size-2 rounded-full transition-colors", activeSource === source ? 'bg-[#00CB07] shadow-[0_0_8px_#00CB07]' : 'bg-zinc-600')}/>
-                                <span className="relative z-20 capitalize">{source === 'upload' ? 'Cargar' : (source === 'url' ? 'URL' : 'Galería')}</span>
+                                <span className="relative z-20 capitalize">
+                                    {source === 'upload' ? 'Cargar' : (source === 'url' ? 'URL' : 'Galería')}
+                                </span>
                             </button>
                         ))}
                     </div>
 
                     <div className="flex-1 pt-2">
-                        {renderSourceContent()}
+                         {activeSource === 'upload' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-sm"><UploadCloud/> Subir Archivo</Label>
+                                <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={handleFileChange} disabled={isUploading} className="text-zinc-300 text-xs border-zinc-700 file:text-primary file:font-semibold"/>
+                                {isUploading && <div className="flex items-center gap-2 text-xs text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
+                            </div>
+                        )}
+                        {activeSource === 'url' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-sm"><LinkIcon/> URL de la Imagen</Label>
+                                <Input id="image-url" placeholder="https://example.com/image.png" value={internalState.url || ''} onChange={(e) => setInternalState({ ...internalState, url: e.target.value })} className="border-zinc-700 text-zinc-200 text-sm h-9"/>
+                            </div>
+                        )}
+                        {activeSource === 'gallery' && (
+                           <div className="h-full min-h-[150px] flex flex-col">
+                                {isGalleryLoading ? (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg bg-zinc-700" />)}
+                                    </div>
+                                ) : galleryFiles.length > 0 ? (
+                                    <ScrollArea className="flex-1 -mr-3 pr-3 h-64">
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {galleryFiles.map(file => (
+                                                <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
+                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
+                                                    {internalState.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                ) : (
+                                    <p className="text-center text-zinc-500 text-sm h-full flex items-center justify-center">Tu galería está vacía.</p>
+                                )}
+                           </div>
+                        )}
                     </div>
                     
                     <div className="space-y-3 text-sm p-3 rounded-lg bg-black/20 border border-zinc-800">
@@ -3633,7 +3615,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             </DialogFooter>
         </DialogContent>
       </Dialog>
-    )
+    );
 };
 
 
@@ -4592,7 +4574,7 @@ export default function CreateTemplatePage() {
   }, [canvasContent, selectedElement]);
   
 
-  const handleApplyBackgroundImage = useCallback((newState: WrapperStyles['backgroundImage']) => {
+  const handleApplyBackgroundImage = useCallback((newState?: WrapperStyles['backgroundImage']) => {
       if (selectedElement?.type !== 'wrapper') return;
       const wrapperId = selectedElement.wrapperId;
 
