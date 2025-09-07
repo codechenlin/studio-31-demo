@@ -155,24 +155,24 @@ body {
         position: absolute;
         top: 0;
         height: 100%;
-        width: 10%;
-        background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.8), transparent);
+        width: 15%;
+        background: linear-gradient(90deg, transparent, #00ADEC, #00CB07, transparent);
         animation: ping-pong-scanner 3s infinite ease-in-out;
         filter: blur(2px);
     }
 
     @keyframes ping-pong-scanner {
       0% {
-        left: -10%;
-        opacity: 0.5;
+        left: -15%;
+        opacity: 0.7;
       }
       50% {
         left: 100%;
         opacity: 1;
       }
       100% {
-        left: -10%;
-        opacity: 0.5;
+        left: -15%;
+        opacity: 0.7;
       }
     }
 
@@ -288,5 +288,21 @@ body {
       background: radial-gradient(circle, hsl(var(--primary)), transparent 70%);
       border-radius: 50%;
       animation: particle-float var(--duration) var(--delay) linear infinite;
+    }
+
+    .led-button {
+        @apply relative transition-all duration-300;
+    }
+
+    .led-button.active {
+        @apply bg-primary/10 border-primary/50 text-primary shadow-[0_0_10px_hsl(var(--primary)/0.3)];
+    }
+    
+    .led-button .led-light {
+        @apply absolute top-1.5 right-1.5 size-2 rounded-full bg-zinc-600 transition-all duration-300;
+    }
+    
+    .led-button.active .led-light {
+        @apply bg-[#00CB07] shadow-[0_0_8px_#00CB07];
     }
 }

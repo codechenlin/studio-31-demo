@@ -242,6 +242,7 @@ const timezones = [
 ];
 
 // --- STATE MANAGEMENT TYPES ---
+type BackgroundSource = 'upload' | 'url' | 'gallery';
 type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static';
 type InteractiveBlockType = 'emoji-interactive' | 'heading-interactive';
 
@@ -436,7 +437,14 @@ interface ImageBlock extends BaseBlock {
   payload: {
     url: string;
     alt: string;
+    link: {
+        url: string;
+        openInNewTab: boolean;
+    };
     styles: {
+      positionX: number;
+      positionY: number;
+      zoom: number;
       borderRadius: number;
       border: {
         width: number;
@@ -3421,19 +3429,13 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
 });
 FileManagerModal.displayName = 'FileManagerModal';
 
-const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
+const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initialValue }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onApply: (state?: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
-    const [internalState, setInternalState] = useState(initialValue || {
-        url: '',
-        fit: 'cover' as BackgroundFit,
-        positionX: 50,
-        positionY: 50,
-        zoom: 100,
-    });
+    const [internalState, setInternalState] = useState(initialValue);
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
@@ -3442,17 +3444,21 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
     const { toast } = useToast();
 
     useEffect(() => {
+        const defaultState = {
+            url: '',
+            fit: 'cover' as BackgroundFit,
+            positionX: 50,
+            positionY: 50,
+            zoom: 100,
+        };
+        const stateToSet = initialValue && initialValue.url ? initialValue : defaultState;
+        setInternalState(stateToSet);
+
         if (open) {
-            setInternalState(initialValue || {
-                url: '',
-                fit: 'cover',
-                positionX: 50,
-                positionY: 50,
-                zoom: 100,
-            });
             setActiveSource(initialValue?.url ? 'gallery' : 'upload');
         }
     }, [open, initialValue]);
+
 
     const fetchGalleryFiles = useCallback(async () => {
         setIsGalleryLoading(true);
@@ -3484,22 +3490,29 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
 
         if (result.success && result.data?.uploadedFile) {
             const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${result.data.uploadedFile.name}`;
-            setInternalState(prev => ({...prev, url: publicUrl}));
+            setInternalState(prev => ({...(prev || { fit: 'cover', positionX: 50, positionY: 50, zoom: 100 }), url: publicUrl}));
             toast({ title: '¡Éxito!', description: 'Imagen subida y lista para aplicar.', className: 'bg-green-500 text-white' });
         } else {
             toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
         }
     };
+    
+    const handleUpdateInternalState = (key: keyof NonNullable<typeof internalState>, value: any) => {
+        setInternalState(prev => ({
+            ...(prev || { url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100 }),
+            [key]: value
+        }));
+    };
 
     const handleApply = () => {
-        onApply(internalState.url ? internalState : undefined);
+        onApply(internalState?.url ? internalState : undefined);
         onOpenChange(false);
     };
 
     const handleGallerySelect = (file: StorageFile) => {
         if (supabaseUrl) {
             const publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
-            setInternalState(prev => ({ ...prev, url: publicUrl }));
+            handleUpdateInternalState('url', publicUrl);
         }
     };
 
@@ -3526,7 +3539,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
                     <Label className="text-zinc-300 text-sm mb-2">Vista previa</Label>
                     <div className="w-full flex-1 rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
-                        {internalState.url ? (
+                        {internalState?.url ? (
                             <div className="w-full h-full" style={{
                                 backgroundImage: `url(${internalState.url})`,
                                 backgroundSize: internalState.fit === 'auto' ? `${internalState.zoom}%` : internalState.fit,
@@ -3547,11 +3560,11 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                              <button
                                 key={source}
                                 onClick={() => setActiveSource(source)}
-                                className={cn("futuristic-source-button relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2",
+                                className={cn("led-button relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2",
                                     activeSource === source && "active"
                                 )}
                             >
-                                <div className={cn("size-2 rounded-full transition-colors", activeSource === source ? 'bg-[#00CB07] shadow-[0_0_8px_#00CB07]' : 'bg-zinc-600')}/>
+                                <span className="led-light"></span>
                                 <span className="relative z-20 capitalize">
                                     {source === 'upload' ? 'Cargar' : (source === 'url' ? 'URL' : 'Galería')}
                                 </span>
@@ -3569,7 +3582,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                         {activeSource === 'url' && (
                             <div className="space-y-2">
                                 <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-sm"><LinkIcon/> URL de la Imagen</Label>
-                                <Input id="image-url" placeholder="https://example.com/image.png" value={internalState.url || ''} onChange={(e) => setInternalState({ ...internalState, url: e.target.value })} className="border-zinc-700 text-zinc-200 text-sm h-9"/>
+                                <Input id="image-url" placeholder="https://example.com/image.png" value={internalState?.url || ''} onChange={(e) => handleUpdateInternalState('url', e.target.value)} className="border-zinc-700 text-zinc-200 text-sm h-9"/>
                             </div>
                         )}
                         {activeSource === 'gallery' && (
@@ -3582,9 +3595,9 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                                     <ScrollArea className="flex-1 -mr-3 pr-3 h-32">
                                         <div className="grid grid-cols-4 gap-2">
                                             {galleryFiles.map(file => (
-                                                <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
+                                                <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState?.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
                                                     <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                                    {internalState.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
+                                                    {internalState?.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
                                                 </Card>
                                             ))}
                                         </div>
@@ -3599,7 +3612,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                         <Label className="text-zinc-300 text-sm">Ajustes de la Imagen</Label>
                         <div className="space-y-2">
                             <Label className="text-zinc-400 text-xs">Ajuste</Label>
-                            <Select value={internalState.fit} onValueChange={(value: BackgroundFit) => setInternalState({ ...internalState, fit: value })}>
+                            <Select value={internalState?.fit || 'cover'} onValueChange={(value: BackgroundFit) => handleUpdateInternalState('fit', value)}>
                                 <SelectTrigger className="border-zinc-700 text-zinc-200 h-9 text-xs"><SelectValue/></SelectTrigger>
                                 <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
                             </Select>
@@ -3607,17 +3620,17 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                         <div className="flex items-center gap-2">
                           <div className="flex-1 space-y-1">
                               <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowLeftRight className="size-3"/> Horizontal</Label>
-                              <Slider value={[internalState.positionX]} onValueChange={(v) => setInternalState({ ...internalState, positionX: v[0] })}/>
+                              <Slider value={[internalState?.positionX || 50]} onValueChange={(v) => handleUpdateInternalState('positionX', v[0])}/>
                           </div>
                           <Separator orientation="vertical" className="h-10 bg-zinc-700 mx-1"/>
                           <div className="flex-1 space-y-1">
                               <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowUpDown className="size-3"/> Vertical</Label>
-                              <Slider value={[internalState.positionY]} onValueChange={(v) => setInternalState({ ...internalState, positionY: v[0] })}/>
+                              <Slider value={[internalState?.positionY || 50]} onValueChange={(v) => handleUpdateInternalState('positionY', v[0])}/>
                           </div>
                         </div>
                         <div className="space-y-1">
                             <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><Expand className="size-3"/> Zoom</Label>
-                            <Slider value={[internalState.zoom]} min={10} max={300} onValueChange={(v) => setInternalState({ ...internalState, zoom: v[0] })} disabled={internalState.fit !== 'auto'}/>
+                            <Slider value={[internalState?.zoom || 100]} min={10} max={300} onValueChange={(v) => handleUpdateInternalState('zoom', v[0])} disabled={internalState?.fit !== 'auto'}/>
                         </div>
                     </div>
                 </div>
@@ -3625,7 +3638,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
 
             <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancelar</Button>
-                <Button onClick={handleApply} disabled={!internalState.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
+                <Button onClick={handleApply} disabled={!internalState?.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
                     {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : <CheckIcon className="mr-2"/>}
                     Aplicar Imagen
                 </Button>
@@ -3633,107 +3646,223 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
         </DialogContent>
       </Dialog>
     );
-};
+});
+BackgroundManagerModal.displayName = 'BackgroundManagerModal';
 
 const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
-  if(selectedElement?.type !== 'primitive') return null;
+    const { toast } = useToast();
+    const [isUploading, setIsUploading] = useState(false);
+    const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
+    const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
+    const [isGalleryLoading, setIsGalleryLoading] = useState(false);
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    
+    useEffect(() => {
+        if(isGalleryOpen && galleryFiles.length === 0){
+             const fetchGalleryFiles = async () => {
+                setIsGalleryLoading(true);
+                const result = await listFiles();
+                if (result.success && result.data) {
+                    setGalleryFiles(result.data.files);
+                    setSupabaseUrl(result.data.baseUrl);
+                } else {
+                    toast({ title: "Error al cargar la galería", description: result.error, variant: 'destructive' });
+                }
+                setIsGalleryLoading(false);
+            };
+            fetchGalleryFiles();
+        }
+    }, [isGalleryOpen, galleryFiles.length, toast])
 
-  const getElement = () => {
-    const row = canvasContent.find(r => r.id === selectedElement.rowId);
-    if (row?.type !== 'columns') return null;
-    const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-    const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-    return block?.type === 'image' ? block as ImageBlock : null;
-  }
-  const element = getElement();
+    if(selectedElement?.type !== 'primitive') return null;
 
-  if(!element) return null;
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'image' ? block as ImageBlock : null;
+    }
+    const element = getElement();
 
-  const updatePayload = (key: keyof ImageBlock['payload'], value: any) => {
-    setCanvasContent(prev => prev.map(row => {
-      if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-      return {
-          ...row,
-          payload: {
-              ...row.payload,
-              columns: row.payload.columns.map(col => {
-                  if (col.id !== selectedElement.columnId) return col;
-                  return {
-                      ...col,
-                      blocks: col.blocks.map(block => {
-                          if (block.id !== selectedElement.primitiveId || block.type !== 'image') return block;
-                          return { ...block, payload: { ...block.payload, [key]: value } };
-                      })
-                  };
-              })
-          }
-      };
-    }), true);
-  };
+    if(!element) return null;
+
+    const updatePayload = (key: keyof ImageBlock['payload'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return {
+              ...row,
+              payload: {
+                  ...row.payload,
+                  columns: row.payload.columns.map(col => {
+                      if (col.id !== selectedElement.columnId) return col;
+                      return {
+                          ...col,
+                          blocks: col.blocks.map(block => {
+                              if (block.id !== selectedElement.primitiveId || block.type !== 'image') return block;
+                              return { ...block, payload: { ...block.payload, [key]: value } };
+                          })
+                      };
+                  })
+              }
+          };
+        }), true);
+    };
   
-  const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any) => {
-    updatePayload('styles', { ...element.payload.styles, [key]: value });
-  };
+    const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any) => {
+        updatePayload('styles', { ...element.payload.styles, [key]: value });
+    };
 
-  const updateBorder = (key: string, value: any) => {
-    updateStyle('border', { ...element.payload.styles.border, [key]: value });
-  };
-  
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Texto Alternativo</Label>
-        <Input 
-          value={element.payload.alt}
-          onChange={(e) => updatePayload('alt', e.target.value)}
-          placeholder="Describe la imagen"
-        />
-      </div>
-      <Separator />
-       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80">Estilos del Borde</h3>
-        <div className="space-y-2">
-          <Label>Ancho del Borde</Label>
-          <Slider value={[element.payload.styles.border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
-        </div>
-        <div className="space-y-2">
-          <Label>Radio del Borde</Label>
-          <Slider value={[element.payload.styles.borderRadius]} max={40} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
-        </div>
-        <div className="space-y-2">
-            <Label>Color del Borde</Label>
-            <Tabs value={element.payload.styles.border.type} onValueChange={(v) => updateBorder('type', v)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
-            </Tabs>
-            <div className="pt-2 space-y-2">
-                <Label>Color 1</Label>
-                <ColorPickerAdvanced color={element.payload.styles.border.color1} setColor={c => updateBorder('color1', c)} />
-            </div>
-            {element.payload.styles.border.type === 'gradient' && (
-                <div className="pt-2 space-y-2">
-                    <Label>Color 2</Label>
-                    <ColorPickerAdvanced color={element.payload.styles.border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
-                    <Label>Dirección</Label>
-                    <Select value={element.payload.styles.border.direction} onValueChange={v => updateBorder('direction', v)}>
-                        <SelectTrigger><SelectValue/></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="vertical">Vertical</SelectItem>
-                            <SelectItem value="horizontal">Horizontal</SelectItem>
-                            <SelectItem value="radial">Radial</SelectItem>
-                        </SelectContent>
-                    </Select>
+    const updateBorder = (key: string, value: any) => {
+        updateStyle('border', { ...element.payload.styles.border, [key]: value });
+    };
+    
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        const result = await uploadFile(formData);
+        setIsUploading(false);
+
+        if (result.success && result.data?.uploadedFile) {
+            const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${result.data.uploadedFile.name}`;
+            updatePayload('url', publicUrl);
+            toast({ title: '¡Éxito!', description: 'Imagen subida.', className: 'bg-green-500 text-white' });
+        } else {
+            toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
+        }
+    };
+    
+    const handleGallerySelect = (file: StorageFile) => {
+        if (supabaseUrl) {
+            const publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+            updatePayload('url', publicUrl);
+            setIsGalleryOpen(false);
+        }
+    };
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Gestionar Imagen</h3>
+             <div className="space-y-2">
+                <Label>Fuente de la Imagen</Label>
+                <div className="space-y-2">
+                    <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" />
+                    <Input value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="O pega una URL aquí" />
+                     <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full"><GalleryVertical className="mr-2"/>Abrir Galería</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl h-[70vh]">
+                             <DialogHeader>
+                                <DialogTitle>Galería de Imágenes</DialogTitle>
+                                <DialogDescription>Selecciona una imagen subida previamente.</DialogDescription>
+                            </DialogHeader>
+                            {isGalleryLoading ? <p>Cargando...</p> : (
+                               <ScrollArea className="h-[calc(70vh-150px)]">
+                                 <div className="grid grid-cols-4 gap-2 pr-4">
+                                  {galleryFiles.map(file => (
+                                     <Card key={file.id} onClick={() => handleGallerySelect(file)} className="cursor-pointer hover:ring-2 hover:ring-primary">
+                                        <img src={getFileUrl(file)} alt={file.name} className="aspect-square object-cover rounded-md"/>
+                                     </Card>
+                                  ))}
+                                </div>
+                               </ScrollArea>
+                            )}
+                        </DialogContent>
+                     </Dialog>
                 </div>
-            )}
+             </div>
+            
+            <div className="space-y-2">
+                <Label>Texto Alternativo</Label>
+                <Input 
+                  value={element.payload.alt}
+                  onChange={(e) => updatePayload('alt', e.target.value)}
+                  placeholder="Describe la imagen"
+                />
+            </div>
+            <Separator />
+            <div className="space-y-3">
+                <Label>Vista Previa</Label>
+                <div className="aspect-video w-full rounded-md overflow-hidden bg-muted/30 border border-dashed flex items-center justify-center">
+                    {element.payload.url ? (
+                        <div 
+                            className="w-full h-full" 
+                            style={{ 
+                                backgroundImage: `url(${element.payload.url})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: `${element.payload.styles.positionX}% ${element.payload.styles.positionY}%`,
+                                transform: `scale(${element.payload.styles.zoom / 100})`,
+                                transition: 'transform 0.2s, background-position 0.2s',
+                            }}
+                        />
+                    ) : <ImageIcon className="size-10 text-muted-foreground"/>}
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
+                <Slider value={[element.payload.styles.zoom]} min={100} max={300} onValueChange={(v) => updateStyle('zoom', v[0])}/>
+            </div>
+            <div className="flex items-center gap-4">
+                <div className="flex-1 space-y-1">
+                    <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
+                    <Slider value={[element.payload.styles.positionX]} onValueChange={(v) => updateStyle('positionX', v[0])}/>
+                </div>
+                <div className="flex-1 space-y-1">
+                    <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
+                    <Slider value={[element.payload.styles.positionY]} onValueChange={(v) => updateStyle('positionY', v[0])}/>
+                </div>
+            </div>
+            <Separator/>
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Estilos del Borde</h3>
+                <div className="space-y-2">
+                  <Label>Ancho del Borde</Label>
+                  <Slider value={[element.payload.styles.border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Radio del Borde</Label>
+                  <Slider value={[element.payload.styles.borderRadius]} max={40} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Color del Borde</Label>
+                    <Tabs value={element.payload.styles.border.type} onValueChange={(v) => updateBorder('type', v as any)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
+                    </Tabs>
+                    <div className="pt-2 space-y-2">
+                        <Label>Color 1</Label>
+                        <ColorPickerAdvanced color={element.payload.styles.border.color1} setColor={c => updateBorder('color1', c)} />
+                    </div>
+                    {element.payload.styles.border.type === 'gradient' && (
+                        <div className="pt-2 space-y-2">
+                            <Label>Color 2</Label>
+                            <ColorPickerAdvanced color={element.payload.styles.border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
+                            <Label>Dirección</Label>
+                            <Select value={element.payload.styles.border.direction} onValueChange={v => updateBorder('direction', v)}>
+                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="vertical">Vertical</SelectItem>
+                                    <SelectItem value="horizontal">Horizontal</SelectItem>
+                                    <SelectItem value="radial">Radial</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  )
+    )
 }
-
 
 export default function CreateTemplatePage() {
   const router = useRouter();
@@ -3979,7 +4108,11 @@ export default function CreateTemplatePage() {
             payload: {
               url: 'https://placehold.co/600x400.png?text=Nueva+Imagen',
               alt: 'Placeholder image',
+              link: { url: '#', openInNewTab: false },
               styles: {
+                positionX: 50,
+                positionY: 50,
+                zoom: 100,
                 borderRadius: 8,
                 border: {
                   width: 0,
@@ -4404,46 +4537,66 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
-                case 'image': {
+              case 'image': {
                     const imageBlock = block as ImageBlock;
-                    const { url, alt, styles } = imageBlock.payload;
-                    const { border, borderRadius } = styles;
+                    const { url, alt, styles, link } = imageBlock.payload;
+                    const { border, borderRadius, zoom, positionX, positionY } = styles;
                 
-                    let borderStyle: React.CSSProperties = {
+                    const containerStyle: React.CSSProperties = {
                       borderRadius: `${borderRadius}px`,
                       padding: `${border.width}px`,
+                      width: '100%',
+                      boxSizing: 'border-box',
                     };
-                
+                    
                     if (border.width > 0) {
                       if (border.type === 'solid') {
-                        borderStyle.background = border.color1;
+                        containerStyle.background = border.color1;
                       } else if (border.type === 'gradient') {
                         const { direction, color1, color2 } = border;
                         if (direction === 'radial') {
-                          borderStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
+                          containerStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
                         } else {
                           const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-                          borderStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
+                          containerStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
                         }
                       }
                     }
-                
-                    return (
-                      <div className="p-2 w-full h-full">
-                        <div style={borderStyle} className="w-full h-full">
-                          <img
-                            src={url}
-                            alt={alt}
-                            style={{
-                              borderRadius: `${borderRadius > 0 ? borderRadius - border.width : 0}px`,
-                              width: '100%',
-                              height: 'auto',
-                              display: 'block'
-                            }}
-                          />
-                        </div>
-                      </div>
+
+                    const imageWrapperStyle: React.CSSProperties = {
+                        borderRadius: `${borderRadius > 0 ? borderRadius - border.width : 0}px`,
+                        width: '100%',
+                        aspectRatio: '16/9',
+                        overflow: 'hidden',
+                        position: 'relative'
+                    };
+
+                    const imageStyle: React.CSSProperties = {
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${positionX}% ${positionY}%`,
+                        transform: `scale(${zoom / 100})`,
+                        transition: 'transform 0.2s, object-position 0.2s'
+                    };
+                    
+                    const imageElement = (
+                       <div style={containerStyle}>
+                         <div style={imageWrapperStyle}>
+                           <img src={url} alt={alt} style={imageStyle}/>
+                         </div>
+                       </div>
                     );
+
+                    if (link && link.url && link.url !== '#') {
+                        return (
+                            <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+                                {imageElement}
+                            </a>
+                        )
+                    }
+                
+                    return imageElement;
                 }
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
@@ -5713,9 +5866,14 @@ const LayerPanel = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <FileManagerModal
+        open={isGalleryOpen}
+        onOpenChange={setIsGalleryOpen}
+      />
     </div>
   );
 }
+
 
 
 
