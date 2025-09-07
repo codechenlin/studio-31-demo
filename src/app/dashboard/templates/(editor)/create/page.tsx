@@ -28,7 +28,7 @@ import { Toggle } from '@/components/ui/toggle';
 import {
   Square,
   Type,
-  Image as ImageIcon,
+  ImageIcon,
   Columns,
   Minus,
   ArrowLeft,
@@ -143,7 +143,7 @@ const mainContentBlocks = [
 const columnContentBlocks = [
   { name: "Titulo", icon: Heading1, id: 'heading' },
   { name: "Texto", icon: Type, id: 'text' },
-  { name: "Image", icon: ImageIcon, id: 'image' },
+  { name: "Imagen", icon: ImageIcon, id: 'image' },
   { name: "Botón", icon: Square, id: 'button' },
   { name: "Separador", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
@@ -431,6 +431,24 @@ interface TimerBlock extends BaseBlock {
     }
 }
 
+interface ImageBlock extends BaseBlock {
+  type: 'image';
+  payload: {
+    url: string;
+    alt: string;
+    styles: {
+      borderRadius: number;
+      border: {
+        width: number;
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      };
+    };
+  };
+}
+
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -463,7 +481,7 @@ interface InteractiveHeadingBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock | InteractiveHeadingBlock;
 
 
@@ -3403,32 +3421,19 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
 });
 FileManagerModal.displayName = 'FileManagerModal';
 
-type ImageModalState = {
-  url: string;
-  fit: BackgroundFit;
-  positionX: number;
-  positionY: number;
-  zoom: number;
-};
-
-const initialImageModalState: ImageModalState = {
-  url: '',
-  fit: 'cover',
-  positionX: 50,
-  positionY: 50,
-  zoom: 100,
-};
-
-type BackgroundSource = 'upload' | 'url' | 'gallery';
-
-// REBUILT BackgroundManagerModal
 const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onApply: (state?: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
-    const [internalState, setInternalState] = useState<ImageModalState>(initialImageModalState);
+    const [internalState, setInternalState] = useState(initialValue || {
+        url: '',
+        fit: 'cover' as BackgroundFit,
+        positionX: 50,
+        positionY: 50,
+        zoom: 100,
+    });
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
@@ -3438,7 +3443,13 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
 
     useEffect(() => {
         if (open) {
-            setInternalState(initialValue ? { ...initialImageModalState, ...initialValue } : initialImageModalState);
+            setInternalState(initialValue || {
+                url: '',
+                fit: 'cover',
+                positionX: 50,
+                positionY: 50,
+                zoom: 100,
+            });
             setActiveSource(initialValue?.url ? 'gallery' : 'upload');
         }
     }, [open, initialValue]);
@@ -3460,7 +3471,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             fetchGalleryFiles();
         }
     }, [open, activeSource, galleryFiles.length, fetchGalleryFiles]);
-    
+
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -3479,7 +3490,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
         }
     };
-    
+
     const handleApply = () => {
         onApply(internalState.url ? internalState : undefined);
         onOpenChange(false);
@@ -3491,24 +3502,52 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
             setInternalState(prev => ({ ...prev, url: publicUrl }));
         }
     };
-    
+
     const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
 
     return (
        <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-full h-[650px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
-            <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
+        <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
+            <div className="absolute inset-0 z-0 opacity-5">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className="particle" style={{
+                  '--x-start': `${Math.random() * 100}%`,
+                  '--x-end': `${Math.random() * 100 - 50}%`,
+                  '--size': `${Math.random() * 3 + 1}px`,
+                  '--duration': `${Math.random() * 5 + 5}s`,
+                  '--delay': `-${Math.random() * 5}s`,
+                } as React.CSSProperties}/>
+              ))}
+            </div>
+            <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
             </DialogHeader>
-            <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                {/* Left Panel - Controls */}
-                <div className="col-span-5 flex flex-col p-4 space-y-4 border-r border-zinc-800 overflow-y-auto custom-scrollbar">
-                    <div className="flex justify-center items-center gap-2 bg-black/20 p-1 rounded-lg border border-zinc-700">
-                        {(['upload', 'url', 'gallery'] as BackgroundSource[]).map((source) => (
+            <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
+                <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
+                    <Label className="text-zinc-300 text-sm mb-2">Vista previa</Label>
+                    <div className="w-full flex-1 rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
+                        {internalState.url ? (
+                            <div className="w-full h-full" style={{
+                                backgroundImage: `url(${internalState.url})`,
+                                backgroundSize: internalState.fit === 'auto' ? `${internalState.zoom}%` : internalState.fit,
+                                backgroundPosition: `${internalState.positionX}% ${internalState.positionY}%`,
+                                backgroundRepeat: 'no-repeat',
+                            }} />
+                        ) : (
+                            <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
+                                <ImageIcon className="mx-auto size-12" />
+                                <p className="mt-2 text-sm">Vista previa de la imagen</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div className="col-span-5 flex flex-col p-4 space-y-3 overflow-y-auto custom-scrollbar">
+                     <div className="flex justify-center items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
+                         {(['upload', 'url', 'gallery'] as BackgroundSource[]).map((source) => (
                              <button
                                 key={source}
                                 onClick={() => setActiveSource(source)}
-                                className={cn("relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 futuristic-source-button",
+                                className={cn("futuristic-source-button relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2",
                                     activeSource === source && "active"
                                 )}
                             >
@@ -3517,10 +3556,9 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                                     {source === 'upload' ? 'Cargar' : (source === 'url' ? 'URL' : 'Galería')}
                                 </span>
                             </button>
-                        ))}
-                    </div>
-
-                    <div className="flex-1 pt-2">
+                         ))}
+                     </div>
+                      <div className="flex-1 pt-2">
                          {activeSource === 'upload' && (
                             <div className="space-y-2">
                                 <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-sm"><UploadCloud/> Subir Archivo</Label>
@@ -3538,10 +3576,10 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                            <div className="h-full min-h-[150px] flex flex-col">
                                 {isGalleryLoading ? (
                                     <div className="grid grid-cols-4 gap-2">
-                                        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg bg-zinc-700" />)}
+                                        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg bg-zinc-700" />)}
                                     </div>
                                 ) : galleryFiles.length > 0 ? (
-                                    <ScrollArea className="flex-1 -mr-3 pr-3 h-64">
+                                    <ScrollArea className="flex-1 -mr-3 pr-3 h-32">
                                         <div className="grid grid-cols-4 gap-2">
                                             {galleryFiles.map(file => (
                                                 <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
@@ -3557,8 +3595,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                            </div>
                         )}
                     </div>
-                    
-                    <div className="space-y-3 text-sm p-3 rounded-lg bg-black/20 border border-zinc-800">
+                     <div className="space-y-3 text-sm p-3 rounded-lg bg-black/20 border border-zinc-800">
                         <Label className="text-zinc-300 text-sm">Ajustes de la Imagen</Label>
                         <div className="space-y-2">
                             <Label className="text-zinc-400 text-xs">Ajuste</Label>
@@ -3567,12 +3604,12 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                                 <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
                             </Select>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                           <div className="flex-1 space-y-1">
                               <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowLeftRight className="size-3"/> Horizontal</Label>
                               <Slider value={[internalState.positionX]} onValueChange={(v) => setInternalState({ ...internalState, positionX: v[0] })}/>
                           </div>
-                          <Separator orientation="vertical" className="h-10 bg-zinc-700"/>
+                          <Separator orientation="vertical" className="h-10 bg-zinc-700 mx-1"/>
                           <div className="flex-1 space-y-1">
                               <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowUpDown className="size-3"/> Vertical</Label>
                               <Slider value={[internalState.positionY]} onValueChange={(v) => setInternalState({ ...internalState, positionY: v[0] })}/>
@@ -3584,29 +3621,9 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
                         </div>
                     </div>
                 </div>
-
-                {/* Right Panel - Preview */}
-                <div className="col-span-7 flex flex-col bg-black/30 p-4">
-                     <Label className="text-zinc-300 text-sm mb-2">Vista previa</Label>
-                    <div className="w-full flex-1 rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
-                        {internalState.url ? (
-                            <div className="w-full h-full" style={{
-                                backgroundImage: `url(${internalState.url})`,
-                                backgroundSize: internalState.fit === 'auto' ? `${internalState.zoom}%` : internalState.fit,
-                                backgroundPosition: `${internalState.positionX}% ${internalState.positionY}%`,
-                                backgroundRepeat: 'no-repeat',
-                            }} />
-                        ) : (
-                            <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
-                                <ImageIcon className="mx-auto size-12" />
-                                <p className="mt-2 text-sm">Vista previa</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
 
-            <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 bg-zinc-900/50">
+            <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancelar</Button>
                 <Button onClick={handleApply} disabled={!internalState.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
                     {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : <CheckIcon className="mr-2"/>}
@@ -3617,6 +3634,105 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
       </Dialog>
     );
 };
+
+const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
+}) => {
+  if(selectedElement?.type !== 'primitive') return null;
+
+  const getElement = () => {
+    const row = canvasContent.find(r => r.id === selectedElement.rowId);
+    if (row?.type !== 'columns') return null;
+    const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+    const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+    return block?.type === 'image' ? block as ImageBlock : null;
+  }
+  const element = getElement();
+
+  if(!element) return null;
+
+  const updatePayload = (key: keyof ImageBlock['payload'], value: any) => {
+    setCanvasContent(prev => prev.map(row => {
+      if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+      return {
+          ...row,
+          payload: {
+              ...row.payload,
+              columns: row.payload.columns.map(col => {
+                  if (col.id !== selectedElement.columnId) return col;
+                  return {
+                      ...col,
+                      blocks: col.blocks.map(block => {
+                          if (block.id !== selectedElement.primitiveId || block.type !== 'image') return block;
+                          return { ...block, payload: { ...block.payload, [key]: value } };
+                      })
+                  };
+              })
+          }
+      };
+    }), true);
+  };
+  
+  const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any) => {
+    updatePayload('styles', { ...element.payload.styles, [key]: value });
+  };
+
+  const updateBorder = (key: string, value: any) => {
+    updateStyle('border', { ...element.payload.styles.border, [key]: value });
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Texto Alternativo</Label>
+        <Input 
+          value={element.payload.alt}
+          onChange={(e) => updatePayload('alt', e.target.value)}
+          placeholder="Describe la imagen"
+        />
+      </div>
+      <Separator />
+       <div className="space-y-4">
+        <h3 className="text-sm font-medium text-foreground/80">Estilos del Borde</h3>
+        <div className="space-y-2">
+          <Label>Ancho del Borde</Label>
+          <Slider value={[element.payload.styles.border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
+        </div>
+        <div className="space-y-2">
+          <Label>Radio del Borde</Label>
+          <Slider value={[element.payload.styles.borderRadius]} max={40} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+        </div>
+        <div className="space-y-2">
+            <Label>Color del Borde</Label>
+            <Tabs value={element.payload.styles.border.type} onValueChange={(v) => updateBorder('type', v)} className="w-full">
+                <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
+            </Tabs>
+            <div className="pt-2 space-y-2">
+                <Label>Color 1</Label>
+                <ColorPickerAdvanced color={element.payload.styles.border.color1} setColor={c => updateBorder('color1', c)} />
+            </div>
+            {element.payload.styles.border.type === 'gradient' && (
+                <div className="pt-2 space-y-2">
+                    <Label>Color 2</Label>
+                    <ColorPickerAdvanced color={element.payload.styles.border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
+                    <Label>Dirección</Label>
+                    <Select value={element.payload.styles.border.direction} onValueChange={v => updateBorder('direction', v)}>
+                        <SelectTrigger><SelectValue/></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="vertical">Vertical</SelectItem>
+                            <SelectItem value="horizontal">Horizontal</SelectItem>
+                            <SelectItem value="radial">Radial</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 
 export default function CreateTemplatePage() {
@@ -3648,8 +3764,7 @@ export default function CreateTemplatePage() {
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
   // State for background image modal
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [imageModalInitialState, setImageModalInitialState] = useState<WrapperStyles['backgroundImage'] | undefined>();
+  const [isBgImageModalOpen, setIsBgImageModalOpen] = useState(false);
   
   const [isCopySuccessModalOpen, setIsCopySuccessModalOpen] = useState(false);
 
@@ -3857,6 +3972,26 @@ export default function CreateTemplatePage() {
                 }
             };
             break;
+        case 'image':
+          newBlock = {
+            ...basePayload,
+            type: 'image',
+            payload: {
+              url: 'https://placehold.co/600x400.png?text=Nueva+Imagen',
+              alt: 'Placeholder image',
+              styles: {
+                borderRadius: 8,
+                border: {
+                  width: 0,
+                  type: 'solid',
+                  color1: '#A020F0',
+                  color2: '#3357FF',
+                  direction: 'vertical'
+                }
+              }
+            }
+          };
+          break;
          case 'button':
             newBlock = {
                 ...basePayload,
@@ -4250,8 +4385,9 @@ export default function CreateTemplatePage() {
                 );
               case 'text':
                 const textBlock = block as TextBlock;
+                const safeGlobalStyles = textBlock.payload.globalStyles || { textAlign: 'left', fontSize: 16 };
                 return (
-                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: textBlock.payload.globalStyles.textAlign, fontSize: `${textBlock.payload.globalStyles.fontSize}px` }}>
+                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: safeGlobalStyles.textAlign, fontSize: `${safeGlobalStyles.fontSize}px` }}>
                         {textBlock.payload.fragments.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
                              const props = fragment.link ? { 
@@ -4268,6 +4404,47 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
+                case 'image': {
+                    const imageBlock = block as ImageBlock;
+                    const { url, alt, styles } = imageBlock.payload;
+                    const { border, borderRadius } = styles;
+                
+                    let borderStyle: React.CSSProperties = {
+                      borderRadius: `${borderRadius}px`,
+                      padding: `${border.width}px`,
+                    };
+                
+                    if (border.width > 0) {
+                      if (border.type === 'solid') {
+                        borderStyle.background = border.color1;
+                      } else if (border.type === 'gradient') {
+                        const { direction, color1, color2 } = border;
+                        if (direction === 'radial') {
+                          borderStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
+                        } else {
+                          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+                          borderStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
+                        }
+                      }
+                    }
+                
+                    return (
+                      <div className="p-2 w-full h-full">
+                        <div style={borderStyle} className="w-full h-full">
+                          <img
+                            src={url}
+                            alt={alt}
+                            style={{
+                              borderRadius: `${borderRadius > 0 ? borderRadius - border.width : 0}px`,
+                              width: '100%',
+                              height: 'auto',
+                              display: 'block'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                }
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
@@ -4565,13 +4742,11 @@ export default function CreateTemplatePage() {
     return style;
   };
   
-  const handleOpenImageModal = useCallback(() => {
+  const handleOpenBgImageModal = useCallback(() => {
     if (selectedElement?.type === 'wrapper') {
-      const wrapper = canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined;
-      setImageModalInitialState(wrapper?.payload.styles.backgroundImage || undefined);
-      setIsImageModalOpen(true);
+      setIsBgImageModalOpen(true);
     }
-  }, [canvasContent, selectedElement]);
+  }, [selectedElement]);
   
 
   const handleApplyBackgroundImage = useCallback((newState?: WrapperStyles['backgroundImage']) => {
@@ -4586,7 +4761,7 @@ export default function CreateTemplatePage() {
           }
           return row;
       }), true);
-      setIsImageModalOpen(false);
+      setIsBgImageModalOpen(false);
   }, [selectedElement, setCanvasContent]);
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -5066,7 +5241,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                 <div className="relative w-full h-[3px] my-2 overflow-hidden bg-muted/10 rounded-full">
+                 <div className="relative w-[calc(100%-1rem)] mx-auto h-[3px] my-2 overflow-hidden bg-muted/10 rounded-full">
                     <div className="tech-scanner" />
                 </div>
                 <button
@@ -5185,7 +5360,7 @@ const LayerPanel = () => {
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
                             setCanvasContent={setCanvasContent}
-                            onOpenImageModal={handleOpenImageModal}
+                            onOpenImageModal={handleOpenBgImageModal}
                         />
                             <Separator className="bg-border/20" />
                             <ColumnDistributionEditor 
@@ -5200,7 +5375,7 @@ const LayerPanel = () => {
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
                             setCanvasContent={setCanvasContent}
-                            onOpenImageModal={handleOpenImageModal}
+                            onOpenImageModal={handleOpenBgImageModal}
                         />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
@@ -5208,6 +5383,9 @@ const LayerPanel = () => {
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
                             <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'image' && (
+                            <ImageEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
                             <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -5245,12 +5423,16 @@ const LayerPanel = () => {
         </Tabs>
       </aside>
 
-      <BackgroundManagerModal 
-        open={isImageModalOpen}
-        onOpenChange={setIsImageModalOpen}
+      <BackgroundManagerModal
+        open={isBgImageModalOpen}
+        onOpenChange={setIsBgImageModalOpen}
         onApply={handleApplyBackgroundImage}
-        initialValue={imageModalInitialState}
-      />
+        initialValue={
+            selectedElement?.type === 'wrapper'
+            ? (canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined)?.payload.styles.backgroundImage
+            : undefined
+        }
+       />
 
        <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
@@ -5534,4 +5716,6 @@ const LayerPanel = () => {
     </div>
   );
 }
+
+
 
