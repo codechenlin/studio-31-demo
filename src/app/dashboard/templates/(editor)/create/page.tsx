@@ -115,6 +115,7 @@ import {
   PackageCheck,
   Info,
   GalleryVertical,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -149,6 +150,7 @@ const columnContentBlocks = [
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
   { name: "Emoji", icon: Smile, id: 'emoji-static' },
+  { name: "Estrellas", icon: Star, id: 'rating' },
 ];
 
 const wrapperContentBlocks = [
@@ -243,7 +245,7 @@ const timezones = [
 
 // --- STATE MANAGEMENT TYPES ---
 type BackgroundSource = 'upload' | 'url' | 'gallery';
-type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static';
+type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'rating';
 type InteractiveBlockType = 'emoji-interactive' | 'heading-interactive';
 
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
@@ -457,6 +459,37 @@ interface ImageBlock extends BaseBlock {
   };
 }
 
+interface RatingBlock extends BaseBlock {
+  type: 'rating';
+  payload: {
+    rating: number; // 0 to 5
+    styles: {
+      starSize: number;
+      cornerRadius: number; // For star points
+      alignment: TextAlign;
+      filled: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      };
+      unfilled: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      };
+      border: {
+        width: number;
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      }
+    }
+  }
+}
+
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -489,7 +522,7 @@ interface InteractiveHeadingBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock | RatingBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock | InteractiveHeadingBlock;
 
 
@@ -3122,7 +3155,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     onApply: (state?: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
-    const [internalState, setInternalState] = useState(initialValue);
+    const [internalState, setInternalState] = useState<WrapperStyles['backgroundImage']>();
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
@@ -3131,7 +3164,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     const { toast } = useToast();
 
     useEffect(() => {
-        const defaultState = {
+        const defaultState: NonNullable<WrapperStyles['backgroundImage']> = {
             url: '',
             fit: 'cover' as BackgroundFit,
             positionX: 50,
@@ -3177,7 +3210,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
 
         if (result.success && result.data?.uploadedFile) {
             const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${result.data.uploadedFile.name}`;
-            setInternalState(prev => ({...(prev || { fit: 'cover', positionX: 50, positionY: 50, zoom: 100 }), url: publicUrl}));
+            handleUpdateInternalState('url', publicUrl);
             toast({ title: '¡Éxito!', description: 'Imagen subida y lista para aplicar.', className: 'bg-green-500 text-white' });
         } else {
             toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
@@ -3185,10 +3218,13 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     };
     
     const handleUpdateInternalState = (key: keyof NonNullable<typeof internalState>, value: any) => {
-        setInternalState(prev => ({
-            ...(prev || { url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100 }),
-            [key]: value
-        }));
+       setInternalState(prevState => {
+            const defaultState: NonNullable<WrapperStyles['backgroundImage']> = {
+                url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100,
+            };
+            const currentState = prevState || defaultState;
+            return { ...currentState, [key]: value };
+        });
     };
 
     const handleApply = () => {
@@ -3304,6 +3340,10 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                 <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
                             </Select>
                         </div>
+                         <div className="space-y-3">
+                            <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><Expand className="size-3"/> Zoom</Label>
+                            <Slider value={[internalState?.zoom || 100]} min={10} max={300} onValueChange={(v) => handleUpdateInternalState('zoom', v[0])} disabled={internalState?.fit !== 'auto'}/>
+                        </div>
                          <div className="flex items-center gap-2">
                             <div className="flex-1 space-y-1">
                                 <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowLeftRight className="size-3"/> Horizontal</Label>
@@ -3314,10 +3354,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                 <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowUpDown className="size-3"/> Vertical</Label>
                                 <Slider value={[internalState?.positionY || 50]} onValueChange={(v) => handleUpdateInternalState('positionY', v[0])}/>
                             </div>
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><Expand className="size-3"/> Zoom</Label>
-                            <Slider value={[internalState?.zoom || 100]} min={10} max={300} onValueChange={(v) => handleUpdateInternalState('zoom', v[0])} disabled={internalState?.fit !== 'auto'}/>
                         </div>
                     </div>
                 </div>
@@ -3350,26 +3386,27 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const [supabaseUrl, setSupabaseUrl] = useState('');
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
+    const fetchGalleryFiles = useCallback(async () => {
+        setIsGalleryLoading(true);
+        const result = await listFiles();
+        if (result.success && result.data) {
+            setGalleryFiles(result.data.files);
+            setSupabaseUrl(result.data.baseUrl);
+        } else {
+            toast({ title: "Error al cargar la galería", description: result.error, variant: 'destructive' });
+        }
+        setIsGalleryLoading(false);
+    }, [toast]);
+
     useEffect(() => {
         if(isGalleryOpen && galleryFiles.length === 0){
-             const fetchGalleryFiles = async () => {
-                setIsGalleryLoading(true);
-                const result = await listFiles();
-                if (result.success && result.data) {
-                    setGalleryFiles(result.data.files);
-                    setSupabaseUrl(result.data.baseUrl);
-                } else {
-                    toast({ title: "Error al cargar la galería", description: result.error, variant: 'destructive' });
-                }
-                setIsGalleryLoading(false);
-            };
             fetchGalleryFiles();
         }
-    }, [isGalleryOpen, galleryFiles.length, toast])
+    }, [isGalleryOpen, galleryFiles.length, fetchGalleryFiles, toast])
 
     if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
 
-    const getElement = () => {
+    const getElement = (): ImageBlock | null => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
         if (row?.type !== 'columns') return null;
         const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
@@ -3402,8 +3439,27 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }), true);
     };
   
-    const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any) => {
-        updatePayload('styles', { ...element.payload.styles, [key]: value });
+    const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any, record: boolean = true) => {
+        const newPayload = { ...element.payload, styles: { ...element.payload.styles, [key]: value } };
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+           return {
+              ...row,
+              payload: {
+                  ...row.payload,
+                  columns: row.payload.columns.map(col => {
+                      if (col.id !== selectedElement.columnId) return col;
+                      return {
+                          ...col,
+                          blocks: col.blocks.map(block => {
+                              if (block.id !== selectedElement.primitiveId || block.type !== 'image') return block;
+                              return { ...block, payload: newPayload };
+                          })
+                      };
+                  })
+              }
+          };
+        }), record);
     };
 
     const updateBorder = (key: string, value: any) => {
@@ -3437,7 +3493,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
     };
     const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
-     const setDirection = (direction: GradientDirection) => {
+    const setDirection = (direction: GradientDirection) => {
         updateBorder('direction', direction);
     };
 
@@ -3448,7 +3504,10 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Fuente de la Imagen</Label>
                 <div className="space-y-2">
                     <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" />
-                    <Input value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="O pega una URL aquí" />
+                    <div>
+                        <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
+                        <Input id="image-url-editor" value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="https://example.com/image.png" />
+                    </div>
                      <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" className="w-full"><GalleryVertical className="mr-2"/>Abrir Galería</Button>
@@ -3487,16 +3546,29 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
-                    <Slider value={[element.payload.styles.zoom]} min={100} max={300} onValueChange={(v) => updateStyle('zoom', v[0])}/>
+                    <Slider 
+                        value={[element.payload.styles.zoom]} 
+                        min={100} max={300} 
+                        onValueChange={(v) => updateStyle('zoom', v[0], false)}
+                        onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                    />
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex-1 space-y-1">
                         <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
-                        <Slider value={[element.payload.styles.positionX]} onValueChange={(v) => updateStyle('positionX', v[0])}/>
+                        <Slider 
+                            value={[element.payload.styles.positionX]} 
+                            onValueChange={(v) => updateStyle('positionX', v[0], false)}
+                            onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                        />
                     </div>
                     <div className="flex-1 space-y-1">
                         <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
-                        <Slider value={[element.payload.styles.positionY]} onValueChange={(v) => updateStyle('positionY', v[0])}/>
+                        <Slider 
+                            value={[element.payload.styles.positionY]} 
+                            onValueChange={(v) => updateStyle('positionY', v[0], false)}
+                            onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                        />
                     </div>
                 </div>
             </div>
@@ -3555,6 +3627,205 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
         </div>
     )
+}
+
+const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'rating') {
+        return <div className="text-center text-muted-foreground p-4 text-sm">Selecciona un bloque de Estrellas para ver sus opciones.</div>;
+    }
+
+    const getElement = (): RatingBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'rating' ? block as RatingBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+    
+    const updatePayload = (key: keyof RatingBlock['payload'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+            if (col.id !== selectedElement.columnId) return col;
+            return { ...col, blocks: col.blocks.map(block => {
+              if (block.id !== selectedElement.primitiveId || block.type !== 'rating') return block;
+              return { ...block, payload: { ...block.payload, [key]: value } };
+            })};
+          })}};
+        }), true);
+    };
+
+    const updateStyle = (key: keyof RatingBlock['payload']['styles'], value: any) => {
+        updatePayload('styles', { ...element.payload.styles, [key]: value });
+    };
+
+    const updateSubStyle = (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => {
+        updateStyle(mainKey, { ...element.payload.styles[mainKey], [subKey]: value });
+    };
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Star/>Editor de Estrellas</h3>
+            <div className="space-y-2">
+                <Label>Calificación ({element.payload.rating} / 5)</Label>
+                <Slider 
+                    value={[element.payload.rating]}
+                    min={0} max={5} step={0.5}
+                    onValueChange={(v) => updatePayload('rating', v[0])}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Alineación</Label>
+                <div className="grid grid-cols-3 gap-2">
+                    <Button variant={element.payload.styles.alignment === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','left')}><AlignLeft/></Button>
+                    <Button variant={element.payload.styles.alignment === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','center')}><AlignCenter/></Button>
+                    <Button variant={element.payload.styles.alignment === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80">Estilos de Estrella</h3>
+            <div className="space-y-2">
+                <Label>Tamaño de Estrella</Label>
+                <Slider value={[element.payload.styles.starSize]} min={10} max={100} onValueChange={v => updateStyle('starSize', v[0])} />
+            </div>
+            <div className="space-y-2">
+                <Label>Redondez de Esquinas</Label>
+                <Slider value={[element.payload.styles.cornerRadius]} min={0} max={10} onValueChange={v => updateStyle('cornerRadius', v[0])} />
+            </div>
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Llenas</h3>
+            <ColorEditor subStyle="filled" styles={element.payload.styles.filled} updateFunc={updateSubStyle} />
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Vacías</h3>
+            <ColorEditor subStyle="unfilled" styles={element.payload.styles.unfilled} updateFunc={updateSubStyle} />
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80">Borde de Estrellas</h3>
+            <div className="space-y-2">
+                <Label>Ancho del Borde</Label>
+                <Slider value={[element.payload.styles.border.width]} min={0} max={10} onValueChange={v => updateSubStyle('border', 'width', v[0])}/>
+            </div>
+            <ColorEditor subStyle="border" styles={element.payload.styles.border} updateFunc={updateSubStyle} />
+        </div>
+    )
+}
+
+const ColorEditor = ({ subStyle, styles, updateFunc }: {
+    subStyle: 'filled' | 'unfilled' | 'border',
+    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection },
+    updateFunc: (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => void
+}) => {
+    const setDirection = (direction: GradientDirection) => {
+        updateFunc(subStyle, 'direction', direction);
+    };
+
+    return (
+        <div className="space-y-4">
+            <Tabs value={styles.type} onValueChange={(v) => updateFunc(subStyle, 'type', v)} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="solid">Sólido</TabsTrigger>
+                    <TabsTrigger value="gradient">Degradado</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <div className="space-y-2">
+                <Label>Color 1</Label>
+                <ColorPickerAdvanced color={styles.color1} setColor={c => updateFunc(subStyle, 'color1', c)} />
+            </div>
+            {styles.type === 'gradient' && (
+                <>
+                    <div className="space-y-2">
+                        <Label>Color 2</Label>
+                        <ColorPickerAdvanced color={styles.color2 || '#ffffff'} setColor={c => updateFunc(subStyle, 'color2', c)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Dirección</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                       <Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Vertical</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                       <Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Horizontal</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                       <Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Radial</p></TooltipContent>
+                                </Tooltip>
+                             </TooltipProvider>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+const RatingComponent = ({ block }: { block: RatingBlock }) => {
+    const { rating, styles } = block.payload;
+    const { filled, unfilled, border, cornerRadius, starSize, alignment } = styles;
+
+    const starPath = "M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.413l-7.416 4.004L6.064 15.134 0 9.306l8.332-1.151z";
+
+    const renderStar = (index: number) => {
+        const fillValue = Math.max(0, Math.min(1, rating - index));
+        const uniqueId = `${block.id}-${index}`;
+        
+        const getFill = (type: 'filled' | 'unfilled' | 'border') => {
+            const config = styles[type];
+            if (config.type === 'gradient') return `url(#${type}-${uniqueId})`;
+            return config.color1;
+        };
+        
+        return (
+            <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                 <defs>
+                    {(['filled', 'unfilled', 'border'] as const).map(type => {
+                        const config = styles[type];
+                        if (config.type === 'gradient') {
+                            if (config.direction === 'radial') {
+                                return <radialGradient key={type} id={`${type}-${uniqueId}`}><stop offset="0%" stopColor={config.color1} /><stop offset="100%" stopColor={config.color2} /></radialGradient>;
+                            }
+                            return <linearGradient key={type} id={`${type}-${uniqueId}`} gradientTransform={config.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}><stop offset="0%" stopColor={config.color1} /><stop offset="100%" stopColor={config.color2} /></linearGradient>;
+                        }
+                        return null;
+                    })}
+                    <clipPath id={`clip-${uniqueId}`}>
+                       <rect x="0" y="0" width={24 * fillValue} height="24" />
+                    </clipPath>
+                 </defs>
+                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" style={{ paintOrder: 'stroke' }} />
+                <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
+                { border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" /> }
+            </svg>
+        );
+    };
+
+    const alignClass = {
+        left: 'justify-start',
+        center: 'justify-center',
+        right: 'justify-end'
+    };
+
+    return (
+        <div className={cn("flex w-full p-2", alignClass[alignment])}>
+            <div className="flex gap-1">
+                {Array.from({ length: 5 }).map((_, i) => renderStar(i))}
+            </div>
+        </div>
+    );
 }
 
 export default function CreateTemplatePage() {
@@ -3889,6 +4160,23 @@ export default function CreateTemplatePage() {
                         fontFamily: 'Roboto', numberColor: isDarkMode ? '#FFFFFF' : '#000000', labelColor: isDarkMode ? '#999999' : '#666666',
                         borderRadius: 15, background: { type: 'gradient', color1: '#AD00EC', color2: '#0018EC', direction: 'vertical' },
                         strokeWidth: 4, scale: 1, minimalistLabelSize: 1
+                    }
+                }
+            };
+            break;
+        case 'rating':
+            newBlock = {
+                ...basePayload,
+                type: 'rating',
+                payload: {
+                    rating: 4.5,
+                    styles: {
+                        starSize: 40,
+                        cornerRadius: 2,
+                        alignment: 'center',
+                        filled: { type: 'solid', color1: '#FFD700', color2: '#FFA500', direction: 'horizontal' },
+                        unfilled: { type: 'solid', color1: '#444444' },
+                        border: { width: 1, type: 'solid', color1: '#666666' },
                     }
                 }
             };
@@ -4241,6 +4529,7 @@ export default function CreateTemplatePage() {
                       width: '100%',
                       boxSizing: 'border-box',
                       overflow: 'hidden',
+                      position: 'relative'
                     };
                     
                     if (border.width > 0) {
@@ -4259,21 +4548,21 @@ export default function CreateTemplatePage() {
 
                     const imageWrapperStyle: React.CSSProperties = {
                         width: '100%',
-                        aspectRatio: '16/9',
+                        paddingTop: '75%', // Aspect ratio 4:3
                         overflow: 'hidden',
                         position: 'relative',
-                        borderRadius: `${borderRadius - border.width}px`
+                        borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
+                        background: 'hsl(var(--muted)/0.2)'
                     };
 
                     const imageStyle: React.CSSProperties = {
                         width: `${zoom}%`,
-                        height: `${zoom}%`,
-                        objectFit: 'cover',
+                        height: 'auto',
                         position: 'absolute',
                         top: `${positionY}%`,
                         left: `${positionX}%`,
                         transform: `translate(-${positionX}%, -${positionY}%)`,
-                        transition: 'transform 0.2s, object-position 0.2s',
+                        transition: 'transform 0.2s, top 0.2s, left 0.2s',
                     };
                     
                     const imageElement = (
@@ -4450,6 +4739,9 @@ export default function CreateTemplatePage() {
               case 'timer': {
                  const timerBlock = block as TimerBlock;
                  return <TimerComponent block={timerBlock} />;
+              }
+              case 'rating': {
+                return <RatingComponent block={block as RatingBlock} />;
               }
               default:
                 return (
@@ -5025,6 +5317,64 @@ const LayerPanel = () => {
     );
 };
 
+const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+    // This is a placeholder for the full file manager.
+    // For now, it just shows a list of files.
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (open) {
+            const fetchFiles = async () => {
+                setIsLoading(true);
+                const result = await listFiles();
+                if (result.success && result.data) {
+                    setFiles(result.data.files);
+                } else {
+                    toast({ title: 'Error', description: result.error, variant: 'destructive' });
+                }
+                setIsLoading(false);
+            };
+            fetchFiles();
+        }
+    }, [open, toast]);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Gestor de Archivos</DialogTitle>
+                    <DialogDescription>
+                        Gestiona, sube y elimina tus archivos aquí.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto">
+                    {isLoading ? (
+                        <p>Cargando archivos...</p>
+                    ) : (
+                        <div className="grid grid-cols-4 gap-4">
+                            {files.map(file => (
+                                <Card key={file.id}>
+                                    <CardContent className="p-2">
+                                        <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
+                                            <FileIcon className="size-8 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-xs truncate mt-2">{file.name.split('/').pop()}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                 <DialogFooter>
+                    <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
@@ -5256,6 +5606,9 @@ const LayerPanel = () => {
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
                             <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
+                        )}
+                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'rating' && (
+                            <RatingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         
                         { !selectedElement && (
@@ -5562,6 +5915,7 @@ const LayerPanel = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <FileManagerModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} />
     </div>
   );
 }
