@@ -3116,319 +3116,6 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
 TimerComponent.displayName = 'TimerComponent';
 
 
-const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { open: boolean, onOpenChange: (open: boolean) => void, onSelectFile?: (file: StorageFile) => void }) => {
-    const { toast } = useToast();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [supabaseUrl, setSupabaseUrl] = useState<string>('');
-    const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'images' | 'gifs'>('images');
-    const [isUploading, setIsUploading] = useState(false);
-    const [renamingFile, setRenamingFile] = useState<StorageFile | null>(null);
-    const [newName, setNewName] = useState('');
-    const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-    const [fileToDelete, setFileToDelete] = useState<string[] | null>(null);
-
-    const fetchFiles = useCallback(async () => {
-        setIsLoading(true);
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            setUserId(session.user.id);
-            const result = await listFiles();
-            if (result.success && result.data) {
-                setFiles(result.data.files);
-                setSupabaseUrl(result.data.baseUrl);
-            } else {
-                toast({ title: "Error al cargar archivos", description: result.error, variant: 'destructive' });
-            }
-        }
-        setIsLoading(false);
-    }, [toast]);
-
-    useEffect(() => {
-        if (open) {
-            fetchFiles();
-        } else {
-            // Reset state on close
-            setIsMultiSelectMode(false);
-            setSelectedFiles([]);
-        }
-    }, [open, fetchFiles]);
-    
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const uploadedFiles = e.target.files;
-      if (!uploadedFiles || uploadedFiles.length === 0) return;
-      setIsUploading(true);
-
-      const uploadPromises = Array.from(uploadedFiles).map(file => {
-          const formData = new FormData();
-          formData.append('file', file);
-          return uploadFile(formData);
-      });
-
-      const results = await Promise.all(uploadPromises);
-      
-      const successfulUploads = results.filter(r => r.success);
-
-      if (successfulUploads.length > 0) {
-          toast({ title: "Subida Exitosa", description: `${successfulUploads.length} archivo(s) subido(s) correctamente.` });
-          await fetchFiles(); // Refresh files list
-      }
-      
-      results.forEach((result, index) => {
-          if (!result.success && uploadedFiles) {
-              toast({ title: `Error al subir ${uploadedFiles[index].name}`, description: result.error, variant: 'destructive' });
-          }
-      });
-      
-      setIsUploading(false);
-    };
-
-
-    const handleRenameFile = async () => {
-        if (!renamingFile || !newName.trim() || !userId) return;
-        
-        const oldName = renamingFile.name.split('/').pop() || '';
-        const fileExtension = oldName.split('.').pop();
-        const newNameWithExt = `${newName.trim()}.${fileExtension}`;
-        
-        const result = await renameFile({ oldPath: renamingFile.name, newName: newNameWithExt });
-        
-        if (result.success && result.data) {
-            toast({ title: "Archivo renombrado", description: `"${oldName}" ahora es "${newNameWithExt}".` });
-            await fetchFiles(); // Refresh list to get new data
-            setRenamingFile(null);
-            setNewName('');
-            setSelectedFiles([]);
-        } else {
-            toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
-        }
-    };
-    
-    const confirmDelete = (paths: string[]) => {
-        setFileToDelete(paths);
-    }
-    
-    const handleDeleteFiles = async () => {
-        if (!fileToDelete || fileToDelete.length === 0) return;
-        
-        const result = await deleteFiles({ paths: fileToDelete });
-        if(result.success) {
-            toast({title: "Archivos eliminados", description: `${fileToDelete.length} archivo(s) ha(n) sido eliminado(s).`});
-            setFiles(prev => prev.filter(f => !fileToDelete.includes(f.name)));
-            setSelectedFiles(prev => prev.filter(f => !fileToDelete.includes(f)));
-        } else {
-            toast({ title: "Error al eliminar", description: result.error, variant: 'destructive'});
-        }
-        setFileToDelete(null);
-    };
-
-    const toggleSelection = (fileName: string) => {
-        if (isMultiSelectMode) {
-            setSelectedFiles(prev => 
-                prev.includes(fileName) ? prev.filter(f => f !== fileName) : [...prev, fileName]
-            );
-        } else {
-            setSelectedFiles(prev => prev[0] === fileName ? [] : [fileName]);
-        }
-    };
-    
-    const BUCKET_NAME = 'template_backgrounds';
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
-    
-    const formatBytes = (bytes: number, decimals = 2) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    };
-
-    const filterAndSortFiles = (files: StorageFile[]) => {
-      return files
-        .filter(f => {
-            const fileName = f.name.split('/').pop()?.toLowerCase() || '';
-            const matchesSearch = fileName.includes(searchTerm.toLowerCase());
-            const isImage = /\.(png|jpg|jpeg|svg|webp)$/i.test(fileName);
-            const isGif = /\.gif$/i.test(fileName);
-            if (activeTab === 'images') return isImage && matchesSearch;
-            if (activeTab === 'gifs') return isGif && matchesSearch;
-            return false;
-        })
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    };
-
-    const imageFiles = filterAndSortFiles(files.filter(f => /\.(png|jpg|jpeg|svg|webp)$/i.test(f.name)));
-    const gifFiles = filterAndSortFiles(files.filter(f => /\.gif$/i.test(f.name)));
-    const displayedFiles = activeTab === 'images' ? imageFiles : gifFiles;
-
-    const selectedFileDetails = files.find(f => f.name === selectedFiles[0]);
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0 bg-card/80 backdrop-blur-xl border-border/20">
-                <DialogHeader className="p-4 border-b border-border/20">
-                    <DialogTitle className="text-lg flex items-center gap-2"><LayoutGrid className="text-primary"/> Gestor de Archivos</DialogTitle>
-                </DialogHeader>
-                
-                 {/* Rename Modal */}
-                 <Dialog open={!!renamingFile} onOpenChange={(isOpen) => !isOpen && setRenamingFile(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Renombrar Archivo</DialogTitle>
-                            <DialogDescription>Introduce el nuevo nombre para "{renamingFile?.name.split('/').pop()}".</DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <Input 
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="Nuevo nombre de archivo (sin extensión)"
-                                autoFocus
-                                onKeyDown={(e) => e.key === 'Enter' && handleRenameFile()}
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setRenamingFile(null)}>Cancelar</Button>
-                            <Button onClick={handleRenameFile} disabled={!newName.trim()}>
-                                Guardar
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-                
-                 {/* Delete Confirmation Modal */}
-                 <Dialog open={!!fileToDelete} onOpenChange={(isOpen) => !isOpen && setFileToDelete(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Estás seguro?</DialogTitle>
-                            <DialogDescription>
-                                Esta acción eliminará {fileToDelete?.length} archivo(s) permanentemente. No podrás deshacer esto.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setFileToDelete(null)}>Cancelar</Button>
-                            <Button variant="destructive" onClick={handleDeleteFiles}>Sí, eliminar</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    {/* Left Panel */}
-                    <div className="col-span-4 md:col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
-                        <div 
-                            onDrop={(e) => { e.preventDefault(); /* handleFileUpload(e.dataTransfer.files); */ }}
-                            onDragOver={(e) => e.preventDefault()}
-                            className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center"
-                        >
-                            <UploadCloud className="mx-auto size-12 text-muted-foreground mb-2"/>
-                            <p className="text-sm text-muted-foreground mb-2">Arrastra y suelta o</p>
-                             <label htmlFor="file-upload" className="cursor-pointer">
-                                <Button asChild variant="outline" size="sm">
-                                  <span>Seleccionar Archivos</span>
-                                </Button>
-                                <input id="file-upload" type="file" className="hidden" multiple onChange={handleFileUpload} accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml"/>
-                            </label>
-                             {isUploading && <p className="text-xs text-muted-foreground mt-2 animate-pulse">Subiendo...</p>}
-                        </div>
-                        
-                        <Separator />
-
-                        <div className="flex-1 space-y-2">
-                             <h3 className="font-semibold flex items-center gap-2"><Info className="text-primary"/>Detalles del Archivo</h3>
-                             {selectedFileDetails ? (
-                                <div className="text-xs space-y-2 text-muted-foreground">
-                                    <p className="font-semibold text-foreground break-all">{selectedFileDetails.name.split('/').pop()}</p>
-                                    <p>Tipo: {selectedFileDetails.metadata.mimetype}</p>
-                                    <p>Tamaño: {formatBytes(selectedFileDetails.metadata.size)}</p>
-                                    <a href={getFileUrl(selectedFileDetails)} target="_blank" rel="noreferrer" className="w-full">
-                                        <Button variant="outline" className="w-full mt-2">
-                                            <View className="mr-2"/>
-                                            Ver Original
-                                        </Button>
-                                    </a>
-                                     {onSelectFile && (
-                                        <Button className="w-full mt-2 bg-green-600 hover:bg-green-700" onClick={() => { if(selectedFileDetails) onSelectFile(selectedFileDetails)}}>
-                                            <CheckIcon className="mr-2"/> Usar Imagen
-                                        </Button>
-                                     )}
-                                </div>
-                             ) : (
-                                <div className="text-center text-xs text-muted-foreground pt-8">
-                                    <p>Selecciona un archivo para ver sus detalles.</p>
-                                </div>
-                             )}
-                        </div>
-                    </div>
-
-                    {/* Right Panel */}
-                    <div className="col-span-8 md:col-span-9 flex flex-col">
-                        <div className="p-4 border-b border-border/20 flex justify-between items-center gap-4 shrink-0">
-                            <div className="relative w-full max-w-sm">
-                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
-                                <Input placeholder="Buscar por nombre..." className="pl-10 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                 <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setIsMultiSelectMode(!isMultiSelectMode);
-                                        setSelectedFiles([]); // Clear selection on mode change
-                                    }}
-                                    className={cn("transition-all", isMultiSelectMode && "ring-2 ring-offset-2 ring-offset-card ring-[#00CB07]")}
-                                 >
-                                    <div className={cn("size-2 rounded-full mr-2 bg-muted-foreground/50 transition-colors", isMultiSelectMode && "bg-[#00CB07] shadow-[0_0_8px_#00CB07]")}/>
-                                    Realizar selección múltiple
-                                 </Button>
-                                <Button variant="destructive" size="sm" onClick={() => confirmDelete(selectedFiles)} disabled={selectedFiles.length === 0}>
-                                    <Trash2 className="mr-2"/>
-                                    Eliminar ({selectedFiles.length})
-                                </Button>
-                            </div>
-                        </div>
-                        
-                        <div className="flex-1 flex flex-col overflow-y-hidden">
-                             <div className="p-4 shrink-0">
-                                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'gifs')} className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="images">{`Imágenes (${imageFiles.length})`}</TabsTrigger>
-                                        <TabsTrigger value="gifs">{`GIFs (${gifFiles.length})`}</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            </div>
-                            <ScrollArea className="flex-1 px-4 pb-4 custom-scrollbar">
-                                   {isLoading ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                           {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
-                                       </div>
-                                   ) : displayedFiles.length > 0 ? (
-                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                           {displayedFiles.map(file => (
-                                               <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
-                                                   <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
-                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop()?.split('.').slice(0, -1).join('.') || ''); }}><Pencil className="text-white"/></Button>
-                                                        <Button size="icon" variant="ghost" className="hover:bg-destructive/50" onClick={(e) => { e.stopPropagation(); confirmDelete([file.name]); }}><Trash2 className="text-white"/></Button>
-                                                   </div>
-                                                   {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
-                                               </Card>
-                                           ))}
-                                       </div>
-                                   ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
-                            </ScrollArea>
-                        </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    )
-});
-FileManagerModal.displayName = 'FileManagerModal';
-
 const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initialValue }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -3451,7 +3138,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
             positionY: 50,
             zoom: 100,
         };
-        const stateToSet = initialValue && initialValue.url ? initialValue : defaultState;
+        const stateToSet = (initialValue && initialValue.url) ? { ...defaultState, ...initialValue } : defaultState;
         setInternalState(stateToSet);
 
         if (open) {
@@ -3617,16 +3304,16 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                 <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
                             </Select>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 space-y-1">
-                              <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowLeftRight className="size-3"/> Horizontal</Label>
-                              <Slider value={[internalState?.positionX || 50]} onValueChange={(v) => handleUpdateInternalState('positionX', v[0])}/>
-                          </div>
-                          <Separator orientation="vertical" className="h-10 bg-zinc-700 mx-1"/>
-                          <div className="flex-1 space-y-1">
-                              <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowUpDown className="size-3"/> Vertical</Label>
-                              <Slider value={[internalState?.positionY || 50]} onValueChange={(v) => handleUpdateInternalState('positionY', v[0])}/>
-                          </div>
+                         <div className="flex items-center gap-2">
+                            <div className="flex-1 space-y-1">
+                                <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowLeftRight className="size-3"/> Horizontal</Label>
+                                <Slider value={[internalState?.positionX || 50]} onValueChange={(v) => handleUpdateInternalState('positionX', v[0])}/>
+                            </div>
+                            <Separator orientation="vertical" className="h-10 bg-zinc-700 mx-1"/>
+                            <div className="flex-1 space-y-1">
+                                <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><ArrowUpDown className="size-3"/> Vertical</Label>
+                                <Slider value={[internalState?.positionY || 50]} onValueChange={(v) => handleUpdateInternalState('positionY', v[0])}/>
+                            </div>
                         </div>
                         <div className="space-y-1">
                             <Label className="flex items-center gap-1.5 text-zinc-400 text-xs"><Expand className="size-3"/> Zoom</Label>
@@ -3648,6 +3335,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     );
 });
 BackgroundManagerModal.displayName = 'BackgroundManagerModal';
+
 
 const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
@@ -3679,7 +3367,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
     }, [isGalleryOpen, galleryFiles.length, toast])
 
-    if(selectedElement?.type !== 'primitive') return null;
+    if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
 
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -3749,6 +3437,9 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
     };
     const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+     const setDirection = (direction: GradientDirection) => {
+        updateBorder('direction', direction);
+    };
 
     return (
         <div className="space-y-4">
@@ -3792,23 +3483,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 />
             </div>
             <Separator />
-            <div className="space-y-3">
-                <Label>Vista Previa</Label>
-                <div className="aspect-video w-full rounded-md overflow-hidden bg-muted/30 border border-dashed flex items-center justify-center">
-                    {element.payload.url ? (
-                        <div 
-                            className="w-full h-full" 
-                            style={{ 
-                                backgroundImage: `url(${element.payload.url})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: `${element.payload.styles.positionX}% ${element.payload.styles.positionY}%`,
-                                transform: `scale(${element.payload.styles.zoom / 100})`,
-                                transition: 'transform 0.2s, background-position 0.2s',
-                            }}
-                        />
-                    ) : <ImageIcon className="size-10 text-muted-foreground"/>}
-                </div>
-            </div>
              <div className="space-y-2">
                 <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
                 <Slider value={[element.payload.styles.zoom]} min={100} max={300} onValueChange={(v) => updateStyle('zoom', v[0])}/>
@@ -3832,7 +3506,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
                 <div className="space-y-2">
                   <Label>Radio del Borde</Label>
-                  <Slider value={[element.payload.styles.borderRadius]} max={40} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+                  <Slider value={[element.payload.styles.borderRadius]} max={100} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
                 </div>
                 <div className="space-y-2">
                     <Label>Color del Borde</Label>
@@ -3847,15 +3521,31 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <div className="pt-2 space-y-2">
                             <Label>Color 2</Label>
                             <ColorPickerAdvanced color={element.payload.styles.border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
-                            <Label>Dirección</Label>
-                            <Select value={element.payload.styles.border.direction} onValueChange={v => updateBorder('direction', v)}>
-                                <SelectTrigger><SelectValue/></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="vertical">Vertical</SelectItem>
-                                    <SelectItem value="horizontal">Horizontal</SelectItem>
-                                    <SelectItem value="radial">Radial</SelectItem>
-                                </SelectContent>
-                            </Select>
+                             <div className="space-y-3">
+                                <Label>Dirección del Degradado</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                               <Button variant={element.payload.styles.border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Vertical</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                               <Button variant={element.payload.styles.border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Horizontal</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                               <Button variant={element.payload.styles.border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Radial</p></TooltipContent>
+                                        </Tooltip>
+                                     </TooltipProvider>
+                                 </div>
+                              </div>
                         </div>
                     )}
                 </div>
@@ -4547,6 +4237,7 @@ export default function CreateTemplatePage() {
                       padding: `${border.width}px`,
                       width: '100%',
                       boxSizing: 'border-box',
+                      overflow: 'hidden',
                     };
                     
                     if (border.width > 0) {
@@ -4564,7 +4255,6 @@ export default function CreateTemplatePage() {
                     }
 
                     const imageWrapperStyle: React.CSSProperties = {
-                        borderRadius: `${borderRadius > 0 ? borderRadius - border.width : 0}px`,
                         width: '100%',
                         aspectRatio: '16/9',
                         overflow: 'hidden',
@@ -5394,7 +5084,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                 <div className="relative w-[calc(100%-1rem)] mx-auto h-[3px] my-2 overflow-hidden bg-muted/10 rounded-full">
+                <div className="relative w-[calc(100%-1rem)] mx-auto h-[3px] my-2 overflow-hidden bg-muted/10 rounded-full">
                     <div className="tech-scanner" />
                 </div>
                 <button
@@ -5873,6 +5563,7 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
 
