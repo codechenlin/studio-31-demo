@@ -3260,10 +3260,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
-                 <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                    <XIcon className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </DialogClose>
             </DialogHeader>
             <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
@@ -3920,7 +3916,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                         <div className="shrink-0 p-2.5 border-b border-border/10 dark:border-zinc-800 flex flex-wrap items-center gap-4">
                              <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
                                  {(['gallery', 'upload', 'url'] as const).map((source) => (
-                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2", activeSource === source && "active")}>
+                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", activeSource === source && "active !text-foreground dark:!text-white")}>
                                          <span className="led-light"></span>
                                          <span className="relative z-20 capitalize">{source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}</span>
                                      </button>
@@ -3928,11 +3924,11 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                              </div>
                             <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'images' && "active text-foreground dark:text-white")}>
+                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'images' && "active text-foreground dark:text-white")}>
                                    <span className="led-light"></span>
                                    <span className="relative z-20 capitalize"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
                                 </button>
-                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'gifs' && "active text-foreground dark:text-white")}>
+                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'gifs' && "active text-foreground dark:text-white")}>
                                    <span className="led-light"></span>
                                    <span className="relative z-20 capitalize"><Film className="inline-block mr-2 size-4"/>GIFs</span>
                                 </button>
@@ -4808,66 +4804,88 @@ export default function CreateTemplatePage() {
                     </p>
                 );
             case 'image': {
-                    const imageBlock = block as ImageBlock;
-                    const { url, alt, styles, link } = imageBlock.payload;
-                    const { borderRadius, zoom, positionX, positionY, border } = styles;
+                const imageBlock = block as ImageBlock;
+                const { url, alt, styles, link } = imageBlock.payload;
+                const { borderRadius, zoom, positionX, positionY, border } = styles;
+            
+                const containerStyle: React.CSSProperties = {
+                    width: '100%',
+                    padding: '8px',
+                    boxSizing: 'border-box',
+                };
+            
+                const wrapperStyle: React.CSSProperties = {
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '75%', // Aspect Ratio 4:3
+                    borderRadius: `${borderRadius}px`,
+                    overflow: 'hidden',
+                };
+            
+                const imageStyle: React.CSSProperties = {
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    top: 0,
+                    left: 0,
+                    backgroundImage: `url(${url})`,
+                    backgroundPosition: `${positionX}% ${positionY}%`,
+                    backgroundSize: `${zoom}%`,
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'all 0.2s',
+                };
 
-                    const containerStyle: React.CSSProperties = {
-                        width: '100%',
-                        padding: '8px',
-                        boxSizing: 'border-box',
-                    };
-                    
-                    const borderWrapperStyle: React.CSSProperties = {
-                      position: 'relative',
-                      width: '100%',
-                      paddingBottom: '75%', // Aspect Ratio 4:3
-                      borderRadius: `${borderRadius}px`,
-                      overflow: 'hidden',
-                    };
-
-                    if (border.width > 0) {
-                      if (border.type === 'solid') {
-                        borderWrapperStyle.border = `${border.width}px solid ${border.color1}`;
-                      } else if (border.type === 'gradient') {
-                        // This is tricky. We'll use a pseudo-element for the gradient border.
-                        // This is a simplified approach. A more robust one might need more divs.
-                        borderWrapperStyle.border = `${border.width}px solid transparent`;
-                        borderWrapperStyle.background = `linear-gradient(white, white) padding-box, linear-gradient(to right, ${border.color1}, ${border.color2}) border-box`;
-                      }
-                    }
-
-                    const imageStyle: React.CSSProperties = {
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        top: 0,
-                        left: 0,
-                        backgroundImage: `url(${url})`,
-                        backgroundPosition: `${positionX}% ${positionY}%`,
-                        backgroundSize: `${zoom}%`,
-                        backgroundRepeat: 'no-repeat',
-                        transition: 'all 0.2s',
-                    };
-
-                    const imageElement = (
-                        <div style={containerStyle}>
-                            <div style={borderWrapperStyle}>
-                                <div style={imageStyle} title={alt} />
-                            </div>
-                        </div>
-                    );
+                const borderStyle: React.CSSProperties = {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: 'inherit',
+                    pointerEvents: 'none',
+                    borderStyle: 'solid',
+                    borderWidth: `${border.width}px`,
+                };
                 
-                    if (link && link.url && link.url !== '#') {
-                        return (
-                            <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
-                                {imageElement}
-                            </a>
-                        );
+                if (border.width > 0) {
+                    if (border.type === 'solid') {
+                        borderStyle.borderColor = border.color1;
+                    } else if (border.type === 'gradient') {
+                        const { direction, color1, color2 } = border;
+                        let gradient = '';
+                        if (direction === 'radial') {
+                            gradient = `radial-gradient(circle, ${color1}, ${color2})`;
+                        } else {
+                            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+                            gradient = `linear-gradient(${angle}, ${color1}, ${color2})`;
+                        }
+                        borderStyle.borderImage = gradient;
+                        borderStyle.borderImageSlice = 1;
+                        borderStyle.borderColor = 'transparent';
                     }
-                
-                    return imageElement;
+                } else {
+                    borderStyle.borderWidth = '0px';
                 }
+            
+                const imageElement = (
+                    <div style={containerStyle}>
+                        <div style={wrapperStyle}>
+                            <div style={imageStyle} title={alt} />
+                            <div style={borderStyle}></div>
+                        </div>
+                    </div>
+                );
+            
+                if (link && link.url && link.url !== '#') {
+                    return (
+                        <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+                            {imageElement}
+                        </a>
+                    );
+                }
+            
+                return imageElement;
+            }
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
@@ -6149,5 +6167,6 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
