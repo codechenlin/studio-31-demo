@@ -118,6 +118,8 @@ import {
   Star,
   CheckCircle,
   FolderOpen,
+  Image as LucideImage,
+  Film
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3361,7 +3363,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
 });
 BackgroundManagerModal.displayName = 'BackgroundManagerModal';
 
-
 const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -3782,12 +3783,14 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
     const { toast } = useToast();
     const [supabaseUrl, setSupabaseUrl] = useState('');
     const [activeSource, setActiveSource] = useState<'gallery' | 'upload' | 'url'>('gallery');
+    const [filterType, setFilterType] = useState<'images' | 'gifs'>('images');
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [selectedFileForPreview, setSelectedFileForPreview] = useState<StorageFile | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isRenaming, setIsRenaming] = useState<string | null>(null);
     const [tempName, setTempName] = useState("");
+    const [urlInputValue, setUrlInputValue] = useState("");
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true);
@@ -3795,6 +3798,11 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
         if (result.success && result.data) {
             setFiles(result.data.files);
             setSupabaseUrl(result.data.baseUrl);
+             if (result.data.files.length > 0) {
+                setSelectedFileForPreview(result.data.files[0]);
+            } else {
+                setSelectedFileForPreview(null);
+            }
         } else {
             toast({ title: 'Error al cargar archivos', description: result.error, variant: 'destructive' });
         }
@@ -3805,21 +3813,11 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
         if (open) {
             fetchFiles();
         } else {
-            // Reset state when closing
             setSelectedFiles([]);
             setIsMultiSelectMode(false);
             setSelectedFileForPreview(null);
         }
     }, [open, fetchFiles]);
-    
-     useEffect(() => {
-        if (files.length > 0 && !selectedFileForPreview) {
-            setSelectedFileForPreview(files[0]);
-        }
-        if (files.length === 0) {
-            setSelectedFileForPreview(null);
-        }
-    }, [files, selectedFileForPreview]);
 
     const handleFileSelect = (file: StorageFile) => {
         if (isMultiSelectMode) {
@@ -3841,15 +3839,10 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
         setIsUploading(false);
         if (result.success) {
             toast({ title: "Subida Exitosa", description: "Tu archivo ha sido subido.", className: "bg-green-500 text-white" });
-            fetchFiles(); // Refresh file list
+            fetchFiles();
         } else {
             toast({ title: "Error al Subir", description: result.error, variant: 'destructive' });
         }
-    };
-
-    const handleUrlUpload = () => {
-        // Placeholder for future implementation
-        toast({ title: "Función no disponible", description: "Añadir desde URL se implementará pronto." });
     };
 
     const handleDelete = async () => {
@@ -3859,7 +3852,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
         const result = await deleteFiles({ paths: pathsToDelete });
         if (result.success) {
             toast({ title: "Archivos Eliminados", description: `${pathsToDelete.length} archivo(s) han sido eliminados.` });
-            fetchFiles(); // Refresh
+            fetchFiles();
             setSelectedFiles([]);
             if(!isMultiSelectMode) setSelectedFileForPreview(null);
         } else {
@@ -3889,120 +3882,121 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
     
     const getFileUrl = (filePath: string) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${filePath}`;
     
+    const filteredFiles = files.filter(file => {
+        if(filterType === 'gifs') return file.metadata.mimetype === 'image/gif';
+        if(filterType === 'images') return file.metadata.mimetype !== 'image/gif';
+        return true;
+    });
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
-                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
+            <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white shadow-2xl shadow-primary/20">
+                 <DialogHeader className="p-3 border-b border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-2 text-base"><FolderOpen className="text-primary"/>Gestor de Archivos</DialogTitle>
                 </DialogHeader>
+
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    <div className="col-span-8 flex flex-col bg-black/30 p-4 border-r border-zinc-800 overflow-y-auto custom-scrollbar">
-                        <div className="flex justify-between items-center mb-4">
+                    {/* Main Content Area */}
+                    <div className="col-span-8 md:col-span-9 flex flex-col bg-black/30 border-r border-zinc-800">
+                        {/* Top Control Bar */}
+                        <div className="shrink-0 p-2.5 border-b border-zinc-800 flex flex-wrap items-center gap-4">
                              <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
                                  {(['gallery', 'upload', 'url'] as const).map((source) => (
-                                     <button
-                                        key={source}
-                                        onClick={() => setActiveSource(source)}
-                                        className={cn("led-button relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2", activeSource === source && "active")}
-                                    >
-                                        <span className="led-light"></span>
-                                        <span className="relative z-20 capitalize">
-                                            {source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}
-                                        </span>
-                                    </button>
+                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2", activeSource === source && "active")}>
+                                         <span className="led-light"></span>
+                                         <span className="relative z-20 capitalize">{source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}</span>
+                                     </button>
                                  ))}
                              </div>
+                            <Separator orientation="vertical" className="h-6 bg-zinc-700"/>
+                             <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
+                                <Button variant="ghost" size="sm" onClick={() => setFilterType('images')} className={cn("text-xs text-zinc-400 hover:text-white", filterType === 'images' && "text-white bg-white/5")}> <LucideImage className="mr-2"/>Imágenes</Button>
+                                <Button variant="ghost" size="sm" onClick={() => setFilterType('gifs')} className={cn("text-xs text-zinc-400 hover:text-white", filterType === 'gifs' && "text-white bg-white/5")}> <Film className="mr-2"/>GIFs</Button>
+                             </div>
+                             <div className="flex-grow"/>
                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button", isMultiSelectMode && "active")}>
-                                     <span className="led-light"></span>
-                                     <span className="relative z-20">Seleccionar Varios</span>
+                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-zinc-600 hover:bg-white/10 hover:border-zinc-400", isMultiSelectMode && "active")}>
+                                     <span className="led-light"></span><span className="relative z-20">Seleccionar Varios</span>
                                 </Button>
                                 {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
-                                     <Button variant="destructive" size="sm" onClick={handleDelete}>
-                                        <Trash2 className="mr-2"/>
-                                        Eliminar
+                                     <Button variant="destructive" size="sm" onClick={handleDelete} className="bg-red-600/80 hover:bg-red-600 text-white border-red-500">
+                                        <Trash2 className="mr-2"/> Eliminar
                                     </Button>
                                 )}
                              </div>
                         </div>
 
-                        {activeSource === 'gallery' && (
-                            isLoading ? <div className="text-center p-8">Cargando...</div> :
-                            files.length === 0 ? <div className="text-center text-zinc-500 p-8">No hay archivos en tu galería.</div> :
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                {files.map(file => (
-                                    <Card 
-                                        key={file.id} 
-                                        onClick={() => handleFileSelect(file)}
-                                        className={cn(
-                                            "relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800 border-2",
-                                            (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50"
-                                        )}
-                                    >
-                                       <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
-                                       {isMultiSelectMode && selectedFiles.includes(file.name) && (
-                                          <div className="absolute top-1.5 right-1.5 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>
-                                       )}
-                                       <div className="absolute bottom-0 left-0 w-full p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                                          <p className="text-xs text-white truncate">{file.name.split('/').pop()}</p>
-                                       </div>
-                                    </Card>
-                                ))}
-                            </div>
-                        )}
-                         {activeSource === 'upload' && (
-                            <div className="h-full flex items-center justify-center">
-                                <div className="p-8 border-2 border-dashed border-zinc-700 rounded-lg text-center w-full max-w-md">
-                                    <UploadCloud className="mx-auto size-12 text-zinc-500"/>
-                                    <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
-                                    <p className="text-xs text-zinc-400 mt-1">PNG, JPG, GIF hasta 10MB</p>
-                                    <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
-                                    <Button asChild variant="primary" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
+                        {/* Dynamic Content */}
+                        <ScrollArea className="flex-1 p-4">
+                            {activeSource === 'gallery' && (
+                                isLoading ? <div className="text-center p-8 text-zinc-400">Cargando...</div> :
+                                filteredFiles.length === 0 ? <div className="text-center text-zinc-500 p-8">No hay archivos en esta categoría.</div> :
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                    {filteredFiles.map(file => (
+                                        <Card key={file.id} onClick={() => handleFileSelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800 border-2", (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50")}>
+                                           <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
+                                           {isMultiSelectMode && selectedFiles.includes(file.name) && <div className="absolute top-1.5 right-1.5 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
+                                           <div className="absolute bottom-0 left-0 w-full p-1.5 bg-gradient-to-t from-black/80 to-transparent"><p className="text-xs text-white truncate">{file.name.split('/').pop()}</p></div>
+                                        </Card>
+                                    ))}
                                 </div>
-                            </div>
-                        )}
-                        {activeSource === 'url' && (
-                            <div className="h-full flex items-center justify-center">
-                                <div className="p-8 border border-zinc-800 rounded-lg text-center w-full max-w-md bg-black/20">
-                                     <LinkIcon className="mx-auto size-12 text-zinc-500"/>
-                                     <h3 className="mt-4 text-lg font-semibold">Añadir desde URL</h3>
-                                     <p className="text-xs text-zinc-400 mt-1">Pega una URL de imagen para subirla a tu galería.</p>
-                                     <div className="flex gap-2 mt-4">
-                                        <Input placeholder="https://..." className="bg-zinc-800 border-zinc-700"/>
-                                        <Button onClick={handleUrlUpload}>Añadir</Button>
-                                     </div>
+                            )}
+                            {activeSource === 'upload' && (
+                                <div className="h-full flex items-center justify-center p-4">
+                                    <div className="p-8 border-2 border-dashed border-zinc-700 rounded-lg text-center w-full max-w-lg">
+                                        <UploadCloud className="mx-auto size-12 text-zinc-500"/>
+                                        <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
+                                        <p className="text-xs text-zinc-400 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                                        <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
+                                        <Button asChild variant="primary" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                            {activeSource === 'url' && (
+                                <div className="h-full flex items-center justify-center p-4">
+                                    <div className="p-8 border border-zinc-800 rounded-lg text-center w-full max-w-lg bg-black/20">
+                                         <LinkIcon className="mx-auto size-12 text-zinc-500"/>
+                                         <h3 className="mt-4 text-lg font-semibold">Añadir desde URL</h3>
+                                         <p className="text-xs text-zinc-400 mt-1">Pega una URL de imagen para subirla a tu galería.</p>
+                                         <div className="flex gap-2 mt-4">
+                                            <Input value={urlInputValue} onChange={e => setUrlInputValue(e.target.value)} placeholder="https://..." className="bg-zinc-800 border-zinc-700"/>
+                                            <Button>Añadir</Button>
+                                         </div>
+                                    </div>
+                                </div>
+                            )}
+                        </ScrollArea>
                     </div>
-                    <div className="col-span-4 p-4 space-y-4 overflow-y-auto custom-scrollbar">
+
+                    {/* Side Panel */}
+                    <div className="col-span-4 md:col-span-3 p-4 space-y-4 overflow-y-auto custom-scrollbar bg-black/20">
                         {selectedFileForPreview ? (
                             <>
                                 <div>
-                                    <h4 className="text-sm font-semibold mb-2">Vista Previa</h4>
-                                    <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                    <h4 className="text-sm font-semibold mb-2 text-zinc-300">Vista Previa</h4>
+                                    <div className="aspect-video bg-black rounded-lg overflow-hidden border border-zinc-700">
                                         <img src={getFileUrl(selectedFileForPreview.name)} alt="Preview" className="w-full h-full object-contain"/>
                                     </div>
                                 </div>
                                 <div className="space-y-3 text-sm">
-                                    <h4 className="text-sm font-semibold">Información</h4>
+                                    <h4 className="text-sm font-semibold text-zinc-300">Información</h4>
                                     <div className="p-3 bg-black/20 rounded-lg border border-zinc-800 space-y-2">
                                         <div className="flex items-center gap-2">
                                             {isRenaming === selectedFileForPreview.name ? (
-                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs"/>
+                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs bg-zinc-800 border-zinc-600"/>
                                             ) : (
-                                               <p className="font-mono text-xs truncate flex-1">{selectedFileForPreview.name.split('/').pop()}</p>
+                                               <p className="font-mono text-xs truncate flex-1 text-zinc-400">{selectedFileForPreview.name.split('/').pop()}</p>
                                             )}
-                                            <Button variant="ghost" size="icon" className="size-6 shrink-0" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
+                                            <Button variant="ghost" size="icon" className="size-6 shrink-0 text-zinc-400 hover:text-white" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
                                         </div>
                                         <p className="text-xs text-zinc-400">Tamaño: {(selectedFileForPreview.metadata.size / 1024).toFixed(2)} KB</p>
                                         <p className="text-xs text-zinc-400">Subido: {format(new Date(selectedFileForPreview.created_at), 'dd MMM, yyyy')}</p>
                                     </div>
                                 </div>
                                  <div className="space-y-2">
-                                     <h4 className="text-sm font-semibold">Acciones</h4>
-                                     <Button variant="outline" className="w-full" onClick={() => navigator.clipboard.writeText(getFileUrl(selectedFileForPreview.name))}>
-                                        <ClipboardCheck className="mr-2"/>Copiar URL Pública
+                                     <h4 className="text-sm font-semibold text-zinc-300">Acciones</h4>
+                                     <Button variant="outline" className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white" onClick={() => window.open(getFileUrl(selectedFileForPreview.name), '_blank')}>
+                                        <Expand className="mr-2"/>Ver en Pantalla Completa
                                     </Button>
                                 </div>
                             </>
@@ -4016,10 +4010,13 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                         )}
                     </div>
                 </div>
+                 <DialogFooter className="p-2.5 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10">
+                    <Button type="button" onClick={() => onOpenChange(false)} className="bg-red-600/80 hover:bg-red-600 text-white border-red-500">Salir</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
-}
+    );
+};
 
 const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean, onOpenChange: (open: boolean) => void, onSelect: (url: string) => void }) => {
     const [files, setFiles] = useState<StorageFile[]>([]);
@@ -4776,64 +4773,43 @@ export default function CreateTemplatePage() {
                     const { borderRadius, zoom, positionX, positionY, border } = styles;
 
                     const containerStyle: React.CSSProperties = {
-                        width: '100%',
                         padding: '8px',
-                        boxSizing: 'border-box',
-                    };
-                    
-                    const outerWrapperStyle: React.CSSProperties = {
                         width: '100%',
                         height: 'auto',
-                        aspectRatio: '16 / 9',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: `${borderRadius}px`,
+                        aspectRatio: '16/9',
                     };
-
+                    
                     const borderGradient = border.type === 'gradient' 
                         ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})` 
                         : undefined;
 
-                    const borderStyle: React.CSSProperties = {
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        borderStyle: 'solid',
-                        borderWidth: `${border.width}px`,
-                        borderColor: border.type === 'solid' ? border.color1 : 'transparent',
-                        ...(border.type === 'gradient' && {
-                            borderImage: borderGradient,
-                            borderImageSlice: 1,
-                        }),
+                    const outerWrapperStyle: React.CSSProperties = {
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        borderRadius: `${borderRadius}px`,
+                        padding: `${border.width}px`,
                         boxSizing: 'border-box',
+                        background: borderGradient || (border.type === 'solid' ? border.color1 : 'transparent'),
                     };
                     
                     const imageContainerStyle: React.CSSProperties = {
-                        position: 'absolute',
                         width: '100%',
                         height: '100%',
                         overflow: 'hidden',
-                        borderRadius: 'inherit'
+                        borderRadius: `${borderRadius - border.width}px`,
+                         backgroundImage: `url(${url})`,
+                        backgroundPosition: `${positionX}% ${positionY}%`,
+                        backgroundSize: `${zoom}%`,
+                        backgroundRepeat: 'no-repeat',
+                        transition: 'all 0.2s',
                     };
-
-                    const imageStyle: React.CSSProperties = {
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: `${positionX}% ${positionY}%`,
-                        transform: `scale(${zoom / 100})`,
-                        transition: 'transform 0.2s, object-position 0.2s',
-                    };
-                    
 
                     const imageElement = (
                         <div style={containerStyle}>
-                            <div style={outerWrapperStyle}>
-                                <div style={imageContainerStyle}>
-                                    <img src={url} alt={alt} style={imageStyle} />
-                                </div>
-                                <div style={borderStyle}></div>
-                            </div>
+                           <div style={outerWrapperStyle}>
+                               <div style={imageContainerStyle} title={alt} />
+                           </div>
                         </div>
                     );
                 
