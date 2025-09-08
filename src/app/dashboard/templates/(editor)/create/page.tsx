@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -139,7 +139,6 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -470,8 +469,8 @@ interface RatingBlock extends BaseBlock {
   payload: {
     rating: number; // 0 to 5
     styles: {
-      starSize: number;
       starStyle: 'pointed' | 'rounded';
+      starSize: number;
       alignment: TextAlign;
       paddingY: number;
       spacing: number;
@@ -3717,7 +3716,7 @@ const ColorEditor = ({ subStyle, styles, updateFunc }: {
 
 const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { rating, styles } = block.payload;
-    const { filled, unfilled, border, starStyle, starSize, alignment, paddingY, spacing } = styles;
+    const { starStyle, starSize, alignment, paddingY, spacing } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
     const roundedStarPath = "M12 17.8l-3.8 2.3c-.5.3-1.1-.1-1-.7l.7-4.2-3-2.9c-.4-.4-.2-1.1.4-1.2l4.2-.6L11.2 7c.2-.5.9-.5 1.1 0l1.9 3.8 4.2.6c.6.1.8.8.4 1.2l-3 2.9.7 4.2c.1.6-.5 1-1 .7L12 17.8z";
@@ -3748,12 +3747,12 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="-1" y="-1" width={26 * fillValue} height="28" />
+                       <rect x="0" y="0" width={24 * fillValue} height="24" />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
+                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
                 <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
+                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
             </svg>
         );
     };
@@ -4414,8 +4413,8 @@ export default function CreateTemplatePage() {
                 payload: {
                     rating: 4.5,
                     styles: {
-                        starSize: 40,
                         starStyle: 'pointed',
+                        starSize: 40,
                         alignment: 'center',
                         paddingY: 10,
                         spacing: 4,
@@ -4769,49 +4768,57 @@ export default function CreateTemplatePage() {
                     const { borderRadius, zoom, positionX, positionY, border } = styles;
 
                     const containerStyle: React.CSSProperties = {
+                        width: '100%',
+                        borderRadius: `${borderRadius}px`,
                         padding: '8px',
-                        width: '100%',
+                        boxSizing: 'border-box'
                     };
 
-                    const outerWrapperStyle: React.CSSProperties = {
+                    const imageWrapperStyle: React.CSSProperties = {
                         width: '100%',
-                        paddingBottom: '75%', // 4:3 aspect ratio
+                        paddingBottom: '75%', // Aspect Ratio
                         position: 'relative',
-                        borderRadius: `${borderRadius}px`,
-                        boxSizing: 'border-box',
                         overflow: 'hidden',
-                    };
-                    
-                    const borderGradient = border.type === 'gradient' 
-                        ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})` 
-                        : undefined;
-
-                    const borderStyle: React.CSSProperties = {
-                        position: 'absolute',
-                        top: 0, right: 0, bottom: 0, left: 0,
-                        border: `${border.width}px solid ${border.type === 'solid' ? border.color1 : 'transparent'}`,
-                        borderImage: borderGradient,
-                        borderImageSlice: 1,
                         borderRadius: `${borderRadius}px`,
-                        pointerEvents: 'none',
                     };
 
-                    const imageContainerStyle: React.CSSProperties = {
+                    const imageStyle: React.CSSProperties = {
                         position: 'absolute',
-                        top: 0, right: 0, bottom: 0, left: 0,
+                        width: '100%',
+                        height: '100%',
+                        top: 0,
+                        left: 0,
                         backgroundImage: `url(${url})`,
                         backgroundPosition: `${positionX}% ${positionY}%`,
                         backgroundSize: `${zoom}%`,
                         backgroundRepeat: 'no-repeat',
                         transition: 'all 0.2s',
                     };
+                    
+                    const borderStyle: React.CSSProperties = {
+                        position: 'absolute',
+                        top: 0, right: 0, bottom: 0, left: 0,
+                        borderRadius: `${borderRadius}px`,
+                        pointerEvents: 'none',
+                        borderStyle: 'solid',
+                        borderWidth: `${border.width}px`,
+                    };
+                    
+                    if (border.type === 'solid') {
+                        borderStyle.borderColor = border.color1;
+                    } else {
+                        const gradient = `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})`;
+                        borderStyle.borderImageSource = gradient;
+                        borderStyle.borderImageSlice = 1;
+                        borderStyle.borderColor = 'transparent';
+                    }
 
                     const imageElement = (
                         <div style={containerStyle}>
-                           <div style={outerWrapperStyle}>
-                               <div style={imageContainerStyle} title={alt} />
-                               <div style={borderStyle}></div>
-                           </div>
+                            <div style={imageWrapperStyle}>
+                                <div style={imageStyle} title={alt} />
+                                <div style={borderStyle}></div>
+                            </div>
                         </div>
                     );
                 
@@ -6106,3 +6113,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
