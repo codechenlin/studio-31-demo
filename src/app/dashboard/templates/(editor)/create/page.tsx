@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -150,7 +150,6 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -3362,7 +3361,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                 </div>
             </div>
 
-            <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10">
+            <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10 flex justify-between">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancelar</Button>
                 <Button onClick={handleApply} disabled={!internalState?.url || isUploading} className="bg-primary hover:bg-primary/80 text-white">
                     {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : <CheckIcon className="mr-2"/>}
@@ -3731,7 +3730,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { starStyle, starSize, alignment, paddingY, spacing } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 17.8c-1.3 0-2.6.5-3.8 1.5-1.1.9-2 2.2-2.3 3.6-.3 1.4.3 2.9 1.5 3.8.5.3 1.1.5 1.6.5.6 0 1.1-.2 1.6-.5l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0 .5-.3 1.1-.5 1.6-.5.6 0 1.1.2 1.6.5 1.2.9 1.8 2.3 1.5 3.8-.3 1.4-1.2 2.7-2.3 3.6-1.2 1-2.5 1.5-3.8 1.5-1.3 0-2.6-.5-3.8-1.5s-2-2.2-2.3-3.6c-.3-1.4.3-2.9 1.5-3.8.5-.3 1.1-.5 1.6-.5z";
+    const roundedStarPath = "M12 2.6c.6 1.2 1.2 2.5 1.9 3.8.7 1.3 1.5 2.6 2.5 3.8.9 1.2 2 2.3 3.2 3.2.6.5.9 1.1.9 1.8s-.3 1.3-.9 1.8c-1.2.9-2.3 2-3.2 3.2s-1.9 2.5-3.2 3.2c-1.3.7-2.6 1.1-3.8 1.1s-2.5-.4-3.8-1.1c-1.2-.7-2.3-1.9-3.2-3.2s-1.9-2.5-3.2-3.2c-1.3-.7-2.6-1.1-3.8-1.1-.7 0-1.3.3-1.8.9-1.2.9-2.3 2-3.2 3.2-.7 1.2-1.1 2.5-1.1 3.8s.4 2.5 1.1 3.8.9 1.3 1.8 1.8.9 1.2 1.8 1.8c1.2.9 2.5 1.5 3.8 1.5s2.6-.5 3.8-1.5c1.2-.9 2.3-2.2 3.2-3.6.3-1.4-.3-2.9-1.5-3.8-.5-.3-1.1-.5-1.6-.5z"
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3766,9 +3765,9 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                        <rect x="0" y="0" width={24 * fillValue} height="24" />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
+                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
                 <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
+                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" /> }
             </svg>
         );
     };
@@ -4149,7 +4148,7 @@ export default function CreateTemplatePage() {
   const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
   
   // Gallery Modal State
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
   
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -4807,71 +4806,55 @@ export default function CreateTemplatePage() {
                 const imageBlock = block as ImageBlock;
                 const { url, alt, styles, link } = imageBlock.payload;
                 const { borderRadius, zoom, positionX, positionY, border } = styles;
-            
-                const containerStyle: React.CSSProperties = {
-                    width: '100%',
-                    padding: '8px',
-                    boxSizing: 'border-box',
-                };
-            
+
                 const wrapperStyle: React.CSSProperties = {
                     position: 'relative',
                     width: '100%',
                     paddingBottom: '75%', // Aspect Ratio 4:3
                     borderRadius: `${borderRadius}px`,
                     overflow: 'hidden',
-                };
-            
-                const imageStyle: React.CSSProperties = {
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    top: 0,
-                    left: 0,
-                    backgroundImage: `url(${url})`,
-                    backgroundPosition: `${positionX}% ${positionY}%`,
-                    backgroundSize: `${zoom}%`,
-                    backgroundRepeat: 'no-repeat',
-                    transition: 'all 0.2s',
-                };
-
-                const borderStyle: React.CSSProperties = {
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    borderRadius: 'inherit',
-                    pointerEvents: 'none',
-                    borderStyle: 'solid',
-                    borderWidth: `${border.width}px`,
+                    boxSizing: 'border-box',
                 };
                 
-                if (border.width > 0) {
+                 if (border.width > 0) {
                     if (border.type === 'solid') {
-                        borderStyle.borderColor = border.color1;
+                        wrapperStyle.border = `${border.width}px solid ${border.color1}`;
                     } else if (border.type === 'gradient') {
                         const { direction, color1, color2 } = border;
                         let gradient = '';
                         if (direction === 'radial') {
                             gradient = `radial-gradient(circle, ${color1}, ${color2})`;
                         } else {
-                            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+                            const angle = direction === 'horizontal' ? '90deg' : '180deg';
                             gradient = `linear-gradient(${angle}, ${color1}, ${color2})`;
                         }
-                        borderStyle.borderImage = gradient;
-                        borderStyle.borderImageSlice = 1;
-                        borderStyle.borderColor = 'transparent';
+                        wrapperStyle.borderWidth = `${border.width}px`;
+                        wrapperStyle.borderStyle = 'solid';
+                        wrapperStyle.borderColor = 'transparent';
+                        wrapperStyle.backgroundImage = `linear-gradient(white, white), ${gradient}`;
+                        wrapperStyle.backgroundOrigin = 'border-box';
+                        wrapperStyle.backgroundClip = 'content-box, border-box';
                     }
-                } else {
-                    borderStyle.borderWidth = '0px';
                 }
-            
+
+                const imageStyle: React.CSSProperties = {
+                    position: 'absolute',
+                    width: `${zoom}%`,
+                    height: `${zoom}%`,
+                    top: `50%`,
+                    left: `50%`,
+                    transform: `translate(calc(-50% + ${positionX - 50}%), calc(-50% + ${positionY - 50}%))`,
+                    backgroundImage: `url(${url})`,
+                    backgroundPosition: `center`,
+                    backgroundSize: `cover`,
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'transform 0.2s, width 0.2s, height 0.2s',
+                };
+
                 const imageElement = (
-                    <div style={containerStyle}>
+                     <div style={{ padding: '8px' }}>
                         <div style={wrapperStyle}>
                             <div style={imageStyle} title={alt} />
-                            <div style={borderStyle}></div>
                         </div>
                     </div>
                 );
@@ -5747,7 +5730,7 @@ const LayerPanel = () => {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                           <Button variant="outline" size="icon" onClick={() => { setIsGalleryOpen(true); }}>
+                           <Button variant="outline" size="icon" onClick={() => { setIsFileManagerOpen(true); }}>
                                 <FileIcon />
                            </Button>
                         </TooltipTrigger>
@@ -6161,12 +6144,13 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
       <FileManagerModal
-        open={isGalleryOpen}
-        onOpenChange={setIsGalleryOpen}
+        open={isFileManagerOpen}
+        onOpenChange={setIsFileManagerOpen}
       />
     </div>
   );
 }
+
 
 
 
