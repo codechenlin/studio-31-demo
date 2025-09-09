@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -150,7 +149,6 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -457,8 +455,8 @@ interface ImageBlock extends BaseBlock {
     url: string;
     alt: string;
     link: {
-        url: string;
-        openInNewTab: boolean;
+      url: string;
+      openInNewTab: boolean;
     };
     styles: {
       positionX: number;
@@ -475,6 +473,7 @@ interface ImageBlock extends BaseBlock {
     };
   };
 }
+
 
 interface RatingBlock extends BaseBlock {
   type: 'rating';
@@ -998,7 +997,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, on
         <Separator className="bg-border/20" />
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Imagen de Fondo</h3>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">Imagen de Fondo</h3>
                 {(styles as WrapperStyles)?.backgroundImage && (
                      <Button 
                         variant="outline" 
@@ -2742,9 +2741,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                             {popularEmojis.map(emoji => (
                                 <TooltipProvider key={emoji}>
                                     <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleInsertEmoji(emoji)}>{emoji}</Button>
-                                        </TooltipTrigger>
+                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="text-lg" onClick={() => handleInsertEmoji(emoji)}>{emoji}</Button></TooltipTrigger>
                                         <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -3260,10 +3257,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
-                 <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </DialogClose>
             </DialogHeader>
             <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
@@ -3326,14 +3319,14 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                         <div className="grid grid-cols-4 gap-2">
                                             {galleryFiles.map(file => (
                                                 <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState?.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
-                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
+                                                    <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
                                                     {internalState?.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
                                                 </Card>
                                             ))}
                                         </div>
                                     </ScrollArea>
                                 ) : (
-                                    <p className="text-center text-zinc-500 text-sm h-full flex items-center justify-center">Tu galería está vacía.</p>
+                                    <p className="text-center text-zinc-500 text-sm h-full flex items-center justify-center">Tu galería está vacía</p>
                                 )}
                            </div>
                         )}
@@ -3385,7 +3378,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     const { toast } = useToast();
-    const [isUploading, setIsUploading] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
@@ -3430,26 +3422,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const updateBorder = (key: string, value: any) => {
         updateStyle('border', { ...element.payload.styles.border, [key]: value });
     };
-    
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
 
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        const result = await uploadFile(formData);
-        setIsUploading(false);
-
-        if (result.success && result.data?.uploadedFile) {
-            const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${result.data.uploadedFile.name}`;
-            updatePayload('url', publicUrl);
-            toast({ title: '¡Éxito!', description: 'Imagen subida.', className: 'bg-green-500 text-white' });
-        } else {
-            toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
-        }
-    };
-    
     const handleGallerySelect = (fileUrl: string) => {
       updatePayload('url', fileUrl);
       setIsGalleryOpen(false);
@@ -3466,18 +3439,14 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Gestionar Imagen</h3>
              <div className="space-y-2">
-                <div className="space-y-2">
-                    <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" disabled={isUploading}/>
-                    {isUploading && <p className="text-xs text-muted-foreground">Subiendo...</p>}
-                    <div>
-                        <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
-                        <Input id="image-url-editor" value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="https://example.com/image.png" />
-                    </div>
-                     <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
-                        <GalleryVertical className="mr-2"/>Abrir Galería
-                    </Button>
+                <div>
+                  <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
+                  <Input id="image-url-editor" value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="https://example.com/image.png" />
                 </div>
-             </div>
+                 <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
+                    <GalleryVertical className="mr-2"/>Abrir Galería
+                </Button>
+            </div>
             
             <div className="space-y-2">
                 <Label>Texto Alternativo</Label>
@@ -3501,7 +3470,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex-1 space-y-1">
-                        <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
+                        <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> Horizontal (X)</Label>
                         <Slider 
                             value={[positionX]} 
                             onValueChange={(v) => updateStyle('positionX', v[0], false)}
@@ -3509,7 +3478,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         />
                     </div>
                     <div className="flex-1 space-y-1">
-                        <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
+                        <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Vertical (Y)</Label>
                         <Slider 
                             value={[positionY]} 
                             onValueChange={(v) => updateStyle('positionY', v[0], false)}
@@ -3547,23 +3516,17 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 <div className="grid grid-cols-3 gap-2">
                                      <TooltipProvider>
                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                               <Button variant={border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
-                                            </TooltipTrigger>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
                                             <TooltipContent><p>Vertical</p></TooltipContent>
                                         </Tooltip>
                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                               <Button variant={border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
-                                            </TooltipTrigger>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
                                             <TooltipContent><p>Horizontal</p></TooltipContent>
                                         </Tooltip>
                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                               <Button variant={border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
-                                            </TooltipTrigger>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
                                             <TooltipContent><p>Radial</p></TooltipContent>
-                                        </Tooltip>
+                                         </Tooltip>
                                      </TooltipProvider>
                                  </div>
                               </div>
@@ -3623,7 +3586,7 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Slider 
                     value={[element.payload.rating]}
                     min={0} max={5} step={0.5}
-                    onValueChange={(v) => updatePayload('rating', v[0])}
+                    onValueChange={v => updatePayload('rating', v[0])}
                 />
             </div>
              <div className="space-y-2">
@@ -3704,23 +3667,17 @@ const ColorEditor = ({ subStyle, styles, updateFunc }: {
                         <div className="grid grid-cols-3 gap-2">
                             <TooltipProvider>
                                 <Tooltip>
-                                    <TooltipTrigger asChild>
-                                       <Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
-                                    </TooltipTrigger>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
                                     <TooltipContent><p>Vertical</p></TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
-                                    <TooltipTrigger asChild>
-                                       <Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
-                                    </TooltipTrigger>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
                                     <TooltipContent><p>Horizontal</p></TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
-                                    <TooltipTrigger asChild>
-                                       <Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
-                                    </TooltipTrigger>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
                                     <TooltipContent><p>Radial</p></TooltipContent>
-                                </Tooltip>
+                                 </Tooltip>
                              </TooltipProvider>
                         </div>
                     </div>
@@ -3732,10 +3689,10 @@ const ColorEditor = ({ subStyle, styles, updateFunc }: {
 
 const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { rating, styles } = block.payload;
-    const { starStyle, starSize, alignment, paddingY, spacing } = styles;
+    const { starSize, alignment, paddingY, spacing, starStyle } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 2C9.5 7 2 7.3 2 10.5c0 2.2 4.9 4.3 7 5.5s3 4.5 3 4.5s-.8-3.4 1.3-4.5c2-1.2 6.7-3.3 6.7-5.5C22 7.3 14.5 7 12 2z";
+    const roundedStarPath = "M12 2c-1.5 3-3.08 3.42-5.5 5.5s-2.5 4-5.5 5.5 3 2.5 5.5 5.5 4-2.5 5.5-5.5-3-2.5-5.5-5.5-4 2.5-5.5 5.5z";
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3747,11 +3704,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
             return config.color1;
         };
         
-        const starPath = starStyle === 'pointed' 
-           ? pointedStarPath
-           : roundedStarPath;
-        
-        const strokeLineJoin = starStyle === 'pointed' ? 'miter' : 'round';
+        const starPath = starStyle === 'pointed' ? pointedStarPath : roundedStarPath;
 
         return (
             <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -3770,9 +3723,9 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                        <rect x="0" y="0" width={24 * fillValue} height="24" />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
+                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
                 <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" /> }
+                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" /> }
             </svg>
         );
     };
@@ -3816,7 +3769,10 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
             setFiles(result.data.files);
             setSupabaseUrl(result.data.baseUrl);
              if (result.data.files.length > 0) {
-                setSelectedFileForPreview(result.data.files[0]);
+                const currentPreviewExists = result.data.files.some(f => f.id === selectedFileForPreview?.id);
+                if (!currentPreviewExists) {
+                    setSelectedFileForPreview(result.data.files[0]);
+                }
             } else {
                 setSelectedFileForPreview(null);
             }
@@ -3824,7 +3780,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
             toast({ title: 'Error al cargar archivos', description: result.error, variant: 'destructive' });
         }
         setIsLoading(false);
-    }, [toast]);
+    }, [toast, selectedFileForPreview?.id]);
 
     useEffect(() => {
         if (open) {
@@ -3843,9 +3799,8 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                     ? prev.filter(name => name !== file.name) 
                     : [...prev, file.name]
             );
-        } else {
-            setSelectedFileForPreview(file);
         }
+        setSelectedFileForPreview(file);
     };
     
     const handleUpload = async (uploadedFile: File) => {
@@ -3857,14 +3812,18 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
         if (result.success) {
             toast({ title: "Subida Exitosa", description: "Tu archivo ha sido subido.", className: "bg-green-500 text-white" });
             fetchFiles();
+            setActiveSource('gallery');
         } else {
             toast({ title: "Error al Subir", description: result.error, variant: 'destructive' });
         }
     };
 
     const handleDelete = async () => {
-        const pathsToDelete = isMultiSelectMode ? selectedFiles : selectedFileForPreview ? [selectedFileForPreview.name] : [];
-        if (pathsToDelete.length === 0) return;
+        const pathsToDelete = isMultiSelectMode && selectedFiles.length > 0 ? selectedFiles : selectedFileForPreview ? [selectedFileForPreview.name] : [];
+        if (pathsToDelete.length === 0) {
+            setIsDeleteDialogOpen(false);
+            return;
+        }
 
         const result = await deleteFiles({ paths: pathsToDelete });
         if (result.success) {
@@ -3909,59 +3868,54 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
-                 <DialogHeader className="p-3 border-b border-border/10 dark:border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
-                    <DialogTitle className="flex items-center gap-2 text-base"><FolderOpen className="text-primary"/>Gestor de Archivos</DialogTitle>
-                </DialogHeader>
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente
+                            {isMultiSelectMode ? ` ${selectedFiles.length} archivos` : ' el archivo seleccionado'}.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
+                {/* Main Content Area */}
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    {/* Main Content Area */}
                     <div className="col-span-8 md:col-span-9 flex flex-col bg-background/50 dark:bg-black/30 border-r border-border/10 dark:border-zinc-800">
                         {/* Top Control Bar */}
                         <div className="shrink-0 p-2.5 border-b border-border/10 dark:border-zinc-800 flex flex-wrap items-center gap-4">
                              <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
                                  {(['gallery', 'upload', 'url'] as const).map((source) => (
-                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", activeSource === source && "active !text-foreground dark:!text-white")}>
-                                         <span className="led-light"></span>
-                                         <span className="relative z-20 capitalize">{source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}</span>
+                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", activeSource === source && "active text-foreground dark:text-white")}>
+                                         <span className="led-light"></span><span className="relative z-20 capitalize">
+                                             {source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}
+                                         </span>
                                      </button>
                                  ))}
                              </div>
                             <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'images' && "active text-foreground dark:text-white")}>
-                                   <span className="led-light"></span>
-                                   <span className="relative z-20 capitalize"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
+                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'images' && "active text-foreground dark:text-white border-primary/50")}>
+                                   <span className="led-light"></span><span className="relative z-20 capitalize flex items-center"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
                                 </button>
-                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'gifs' && "active text-foreground dark:text-white")}>
-                                   <span className="led-light"></span>
-                                   <span className="relative z-20 capitalize"><Film className="inline-block mr-2 size-4"/>GIFs</span>
+                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'gifs' && "active text-foreground dark:text-white border-primary/50")}>
+                                   <span className="led-light"></span><span className="relative z-20 capitalize flex items-center"><Film className="inline-block mr-2 size-4"/>GIFs</span>
                                 </button>
                             </div>
                              <div className="flex-grow"/>
                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-border/50 dark:border-zinc-600 hover:bg-muted dark:hover:bg-white/10 hover:border-border dark:hover:border-zinc-400", isMultiSelectMode && "active")}>
+                                <Button variant={isMultiSelectMode ? "secondary" : "outline"} size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-border/50 dark:border-zinc-600 hover:bg-muted dark:hover:bg-white/10 hover:border-border dark:hover:border-zinc-400", isMultiSelectMode && "active")}>
                                      <span className="led-light"></span><span className="relative z-20">Seleccionar Varios</span>
                                 </Button>
                                 {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
-                                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                                      <AlertDialogTrigger asChild>
-                                         <Button variant="destructive" size="sm">
-                                            <Trash2 className="mr-2"/> Eliminar
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Se eliminarán permanentemente {isMultiSelectMode ? `${selectedFiles.length} archivos` : 'este archivo'}.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Sí, eliminar</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
+                                    <Button variant="destructive" size="sm" onClick={() => setIsDeleteDialogOpen(true)}>
+                                        <Trash2 className="mr-2"/> Eliminar
+                                    </Button>
                                 )}
                              </div>
                         </div>
@@ -3988,7 +3942,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                                         <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
                                         <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF hasta 10MB</p>
                                         <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
-                                        <Button asChild variant="primary" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
+                                        <Button asChild variant="default" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
                                     </div>
                                 </div>
                             )}
@@ -4051,7 +4005,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                     </div>
                 </div>
                  <DialogFooter className="p-2.5 border-t border-border/10 dark:border-zinc-800 shrink-0 bg-background/80 dark:bg-zinc-900/50 z-10">
-                    <Button type="button" onClick={() => onOpenChange(false)} variant="outline">Salir</Button>
+                    <Button type="button" onClick={() => onOpenChange(false)} variant="outline" className="dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700">Salir</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -4250,11 +4204,9 @@ export default function CreateTemplatePage() {
   const ThemeToggle = () => (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={toggleTheme}>
             {isDarkMode ? <Sun /> : <Moon />}
-          </Button>
-        </TooltipTrigger>
+          </Button></TooltipTrigger>
         <TooltipContent>
           <p>Cambiar a modo {isDarkMode ? 'claro' : 'oscuro'}</p>
         </TooltipContent>
@@ -4807,69 +4759,56 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
-            case 'image': {
+              case 'image': {
                 const imageBlock = block as ImageBlock;
                 const { url, alt, styles, link } = imageBlock.payload;
                 const { borderRadius, zoom, positionX, positionY, border } = styles;
 
                 const wrapperStyle: React.CSSProperties = {
-                    position: 'relative',
                     width: '100%',
-                    paddingBottom: '75%', // Aspect Ratio 4:3
+                    height: 'auto',
+                    padding: `${border.width}px`,
                     borderRadius: `${borderRadius}px`,
-                    overflow: 'hidden',
-                    boxSizing: 'border-box',
                 };
                 
-                let borderStyle: React.CSSProperties = {};
-                if (border.width > 0 && border.type === 'gradient') {
-                    const { direction, color1, color2 } = border;
-                    let gradient = '';
-                    if (direction === 'radial') {
-                        gradient = `radial-gradient(${color1}, ${color2})`;
-                    } else {
-                        const angle = direction === 'horizontal' ? '90deg' : '180deg';
-                        gradient = `linear-gradient(${angle}, ${color1}, ${color2})`;
+                if (border.width > 0) {
+                    if (border.type === 'solid') {
+                        wrapperStyle.backgroundColor = border.color1;
+                    } else if (border.type === 'gradient') {
+                        const { direction, color1, color2 } = border;
+                        if (direction === 'radial') {
+                            wrapperStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
+                        } else {
+                            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+                            wrapperStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
+                        }
                     }
-                    borderStyle.background = gradient;
-                    borderStyle.position = 'absolute';
-                    borderStyle.inset = '0';
-                    borderStyle.zIndex = 1;
-                    borderStyle.borderRadius = `${borderRadius}px`;
-
-                } else if (border.width > 0) {
-                     wrapperStyle.border = `${border.width}px solid ${border.color1}`;
                 }
                 
                 const imageContainerStyle: React.CSSProperties = {
-                    position: 'absolute',
-                    top: border.width,
-                    left: border.width,
-                    right: border.width,
-                    bottom: border.width,
                     borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
                     overflow: 'hidden',
-                    zIndex: 2,
+                    height: 0,
+                    paddingBottom: '75%', // Maintain 4:3 aspect ratio
+                    position: 'relative',
                 };
                 
                 const imageStyle: React.CSSProperties = {
+                    position: 'absolute',
                     width: `${zoom}%`,
                     height: `${zoom}%`,
-                    objectFit: 'cover',
-                    position: 'absolute',
                     top: `${positionY}%`,
                     left: `${positionX}%`,
-                    transform: `translate(-${positionX}%, -${positionY}%)`,
-                    transition: 'transform 0.2s, width 0.2s, height 0.2s',
+                    transform: `translate(-${positionX}%, -${positionY}%) scale(1)`,
+                    objectFit: 'cover',
                 };
 
                 const imageElement = (
-                     <div style={{ padding: '8px' }}>
+                    <div style={{ padding: '8px' }}>
                         <div style={wrapperStyle}>
                             <div style={imageContainerStyle}>
                                 <img src={url} alt={alt} style={imageStyle} />
                             </div>
-                            <div style={borderStyle}></div>
                         </div>
                     </div>
                 );
@@ -4881,9 +4820,8 @@ export default function CreateTemplatePage() {
                         </a>
                     );
                 }
-            
                 return imageElement;
-            }
+              }
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
@@ -4935,8 +4873,8 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                      default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
-                      classic: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
+                      default: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>`,
+                      classic: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
                     };
                     
                      const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
@@ -5715,25 +5653,19 @@ const LayerPanel = () => {
             <TooltipProvider>
               <div className="flex items-center gap-2 p-1 bg-card/10 rounded-lg border border-border/20">
                   <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button variant={viewport === 'desktop' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('desktop')}><Laptop/></Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger asChild><Button variant={viewport === 'desktop' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('desktop')}><Laptop/></Button></TooltipTrigger>
                       <TooltipContent>
                           <p>Mira cómo se ve en <span className="font-bold">Escritorio</span></p>
                       </TooltipContent>
                   </Tooltip>
                   <Tooltip>
-                      <TooltipTrigger asChild>
-                           <Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger asChild><Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button></TooltipTrigger>
                       <TooltipContent>
-                          <p>Comprueba la vista para <span className="font-bold">Tableta</span></p>
+                          <p>Comprueba la vista para <span className="font-bold">Tabletas</span></p>
                       </TooltipContent>
                   </Tooltip>
                   <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger asChild><Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button></TooltipTrigger>
                       <TooltipContent>
                           <p>Comprueba la vista para <span className="font-bold">Móvil</span></p>
                       </TooltipContent>
@@ -5744,11 +5676,9 @@ const LayerPanel = () => {
            <div className="flex items-center gap-4">
                 <TooltipProvider>
                     <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button variant="outline" size="icon" onClick={() => { setIsFileManagerOpen(true); }}>
+                        <TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setIsFileManagerOpen(true); }}>
                                 <FileIcon />
-                           </Button>
-                        </TooltipTrigger>
+                           </Button></TooltipTrigger>
                         <TooltipContent>
                             <p>Abrir Gestor de Archivos</p>
                         </TooltipContent>
@@ -5911,7 +5841,7 @@ const LayerPanel = () => {
           }
           setIsWrapperBlockSelectorOpen(open);
       }}>
-        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Contenedor</DialogTitle>
             <DialogDescription>
@@ -6134,7 +6064,7 @@ const LayerPanel = () => {
              <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
                 <div className="flex items-center gap-2">
                     <Cloud className="size-4 text-green-400"/>
-                    <span>{lastSaved ? `Último guardado a las ${format(lastSaved, 'HH:mm')}`: 'No se ha guardado'}</span>
+                    <span>Último guardado a las {lastSaved ? format(lastSaved, 'HH:mm') : 'No se ha guardado'}</span>
                 </div>
                  <Button
                   variant="ghost"
@@ -6165,8 +6095,4 @@ const LayerPanel = () => {
     </div>
   );
 }
-
-
-
-
 
