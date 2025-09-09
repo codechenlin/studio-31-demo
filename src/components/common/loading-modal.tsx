@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { BrainCircuit, Loader, Save, UploadCloud } from 'lucide-react';
+import { BrainCircuit, Loader, Save, UploadCloud, Hourglass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type LoadingModalVariant = 'generate' | 'save' | 'upload' | 'login';
@@ -29,15 +29,21 @@ const variantConfig = {
     title: "Iniciando Sesión",
     description: "Verificando tus credenciales. Un momento...",
   },
+  default: {
+    icon: Hourglass,
+    title: 'Procesando',
+    description: 'Por favor, espera un momento...',
+  }
 };
 
 interface LoadingModalProps {
   isOpen: boolean;
-  variant?: LoadingModalVariant;
+  variant?: LoadingModalVariant | string; // Allow string for flexibility, but handle fallback
 }
 
 export function LoadingModal({ isOpen, variant = 'generate' }: LoadingModalProps) {
-  const { icon: Icon, title, description } = variantConfig[variant];
+  const config = variantConfig[variant as keyof typeof variantConfig] || variantConfig.default;
+  const { icon: Icon, title, description } = config;
 
   return (
     <Dialog open={isOpen}>
