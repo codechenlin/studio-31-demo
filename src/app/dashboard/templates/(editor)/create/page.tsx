@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -150,6 +150,7 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -3259,6 +3260,10 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
+                 <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                </DialogClose>
             </DialogHeader>
             <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
@@ -3730,7 +3735,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { starStyle, starSize, alignment, paddingY, spacing } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 2.6c.6 1.2 1.2 2.5 1.9 3.8.7 1.3 1.5 2.6 2.5 3.8.9 1.2 2 2.3 3.2 3.2.6.5.9 1.1.9 1.8s-.3 1.3-.9 1.8c-1.2.9-2.3 2-3.2 3.2s-1.9 2.5-3.2 3.2c-1.3.7-2.6 1.1-3.8 1.1s-2.5-.4-3.8-1.1c-1.2-.7-2.3-1.9-3.2-3.2s-1.9-2.5-3.2-3.2c-1.3-.7-2.6-1.1-3.8-1.1-.7 0-1.3.3-1.8.9-1.2.9-2.3 2-3.2 3.2-.7 1.2-1.1 2.5-1.1 3.8s.4 2.5 1.1 3.8.9 1.3 1.8 1.8.9 1.2 1.8 1.8c1.2.9 2.5 1.5 3.8 1.5s2.6-.5 3.8-1.5c1.2-.9 2.3-2.2 3.2-3.6.3-1.4-.3-2.9-1.5-3.8-.5-.3-1.1-.5-1.6-.5z"
+    const roundedStarPath = "M12 2C9.5 7 2 7.3 2 10.5c0 2.2 4.9 4.3 7 5.5s3 4.5 3 4.5s-.8-3.4 1.3-4.5c2-1.2 6.7-3.3 6.7-5.5C22 7.3 14.5 7 12 2z";
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3743,8 +3748,8 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         };
         
         const starPath = starStyle === 'pointed' 
-           ? "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-           : "M12,2.6l2.3,4.7l5.2,0.8l-3.8,3.7l0.9,5.2L12,14.3l-4.6,2.4l0.9-5.2L4.5,8.1l5.2-0.8L12,2.6z";
+           ? pointedStarPath
+           : roundedStarPath;
         
         const strokeLineJoin = starStyle === 'pointed' ? 'miter' : 'round';
 
@@ -4816,45 +4821,55 @@ export default function CreateTemplatePage() {
                     boxSizing: 'border-box',
                 };
                 
-                 if (border.width > 0) {
-                    if (border.type === 'solid') {
-                        wrapperStyle.border = `${border.width}px solid ${border.color1}`;
-                    } else if (border.type === 'gradient') {
-                        const { direction, color1, color2 } = border;
-                        let gradient = '';
-                        if (direction === 'radial') {
-                            gradient = `radial-gradient(circle, ${color1}, ${color2})`;
-                        } else {
-                            const angle = direction === 'horizontal' ? '90deg' : '180deg';
-                            gradient = `linear-gradient(${angle}, ${color1}, ${color2})`;
-                        }
-                        wrapperStyle.borderWidth = `${border.width}px`;
-                        wrapperStyle.borderStyle = 'solid';
-                        wrapperStyle.borderColor = 'transparent';
-                        wrapperStyle.backgroundImage = `linear-gradient(white, white), ${gradient}`;
-                        wrapperStyle.backgroundOrigin = 'border-box';
-                        wrapperStyle.backgroundClip = 'content-box, border-box';
+                let borderStyle: React.CSSProperties = {};
+                if (border.width > 0 && border.type === 'gradient') {
+                    const { direction, color1, color2 } = border;
+                    let gradient = '';
+                    if (direction === 'radial') {
+                        gradient = `radial-gradient(${color1}, ${color2})`;
+                    } else {
+                        const angle = direction === 'horizontal' ? '90deg' : '180deg';
+                        gradient = `linear-gradient(${angle}, ${color1}, ${color2})`;
                     }
-                }
+                    borderStyle.background = gradient;
+                    borderStyle.position = 'absolute';
+                    borderStyle.inset = '0';
+                    borderStyle.zIndex = 1;
+                    borderStyle.borderRadius = `${borderRadius}px`;
 
-                const imageStyle: React.CSSProperties = {
+                } else if (border.width > 0) {
+                     wrapperStyle.border = `${border.width}px solid ${border.color1}`;
+                }
+                
+                const imageContainerStyle: React.CSSProperties = {
                     position: 'absolute',
+                    top: border.width,
+                    left: border.width,
+                    right: border.width,
+                    bottom: border.width,
+                    borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
+                    overflow: 'hidden',
+                    zIndex: 2,
+                };
+                
+                const imageStyle: React.CSSProperties = {
                     width: `${zoom}%`,
                     height: `${zoom}%`,
-                    top: `50%`,
-                    left: `50%`,
-                    transform: `translate(calc(-50% + ${positionX - 50}%), calc(-50% + ${positionY - 50}%))`,
-                    backgroundImage: `url(${url})`,
-                    backgroundPosition: `center`,
-                    backgroundSize: `cover`,
-                    backgroundRepeat: 'no-repeat',
+                    objectFit: 'cover',
+                    position: 'absolute',
+                    top: `${positionY}%`,
+                    left: `${positionX}%`,
+                    transform: `translate(-${positionX}%, -${positionY}%)`,
                     transition: 'transform 0.2s, width 0.2s, height 0.2s',
                 };
 
                 const imageElement = (
                      <div style={{ padding: '8px' }}>
                         <div style={wrapperStyle}>
-                            <div style={imageStyle} title={alt} />
+                            <div style={imageContainerStyle}>
+                                <img src={url} alt={alt} style={imageStyle} />
+                            </div>
+                            <div style={borderStyle}></div>
                         </div>
                     </div>
                 );
@@ -6150,6 +6165,7 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
 
