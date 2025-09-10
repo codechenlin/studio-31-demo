@@ -144,6 +144,7 @@ import {
   Image as ImageIconType,
   Eye,
   Settings2,
+  Crop,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -587,8 +588,8 @@ interface GifBlock extends BaseBlock {
     url: string;
     alt: string;
     styles: {
-      scale: number;
       size: number;
+      scale: number;
       positionX: number;
       positionY: number;
     }
@@ -3916,344 +3917,12 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     );
 }
 
-const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
-    const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const { toast } = useToast();
-    const [supabaseUrl, setSupabaseUrl] = useState('');
-    const [activeSource, setActiveSource] = useState<'gallery' | 'upload' | 'url'>('gallery');
-    const [filterType, setFilterType] = useState<'images' | 'gifs'>('images');
-    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-    const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
-    const [selectedFileForPreview, setSelectedFileForPreview] = useState<StorageFile | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isRenaming, setIsRenaming] = useState<string | null>(null);
-    const [tempName, setTempName] = useState("");
-    const [urlInputValue, setUrlInputValue] = useState("");
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-
-    const fetchFiles = useCallback(async () => {
-        setIsLoading(true);
-        const result = await listFiles();
-        if (result.success && result.data) {
-            setFiles(result.data.files);
-            setSupabaseUrl(result.data.baseUrl);
-             if (result.data.files.length > 0) {
-                const currentPreviewExists = result.data.files.some(f => f.id === selectedFileForPreview?.id);
-                if (!currentPreviewExists) {
-                    setSelectedFileForPreview(result.data.files[0]);
-                }
-            } else {
-                setSelectedFileForPreview(null);
-            }
-        } else {
-            toast({ title: 'Error al cargar archivos', description: result.error, variant: 'destructive' });
-        }
-        setIsLoading(false);
-    }, [toast, selectedFileForPreview?.id]);
-
-    useEffect(() => {
-        if (open) {
-            fetchFiles();
-        } else {
-            setSelectedFiles([]);
-            setIsMultiSelectMode(false);
-            setSelectedFileForPreview(null);
-        }
-    }, [open, fetchFiles]);
-
-    const handleFileSelect = (file: StorageFile) => {
-        if (isMultiSelectMode) {
-            setSelectedFiles(prev => 
-                prev.includes(file.name) 
-                    ? prev.filter(name => name !== file.name) 
-                    : [...prev, file.name]
-            );
-        }
-        setSelectedFileForPreview(file);
-    };
-    
-    const handleUpload = async (uploadedFile: File) => {
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', uploadedFile);
-        const result = await uploadFile(formData);
-        setIsUploading(false);
-        if (result.success) {
-            toast({ title: "Subida Exitosa", description: "Tu archivo ha sido subido.", className: "bg-green-500 text-white" });
-            fetchFiles();
-            setActiveSource('gallery');
-        } else {
-            toast({ title: "Error al Subir", description: result.error, variant: 'destructive' });
-        }
-    };
-
-    const handleDelete = async () => {
-        const pathsToDelete = isMultiSelectMode && selectedFiles.length > 0 ? selectedFiles : selectedFileForPreview ? [selectedFileForPreview.name] : [];
-        if (pathsToDelete.length === 0) {
-            setIsDeleteDialogOpen(false);
-            return;
-        }
-
-        const result = await deleteFiles({ paths: pathsToDelete });
-        if (result.success) {
-            toast({ title: "Archivos Eliminados", description: `${pathsToDelete.length} archivo(s) han sido eliminados.` });
-            fetchFiles();
-            setSelectedFiles([]);
-            if(!isMultiSelectMode) setSelectedFileForPreview(null);
-        } else {
-            toast({ title: "Error al Eliminar", description: result.error, variant: 'destructive' });
-        }
-        setIsDeleteDialogOpen(false);
-    };
-    
-    const startRename = (file: StorageFile) => {
-      setIsRenaming(file.name);
-      setTempName(file.name.split('/').pop() || "");
-    }
-    
-    const handleRename = async () => {
-        if (!isRenaming || !tempName) return;
-        
-        const oldPath = isRenaming;
-        const result = await renameFile({ oldPath, newName: tempName });
-
-        if (result.success) {
-            toast({ title: "Renombrado", description: "El archivo ha sido renombrado." });
-            fetchFiles();
-        } else {
-            toast({ title: "Error al Renombrar", description: result.error, variant: 'destructive' });
-        }
-        setIsRenaming(null);
-    }
-    
-    const getFileUrl = (filePath: string) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${filePath}`;
-    
-    const filteredFiles = files.filter(file => {
-        if(filterType === 'gifs') return file.metadata.mimetype === 'image/gif';
-        if(filterType === 'images') return file.metadata.mimetype !== 'image/gif';
-        return true;
-    });
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
-                <DialogHeader className="p-4 border-b border-border/10 dark:border-zinc-800 shrink-0">
-                    <DialogTitle>Gestor de Archivos</DialogTitle>
-                    <DialogDescription>
-                    Sube, gestiona y selecciona imágenes y GIFs para tus plantillas.
-                    </DialogDescription>
-                </DialogHeader>
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente
-                            {isMultiSelectMode ? ` ${selectedFiles.length} archivos` : ' el archivo seleccionado'}.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* Main Content Area */}
-                <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    <div className="col-span-8 md:col-span-9 flex flex-col bg-background/50 dark:bg-black/30 border-r border-border/10 dark:border-zinc-800">
-                        {/* Top Control Bar */}
-                        <div className="shrink-0 p-2.5 border-b border-border/10 dark:border-zinc-800 flex flex-wrap items-center gap-4">
-                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                 {(['gallery', 'upload', 'url'] as const).map((source) => (
-                                     <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", activeSource === source && "active text-foreground dark:text-white")}>
-                                         <span className="led-light"></span><span className="relative z-20 capitalize">
-                                             {source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}
-                                         </span>
-                                     </button>
-                                 ))}
-                             </div>
-                            <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
-                            <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'images' && "active text-foreground dark:text-white border-primary/50")}>
-                                   <span className="led-light"></span><span className="relative z-20 capitalize flex items-center"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
-                                </button>
-                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-foreground/70 dark:text-white/70", filterType === 'gifs' && "active text-foreground dark:text-white border-primary/50")}>
-                                   <span className="led-light"></span><span className="relative z-20 capitalize flex items-center"><Film className="inline-block mr-2 size-4"/>GIFs</span>
-                                </button>
-                            </div>
-                             <div className="flex-grow"/>
-                             <div className="flex items-center gap-2">
-                                <Button variant={isMultiSelectMode ? "secondary" : "outline"} size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-border/50 dark:border-zinc-600 hover:bg-muted dark:hover:bg-white/10 hover:border-border dark:hover:border-zinc-400", isMultiSelectMode && "active")}>
-                                     <span className="led-light"></span><span className="relative z-20">Seleccionar Varios</span>
-                                </Button>
-                                {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
-                                    <Button variant="destructive" size="sm" onClick={() => setIsDeleteDialogOpen(true)}>
-                                        <Trash2 className="mr-2"/> Eliminar
-                                    </Button>
-                                )}
-                             </div>
-                        </div>
-
-                        {/* Dynamic Content */}
-                        <ScrollArea className="flex-1 p-4">
-                            {activeSource === 'gallery' && (
-                                isLoading ? <div className="text-center p-8 text-muted-foreground">Cargando...</div> :
-                                filteredFiles.length === 0 ? <div className="text-center text-muted-foreground p-8">No hay archivos en esta categoría.</div> :
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                    {filteredFiles.map(file => (
-                                        <Card key={file.id} onClick={() => handleFileSelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-muted/30 dark:bg-zinc-800 border-2", (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50")}>
-                                           <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
-                                           {isMultiSelectMode && selectedFiles.includes(file.name) && <div className="absolute top-1.5 right-1.5 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
-                                           <div className="absolute bottom-0 left-0 w-full p-1.5 bg-gradient-to-t from-black/80 to-transparent"><p className="text-xs text-white truncate">{file.name.split('/').pop()}</p></div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                            {activeSource === 'upload' && (
-                                <div className="h-full flex items-center justify-center p-4">
-                                    <div className="p-8 border-2 border-dashed border-border/50 dark:border-zinc-700 rounded-lg text-center w-full max-w-lg">
-                                        <UploadCloud className="mx-auto size-12 text-muted-foreground"/>
-                                        <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
-                                        <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF hasta 10MB</p>
-                                        <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
-                                        <Button asChild variant="default" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
-                                    </div>
-                                </div>
-                            )}
-                            {activeSource === 'url' && (
-                                <div className="h-full flex items-center justify-center p-4">
-                                    <div className="p-8 border border-border/30 dark:border-zinc-800 rounded-lg text-center w-full max-w-lg bg-background dark:bg-black/20">
-                                         <LinkIcon className="mx-auto size-12 text-muted-foreground"/>
-                                         <h3 className="mt-4 text-lg font-semibold">Añadir desde URL</h3>
-                                         <p className="text-xs text-muted-foreground mt-1">Pega una URL de imagen para subirla a tu galería.</p>
-                                         <div className="flex gap-2 mt-4">
-                                            <Input value={urlInputValue} onChange={e => setUrlInputValue(e.target.value)} placeholder="https://..." className="bg-muted/50 dark:bg-zinc-800 border-border/50 dark:border-zinc-700"/>
-                                            <Button>Añadir</Button>
-                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-
-                    {/* Side Panel */}
-                    <div className="col-span-4 md:col-span-3 p-4 space-y-4 overflow-y-auto custom-scrollbar bg-background/50 dark:bg-black/20">
-                        {selectedFileForPreview ? (
-                            <>
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Vista Previa</h4>
-                                    <div className="aspect-video bg-muted/20 dark:bg-black rounded-lg overflow-hidden border border-border/20 dark:border-zinc-700">
-                                        <img src={getFileUrl(selectedFileForPreview.name)} alt="Preview" className="w-full h-full object-contain"/>
-                                    </div>
-                                </div>
-                                <div className="space-y-3 text-sm">
-                                    <h4 className="text-sm font-semibold text-muted-foreground">Información</h4>
-                                    <div className="p-3 bg-muted/50 dark:bg-black/20 rounded-lg border border-border/20 dark:border-zinc-800 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            {isRenaming === selectedFileForPreview.name ? (
-                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs bg-background dark:bg-zinc-800 border-border/50 dark:border-zinc-600"/>
-                                            ) : (
-                                               <p className="font-mono text-xs truncate flex-1 text-muted-foreground">{selectedFileForPreview.name.split('/').pop()}</p>
-                                            )}
-                                            <Button variant="ghost" size="icon" className="size-6 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">Tamaño: {(selectedFileForPreview.metadata.size / 1024).toFixed(2)} KB</p>
-                                        <p className="text-xs text-muted-foreground">Subido: {format(new Date(selectedFileForPreview.created_at), 'dd MMM, yyyy')}</p>
-                                    </div>
-                                </div>
-                                 <div className="space-y-2">
-                                     <h4 className="text-sm font-semibold text-muted-foreground">Acciones</h4>
-                                     <Button variant="outline" className="w-full border-border/50 dark:border-zinc-700 text-muted-foreground hover:text-foreground dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white" onClick={() => window.open(getFileUrl(selectedFileForPreview.name), '_blank')}>
-                                        <Expand className="mr-2"/>Ver en Pantalla Completa
-                                    </Button>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-center text-muted-foreground">
-                                <div>
-                                    <ImageIconType className="size-16 mx-auto"/>
-                                    <p className="mt-2 text-sm">Selecciona un archivo</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                 <DialogFooter className="p-2.5 border-t border-border/10 dark:border-zinc-800 shrink-0 bg-background/80 dark:bg-zinc-900/50 z-10">
-                    <DialogClose asChild>
-                      <Button type="button" variant="outline" className="dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700">Salir</Button>
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
-const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean, onOpenChange: (open: boolean) => void, onSelect: (url: string) => void }) => {
-    const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-    const [supabaseUrl, setSupabaseUrl] = useState('');
-
-    const fetchFiles = useCallback(async () => {
-        setIsLoading(true);
-        const result = await listFiles();
-        if (result.success && result.data) {
-            setFiles(result.data.files);
-            setSupabaseUrl(result.data.baseUrl);
-        } else {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-        }
-        setIsLoading(false);
-    }, [toast]);
-
-    useEffect(() => {
-        if (open) {
-            fetchFiles();
-        }
-    }, [open, fetchFiles]);
-    
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[70vh] bg-card/90 backdrop-blur-sm">
-                <DialogHeader>
-                    <DialogTitle>Galería de Imágenes</DialogTitle>
-                    <DialogDescription>Selecciona una imagen subida previamente para tu bloque de contenido.</DialogDescription>
-                </DialogHeader>
-                {isLoading ? (
-                    <div className="flex items-center justify-center h-full"><p>Cargando archivos...</p></div>
-                ) : (
-                   <ScrollArea className="h-full">
-                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pr-4">
-                      {files.map(file => (
-                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file))} className="cursor-pointer hover:ring-2 hover:ring-primary overflow-hidden">
-                            <CardContent className="p-0 aspect-square">
-                                <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover"/>
-                            </CardContent>
-                            <CardFooter className="p-2">
-                               <p className="text-xs truncate">{file.name.split('/').pop()}</p>
-                            </CardFooter>
-                         </Card>
-                      ))}
-                    </div>
-                   </ScrollArea>
-                )}
-            </DialogContent>
-        </Dialog>
-    )
-};
-
 const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'switch') return null;
-    const [isOn, setIsOn] = useState(false);
 
     const getElement = (): SwitchBlock | null => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -4456,6 +4125,7 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
     const { toast } = useToast();
 
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'gif') return null;
@@ -4511,11 +4181,25 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         reader.readAsDataURL(file);
       }
     };
+    
+    const handleCropSave = (newStyles: { scale: number, positionX: number, positionY: number }) => {
+        updateStyle('scale', newStyles.scale);
+        updateStyle('positionX', newStyles.positionX);
+        updateStyle('positionY', newStyles.positionY);
+        setIsCropModalOpen(false);
+    }
 
 
     return (
         <div className="space-y-4">
             <GifGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <CropAndZoomModal 
+                isOpen={isCropModalOpen}
+                onOpenChange={setIsCropModalOpen}
+                imageUrl={element.payload.url}
+                initialStyles={element.payload.styles}
+                onSave={handleCropSave}
+            />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Film/>Editor de GIF</h3>
              <div className="space-y-2">
                  <Label htmlFor="gif-upload" className="w-full">
@@ -4535,32 +4219,16 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Input value={element.payload.alt} onChange={e => updatePayload('alt', e.target.value)} placeholder="Describe el GIF"/>
             </div>
             <Separator/>
-             <div className="space-y-2">
+            <div className="space-y-2">
                 <Label>Tamaño Global</Label>
                 <Slider value={[element.payload.styles.size]} min={10} max={100} 
                     onValueChange={v => updateStyle('size', v[0])}
                 />
             </div>
             <div className="space-y-2">
-                <Label>Escala (Zoom)</Label>
-                <Slider value={[element.payload.styles.scale]} min={0.1} max={2} step={0.1} 
-                    onValueChange={v => updateStyle('scale', v[0], false)}
-                    onValueCommit={v => updateStyle('scale', v[0], true)}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Posición Horizontal (X)</Label>
-                <Slider value={[element.payload.styles.positionX]} 
-                    onValueChange={v => updateStyle('positionX', v[0], false)}
-                    onValueCommit={v => updateStyle('positionX', v[0], true)}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Posición Vertical (Y)</Label>
-                <Slider value={[element.payload.styles.positionY]} 
-                    onValueChange={v => updateStyle('positionY', v[0], false)}
-                    onValueCommit={v => updateStyle('positionY', v[0], true)}
-                />
+                <Button variant="outline" className="w-full" onClick={() => setIsCropModalOpen(true)}>
+                    <Crop className="mr-2"/>Ajustar Zoom y Posición
+                </Button>
             </div>
         </div>
     );
@@ -4652,6 +4320,100 @@ const GifGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOp
         </Dialog>
     );
 };
+
+const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSave }: {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    imageUrl: string;
+    initialStyles: GifBlock['payload']['styles'];
+    onSave: (newStyles: { scale: number, positionX: number, positionY: number }) => void;
+}) => {
+    const [scale, setScale] = useState(initialStyles.scale);
+    const [positionX, setPositionX] = useState(initialStyles.positionX);
+    const [positionY, setPositionY] = useState(initialStyles.positionY);
+
+    useEffect(() => {
+        if(isOpen) {
+            setScale(initialStyles.scale);
+            setPositionX(initialStyles.positionX);
+            setPositionY(initialStyles.positionY);
+        }
+    }, [isOpen, initialStyles]);
+    
+    const handleSave = () => {
+        onSave({ scale, positionX, positionY });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border border-zinc-700 backdrop-blur-xl text-white">
+                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
+                    <DialogTitle className="flex items-center gap-2"><Crop className="text-primary"/>Ajustar Zoom y Posición del GIF</DialogTitle>
+                    <DialogDescription className="text-zinc-400">Usa los controles para enfocar la parte más importante de tu GIF.</DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 grid grid-cols-12 overflow-hidden">
+                    <div className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800">
+                        <div className="w-full h-full relative overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full overflow-hidden" style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', filter: 'blur(10px) brightness(0.5)' }} />
+                            <div className="w-full h-full relative" style={{ perspective: '1000px' }}>
+                                <div className="absolute inset-4 overflow-hidden border-4 border-dashed border-zinc-600">
+                                    <img 
+                                        src={imageUrl} 
+                                        alt="Preview" 
+                                        className="absolute transition-all duration-100 ease-linear"
+                                        style={{
+                                            width: `${scale * 100}%`,
+                                            height: 'auto',
+                                            top: `${positionY}%`,
+                                            left: `${positionX}%`,
+                                            transform: `translate(-${positionX}%, -${positionY}%)`
+                                        }}
+                                    />
+                                </div>
+                                <div 
+                                    className="absolute inset-4 border-4 border-blue-400/80 shadow-[0_0_20px_theme(colors.blue.400/50%)]" 
+                                    style={{
+                                        transform: 'translateZ(50px)',
+                                        clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 
+                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100}%, 
+                                                    ${(100/scale) * positionX/100 + (100/scale)}% ${(100/scale) * positionY/100}%,
+                                                    ${(100/scale) * positionX/100 + (100/scale)}% ${(100/scale) * positionY/100 + (100/scale)}%,
+                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100 + (100/scale)}%,
+                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100}%)`,
+                                        
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-span-4 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><Expand/>Zoom (Escala)</Label>
+                           <Slider value={[scale]} min={1} max={5} step={0.1} onValueChange={v => setScale(v[0])} />
+                           <p className="text-xs text-zinc-400 text-center">{Math.round(scale * 100)}%</p>
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><ArrowLeftRight/>Posición Horizontal (X)</Label>
+                           <Slider value={[positionX]} onValueChange={v => setPositionX(v[0])} />
+                           <p className="text-xs text-zinc-400 text-center">{positionX}%</p>
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><ArrowUpDown/>Posición Vertical (Y)</Label>
+                           <Slider value={[positionY]} onValueChange={v => setPositionY(v[0])} />
+                            <p className="text-xs text-zinc-400 text-center">{positionY}%</p>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter className="p-3 border-t border-zinc-800 shrink-0">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="dark:text-zinc-300 dark:border-zinc-600 dark:hover:bg-zinc-700">Cancelar</Button>
+                    <Button onClick={handleSave} className="bg-primary hover:bg-primary/80">
+                        <CheckIcon className="mr-2"/>Aplicar Cambios
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function CreateTemplatePage() {
   const router = useRouter();
@@ -5058,7 +4820,7 @@ export default function CreateTemplatePage() {
                 payload: {
                     url: 'https://placehold.co/300x200.gif?text=Añadir+GIF',
                     alt: 'Placeholder GIF',
-                    styles: { scale: 1, size: 100, positionX: 50, positionY: 50 }
+                    styles: { size: 100, scale: 1, positionX: 50, positionY: 50 }
                 }
             };
             break;
@@ -5357,11 +5119,19 @@ export default function CreateTemplatePage() {
     const { design, scale, styles, paddingY, alignment } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
-    const onBg = styles.on.type === 'gradient' ? `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})` : styles.on.color1;
-    const offBg = styles.off.type === 'gradient' ? `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})` : styles.off.color1;
+    const onBg = styles.on.type === 'gradient' 
+      ? (styles.on.direction === 'radial' 
+          ? `radial-gradient(circle, ${styles.on.color1}, ${styles.on.color2})`
+          : `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})`)
+      : styles.on.color1;
 
-    const baseWrapperStyle = { transform: `scale(${scale})` };
-    const Wrapper = 'div';
+    const offBg = styles.off.type === 'gradient' 
+      ? (styles.off.direction === 'radial' 
+          ? `radial-gradient(circle, ${styles.off.color1}, ${styles.off.color2})`
+          : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
+      : styles.off.color1;
+
+    const Wrapper = 'div'; // No longer needs to be a button for email compatibility
     
     const alignClass = {
         left: 'justify-start',
@@ -5372,21 +5142,13 @@ export default function CreateTemplatePage() {
     const clickHandler = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsOn(!isOn);
-    }
+    };
     
-    const themeStyles = `
-        <style>
-            .container-${block.id} { background-color: var(--initial-bg); color: var(--initial-fg); }
-            #switch-${block.id}:checked ~ .container-${block.id} { background-color: var(--themed-bg); color: var(--themed-fg); }
-        </style>
-    `;
-    const themeVariables = `<div class="container-${block.id}" style="--initial-bg: white; --initial-fg: black; --themed-bg: ${styles.theme.background}; --themed-fg: ${styles.theme.foreground};">`;
-    const checkbox = `<input type="checkbox" id="switch-${block.id}" class="hidden-checkbox" />`;
-
     const renderSwitch = () => {
+      const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: alignment };
       if (design === 'classic') {
           return (
-              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
+              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
                       <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
                   </div>
@@ -5396,10 +5158,10 @@ export default function CreateTemplatePage() {
   
       if (design === 'futuristic') {
           return (
-              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
-                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-primary/30" : "bg-muted/30")}>
-                       <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : 'transparent', filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
-                       <div className={cn("relative z-10 w-full h-full rounded-full transition-all")} style={{ background: isOn ? 'transparent' : offBg }} />
+              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
+                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-transparent" : "bg-transparent")}>
+                       <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : offBg, filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
+                       <div className={cn("relative z-10 w-full h-full rounded-full transition-all")} style={{ background: isOn ? onBg : offBg }} />
                        <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
                           <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
                       </div>
@@ -5410,7 +5172,7 @@ export default function CreateTemplatePage() {
   
       if (design === 'minimalist') {
          return (
-              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
+              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
                       <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
                           <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
@@ -5457,8 +5219,9 @@ export default function CreateTemplatePage() {
     }
 
     function hexToRgba(hex: string, opacity: number) {
+        if (!hex) return `rgba(0,0,0, ${opacity / 100})`;
         let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${opacity / 100})` : hex;
+        return result ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${opacity / 100})` : `rgba(0,0,0, ${opacity / 100})`;
     }
     
     function getShadowFilter() {
@@ -5480,24 +5243,26 @@ export default function CreateTemplatePage() {
     }
 
     return (
-        <div style={{ width: `${size}%`, margin: 'auto' }}>
-             <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: `blur(${blur}px) ${getShadowFilter()}` }}>
-                <defs>
-                    {background.type === 'gradient' && background.direction === 'radial' ? (
-                        <radialGradient id={bgFillId}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2} />
-                        </radialGradient>
-                    ) : background.type === 'gradient' ? (
-                        <linearGradient id={bgFillId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2} />
-                        </linearGradient>
-                    ) : null}
-                </defs>
-                <path d={shapePaths[shape]} {...bgProps} />
-             </svg>
-        </div>
+      <div style={{ width: `${size}%`, margin: 'auto' }}>
+        <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: `blur(${blur}px)` }}>
+          <defs>
+              {background.type === 'gradient' && background.direction === 'radial' ? (
+                  <radialGradient id={bgFillId}>
+                      <stop offset="0%" stopColor={background.color1} />
+                      <stop offset="100%" stopColor={background.color2} />
+                  </radialGradient>
+              ) : background.type === 'gradient' ? (
+                  <linearGradient id={bgFillId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                      <stop offset="0%" stopColor={background.color1} />
+                      <stop offset="100%" stopColor={background.color2} />
+                  </linearGradient>
+              ) : null}
+          </defs>
+          <g style={{ filter: getShadowFilter() }}>
+            <path d={shapePaths[shape]} {...bgProps} />
+          </g>
+        </svg>
+      </div>
     );
   };
   ShapesComponent.displayName = 'ShapesComponent';
@@ -5506,11 +5271,11 @@ export default function CreateTemplatePage() {
     const { url, alt, styles } = block.payload;
     
     const wrapperStyle: React.CSSProperties = {
-        width: `${styles.size}%`,
-        paddingBottom: `${styles.size}%`,
+        width: '100%',
         margin: 'auto',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        paddingBottom: '100%', // Creates a square container
     };
 
     const imageStyle: React.CSSProperties = {
@@ -5518,10 +5283,12 @@ export default function CreateTemplatePage() {
         top: '50%',
         left: '50%',
         width: `${styles.scale * 100}%`,
-        height: `${styles.scale * 100}%`,
-        objectFit: 'cover',
-        objectPosition: `${styles.positionX}% ${styles.positionY}%`,
-        transform: `translate(-50%, -50%)`,
+        height: 'auto', // Keep aspect ratio
+        maxWidth: 'none',
+        maxHeight: 'none',
+        objectFit: 'cover', // ensures the image covers the area, might crop
+        transform: `translate(-${styles.positionX}%, -${styles.positionY}%) scale(${styles.size / 100})`,
+        transformOrigin: 'top left',
     };
 
     return (
