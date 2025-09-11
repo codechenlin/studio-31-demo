@@ -11,7 +11,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,6 +30,8 @@ import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
 import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
+import { ImageCarousel } from "@/components/login/image-carousel";
+import { Logo } from "@/components/common/logo";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -92,89 +93,97 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="absolute inset-0 z-[-1]">
-        <SphereAnimation />
-      </div>
       <LoadingModal isOpen={isLoading} variant="login" />
-      <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl">{t('login_welcome_back')}</CardTitle>
-          <CardDescription>
-            {t('login_enter_credentials')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('email')}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <Input
-                          placeholder="you@example.com"
-                          {...field}
-                          className="pl-10"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel>{t('password')}</FormLabel>
-                      <Link
-                        href="/forgot-password"
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        {t('forgot_password_link')}
-                      </Link>
-                    </div>
-                    <FormControl>
-                      <div className="relative">
-                         <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
-                        </button>
-                        <Input
-                          type={isPasswordVisible ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...field}
-                          className="pr-10"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={isPending}>
-                {isPending ? t('login_signing_in') : t('login_sign_in_button')}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="text-sm">
-          <p className="text-muted-foreground">
-            {t('login_no_account')}{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-primary hover:underline"
-            >
-              {t('sign_up_link')}
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+      <div className="w-screen h-screen flex">
+        <div className="w-1/2 h-full relative overflow-hidden bg-card flex flex-col justify-center items-center p-10">
+          <div className="absolute top-8 left-8">
+            <Logo />
+          </div>
+          <SphereAnimation />
+
+          <div className="w-full max-w-sm z-10">
+            <Card className="bg-transparent border-none shadow-none">
+              <CardHeader className="text-left px-0">
+                <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
+                <CardDescription>
+                  {t('login_enter_credentials')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('email')}</FormLabel>
+                          <FormControl>
+                              <Input
+                                placeholder="you@example.com"
+                                {...field}
+                                className="bg-background/50 border-border/50"
+                              />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('password')}</FormLabel>
+                            <Link
+                              href="/forgot-password"
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              {t('forgot_password_link')}
+                            </Link>
+                          </div>
+                          <FormControl>
+                            <div className="relative">
+                              <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
+                              </button>
+                              <Input
+                                type={isPasswordVisible ? "text" : "password"}
+                                placeholder="••••••••"
+                                {...field}
+                                className="pr-10 bg-background/50 border-border/50"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90 transition-opacity" disabled={isPending}>
+                      {isPending ? t('login_signing_in') : t('login_sign_in_button')}
+                    </Button>
+                  </form>
+                </Form>
+                 <div className="text-center text-sm text-muted-foreground mt-8">
+                  <p>
+                    {t('login_no_account')}{" "}
+                    <Link
+                      href="/signup"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {t('sign_up_link')}
+                    </Link>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <div className="w-1/2 h-full bg-zinc-900 flex items-center justify-center p-10">
+          <ImageCarousel />
+        </div>
+      </div>
     </>
   );
 }
