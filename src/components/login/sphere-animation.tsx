@@ -75,11 +75,13 @@ export function SphereAnimation() {
         
         const scale = fov / (fov + z2);
 
-        ctx!.beginPath();
-        ctx!.arc(x1 * scale, y1 * scale, dotRadius * scale, 0, 2 * Math.PI);
-        const opacity = Math.max(0, (z2 + sphereRadius) / (2 * sphereRadius));
-        ctx!.fillStyle = `rgba(173, 0, 236, ${opacity})`;
-        ctx!.fill();
+        if (scale > 0) {
+          ctx!.beginPath();
+          ctx!.arc(x1 * scale, y1 * scale, dotRadius * scale, 0, 2 * Math.PI);
+          const opacity = Math.max(0, (z2 + sphereRadius) / (2 * sphereRadius));
+          ctx!.fillStyle = `rgba(173, 0, 236, ${opacity})`;
+          ctx!.fill();
+        }
       });
       ctx!.restore();
     }
