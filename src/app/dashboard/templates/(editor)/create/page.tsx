@@ -3524,7 +3524,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
-            <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <ImageGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIconType/>Gestionar Imagen</h3>
              <div className="space-y-2">
                 <div>
@@ -4330,19 +4330,61 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
     onSave: (newStyles: { scale: number, positionX: number, positionY: number }) => void;
 }) => {
     const [scale, setScale] = useState(initialStyles.scale);
-    const [positionX, setPositionX] = useState(initialStyles.positionX);
-    const [positionY, setPositionY] = useState(initialStyles.positionY);
+    const [position, setPosition] = useState({ x: initialStyles.positionX, y: initialStyles.positionY });
+    const imageRef = useRef<HTMLImageElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isDragging = useRef(false);
+    const dragStart = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         if(isOpen) {
             setScale(initialStyles.scale);
-            setPositionX(initialStyles.positionX);
-            setPositionY(initialStyles.positionY);
+            setPosition({ x: initialStyles.positionX, y: initialStyles.positionY });
         }
     }, [isOpen, initialStyles]);
     
     const handleSave = () => {
-        onSave({ scale, positionX, positionY });
+        onSave({ scale, positionX: position.x, positionY: position.y });
+    };
+
+    const onMouseDown = (e: React.MouseEvent) => {
+        isDragging.current = true;
+        dragStart.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+        isDragging.current = false;
+    };
+    
+    const onMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging.current || !imageRef.current || !containerRef.current) return;
+        
+        const dx = e.clientX - dragStart.current.x;
+        const dy = e.clientY - dragStart.current.y;
+        
+        dragStart.current = { x: e.clientX, y: e.clientY };
+
+        const imageRect = imageRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        const newLeft = imageRef.current.offsetLeft + dx;
+        const newTop = imageRef.current.offsetTop + dy;
+
+        const maxLeft = 0;
+        const minLeft = containerRect.width - imageRect.width;
+        const maxTop = 0;
+        const minTop = containerRect.height - imageRect.height;
+        
+        const clampedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+        const clampedTop = Math.max(minTop, Math.min(maxTop, newTop));
+        
+        const newPosX = (clampedLeft / (containerRect.width - imageRect.width)) * 100 || 0;
+        const newPosY = (clampedTop / (containerRect.height - imageRect.height)) * 100 || 0;
+
+        setPosition({
+            x: isNaN(newPosX) ? 50 : 100 - newPosX,
+            y: isNaN(newPosY) ? 50 : 100 - newPosY
+        });
     };
 
     return (
@@ -4353,39 +4395,24 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
                     <DialogDescription className="text-zinc-400">Usa los controles para enfocar la parte más importante de tu GIF.</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    <div className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800">
-                        <div className="w-full h-full relative overflow-hidden">
-                            <div className="absolute inset-0 w-full h-full overflow-hidden" style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', filter: 'blur(10px) brightness(0.5)' }} />
-                            <div className="w-full h-full relative" style={{ perspective: '1000px' }}>
-                                <div className="absolute inset-4 overflow-hidden border-4 border-dashed border-zinc-600">
-                                    <img 
-                                        src={imageUrl} 
-                                        alt="Preview" 
-                                        className="absolute transition-all duration-100 ease-linear"
-                                        style={{
-                                            width: `${scale * 100}%`,
-                                            height: 'auto',
-                                            top: `${positionY}%`,
-                                            left: `${positionX}%`,
-                                            transform: `translate(-${positionX}%, -${positionY}%)`
-                                        }}
-                                    />
-                                </div>
-                                <div 
-                                    className="absolute inset-4 border-4 border-blue-400/80 shadow-[0_0_20px_theme(colors.blue.400/50%)]" 
-                                    style={{
-                                        transform: 'translateZ(50px)',
-                                        clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 
-                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100}%, 
-                                                    ${(100/scale) * positionX/100 + (100/scale)}% ${(100/scale) * positionY/100}%,
-                                                    ${(100/scale) * positionX/100 + (100/scale)}% ${(100/scale) * positionY/100 + (100/scale)}%,
-                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100 + (100/scale)}%,
-                                                    ${(100/scale) * positionX/100}% ${(100/scale) * positionY/100}%)`,
-                                        
-                                    }}
-                                />
-                            </div>
-                        </div>
+                    <div ref={containerRef} className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800 relative overflow-hidden" onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
+                        {imageUrl ? (
+                             <img 
+                                ref={imageRef}
+                                src={imageUrl} 
+                                alt="Preview" 
+                                className="absolute cursor-move"
+                                style={{
+                                    width: `${scale * 100}%`,
+                                    height: 'auto',
+                                    left: `calc(${100 - position.x}% - ${(imageRef.current?.width || 0) * ((100-position.x)/100)}px)`,
+                                    top: `calc(${100 - position.y}% - ${(imageRef.current?.height || 0) * ((100-position.y)/100)}px)`,
+                                }}
+                                onMouseDown={onMouseDown}
+                                draggable="false"
+                            />
+                        ) : null }
+                         <div className="absolute inset-4 border-4 border-dashed border-blue-400/80 pointer-events-none" />
                     </div>
                     <div className="col-span-4 p-4 space-y-6 overflow-y-auto custom-scrollbar">
                         <div className="space-y-2">
@@ -4395,13 +4422,13 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
                         </div>
                         <div className="space-y-2">
                            <Label className="flex items-center gap-2"><ArrowLeftRight/>Posición Horizontal (X)</Label>
-                           <Slider value={[positionX]} onValueChange={v => setPositionX(v[0])} />
-                           <p className="text-xs text-zinc-400 text-center">{positionX}%</p>
+                           <Slider value={[position.x]} onValueChange={v => setPosition(p => ({...p, x: v[0]}))} />
+                           <p className="text-xs text-zinc-400 text-center">{position.x.toFixed(0)}%</p>
                         </div>
                         <div className="space-y-2">
                            <Label className="flex items-center gap-2"><ArrowUpDown/>Posición Vertical (Y)</Label>
-                           <Slider value={[positionY]} onValueChange={v => setPositionY(v[0])} />
-                            <p className="text-xs text-zinc-400 text-center">{positionY}%</p>
+                           <Slider value={[position.y]} onValueChange={v => setPosition(p => ({...p, y: v[0]}))} />
+                            <p className="text-xs text-zinc-400 text-center">{position.y.toFixed(0)}%</p>
                         </div>
                     </div>
                 </div>
@@ -5120,19 +5147,19 @@ export default function CreateTemplatePage() {
     const { design, scale, styles, paddingY, alignment } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
-    const onBg = styles.on.type === 'gradient' 
-      ? (styles.on.direction === 'radial' 
+    const onBg = styles.on.type === 'gradient'
+      ? (styles.on.direction === 'radial'
           ? `radial-gradient(circle, ${styles.on.color1}, ${styles.on.color2})`
           : `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})`)
       : styles.on.color1;
 
-    const offBg = styles.off.type === 'gradient' 
-      ? (styles.off.direction === 'radial' 
+    const offBg = styles.off.type === 'gradient'
+      ? (styles.off.direction === 'radial'
           ? `radial-gradient(circle, ${styles.off.color1}, ${styles.off.color2})`
           : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
       : styles.off.color1;
 
-    const Wrapper = 'div'; // No longer needs to be a button for email compatibility
+    const Wrapper = 'div';
     
     const alignClass = {
         left: 'justify-start',
@@ -5228,24 +5255,20 @@ export default function CreateTemplatePage() {
     function getShadowFilter() {
         const color = hexToRgba(shadow.color, shadow.opacity);
         let offsets = { x: 0, y: 0 };
+        const shadowBlur = 6;
         switch (shadow.position) {
             case 'bottom': offsets = { x: 0, y: 4 }; break;
             case 'top': offsets = { x: 0, y: -4 }; break;
             case 'right': offsets = { x: 4, y: 0 }; break;
             case 'left': offsets = { x: -4, y: 0 }; break;
-            case 'around': offsets = { x: 0, y: 2 }; break;
+            case 'around': return `drop-shadow(0 2px ${shadowBlur}px ${color}) drop-shadow(0 -2px ${shadowBlur}px ${color}) drop-shadow(2px 0 ${shadowBlur}px ${color}) drop-shadow(-2px 0 ${shadowBlur}px ${color})`;
         }
-        
-        let filterValue = `drop-shadow(${offsets.x}px ${offsets.y}px 6px ${color})`;
-        if (shadow.position === 'around') {
-          filterValue += ` drop-shadow(0 -2px 6px ${color}) drop-shadow(2px 0 6px ${color}) drop-shadow(-2px 0 6px ${color})`;
-        }
-        return filterValue;
+        return `drop-shadow(${offsets.x}px ${offsets.y}px ${shadowBlur}px ${color})`;
     }
 
     return (
-      <div style={{ width: `${size}%`, margin: 'auto' }}>
-        <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: `blur(${blur}px)` }}>
+      <div style={{ width: `${size}%`, margin: 'auto', filter: `blur(${blur}px)` }}>
+        <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: getShadowFilter() }}>
           <defs>
               {background.type === 'gradient' && background.direction === 'radial' ? (
                   <radialGradient id={bgFillId}>
@@ -5259,9 +5282,7 @@ export default function CreateTemplatePage() {
                   </linearGradient>
               ) : null}
           </defs>
-          <g style={{ filter: getShadowFilter() }}>
-            <path d={shapePaths[shape]} {...bgProps} />
-          </g>
+          <path d={shapePaths[shape]} {...bgProps} />
         </svg>
       </div>
     );
@@ -5270,38 +5291,43 @@ export default function CreateTemplatePage() {
 
   const GifComponent = ({ block }: { block: GifBlock }) => {
     const { url, alt, styles } = block.payload;
-    
-    const wrapperStyle: React.CSSProperties = {
-        width: '100%',
+    const { size, scale, positionX, positionY } = styles;
+
+    const outerWrapperStyle: React.CSSProperties = {
+        width: `${size}%`,
         margin: 'auto',
+        padding: '8px',
+    };
+    
+    const innerWrapperStyle: React.CSSProperties = {
+        width: '100%',
+        paddingBottom: '75%', // 4:3 Aspect Ratio
         position: 'relative',
         overflow: 'hidden',
-        paddingBottom: '100%', // Creates a square container
+        borderRadius: '8px',
+        backgroundColor: 'hsl(var(--muted))'
     };
 
     const imageStyle: React.CSSProperties = {
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: `${styles.scale * 100}%`,
-        height: 'auto', // Keep aspect ratio
+        width: `${scale * 100}%`,
+        height: 'auto',
         maxWidth: 'none',
-        maxHeight: 'none',
-        objectFit: 'cover', // ensures the image covers the area, might crop
-        transform: `translate(-${styles.positionX}%, -${styles.positionY}%) scale(${styles.size / 100})`,
-        transformOrigin: 'top left',
+        top: `${positionY}%`,
+        left: `${positionX}%`,
+        transform: `translate(-${positionX}%, -${positionY}%)`,
     };
 
     return (
-      <div className="p-2 w-full h-full flex items-center justify-center">
-         <div style={wrapperStyle}>
-            <img
-              src={url}
-              alt={alt}
-              style={imageStyle}
-            />
-         </div>
-      </div>
+        <div style={outerWrapperStyle}>
+            <div style={innerWrapperStyle}>
+                <img
+                    src={url}
+                    alt={alt}
+                    style={imageStyle}
+                />
+            </div>
+        </div>
     );
   };
   GifComponent.displayName = 'GifComponent';
@@ -6716,3 +6742,5 @@ const LayerPanel = () => {
     </div>
   );
 }
+
+    
