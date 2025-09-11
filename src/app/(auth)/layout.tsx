@@ -14,7 +14,7 @@ export default function AuthLayout({
 }) {
   return (
     <LanguageProvider>
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background overflow-hidden">
+      <div className="min-h-screen bg-background overflow-hidden relative">
         <div
           className="absolute inset-0 z-0 opacity-[0.03]"
           style={{
@@ -29,12 +29,7 @@ export default function AuthLayout({
           <ThemeToggle />
         </div>
 
-        <div className="z-10 w-full max-w-md">
-          <div className="mb-8 flex justify-center">
-            <Logo />
-          </div>
-          {children}
-        </div>
+        {children}
       </div>
     </LanguageProvider>
   );

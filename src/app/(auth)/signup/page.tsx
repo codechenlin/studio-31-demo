@@ -29,6 +29,7 @@ import { User, Mail, Eye, EyeOff } from "lucide-react";
 import React from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/context/language-context";
+import { Logo } from "@/components/common/logo";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -80,96 +81,103 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">{t('signup_create_account')}</CardTitle>
-        <CardDescription>
-          {t('signup_description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('full_name')}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input
-                        placeholder={t('your_name_placeholder')}
-                        {...field}
-                        className="pl-10"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('email')}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input
-                        placeholder="you@example.com"
-                        {...field}
-                        className="pl-10"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('password')}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
-                      </button>
-                      <Input
-                        type={isPasswordVisible ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...field}
-                        className="pr-10"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? t('signup_creating_account') : t('signup_create_account_button')}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="text-sm">
-        <p className="text-muted-foreground">
-          {t('signup_already_account')}{" "}
-          <Link
-            href="/login"
-            className="font-medium text-primary hover:underline"
-          >
-            {t('sign_in_link')}
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="z-10 w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <Logo />
+        </div>
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl">{t('signup_create_account')}</CardTitle>
+            <CardDescription>
+              {t('signup_description')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('full_name')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder={t('your_name_placeholder')}
+                            {...field}
+                            className="pl-10"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('email')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder="you@example.com"
+                            {...field}
+                            className="pl-10"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('password')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
+                          </button>
+                          <Input
+                            type={isPasswordVisible ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
+                            className="pr-10"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? t('signup_creating_account') : t('signup_create_account_button')}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter className="text-sm">
+            <p className="text-muted-foreground">
+              {t('signup_already_account')}{" "}
+              <Link
+                href="/login"
+                className="font-medium text-primary hover:underline"
+              >
+                {t('sign_in_link')}
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
   );
 }

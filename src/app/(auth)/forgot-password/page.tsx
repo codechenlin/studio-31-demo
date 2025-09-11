@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/context/language-context";
+import { Logo } from "@/components/common/logo";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -67,50 +68,57 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">{t('forgot_password_title')}</CardTitle>
-        <CardDescription>
-          {t('forgot_password_description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('email')}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input
-                        placeholder="you@example.com"
-                        {...field}
-                        className="pl-10"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? t('forgot_password_sending') : t('forgot_password_send_button')}
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="z-10 w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <Logo />
+        </div>
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl">{t('forgot_password_title')}</CardTitle>
+            <CardDescription>
+              {t('forgot_password_description')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('email')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input
+                            placeholder="you@example.com"
+                            {...field}
+                            className="pl-10"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? t('forgot_password_sending') : t('forgot_password_send_button')}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+          <CardFooter>
+            <Button variant="ghost" asChild className="w-full">
+              <Link href="/login">
+                <ArrowLeft className="mr-2 size-4" />
+                {t('back_to_sign_in')}
+              </Link>
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter>
-        <Button variant="ghost" asChild className="w-full">
-          <Link href="/login">
-            <ArrowLeft className="mr-2 size-4" />
-            {t('back_to_sign_in')}
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
   );
 }
