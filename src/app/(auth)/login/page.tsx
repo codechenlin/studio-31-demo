@@ -30,7 +30,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
 import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
-import { AiFeatureCarousel } from "@/components/login/image-carousel";
+import { ImageGrid } from "@/components/login/image-grid";
 import { Logo } from "@/components/common/logo";
 
 const formSchema = z.object({
@@ -181,10 +181,9 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="w-1/2 h-full bg-zinc-900 flex items-center justify-center p-10 overflow-hidden">
-          <AiFeatureCarousel />
+          <ImageGrid />
         </div>
       </div>
     </>
   );
 }
-

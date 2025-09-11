@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 export function SphereAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const colors = useMemo(() => ['#00FFFF', '#4B4B4B', '#FFD700'], []);
+  const colors = useMemo(() => ['#AD00EC', '#1700E6', '#00ADEC'], []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
