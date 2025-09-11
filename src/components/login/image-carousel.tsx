@@ -33,8 +33,8 @@ export function ImageCarousel() {
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: false }));
 
   return (
-    <div className="flex flex-col items-center justify-center text-center text-white">
-        <div className="relative w-full max-w-sm aspect-[3/4] mb-8 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+    <div className="flex w-full max-w-md flex-col items-center justify-center text-center text-white">
+        <div className="relative w-full aspect-[3/4] mb-8 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
             <Image 
                 src="https://picsum.photos/seed/person/600/800"
                 alt="Manage your money anywhere"
@@ -46,11 +46,11 @@ export function ImageCarousel() {
         </div>
       
       <h2 className="text-3xl font-bold">Gestiona tu Dinero Donde Sea</h2>
-      <p className="text-zinc-400 mt-2 max-w-sm">
+      <p className="text-zinc-400 mt-2">
         Puedes gestionar tu dinero sobre la marcha con Quicken en la web.
       </p>
       
-      <div className="w-full max-w-sm mt-8">
+      <div className="w-full mt-8">
         <Carousel
           plugins={[plugin.current]}
           className="w-full"

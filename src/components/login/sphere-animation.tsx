@@ -7,27 +7,11 @@ import { cn } from '@/lib/utils';
 export function SphereAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const gradients = useMemo(() => {
-    if (typeof window === 'undefined') return [];
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return [];
-    
-    const purpleBlueGradient = ctx.createLinearGradient(0, 0, 1, 0);
-    purpleBlueGradient.addColorStop(0, '#AD00EC');
-    purpleBlueGradient.addColorStop(1, '#1700E6');
-    
-    const greenYellowGradient = ctx.createLinearGradient(0, 0, 1, 0);
-    greenYellowGradient.addColorStop(0, '#00CE07');
-    greenYellowGradient.addColorStop(1, '#A6EE00');
-
-    return [purpleBlueGradient, greenYellowGradient];
-  }, []);
+  const colors = useMemo(() => ['#00FFFF', '#4B4B4B', '#FFD700'], []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || gradients.length === 0) return;
+    if (!canvas || colors.length === 0) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -48,7 +32,7 @@ export function SphereAnimation() {
       vx: number;
       vy: number;
       vz: number;
-      color: CanvasGradient | string;
+      color: string;
     }[] = [];
 
     const dotCount = 800;
@@ -58,7 +42,6 @@ export function SphereAnimation() {
     
     let mouse = { x: 0, y: 0 };
     const mouseMoveHandler = (e: MouseEvent) => {
-        // Adjust mouse coordinates based on canvas position
         const rect = canvas.getBoundingClientRect();
         mouse.x = e.clientX - rect.left - width / 2;
         mouse.y = e.clientY - rect.top - height / 2;
@@ -76,7 +59,7 @@ export function SphereAnimation() {
         vx: 0.1 * (Math.random() - 0.5),
         vy: 0.1 * (Math.random() - 0.5),
         vz: 0.1 * (Math.random() - 0.5),
-        color: gradients[i % 2],
+        color: colors[i % colors.length],
       });
     }
 
@@ -146,7 +129,7 @@ export function SphereAnimation() {
       cancelAnimationFrame(animationFrameId);
     };
 
-  }, [gradients]);
+  }, [colors]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-20 dark:opacity-30 pointer-events-none" />;
 }
