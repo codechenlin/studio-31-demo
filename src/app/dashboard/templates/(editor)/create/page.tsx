@@ -588,19 +588,19 @@ interface GifBlock extends BaseBlock {
   payload: {
     url: string;
     alt: string;
-    styles: {
-      size: number;
-      scale: number;
-      positionX: number;
-      positionY: number;
-      borderRadius: number;
-      border: {
-        width: number;
-        type: 'solid' | 'gradient';
-        color1: string;
-        color2?: string;
-        direction?: GradientDirection;
-      };
+    styles: { 
+        size: number; 
+        scale: number; 
+        positionX: number; 
+        positionY: number;
+        borderRadius: number;
+        border: {
+            width: number;
+            type: 'solid' | 'gradient';
+            color1: string;
+            color2?: string;
+            direction?: GradientDirection;
+        }
     }
   }
 }
@@ -3469,12 +3469,193 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
 });
 BackgroundManagerModal.displayName = 'BackgroundManagerModal';
 
+const ImageCropAndZoomModal = React.memo(({ isOpen, onOpenChange, imageUrl, initialStyles, onSave }: {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    imageUrl: string;
+    initialStyles: ImageBlock['payload']['styles'];
+    onSave: (newStyles: { zoom: number, positionX: number, positionY: number }) => void;
+}) => {
+    const [zoom, setZoom] = useState(initialStyles.zoom);
+    const [position, setPosition] = useState({ x: initialStyles.positionX, y: initialStyles.positionY });
+
+    useEffect(() => {
+        if(isOpen) {
+            setZoom(initialStyles.zoom);
+            setPosition({ x: initialStyles.positionX, y: initialStyles.positionY });
+        }
+    }, [isOpen, initialStyles]);
+    
+    const handleSave = () => {
+        onSave({ zoom, positionX: position.x, positionY: position.y });
+        onOpenChange(false);
+    };
+
+    const containerStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: 'hsl(var(--muted))'
+    };
+
+    const imageStyle: React.CSSProperties = {
+        position: 'absolute',
+        width: `${zoom}%`,
+        height: 'auto',
+        maxWidth: 'none',
+        top: `${position.y}%`,
+        left: `${position.x}%`,
+        transform: `translate(-${position.x}%, -${position.y}%)`,
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border border-zinc-700 backdrop-blur-xl text-white">
+                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0">
+                    <DialogTitle className="flex items-center gap-2"><Crop className="text-primary"/>Ajustar Zoom y Posición de la Imagen</DialogTitle>
+                    <DialogDescription className="text-zinc-400">Usa los controles para enfocar la parte más importante de tu imagen.</DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 grid grid-cols-12 overflow-hidden">
+                    <div className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800 relative overflow-hidden">
+                        {imageUrl ? (
+                             <div style={containerStyle}>
+                                <img 
+                                    src={imageUrl} 
+                                    alt="Preview" 
+                                    style={imageStyle}
+                                />
+                             </div>
+                        ) : null }
+                    </div>
+                    <div className="col-span-4 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><Expand/>Zoom (Escala)</Label>
+                           <Slider value={[zoom]} min={100} max={500} step={1} onValueChange={v => setZoom(v[0])} />
+                           <p className="text-xs text-zinc-400 text-center">{Math.round(zoom)}%</p>
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><ArrowLeftRight/>Posición Horizontal (X)</Label>
+                           <Slider value={[position.x]} onValueChange={v => setPosition(p => ({...p, x: v[0]}))} />
+                           <p className="text-xs text-zinc-400 text-center">{position.x.toFixed(0)}%</p>
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="flex items-center gap-2"><ArrowUpDown/>Posición Vertical (Y)</Label>
+                           <Slider value={[position.y]} onValueChange={v => setPosition(p => ({...p, y: v[0]}))} />
+                            <p className="text-xs text-zinc-400 text-center">{position.y.toFixed(0)}%</p>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter className="p-3 border-t border-zinc-800 shrink-0">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="dark:text-zinc-300 dark:border-zinc-600 dark:hover:bg-zinc-700">Cancelar</Button>
+                    <Button onClick={handleSave} className="bg-primary hover:bg-primary/80">
+                        <CheckIcon className="mr-2"/>Aplicar Cambios
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+});
+ImageCropAndZoomModal.displayName = 'ImageCropAndZoomModal';
+
+const ImageGalleryModal = React.memo(({ open, onOpenChange, onSelect }: { open: boolean; onOpenChange: (open: boolean) => void; onSelect: (url: string) => void; }) => {
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+
+    const fetchFiles = useCallback(async () => {
+        setIsLoading(true);
+        const result = await listFiles();
+        if (result.success && result.data) {
+            const imageFiles = result.data.files.filter(file => file.metadata.mimetype.startsWith('image/') && file.metadata.mimetype !== 'image/gif');
+            setFiles(imageFiles);
+            setSupabaseUrl(result.data.baseUrl);
+        } else {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        }
+        setIsLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        if (open) {
+            fetchFiles();
+        }
+    }, [open, fetchFiles]);
+
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+    
+    const Particle = () => {
+      const style = {
+        '--size': `${Math.random() * 2 + 1}px`,
+        '--x-start': `${Math.random() * 100}%`,
+        '--x-end': `${Math.random() * 200 - 100}px`,
+        '--duration': `${Math.random() * 5 + 5}s`,
+        '--delay': `-${Math.random() * 10}s`,
+      } as React.CSSProperties;
+      return <div className="particle" style={style} />;
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border border-zinc-700 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+                </div>
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-96 h-96 bg-primary/10 rounded-full animate-pulse-slow filter blur-3xl" />
+                </div>
+                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10 bg-zinc-900/50 backdrop-blur-sm">
+                    <DialogTitle className="flex items-center gap-2"><ImageIconType className="text-primary"/>Galería Futurista de Imágenes</DialogTitle>
+                    <DialogDescription className="text-zinc-400">Analizando el repositorio de imágenes estáticas...</DialogDescription>
+                </DialogHeader>
+                {isLoading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 z-10">
+                        <div className="relative w-20 h-20">
+                           <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
+                           <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                           <div className="absolute inset-0 flex items-center justify-center"><ImageIconType className="text-primary size-8" /></div>
+                        </div>
+                        <p className="font-semibold tracking-wider">CARGANDO...</p>
+                        <p className="text-sm text-zinc-400">Sincronizando con el servidor de archivos.</p>
+                    </div>
+                ) : files.length > 0 ? (
+                   <ScrollArea className="flex-1 z-10">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4">
+                      {files.map(file => (
+                         <Card key={file.id} onClick={() => {onSelect(getFileUrl(file)); onOpenChange(false);}} className="group relative cursor-pointer overflow-hidden aspect-square bg-black/50 border-zinc-800 hover:border-primary/50 hover:border-2 transition-all duration-300">
+                            <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                <p className="text-xs text-white truncate font-mono">{file.name.split('/').pop()}</p>
+                            </div>
+                         </Card>
+                      ))}
+                    </div>
+                   </ScrollArea>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 z-10">
+                         <FolderOpen className="size-12 text-zinc-600"/>
+                        <p className="font-semibold text-zinc-400">No se encontraron imágenes</p>
+                        <p className="text-sm text-zinc-500">Sube algunos archivos de imagen para verlos aquí.</p>
+                    </div>
+                )}
+                 <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 z-10">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cerrar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+});
+ImageGalleryModal.displayName = 'ImageGalleryModal';
+
 const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+    const { toast } = useToast();
     
     if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
 
@@ -3524,23 +3705,57 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
       setIsGalleryOpen(false);
     };
 
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        if (!file.type.startsWith('image/') || file.type === 'image/gif') {
+            toast({
+                title: 'Archivo no válido',
+                description: 'Por favor, selecciona un archivo de imagen (JPG, PNG, SVG, etc.).',
+                variant: 'destructive',
+            });
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const url = e.target?.result as string;
+          updatePayload('url', url);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    const handleCropSave = (newStyles: { zoom: number, positionX: number, positionY: number }) => {
+        updatePayload('styles', { ...element.payload.styles, ...newStyles });
+        setIsCropModalOpen(false);
+    };
+
     const setDirection = (direction: GradientDirection) => {
         updateBorder('direction', direction);
     };
     
-    const { border, borderRadius, zoom, positionX, positionY } = element.payload.styles;
+    const { border, borderRadius } = element.payload.styles;
 
     return (
         <div className="space-y-4">
-            <FileManagerModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} />
+            <ImageGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <ImageCropAndZoomModal 
+                isOpen={isCropModalOpen}
+                onOpenChange={setIsCropModalOpen}
+                imageUrl={element.payload.url}
+                initialStyles={element.payload.styles}
+                onSave={handleCropSave}
+            />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIconType/>Gestionar Imagen</h3>
              <div className="space-y-2">
-                <div>
-                  <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
-                  <Input id="image-url-editor" value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="https://example.com/image.png" />
-                </div>
-                 <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
-                    <GalleryVertical className="mr-2"/>Abrir Galería
+                <Label htmlFor="image-upload-editor" className="w-full">
+                    <Button asChild variant="outline" className="w-full cursor-pointer">
+                        <span><UploadCloud className="mr-2"/>Subir imagen local</span>
+                    </Button>
+                    <Input id="image-upload-editor" type="file" accept="image/png, image/jpeg, image/svg+xml, image/webp" className="sr-only" onChange={handleFileUpload} />
+                 </Label>
+                <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
+                    <GalleryVertical className="mr-2"/>Abrir Galería de Imágenes
                 </Button>
             </div>
             
@@ -3553,35 +3768,10 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 />
             </div>
             <Separator />
-             <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
-                <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
-                    <Slider 
-                        value={[zoom]} 
-                        min={100} max={300} 
-                        onValueChange={(v) => updateStyle('zoom', v[0], false)}
-                        onValueCommit={(v) => updateStyle('zoom', v[0], true)}
-                    />
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex-1 space-y-1">
-                        <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> Horizontal (X)</Label>
-                        <Slider 
-                            value={[positionX]} 
-                            onValueChange={(v) => updateStyle('positionX', v[0], false)}
-                            onValueCommit={(v) => updateStyle('positionX', v[0], true)}
-                        />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                        <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Vertical (Y)</Label>
-                        <Slider 
-                            value={[positionY]} 
-                            onValueChange={(v) => updateStyle('positionY', v[0], false)}
-                            onValueCommit={(v) => updateStyle('positionY', v[0], true)}
-                        />
-                    </div>
-                </div>
+            <div className="space-y-2">
+                <Button variant="outline" className="w-full" onClick={() => setIsCropModalOpen(true)}>
+                    <Crop className="mr-2"/>Ajustar Zoom y Posición
+                </Button>
             </div>
             <Separator/>
             <div className="space-y-4">
@@ -3632,7 +3822,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
         </div>
     )
-}
+};
 
 const ColorEditor = ({ subStyle, styles, updateFunc }: {
     subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow' | 'theme',
@@ -4201,18 +4391,7 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     };
     
     const handleCropSave = (newStyles: { scale: number, positionX: number, positionY: number }) => {
-        setCanvasContent(prev => prev.map(row => {
-            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-            return {
-                ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
-                    if (col.id !== selectedElement.columnId) return col;
-                    return { ...col, blocks: col.blocks.map(block => {
-                        if (block.id !== selectedElement.primitiveId || block.type !== 'gif') return block;
-                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, ...newStyles } } };
-                    }) };
-                }) }
-            };
-        }), true);
+        updatePayload('styles', { ...element.payload.styles, ...newStyles });
         setIsCropModalOpen(false);
     };
 
@@ -4239,8 +4418,6 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
                     <GalleryVertical className="mr-2"/>Abrir Galería de GIFs
                 </Button>
-                <Label htmlFor="gif-url" className="text-xs text-muted-foreground">O añade una URL de GIF</Label>
-                <Input id="gif-url" value={element.payload.url} onChange={e => updatePayload('url', e.target.value)} placeholder="https://example.com/image.gif"/>
             </div>
             <div className="space-y-2">
                 <Label>Texto Alternativo</Label>
@@ -5227,7 +5404,7 @@ export default function CreateTemplatePage() {
     };
     
     const renderSwitch = () => {
-      const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: 'center' };
+      const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: alignment };
       if (design === 'classic') {
           return (
               <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
@@ -5508,10 +5685,11 @@ export default function CreateTemplatePage() {
                 const imageStyle: React.CSSProperties = {
                     position: 'absolute',
                     width: `${zoom}%`,
-                    height: `${zoom}%`,
+                    height: 'auto',
+                    maxWidth: 'none',
                     top: `${positionY}%`,
                     left: `${positionX}%`,
-                    transform: `translate(-${positionX}%, -${positionY}%) scale(1)`,
+                    transform: `translate(-${positionX}%, -${positionY}%)`,
                     objectFit: 'cover',
                 };
 
@@ -6835,4 +7013,5 @@ const LayerPanel = () => {
 }
 
     
+
 
