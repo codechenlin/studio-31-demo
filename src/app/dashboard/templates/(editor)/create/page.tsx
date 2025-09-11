@@ -3524,7 +3524,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
-            <ImageGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <FileManagerModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIconType/>Gestionar Imagen</h3>
              <div className="space-y-2">
                 <div>
@@ -4301,7 +4301,7 @@ const GifGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOp
                    <ScrollArea className="flex-1 z-10">
                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4">
                       {files.map(file => (
-                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file))} className="group relative cursor-pointer overflow-hidden aspect-square bg-black/50 border-zinc-800 hover:border-primary/50 hover:border-2 transition-all duration-300">
+                         <Card key={file.id} onClick={() => {onSelect(getFileUrl(file)); onOpenChange(false);}} className="group relative cursor-pointer overflow-hidden aspect-square bg-black/50 border-zinc-800 hover:border-primary/50 hover:border-2 transition-all duration-300">
                             <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                                 <p className="text-xs text-white truncate font-mono">{file.name.split('/').pop()}</p>
@@ -4317,6 +4317,9 @@ const GifGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOp
                         <p className="text-sm text-zinc-500">Sube algunos archivos GIF para verlos aquí.</p>
                     </div>
                 )}
+                 <DialogFooter className="p-3 border-t border-zinc-800 shrink-0 z-10">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cerrar</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
@@ -4331,10 +4334,6 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
 }) => {
     const [scale, setScale] = useState(initialStyles.scale);
     const [position, setPosition] = useState({ x: initialStyles.positionX, y: initialStyles.positionY });
-    const imageRef = useRef<HTMLImageElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const isDragging = useRef(false);
-    const dragStart = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         if(isOpen) {
@@ -4347,44 +4346,22 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
         onSave({ scale, positionX: position.x, positionY: position.y });
     };
 
-    const onMouseDown = (e: React.MouseEvent) => {
-        isDragging.current = true;
-        dragStart.current = { x: e.clientX, y: e.clientY };
+    const containerStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: 'hsl(var(--muted))'
     };
 
-    const onMouseUp = () => {
-        isDragging.current = false;
-    };
-    
-    const onMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging.current || !imageRef.current || !containerRef.current) return;
-        
-        const dx = e.clientX - dragStart.current.x;
-        const dy = e.clientY - dragStart.current.y;
-        
-        dragStart.current = { x: e.clientX, y: e.clientY };
-
-        const imageRect = imageRef.current.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        
-        const newLeft = imageRef.current.offsetLeft + dx;
-        const newTop = imageRef.current.offsetTop + dy;
-
-        const maxLeft = 0;
-        const minLeft = containerRect.width - imageRect.width;
-        const maxTop = 0;
-        const minTop = containerRect.height - imageRect.height;
-        
-        const clampedLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
-        const clampedTop = Math.max(minTop, Math.min(maxTop, newTop));
-        
-        const newPosX = (clampedLeft / (containerRect.width - imageRect.width)) * 100 || 0;
-        const newPosY = (clampedTop / (containerRect.height - imageRect.height)) * 100 || 0;
-
-        setPosition({
-            x: isNaN(newPosX) ? 50 : 100 - newPosX,
-            y: isNaN(newPosY) ? 50 : 100 - newPosY
-        });
+    const imageStyle: React.CSSProperties = {
+        position: 'absolute',
+        width: `${scale * 100}%`,
+        height: 'auto',
+        maxWidth: 'none',
+        top: `${position.y}%`,
+        left: `${position.x}%`,
+        transform: `translate(-${position.x}%, -${position.y}%)`,
     };
 
     return (
@@ -4395,24 +4372,16 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
                     <DialogDescription className="text-zinc-400">Usa los controles para enfocar la parte más importante de tu GIF.</DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
-                    <div ref={containerRef} className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800 relative overflow-hidden" onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
+                    <div className="col-span-8 flex items-center justify-center bg-black/30 p-4 border-r border-zinc-800 relative overflow-hidden">
                         {imageUrl ? (
-                             <img 
-                                ref={imageRef}
-                                src={imageUrl} 
-                                alt="Preview" 
-                                className="absolute cursor-move"
-                                style={{
-                                    width: `${scale * 100}%`,
-                                    height: 'auto',
-                                    left: `calc(${100 - position.x}% - ${(imageRef.current?.width || 0) * ((100-position.x)/100)}px)`,
-                                    top: `calc(${100 - position.y}% - ${(imageRef.current?.height || 0) * ((100-position.y)/100)}px)`,
-                                }}
-                                onMouseDown={onMouseDown}
-                                draggable="false"
-                            />
+                             <div style={containerStyle}>
+                                <img 
+                                    src={imageUrl} 
+                                    alt="Preview" 
+                                    style={imageStyle}
+                                />
+                             </div>
                         ) : null }
-                         <div className="absolute inset-4 border-4 border-dashed border-blue-400/80 pointer-events-none" />
                     </div>
                     <div className="col-span-4 p-4 space-y-6 overflow-y-auto custom-scrollbar">
                         <div className="space-y-2">
@@ -5159,8 +5128,6 @@ export default function CreateTemplatePage() {
           : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
       : styles.off.color1;
 
-    const Wrapper = 'div';
-    
     const alignClass = {
         left: 'justify-start',
         center: 'justify-center',
@@ -5173,41 +5140,41 @@ export default function CreateTemplatePage() {
     };
     
     const renderSwitch = () => {
-      const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: alignment };
+      const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: 'center' };
       if (design === 'classic') {
           return (
-              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
+              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
                       <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
                   </div>
-              </Wrapper>
+              </div>
           );
       }
   
       if (design === 'futuristic') {
           return (
-              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
-                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-transparent" : "bg-transparent")}>
+              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
+                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1")}>
                        <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : offBg, filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
                        <div className={cn("relative z-10 w-full h-full rounded-full transition-all")} style={{ background: isOn ? onBg : offBg }} />
                        <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
                           <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
                       </div>
                   </div>
-              </Wrapper>
+              </div>
           )
       }
   
       if (design === 'minimalist') {
          return (
-              <Wrapper style={wrapperStyle} className="inline-block" onClick={clickHandler}>
+              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
                       <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
                           <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
                           <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
                       </div>
                   </div>
-              </Wrapper>
+              </div>
          )
       }
       return null;
@@ -5254,21 +5221,39 @@ export default function CreateTemplatePage() {
     
     function getShadowFilter() {
         const color = hexToRgba(shadow.color, shadow.opacity);
-        let offsets = { x: 0, y: 0 };
         const shadowBlur = 6;
-        switch (shadow.position) {
-            case 'bottom': offsets = { x: 0, y: 4 }; break;
-            case 'top': offsets = { x: 0, y: -4 }; break;
-            case 'right': offsets = { x: 4, y: 0 }; break;
-            case 'left': offsets = { x: -4, y: 0 }; break;
-            case 'around': return `drop-shadow(0 2px ${shadowBlur}px ${color}) drop-shadow(0 -2px ${shadowBlur}px ${color}) drop-shadow(2px 0 ${shadowBlur}px ${color}) drop-shadow(-2px 0 ${shadowBlur}px ${color})`;
+        let finalFilter = ``;
+
+        if (shadow.position === 'around') {
+            finalFilter = `drop-shadow(0 4px ${shadowBlur}px ${color}) drop-shadow(0 -4px ${shadowBlur}px ${color}) drop-shadow(4px 0 ${shadowBlur}px ${color}) drop-shadow(-4px 0 ${shadowBlur}px ${color})`;
+        } else {
+             let offsets = { x: 0, y: 0 };
+             switch (shadow.position) {
+                case 'bottom': offsets = { x: 0, y: 4 }; break;
+                case 'top': offsets = { x: 0, y: -4 }; break;
+                case 'right': offsets = { x: 4, y: 0 }; break;
+                case 'left': offsets = { x: -4, y: 0 }; break;
+            }
+            finalFilter = `drop-shadow(${offsets.x}px ${offsets.y}px ${shadowBlur}px ${color})`;
         }
-        return `drop-shadow(${offsets.x}px ${offsets.y}px ${shadowBlur}px ${color})`;
+        
+        return finalFilter;
+    }
+    
+    const wrapperStyle: React.CSSProperties = {
+        width: `${size}%`,
+        margin: 'auto',
+        filter: blur > 0 ? `blur(${blur}px)`: 'none',
+    };
+    
+    const svgStyle: React.CSSProperties = {
+      filter: getShadowFilter(),
+      overflow: 'visible', // To prevent clipping shadows
     }
 
     return (
-      <div style={{ width: `${size}%`, margin: 'auto', filter: `blur(${blur}px)` }}>
-        <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: getShadowFilter() }}>
+      <div style={wrapperStyle}>
+        <svg viewBox="0 0 100 100" className="w-full h-full" style={svgStyle}>
           <defs>
               {background.type === 'gradient' && background.direction === 'radial' ? (
                   <radialGradient id={bgFillId}>

@@ -53,6 +53,8 @@ body {
     --ai-glow-start: 180 100% 50%;
     --ai-glow-mid: 210 100% 56%;
     --ai-glow-end: 260 100% 65%;
+    --button-exit-border: #00ADEC;
+    --button-exit-border-hover: #00CB07;
   }
   .dark {
     --background: 232 50% 6%;
@@ -195,13 +197,14 @@ body {
 
     .ai-core-button {
         background: rgba(10, 5, 20, 0.7);
-        border: 1px solid rgba(173, 0, 236, 0.2);
+        border: 1px solid var(--button-exit-border);
         backdrop-filter: blur(4px);
-        transition: background-color 0.3s;
+        transition: background-color 0.3s, border-color 0.3s;
     }
 
     .ai-core-button:hover {
         background: rgba(0, 203, 7, 0.1);
+        border-color: var(--button-exit-border-hover);
     }
     
     .ai-core-button:hover .ai-core-border-animation {
