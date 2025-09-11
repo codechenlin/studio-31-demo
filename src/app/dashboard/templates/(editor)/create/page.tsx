@@ -593,6 +593,14 @@ interface GifBlock extends BaseBlock {
       scale: number;
       positionX: number;
       positionY: number;
+      borderRadius: number;
+      border: {
+        width: number;
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      };
     }
   }
 }
@@ -3910,7 +3918,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     };
 
     return (
-        <div className={cn("flex w-full", alignClass[alignment])} style={{paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px`}}>
+        <div className={cn("w-full flex", alignClass[alignment])} style={{paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px`}}>
             <div className="flex" style={{ gap: `${spacing}px`}}>
                 {Array.from({ length: 5 }).map((_, i) => renderStar(i))}
             </div>
@@ -3938,13 +3946,14 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const updatePayload = (key: keyof SwitchBlock['payload'], value: any) => {
         setCanvasContent(prev => prev.map(row => {
           if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+          const newColumns = row.payload.columns.map(col => {
             if (col.id !== selectedElement.columnId) return col;
             return { ...col, blocks: col.blocks.map(block => {
               if (block.id !== selectedElement.primitiveId || block.type !== 'switch') return block;
               return { ...block, payload: { ...block.payload, [key]: value } };
             })};
-          })}};
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns }};
         }), true);
     };
     
@@ -4157,6 +4166,14 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const updateStyle = (key: keyof GifBlock['payload']['styles'], value: any, record: boolean = true) => {
         updatePayload('styles', { ...element.payload.styles, [key]: value }, record);
     };
+
+    const updateBorder = (key: string, value: any) => {
+        updateStyle('border', { ...element.payload.styles.border, [key]: value });
+    };
+
+    const setBorderDirection = (direction: GradientDirection) => {
+        updateBorder('direction', direction);
+    };
     
     const handleGallerySelect = (fileUrl: string) => {
       updatePayload('url', fileUrl);
@@ -4184,12 +4201,22 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     };
     
     const handleCropSave = (newStyles: { scale: number, positionX: number, positionY: number }) => {
-        updateStyle('scale', newStyles.scale);
-        updateStyle('positionX', newStyles.positionX);
-        updateStyle('positionY', newStyles.positionY);
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            return {
+                ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+                    if (col.id !== selectedElement.columnId) return col;
+                    return { ...col, blocks: col.blocks.map(block => {
+                        if (block.id !== selectedElement.primitiveId || block.type !== 'gif') return block;
+                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, ...newStyles } } };
+                    }) };
+                }) }
+            };
+        }), true);
         setIsCropModalOpen(false);
-    }
+    };
 
+    const { border, borderRadius } = element.payload.styles;
 
     return (
         <div className="space-y-4">
@@ -4230,6 +4257,53 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Button variant="outline" className="w-full" onClick={() => setIsCropModalOpen(true)}>
                     <Crop className="mr-2"/>Ajustar Zoom y Posición
                 </Button>
+            </div>
+             <Separator/>
+             <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Estilos del Borde</h3>
+                <div className="space-y-2">
+                  <Label>Ancho del Borde</Label>
+                  <Slider value={[border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Radio del Borde</Label>
+                  <Slider value={[borderRadius]} max={100} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Color del Borde</Label>
+                    <Tabs value={border.type} onValueChange={(v) => updateBorder('type', v as any)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
+                    </Tabs>
+                    <div className="pt-2 space-y-2">
+                        <Label>Color 1</Label>
+                        <ColorPickerAdvanced color={border.color1} setColor={c => updateBorder('color1', c)} />
+                    </div>
+                    {border.type === 'gradient' && (
+                        <div className="pt-2 space-y-2">
+                            <Label>Color 2</Label>
+                            <ColorPickerAdvanced color={border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
+                             <div className="space-y-3">
+                                <Label>Dirección del Degradado</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setBorderDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
+                                            <TooltipContent><p>Vertical</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setBorderDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
+                                            <TooltipContent><p>Horizontal</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild><Button variant={border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setBorderDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
+                                            <TooltipContent><p>Radial</p></TooltipContent>
+                                         </Tooltip>
+                                     </TooltipProvider>
+                                 </div>
+                              </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -4817,7 +4891,20 @@ export default function CreateTemplatePage() {
                 payload: {
                     url: 'https://placehold.co/300x200.gif?text=Añadir+GIF',
                     alt: 'Placeholder GIF',
-                    styles: { size: 100, scale: 1, positionX: 50, positionY: 50 }
+                    styles: { 
+                        size: 100, 
+                        scale: 1, 
+                        positionX: 50, 
+                        positionY: 50,
+                        borderRadius: 8,
+                        border: {
+                            width: 0,
+                            type: 'solid',
+                            color1: '#A020F0',
+                            color2: '#3357FF',
+                            direction: 'vertical'
+                        }
+                    }
                 }
             };
             break;
@@ -5276,7 +5363,7 @@ export default function CreateTemplatePage() {
 
   const GifComponent = ({ block }: { block: GifBlock }) => {
     const { url, alt, styles } = block.payload;
-    const { size, scale, positionX, positionY } = styles;
+    const { size, scale, positionX, positionY, borderRadius, border } = styles;
 
     const outerWrapperStyle: React.CSSProperties = {
         width: `${size}%`,
@@ -5284,12 +5371,29 @@ export default function CreateTemplatePage() {
         padding: '8px',
     };
     
+    const borderWrapperStyle: React.CSSProperties = {
+        padding: `${border.width}px`,
+        borderRadius: `${borderRadius}px`,
+    };
+
+    if (border.width > 0) {
+        if (border.type === 'solid') {
+            borderWrapperStyle.backgroundColor = border.color1;
+        } else if (border.type === 'gradient') {
+            const { direction, color1, color2 } = border;
+            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+            borderWrapperStyle.background = direction === 'radial'
+                ? `radial-gradient(circle, ${color1}, ${color2})`
+                : `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
+    }
+
     const innerWrapperStyle: React.CSSProperties = {
         width: '100%',
         paddingBottom: '75%', // 4:3 Aspect Ratio
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: '8px',
+        borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
         backgroundColor: 'hsl(var(--muted))'
     };
 
@@ -5305,12 +5409,14 @@ export default function CreateTemplatePage() {
 
     return (
         <div style={outerWrapperStyle}>
-            <div style={innerWrapperStyle}>
-                <img
-                    src={url}
-                    alt={alt}
-                    style={imageStyle}
-                />
+            <div style={borderWrapperStyle}>
+                <div style={innerWrapperStyle}>
+                    <img
+                        src={url}
+                        alt={alt}
+                        style={imageStyle}
+                    />
+                </div>
             </div>
         </div>
     );
@@ -6260,7 +6366,7 @@ const LayerPanel = () => {
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex === 0}><Undo/></Button>
-            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex === history.length - 1}><Redo/></Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex < history.length - 1}><Redo/></Button>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
@@ -6729,3 +6835,4 @@ const LayerPanel = () => {
 }
 
     
+
