@@ -30,7 +30,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
 import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
-import { ImageCarousel } from "@/components/login/image-carousel";
+import { AiFeatureCarousel } from "@/components/login/image-carousel";
 import { Logo } from "@/components/common/logo";
 
 const formSchema = z.object({
@@ -95,7 +95,7 @@ export default function LoginPage() {
     <>
       <LoadingModal isOpen={isLoading} variant="login" />
       <div className="w-screen h-screen flex">
-        <div className="w-1/2 h-full relative overflow-hidden bg-card flex flex-col justify-center items-center p-10">
+        <div className="w-1/2 h-full relative bg-card flex flex-col justify-center items-center p-10 overflow-hidden">
           <div className="absolute top-8 left-8">
             <Logo />
           </div>
@@ -180,10 +180,11 @@ export default function LoginPage() {
             </Card>
           </div>
         </div>
-        <div className="w-1/2 h-full bg-zinc-900 flex items-center justify-center p-10">
-          <ImageCarousel />
+        <div className="w-1/2 h-full bg-zinc-900 flex items-center justify-center p-10 overflow-hidden">
+          <AiFeatureCarousel />
         </div>
       </div>
     </>
   );
 }
+
