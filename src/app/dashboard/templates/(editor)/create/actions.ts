@@ -32,6 +32,7 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
   const { name, content, templateId } = validatedInput.data;
 
   try {
+    let result;
     if (templateId) {
       // Actualizar plantilla existente
       const { data, error } = await supabase
@@ -43,7 +44,7 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
         .single();
         
       if (error) throw error;
-      return { success: true, data };
+      result = data;
 
     } else {
       // Crear nueva plantilla
@@ -54,10 +55,17 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
         .single();
         
       if (error) throw error;
-      return { success: true, data };
+      result = data;
     }
+    
+    // Revalidate the path to show the new/updated template in the list
+    revalidatePath('/dashboard/templates');
+
+    return { success: true, data: result };
+
   } catch (error: any) {
     console.error('Error al guardar la plantilla:', error);
     return { success: false, error: error.message };
   }
 }
+
