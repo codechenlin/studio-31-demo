@@ -12,8 +12,21 @@ export function SphereAnimation() {
 
   React.useEffect(() => {
     setMounted(true);
-    const storedTheme = localStorage.getItem("theme");
-    setIsDarkMode(storedTheme === "dark");
+    const handleThemeChange = () => {
+        const storedTheme = localStorage.getItem("theme");
+        setIsDarkMode(storedTheme === "dark");
+    };
+    
+    handleThemeChange(); // Initial check
+
+    // Use a MutationObserver to detect changes in the class of the <html> element
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+        observer.disconnect();
+    };
+
   }, []);
 
   const colors = useMemo(() => {
