@@ -255,10 +255,76 @@ const renderBlock = (block: Block, colCount: number = 1) => {
     }
 
     case 'timer':
-        return <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-md">⏳ El contador dinámico se mostrará aquí en el correo final.</div>;
+        return <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-md">⏳ El contador se mostrará como una imagen estática en el correo final.</div>;
 
-    case 'switch':
-        return <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-md">🤫 El contenido secreto interactivo se mostrará aquí.</div>;
+    case 'switch': {
+        const { design, scale, alignment, paddingY, styles, isOn, hookText } = payload;
+        
+        const onBg = styles.on.type === 'gradient'
+          ? (styles.on.direction === 'radial'
+              ? `radial-gradient(circle, ${styles.on.color1}, ${styles.on.color2})`
+              : `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})`)
+          : styles.on.color1;
+
+        const offBg = styles.off.type === 'gradient'
+          ? (styles.off.direction === 'radial'
+              ? `radial-gradient(circle, ${styles.off.color1}, ${styles.off.color2})`
+              : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
+          : styles.off.color1;
+
+        const alignClass = { left: 'flex-start', center: 'center', right: 'flex-end' }[alignment] || 'center';
+        
+        const scaledFontSize = (baseSize: number) => `${baseSize * scale}px`;
+        const scaledGap = `${8 * scale}px`;
+
+        const renderSwitch = () => {
+          const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: 'center' };
+          
+          if (design === 'classic') {
+            return (
+                <div style={wrapperStyle} className="inline-block">
+                  <div className={cn("relative w-16 h-8 rounded-full")} style={{ background: isOn ? onBg : offBg }}>
+                      <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full", isOn && "translate-x-8")} />
+                  </div>
+              </div>
+            );
+          }
+          if (design === 'futuristic') {
+            return (
+              <div style={wrapperStyle}>
+                <div className={cn("relative w-20 h-6 rounded-full p-1")}>
+                  <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : offBg}} />
+                  <div className={cn("absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
+                    <div className={cn("w-2 h-2 rounded-full", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          if (design === 'minimalist') {
+            return (
+              <div style={wrapperStyle}>
+                  <div className="w-24 h-10 flex items-center justify-center">
+                    <div className="relative w-16 h-2 rounded-full" style={{background: offBg}}>
+                      <div className="absolute top-1/2 -translate-y-1/2 h-full rounded-full" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
+                      <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
+                    </div>
+                  </div>
+              </div>
+            )
+          }
+          return null;
+        }
+
+        return (
+          <div className="w-full flex" style={{ justifyContent: alignClass, paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
+            <div className="flex flex-col items-center" style={{ gap: scaledGap }}>
+                {renderSwitch()}
+                <p style={{ fontSize: scaledFontSize(14), color: styles.hookTextColor }}>{hookText}</p>
+            </div>
+          </div>
+        );
+      }
 
     case 'rating': {
         const { rating, styles } = payload;
