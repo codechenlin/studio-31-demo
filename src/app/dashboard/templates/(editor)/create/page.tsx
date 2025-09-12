@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog'
 import { Toggle } from '@/components/ui/toggle';
 import {
   Square,
@@ -538,11 +538,11 @@ interface SwitchBlock extends BaseBlock {
   type: 'switch';
   payload: {
     design: SwitchDesign;
+    isOn: boolean;
     scale: number;
     alignment: TextAlign;
     paddingY: number;
     hookText: string;
-    secretContent: string;
     styles: {
       on: {
         type: 'solid' | 'gradient';
@@ -557,7 +557,6 @@ interface SwitchBlock extends BaseBlock {
         direction?: GradientDirection;
       },
       hookTextColor: string;
-      secretContentColor: string;
     }
   }
 }
@@ -4149,7 +4148,7 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Gift/>Editor de Contenido Secreto</h3>
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ToggleLeft/>Editor de Interruptor</h3>
         
         <div className="space-y-2">
           <Label>Diseño del Interruptor</Label>
@@ -4190,7 +4189,7 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         <Separator />
         
         <div className="space-y-2">
-          <Label>Texto de Gancho (Visible)</Label>
+          <Label>Texto de Gancho</Label>
           <Input 
             value={element.payload.hookText}
             onChange={e => updatePayload('hookText', e.target.value)}
@@ -4198,28 +4197,27 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           />
         </div>
         <div className="space-y-2">
-            <Label>Color del Texto de Gancho</Label>
+            <Label>Color del Texto</Label>
             <ColorPickerAdvanced 
                 color={element.payload.styles.hookTextColor} 
                 setColor={c => updateStyle('hookTextColor', c)} 
             />
         </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+            <Label>Estado Fijo</Label>
+            <div className="flex items-center gap-2">
+                <span className={cn("text-sm", !element.payload.isOn && "text-primary font-semibold")}>Apagado</span>
+                <Switch 
+                    checked={element.payload.isOn}
+                    onCheckedChange={(checked) => updatePayload('isOn', checked)}
+                />
+                <span className={cn("text-sm", element.payload.isOn && "text-primary font-semibold")}>Encendido</span>
+            </div>
+        </div>
 
-        <div className="space-y-2">
-          <Label>Contenido Secreto (Oculto)</Label>
-          <Input 
-            value={element.payload.secretContent}
-            onChange={e => updatePayload('secretContent', e.target.value)}
-            placeholder="Ej: CÓDIGO: VERANO25"
-          />
-        </div>
-         <div className="space-y-2">
-            <Label>Color del Contenido Secreto</Label>
-            <ColorPickerAdvanced 
-                color={element.payload.styles.secretContentColor} 
-                setColor={c => updateStyle('secretContentColor', c)} 
-            />
-        </div>
         <Separator />
 
         <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
@@ -5036,16 +5034,15 @@ export default function CreateTemplatePage() {
                 type: 'switch',
                 payload: {
                     design: 'classic',
+                    isOn: true,
                     scale: 1,
                     alignment: 'center',
                     paddingY: 10,
-                    hookText: 'Haz clic para revelar tu premio',
-                    secretContent: 'CÓDIGO: VERANO25',
+                    hookText: 'Texto del interruptor',
                     styles: {
                         on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
                         off: { type: 'solid', color1: '#555555' },
                         hookTextColor: defaultTextColor,
-                        secretContentColor: defaultTextColor,
                     }
                 }
             };
@@ -5381,8 +5378,7 @@ export default function CreateTemplatePage() {
   };
 
   const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
-    const { design, scale, alignment, paddingY, styles } = block.payload;
-    const [isOn, setIsOn] = useState(false);
+    const { design, scale, alignment, paddingY, styles, isOn, hookText } = block.payload;
 
     const onBg = styles.on.type === 'gradient'
       ? (styles.on.direction === 'radial'
@@ -5402,11 +5398,6 @@ export default function CreateTemplatePage() {
         right: 'justify-end'
     };
     
-    const clickHandler = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsOn(!isOn);
-    };
-
     const scaledFontSize = (baseSize: number) => `${baseSize * scale}px`;
     const scaledGap = `${8 * scale}px`;
     
@@ -5414,8 +5405,8 @@ export default function CreateTemplatePage() {
       const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: alignment };
       if (design === 'classic') {
           return (
-              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
-                  <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
+              <div style={wrapperStyle} className="inline-block">
+                  <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300")} style={{ background: isOn ? onBg : offBg }}>
                       <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
                   </div>
               </div>
@@ -5424,8 +5415,8 @@ export default function CreateTemplatePage() {
   
       if (design === 'futuristic') {
           return (
-              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
-                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1")}>
+              <div style={wrapperStyle} className="inline-block">
+                  <div className={cn("relative w-20 h-6 rounded-full p-1")}>
                        <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : offBg, filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
                        <div className={cn("relative z-10 w-full h-full rounded-full transition-all")} style={{ background: isOn ? onBg : offBg }} />
                        <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
@@ -5433,13 +5424,13 @@ export default function CreateTemplatePage() {
                       </div>
                   </div>
               </div>
-          )
+         )
       }
   
       if (design === 'minimalist') {
          return (
-              <div style={wrapperStyle} className="inline-block" onClick={clickHandler}>
-                  <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
+              <div style={wrapperStyle} className="inline-block">
+                  <div className="w-24 h-10 flex items-center justify-center">
                       <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
                           <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
                           <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
@@ -5455,8 +5446,7 @@ export default function CreateTemplatePage() {
       <div className={cn("w-full flex", alignClass[alignment])} style={{ paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
         <div className="flex flex-col items-center" style={{ gap: scaledGap }}>
             {renderSwitch()}
-            <p className={cn("transition-opacity duration-300", isOn ? 'opacity-0 h-0' : 'opacity-100')} style={{ fontSize: scaledFontSize(14), color: styles.hookTextColor }}>{block.payload.hookText}</p>
-            <p className={cn("font-bold transition-opacity duration-300", isOn ? 'opacity-100' : 'opacity-0 h-0')} style={{ fontSize: scaledFontSize(14), color: styles.secretContentColor }}>{block.payload.secretContent}</p>
+            <p style={{ fontSize: scaledFontSize(14), color: styles.hookTextColor }}>{hookText}</p>
         </div>
       </div>
     );
@@ -7031,5 +7021,6 @@ const LayerPanel = () => {
 }
 
     
+
 
 
