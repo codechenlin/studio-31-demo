@@ -556,6 +556,8 @@ interface SwitchBlock extends BaseBlock {
         color2?: string;
         direction?: GradientDirection;
       },
+      hookTextColor: string;
+      secretContentColor: string;
     }
   }
 }
@@ -4129,7 +4131,13 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }), true);
     };
     
-    const updateStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
+    const updateStyle = (key: keyof SwitchBlock['payload']['styles'], value: any) => {
+        const currentStyles = element.payload.styles;
+        const newStyles = { ...currentStyles, [key]: value };
+        updatePayload('styles', newStyles);
+    };
+    
+    const updateSubStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
         const currentStyles = element.payload.styles;
         const mainKeyStyles = currentStyles[mainKey];
       
@@ -4190,6 +4198,14 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           />
         </div>
         <div className="space-y-2">
+            <Label>Color del Texto de Gancho</Label>
+            <ColorPickerAdvanced 
+                color={element.payload.styles.hookTextColor} 
+                setColor={c => updateStyle('hookTextColor', c)} 
+            />
+        </div>
+
+        <div className="space-y-2">
           <Label>Contenido Secreto (Oculto)</Label>
           <Input 
             value={element.payload.secretContent}
@@ -4197,14 +4213,21 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             placeholder="Ej: CÓDIGO: VERANO25"
           />
         </div>
+         <div className="space-y-2">
+            <Label>Color del Contenido Secreto</Label>
+            <ColorPickerAdvanced 
+                color={element.payload.styles.secretContentColor} 
+                setColor={c => updateStyle('secretContentColor', c)} 
+            />
+        </div>
         <Separator />
 
         <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
-        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateStyle as any} />
+        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateSubStyle as any} />
         <Separator />
         
         <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
-        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle as any} />
+        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateSubStyle as any} />
       </div>
     );
 }
@@ -4852,6 +4875,7 @@ export default function CreateTemplatePage() {
 
       let newBlock: PrimitiveBlock;
       const basePayload = { id: `${type}_${Date.now()}` };
+      const defaultTextColor = isDarkMode ? '#FFFFFF' : '#000000';
 
       switch(type) {
          case 'heading':
@@ -4861,7 +4885,7 @@ export default function CreateTemplatePage() {
                 payload: {
                     text: 'Escribe tu título aquí',
                     styles: {
-                        color: isDarkMode ? '#FFFFFF' : '#000000',
+                        color: defaultTextColor,
                         fontFamily: 'Roboto',
                         fontSize: 32,
                         textAlign: 'center',
@@ -4980,7 +5004,7 @@ export default function CreateTemplatePage() {
                     design: 'minimalist',
                     endAction: { type: 'stop', message: '¡La oferta ha terminado!' },
                     styles: {
-                        fontFamily: 'Roboto', numberColor: isDarkMode ? '#FFFFFF' : '#000000', labelColor: isDarkMode ? '#999999' : '#666666',
+                        fontFamily: 'Roboto', numberColor: defaultTextColor, labelColor: isDarkMode ? '#999999' : '#666666',
                         borderRadius: 15, background: { type: 'gradient', color1: '#AD00EC', color2: '#0018EC', direction: 'vertical' },
                         strokeWidth: 4, scale: 1, minimalistLabelSize: 1
                     }
@@ -5020,6 +5044,8 @@ export default function CreateTemplatePage() {
                     styles: {
                         on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
                         off: { type: 'solid', color1: '#555555' },
+                        hookTextColor: defaultTextColor,
+                        secretContentColor: defaultTextColor,
                     }
                 }
             };
@@ -5355,20 +5381,20 @@ export default function CreateTemplatePage() {
   };
 
   const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
-    const { design, scale, alignment, paddingY } = block.payload;
+    const { design, scale, alignment, paddingY, styles } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
-    const onBg = block.payload.styles.on.type === 'gradient'
-      ? (block.payload.styles.on.direction === 'radial'
-          ? `radial-gradient(circle, ${block.payload.styles.on.color1}, ${block.payload.styles.on.color2})`
-          : `linear-gradient(${block.payload.styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${block.payload.styles.on.color1}, ${block.payload.styles.on.color2})`)
-      : block.payload.styles.on.color1;
+    const onBg = styles.on.type === 'gradient'
+      ? (styles.on.direction === 'radial'
+          ? `radial-gradient(circle, ${styles.on.color1}, ${styles.on.color2})`
+          : `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})`)
+      : styles.on.color1;
 
-    const offBg = block.payload.styles.off.type === 'gradient'
-      ? (block.payload.styles.off.direction === 'radial'
-          ? `radial-gradient(circle, ${block.payload.styles.off.color1}, ${block.payload.styles.off.color2})`
-          : `linear-gradient(${block.payload.styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${block.payload.styles.off.color1}, ${block.payload.styles.off.color2})`)
-      : block.payload.styles.off.color1;
+    const offBg = styles.off.type === 'gradient'
+      ? (styles.off.direction === 'radial'
+          ? `radial-gradient(circle, ${styles.off.color1}, ${styles.off.color2})`
+          : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
+      : styles.off.color1;
 
     const alignClass = {
         left: 'justify-start',
@@ -5380,6 +5406,9 @@ export default function CreateTemplatePage() {
         e.stopPropagation();
         setIsOn(!isOn);
     };
+
+    const scaledFontSize = (baseSize: number) => `${baseSize * scale}px`;
+    const scaledGap = `${8 * scale}px`;
     
     const renderSwitch = () => {
       const wrapperStyle = { transform: `scale(${scale})`, transformOrigin: alignment };
@@ -5424,10 +5453,10 @@ export default function CreateTemplatePage() {
     
     return (
       <div className={cn("w-full flex", alignClass[alignment])} style={{ paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center" style={{ gap: scaledGap }}>
             {renderSwitch()}
-            <p className={cn("text-sm transition-opacity duration-300", isOn ? 'opacity-0 h-0' : 'opacity-100')}>{block.payload.hookText}</p>
-            <p className={cn("text-sm font-bold transition-opacity duration-300", isOn ? 'opacity-100' : 'opacity-0 h-0')}>{block.payload.secretContent}</p>
+            <p className={cn("transition-opacity duration-300", isOn ? 'opacity-0 h-0' : 'opacity-100')} style={{ fontSize: scaledFontSize(14), color: styles.hookTextColor }}>{block.payload.hookText}</p>
+            <p className={cn("font-bold transition-opacity duration-300", isOn ? 'opacity-100' : 'opacity-0 h-0')} style={{ fontSize: scaledFontSize(14), color: styles.secretContentColor }}>{block.payload.secretContent}</p>
         </div>
       </div>
     );
@@ -6222,15 +6251,22 @@ export default function CreateTemplatePage() {
     if (!selectedElement) return null;
 
     let blockName = '';
-
     const blockType = getSelectedBlockType(selectedElement, canvasContent);
     
     if (blockType) {
+        if (blockType === 'columns') {
+             return (
+                <div className="mb-4">
+                    <Button className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white">
+                        Configura tu columna
+                    </Button>
+                </div>
+            );
+        }
+
         const foundBlock = [...columnContentBlocks, ...wrapperContentBlocks, ...mainContentBlocks].find(b => b.id === blockType);
         if (foundBlock) {
              blockName = `Bloque ${foundBlock.name.toLowerCase()}`;
-        } else if (blockType === 'column') {
-             blockName = 'Columna';
         } else if (blockType === 'wrapper') {
             blockName = 'Contenedor';
         }
@@ -6995,4 +7031,5 @@ const LayerPanel = () => {
 }
 
     
+
 
