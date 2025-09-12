@@ -4,8 +4,8 @@
 import React, { useState, useTransition } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brush, AlertTriangle, User, Calendar, Tags, Check, FileSignature, Eye } from 'lucide-react';
-import { type TemplateWithAuthor, renameTemplate } from '@/app/dashboard/templates/actions';
+import { Brush, AlertTriangle, User, Calendar, Tags, Check, FileSignature, Eye, Trash2 } from 'lucide-react';
+import { type TemplateWithAuthor, renameTemplate, deleteTemplate } from '@/app/dashboard/templates/actions';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +48,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
     const [isConfirmingEdit, setIsConfirmingEdit] = useState(false);
     const [isManagingCategories, setIsManagingCategories] = useState(false);
     const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [newName, setNewName] = useState(template.name);
     const [isSaving, startSaving] = useTransition();
 
@@ -68,6 +79,26 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
             setIsRenaming(false);
         });
     }
+    
+    const handleDelete = async () => {
+        startSaving(async () => {
+            const result = await deleteTemplate(template.id);
+            if (result.success) {
+                toast({
+                    title: 'Plantilla Eliminada',
+                    description: `La plantilla "${template.name}" ha sido eliminada.`,
+                });
+                onTemplateUpdate();
+            } else {
+                toast({
+                    title: 'Error al eliminar',
+                    description: result.error,
+                    variant: 'destructive',
+                });
+            }
+            setIsDeleting(false);
+        });
+    };
 
     const handleEdit = () => {
         router.push(`/dashboard/templates/create?id=${template.id}`);
@@ -82,7 +113,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                           <TemplateRenderer content={template.content} />
                         </div>
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
-                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsPreviewing(true)}>
+                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => router.push(`/dashboard/templates/preview/${template.id}`, '_blank')}>
                                 <Eye className="text-white"/>
                             </Button>
                             <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsConfirmingEdit(true)}>
@@ -94,12 +125,9 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter 
-                    className="p-4 flex flex-col items-start gap-3 bg-card/50 cursor-pointer flex-grow"
-                    onClick={() => setIsManagingCategories(true)}
-                >
-                    <p className="font-semibold text-lg truncate w-full">{template.name}</p>
-                    <div className="w-full text-xs text-muted-foreground space-y-2 mt-auto">
+                <div className="p-4 flex flex-col items-start gap-3 bg-card/50 flex-grow relative">
+                    <p className="font-semibold text-lg truncate w-full pr-10" onClick={() => setIsManagingCategories(true)}>{template.name}</p>
+                    <div className="w-full text-xs text-muted-foreground space-y-2 mt-auto" onClick={() => setIsManagingCategories(true)}>
                         <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                                 <AvatarImage src={authorAvatar || ''} alt={authorName} />
@@ -122,7 +150,15 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                              )}
                         </div>
                     </div>
-                </CardFooter>
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute bottom-2 right-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => setIsDeleting(true)}
+                      >
+                        <Trash2 className="size-5"/>
+                    </Button>
+                </div>
             </Card>
 
             {/* Rename Modal */}
@@ -163,6 +199,25 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            
+            {/* Delete Confirmation Modal */}
+            <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente la plantilla &quot;{template.name}&quot; de nuestros servidores.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} disabled={isSaving} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {isSaving ? 'Eliminando...' : 'Sí, eliminar'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
 
             {/* Category Manager Modal */}
             <CategoryManagerModal 
@@ -170,13 +225,6 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                 onOpenChange={setIsManagingCategories}
                 template={template}
                 onTemplateUpdate={onTemplateUpdate}
-            />
-
-            {/* Preview Modal */}
-            <TemplatePreviewModal 
-              isOpen={isPreviewing}
-              onOpenChange={setIsPreviewing}
-              template={template}
             />
         </>
     );

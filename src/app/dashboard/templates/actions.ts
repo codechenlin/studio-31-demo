@@ -120,3 +120,24 @@ export async function updateTemplateCategories(templateId: string, categories: s
         return { success: false, error: error.message };
     }
 }
+
+export async function deleteTemplate(templateId: string) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Usuario no autenticado.' };
+
+    try {
+        const { error } = await supabase
+            .from('templates')
+            .delete()
+            .eq('id', templateId)
+            .eq('user_id', user.id);
+        
+        if (error) throw error;
+
+        revalidatePath('/dashboard/templates');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
