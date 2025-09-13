@@ -150,19 +150,32 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                              )}
                         </div>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "absolute bottom-4 right-4 size-8",
-                          "bg-transparent border border-[#F00000] text-white",
-                          "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
-                          "transition-colors"
-                        )}
-                        onClick={() => setIsDeleting(true)}
-                      >
-                        <Trash2 className="size-4" />
-                    </Button>
+                    <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "size-8 bg-transparent border text-[#1700E6] border-[#1700E6]",
+                              "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
+                              "transition-colors"
+                            )}
+                            onClick={() => setIsManagingCategories(true)}
+                          >
+                            <Tags className="size-4" />
+                        </Button>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "size-8 bg-transparent border text-[#F00000] border-[#F00000]",
+                              "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
+                              "transition-colors"
+                            )}
+                            onClick={() => setIsDeleting(true)}
+                          >
+                            <Trash2 className="size-4" />
+                        </Button>
+                    </div>
                 </div>
             </Card>
 
