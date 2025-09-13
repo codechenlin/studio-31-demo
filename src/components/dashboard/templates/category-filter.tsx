@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tag } from 'lucide-react';
+import { Tag, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface CategoryFilterProps {
@@ -39,7 +39,22 @@ export function CategoryFilter({ allCategories, selectedCategories, setSelectedC
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>Filtrar por Categoría</DropdownMenuLabel>
+                <div className="flex items-center justify-between px-2 py-1.5">
+                    <DropdownMenuLabel className="p-0">Filtrar por Categoría</DropdownMenuLabel>
+                    {selectedCategories.length > 0 && (
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCategories([]);
+                            }}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
                 <DropdownMenuSeparator />
                 {allCategories.length > 0 ? (
                      allCategories.map(category => (

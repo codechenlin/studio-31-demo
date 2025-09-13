@@ -64,7 +64,11 @@ export function CategoryManagerModal({ isOpen, onOpenChange, template, onTemplat
         startSaving(async () => {
             const result = await updateTemplateCategories(template.id, selectedCategories);
             if(result.success) {
-                toast({ title: 'Éxito', description: 'Categorías actualizadas.', className: 'bg-green-500 text-white' });
+                toast({ 
+                  title: 'Éxito', 
+                  description: 'Categorías actualizadas.', 
+                  className: 'bg-[#00CB07] border-none text-white' 
+                });
                 onTemplateUpdate();
                 onOpenChange(false);
             } else {

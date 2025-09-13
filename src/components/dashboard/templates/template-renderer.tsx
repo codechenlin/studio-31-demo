@@ -108,15 +108,15 @@ const renderFragment = (fragment: any) => {
 };
 
 const TimerComponent = ({ payload }: { payload: any }) => {
-    const { duration, design, styles } = payload;
+    const { values, design, styles } = payload;
     
-    if (!duration || !styles) return null;
+    if (!values || !styles) return null;
 
     const timeData = [
-      { label: 'Días', value: duration.days, max: 31 },
-      { label: 'Horas', value: duration.hours, max: 24 },
-      { label: 'Minutos', value: duration.minutes, max: 60 },
-      { label: 'Segundos', value: duration.seconds, max: 60 },
+      { label: 'Días', value: parseInt(values.days || '0', 10), max: 31 },
+      { label: 'Horas', value: parseInt(values.hours || '0', 10), max: 24 },
+      { label: 'Minutos', value: parseInt(values.minutes || '0', 10), max: 60 },
+      { label: 'Segundos', value: parseInt(values.seconds || '0', 10), max: 60 },
     ];
     
     const getProgress = (value: number, max: number) => {
@@ -541,7 +541,7 @@ const getElementStyle = (styles: any = {}) => {
     return style;
 };
 
-export const TemplateRenderer = ({ content }: { content: any }) => {
+export const TemplateRenderer = ({ content, asCover = false }: { content: any, asCover?: boolean }) => {
     if (!content || !Array.isArray(content) || content.length === 0) {
         return (
             <div className="flex items-center justify-center h-full bg-muted/50 text-muted-foreground">
@@ -550,6 +550,22 @@ export const TemplateRenderer = ({ content }: { content: any }) => {
         );
     }
     
+    // For card cover, try to find an image in the first block
+    if (asCover) {
+        const firstBlock = content[0];
+        let coverImage = '';
+
+        if (firstBlock.type === 'columns' && firstBlock.payload.columns?.[0]?.blocks?.[0]?.type === 'image') {
+            coverImage = firstBlock.payload.columns[0].blocks[0].payload.url;
+        } else if (firstBlock.type === 'wrapper' && firstBlock.payload.styles?.backgroundImage?.url) {
+            coverImage = firstBlock.payload.styles.backgroundImage.url;
+        }
+        
+        if (coverImage) {
+            return <img src={coverImage} alt="Template preview" className="w-full h-full object-cover" />
+        }
+    }
+
     return (
         <div className={cn("bg-background", inter.className)}>
             {content.map((canvasBlock: CanvasBlock) => (
