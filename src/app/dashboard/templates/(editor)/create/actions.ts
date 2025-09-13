@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -12,6 +13,7 @@ export async function revalidatePath(path: string) {
 const saveTemplateSchema = z.object({
   name: z.string().min(1, 'El nombre de la plantilla es requerido.'),
   content: z.any(),
+  categories: z.array(z.string()).optional(),
   templateId: z.string().uuid().optional(),
 });
 
@@ -29,7 +31,7 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
     return { success: false, error: 'Datos de entrada inválidos.', details: validatedInput.error.format() };
   }
   
-  const { name, content, templateId } = validatedInput.data;
+  const { name, content, categories, templateId } = validatedInput.data;
 
   try {
     let result;
@@ -37,7 +39,7 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
       // Actualizar plantilla existente
       const { data, error } = await supabase
         .from('templates')
-        .update({ name, content, updated_at: new Date().toISOString() })
+        .update({ name, content, categories, updated_at: new Date().toISOString() })
         .eq('id', templateId)
         .eq('user_id', user.id)
         .select('id, updated_at')
@@ -50,7 +52,7 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
       // Crear nueva plantilla
       const { data, error } = await supabase
         .from('templates')
-        .insert({ name, content, user_id: user.id })
+        .insert({ name, content, categories, user_id: user.id })
         .select('id, updated_at')
         .single();
         
@@ -68,4 +70,3 @@ export async function saveTemplateAction(input: z.infer<typeof saveTemplateSchem
     return { success: false, error: error.message };
   }
 }
-

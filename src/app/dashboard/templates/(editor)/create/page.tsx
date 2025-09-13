@@ -34,7 +34,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Toggle } from '@/components/ui/toggle';
 import {
@@ -147,6 +146,7 @@ import {
   Settings2,
   Crop,
   Gift,
+  Tags,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -161,7 +161,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveTemplateAction, revalidatePath } from './actions';
-import { getTemplateById } from '@/app/dashboard/templates/actions';
+import { getTemplateById, getAllCategories } from '@/app/dashboard/templates/actions';
 import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -4363,6 +4363,11 @@ export default function CreateTemplatePage() {
   
   const [userId, setUserId] = useState<string | null>(null);
 
+  // New states for initial modal category management
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -4410,12 +4415,13 @@ export default function CreateTemplatePage() {
   };
 
 
-  const handlePublish = () => {
+  const handlePublish = (categoriesToSave?: string[]) => {
     setLoadingAction('save');
     startSaving(async () => {
       const result = await saveTemplateAction({
         name: templateName,
         content: canvasContent,
+        categories: categoriesToSave ?? selectedCategories,
         templateId: templateId ?? undefined,
       });
 
@@ -4456,6 +4462,7 @@ export default function CreateTemplatePage() {
             _setCanvasContent(result.data.content || []);
             setTemplateId(result.data.id);
             setLastSaved(new Date(result.data.updated_at));
+            setSelectedCategories(result.data.categories || []);
             // Reset history for the loaded template
             setHistory([result.data.content || []]);
             setHistoryIndex(0);
@@ -4471,17 +4478,25 @@ export default function CreateTemplatePage() {
         setIsLoading(false);
         setLoadingAction(null);
     };
-
-    if (templateIdFromUrl) {
-        loadTemplate(templateIdFromUrl);
-    } else {
-        // No ID in URL, it's a new template
-        const timer = setTimeout(() => setIsLoading(false), 1500);
-        if (!isLoading) {
-            setIsInitialNameModalOpen(true);
+    
+    const fetchInitialData = async () => {
+        const categoriesResult = await getAllCategories();
+        if (categoriesResult.success && categoriesResult.data) {
+            setAllCategories(categoriesResult.data);
         }
-        return () => clearTimeout(timer);
-    }
+    
+        if (templateIdFromUrl) {
+            loadTemplate(templateIdFromUrl);
+        } else {
+            const timer = setTimeout(() => setIsLoading(false), 1500);
+             if (!isLoading) {
+                setIsInitialNameModalOpen(true);
+            }
+            return () => clearTimeout(timer);
+        }
+    };
+    
+    fetchInitialData();
   }, [searchParams, toast, isLoading]);
   
   useEffect(() => {
@@ -5601,7 +5616,7 @@ export default function CreateTemplatePage() {
     setIsEditNameModalOpen(false);
     if(isInitialNameModalOpen){
         setIsInitialNameModalOpen(false);
-        handlePublish()
+        handlePublish(selectedCategories);
     } else {
         handlePublish();
     }
@@ -6146,6 +6161,23 @@ const LayerPanel = () => {
     );
 };
 
+  const handleCategoryToggle = (category: string, checked: boolean) => {
+    if (checked) {
+        setSelectedCategories(prev => [...prev, category]);
+    } else {
+        setSelectedCategories(prev => prev.filter(c => c !== category));
+    }
+  };
+
+  const handleAddNewCategory = () => {
+    const trimmed = newCategory.trim();
+    if (trimmed && !allCategories.includes(trimmed)) {
+        setAllCategories(prev => [...prev, trimmed]);
+        setSelectedCategories(prev => [...prev, trimmed]);
+        setNewCategory('');
+    }
+  };
+
   if (isLoading) {
       return <Preloader />
   }
@@ -6616,47 +6648,78 @@ const LayerPanel = () => {
       </Dialog>
       
        {/* Initial Name Modal */}
-       <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
+      <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
         <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
           <DialogHeader>
-             <div className="flex justify-center pb-4">
-                <FileSignature className="size-12 text-primary" />
-             </div>
+            <div className="flex justify-center pb-4">
+              <FileSignature className="size-12 text-primary" />
+            </div>
             <DialogTitle className="text-center text-xl">¡Inicia tu Obra Maestra!</DialogTitle>
             <DialogDescription className="text-center">
-              Dale un nombre a tu nueva plantilla para comenzar a dar vida a tus ideas.
+              Dale un nombre y asigna categorías a tu nueva plantilla para empezar a dar vida a tus ideas.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={tempTemplateName}
-              onChange={(e) => setTempTemplateName(e.target.value)}
-              placeholder="Ej: Newsletter de Bienvenida"
-              autoFocus
-              maxLength={20}
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateName()}
-            />
+          <div className="py-4 space-y-4">
+            <div>
+              <Label>Nombre de la Plantilla</Label>
+              <Input
+                value={tempTemplateName}
+                onChange={(e) => setTempTemplateName(e.target.value)}
+                placeholder="Ej: Newsletter de Bienvenida"
+                autoFocus
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <Label>Categorías</Label>
+              <div className="mt-2 space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                {allCategories.map((category) => (
+                  <div key={category} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`initial-cat-${category}`}
+                      checked={selectedCategories.includes(category)}
+                      onCheckedChange={(checked) => handleCategoryToggle(category, !!checked)}
+                    />
+                    <label htmlFor={`initial-cat-${category}`} className="text-sm font-medium leading-none">
+                      {category}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Crear nueva categoría"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                />
+                <Button onClick={handleAddNewCategory} size="icon" variant="outline">
+                  <PlusCircle className="size-4" />
+                </Button>
+              </div>
+            </div>
           </div>
           <DialogFooter className="sm:justify-between">
-             <Button
+            <Button
               type="button"
               onClick={() => router.push('/dashboard')}
               className="text-white bg-[#A11C00] hover:bg-[#F00000]"
             >
               Cancelar
             </Button>
-            <Button 
-                type="button" 
-                onClick={() => {
-                    handleSaveTemplateName();
-                }}
-                className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
+            <Button
+              type="button"
+              onClick={() => {
+                handleSaveTemplateName();
+              }}
+              className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
             >
               Guardar y Empezar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Confirm Exit Modal */}
        <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
@@ -6705,4 +6768,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-

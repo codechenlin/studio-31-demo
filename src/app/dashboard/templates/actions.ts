@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -121,6 +122,35 @@ export async function getTemplateById(templateId: string): Promise<{ success: bo
   }
 }
 
+export async function getAllCategories(): Promise<{ success: boolean; data?: string[]; error?: string }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('templates')
+      .select('categories')
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    
+    const allCategoriesSet = new Set<string>();
+    data.forEach(item => {
+      if (Array.isArray(item.categories)) {
+        item.categories.forEach(cat => allCategoriesSet.add(cat));
+      }
+    });
+
+    return { success: true, data: Array.from(allCategoriesSet) };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 
 export async function renameTemplate(templateId: string, newName: string) {
     const supabase = createClient();
@@ -184,3 +214,4 @@ export async function deleteTemplate(templateId: string) {
         return { success: false, error: error.message };
     }
 }
+
