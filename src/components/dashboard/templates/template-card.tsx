@@ -34,13 +34,15 @@ import { CategoryManagerModal } from './category-manager-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { TemplateRenderer } from './template-renderer';
+import { cn } from '@/lib/utils';
 
 interface TemplateCardProps {
     template: TemplateWithAuthor;
     onTemplateUpdate: () => void;
+    onPreview: () => void;
 }
 
-export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) {
+export function TemplateCard({ template, onTemplateUpdate, onPreview }: TemplateCardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isRenaming, setIsRenaming] = useState(false);
@@ -111,7 +113,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                           <TemplateRenderer content={template.content} />
                         </div>
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
-                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => window.open(`/dashboard/templates/preview/${template.id}`, '_blank')}>
+                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={onPreview}>
                                 <Eye className="text-white"/>
                             </Button>
                             <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsConfirmingEdit(true)}>
@@ -149,12 +151,18 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                         </div>
                     </div>
                     <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute bottom-2 right-2 text-destructive border-destructive/50 hover:bg-transparent hover:text-[#F00000] hover:border-[#F00000]"
-                        onClick={() => setIsDeleting(true)}
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        "absolute bottom-2 right-2 size-8",
+                        "border bg-transparent text-foreground border-border transition-colors",
+                        "hover:bg-transparent hover:text-[#F00000] hover:border-[#F00000]",
+                        "dark:text-white dark:hover:text-[#F00000]",
+                        "border-[#F00000] dark:border-[#F00000]"
+                      )}
+                      onClick={() => setIsDeleting(true)}
                     >
-                        <Trash2 className="size-5"/>
+                      <Trash2 className="size-5" />
                     </Button>
                 </div>
             </Card>

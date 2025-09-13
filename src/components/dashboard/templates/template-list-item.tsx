@@ -6,11 +6,21 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Brush, FileSignature, Eye, Trash2, Check } from 'lucide-react';
-import { type TemplateWithAuthor, renameTemplate, updateTemplateCategories } from '@/app/dashboard/templates/actions';
+import { type TemplateWithAuthor, renameTemplate, deleteTemplate } from '@/app/dashboard/templates/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -20,13 +30,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface TemplateListItemProps {
   template: TemplateWithAuthor;
   onTemplateUpdate: () => void;
+  onPreview: () => void;
 }
 
-export function TemplateListItem({ template, onTemplateUpdate }: TemplateListItemProps) {
+export function TemplateListItem({ template, onTemplateUpdate, onPreview }: TemplateListItemProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
   const [isConfirmingEdit, setIsConfirmingEdit] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newName, setNewName] = useState(template.name);
   const [isSaving, startSaving] = useTransition();
 
@@ -54,6 +66,26 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
     router.push(`/dashboard/templates/create?id=${template.id}`);
   };
 
+  const handleDelete = async () => {
+    startSaving(async () => {
+        const result = await deleteTemplate(template.id);
+        if (result.success) {
+            toast({
+                title: 'Plantilla Eliminada',
+                description: `La plantilla "${template.name}" ha sido eliminada.`,
+            });
+            onTemplateUpdate();
+        } else {
+            toast({
+                title: 'Error al eliminar',
+                description: result.error,
+                variant: 'destructive',
+            });
+        }
+        setIsDeleting(false);
+    });
+  };
+
   return (
     <>
       <TableRow>
@@ -74,10 +106,10 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
               <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => window.open(`/dashboard/templates/preview/${template.id}`, '_blank')}><Eye className="mr-2"/>Previsualizar</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onPreview}><Eye className="mr-2"/>Previsualizar</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsConfirmingEdit(true)}><Brush className="mr-2"/>Editar</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsRenaming(true)}><FileSignature className="mr-2"/>Renombrar</DropdownMenuItem>
-              {/* <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem> */}
+              <DropdownMenuItem className="text-destructive" onSelect={() => setIsDeleting(true)}><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>
@@ -114,6 +146,23 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
               </DialogFooter>
           </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Esta acción no se puede deshacer. Esto eliminará permanentemente la plantilla.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isSaving}>
+                      {isSaving ? 'Eliminando...' : 'Sí, eliminar'}
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

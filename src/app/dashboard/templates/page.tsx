@@ -13,6 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CategoryFilter, CategoryFilterSkeleton } from '@/components/dashboard/templates/category-filter';
 import { TemplateListItem, TemplateListItemSkeleton } from '@/components/dashboard/templates/template-list-item';
 import { Table, TableHeader, TableRow, TableHead, TableBody } from '@/components/ui/table';
+import { TemplatePreviewModal } from '@/components/dashboard/templates/template-preview-modal';
 
 export default function TemplatesPage() {
     const [templates, setTemplates] = useState<TemplateWithAuthor[]>([]);
@@ -22,6 +23,7 @@ export default function TemplatesPage() {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [allCategories, setAllCategories] = useState<string[]>([]);
     const [layout, setLayout] = useState<'grid' | 'list'>('grid');
+    const [previewTemplate, setPreviewTemplate] = useState<TemplateWithAuthor | null>(null);
 
     const fetchTemplatesData = React.useCallback(() => {
         startLoading(async () => {
@@ -52,6 +54,16 @@ export default function TemplatesPage() {
       );
 
     return (
+        <>
+        <TemplatePreviewModal 
+            template={previewTemplate}
+            isOpen={!!previewTemplate}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setPreviewTemplate(null);
+                }
+            }}
+        />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
             <div className="flex items-center justify-between">
                 <div>
@@ -132,7 +144,7 @@ export default function TemplatesPage() {
                 ) : layout === 'grid' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTemplates.map(template => (
-                           <TemplateCard key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} />
+                           <TemplateCard key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} onPreview={() => setPreviewTemplate(template)} />
                         ))}
                     </div>
                 ) : (
@@ -148,7 +160,7 @@ export default function TemplatesPage() {
                             </TableHeader>
                             <TableBody>
                                 {filteredTemplates.map(template => (
-                                    <TemplateListItem key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} />
+                                    <TemplateListItem key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} onPreview={() => setPreviewTemplate(template)} />
                                 ))}
                             </TableBody>
                         </Table>
@@ -156,5 +168,6 @@ export default function TemplatesPage() {
                 )}
             </div>
         </main>
+        </>
     );
 }
