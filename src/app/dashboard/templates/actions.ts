@@ -79,6 +79,39 @@ export async function getTemplates(): Promise<{ success: boolean; data?: Templat
   }
 }
 
+export async function getTemplateById(templateId: string): Promise<{ success: boolean; data?: TemplateWithAuthor; error?: string }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('templates')
+      .select(`
+        *,
+        profiles (
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq('id', templateId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return { success: false, error: 'Plantilla no encontrada.' };
+
+    return { success: true, data: data as TemplateWithAuthor };
+  } catch (error: any) {
+    console.error(`Error fetching template ${templateId}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+
 export async function renameTemplate(templateId: string, newName: string) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();

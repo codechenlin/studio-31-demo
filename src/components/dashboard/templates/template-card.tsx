@@ -126,8 +126,8 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                     </div>
                 </CardContent>
                 <div className="p-4 flex flex-col items-start gap-3 bg-card/50 flex-grow relative">
-                    <p className="font-semibold text-lg truncate w-full pr-10" onClick={() => setIsManagingCategories(true)}>{template.name}</p>
-                    <div className="w-full text-xs text-muted-foreground space-y-2 mt-auto" onClick={() => setIsManagingCategories(true)}>
+                    <p className="font-semibold text-lg truncate w-full pr-10">{template.name}</p>
+                    <div className="w-full text-xs text-muted-foreground space-y-2 mt-auto">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                                 <AvatarImage src={authorAvatar || ''} alt={authorName} />
@@ -151,11 +151,11 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                         </div>
                     </div>
                     <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-                        <Button
+                         <Button
                             variant="ghost"
                             size="icon"
                             className={cn(
-                              "size-8 bg-transparent border text-[#1700E6] border-[#1700E6]",
+                              "size-8 bg-transparent border text-[#E18700] border-[#E18700]",
                               "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
                               "transition-colors"
                             )}

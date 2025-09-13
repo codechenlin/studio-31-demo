@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,7 +160,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { saveTemplateAction, revalidatePath } from './actions';
+import { saveTemplateAction, revalidatePath, getTemplateById } from './actions';
 import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -4323,6 +4324,7 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
 
 export default function CreateTemplatePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [canvasContent, _setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -4446,14 +4448,45 @@ export default function CreateTemplatePage() {
   };
 
   useEffect(() => {
-    // Show preloader for a bit
-    const timer = setTimeout(() => setIsLoading(false), 1500);
+    const templateIdFromUrl = searchParams.get('id');
 
-    // After preloader, show the initial name modal
-    if (!isLoading) {
-      setIsInitialNameModalOpen(true);
+    const loadTemplate = async (id: string) => {
+        setLoadingAction('Cargando plantilla...');
+        const result = await getTemplateById(id);
+        if (result.success && result.data) {
+            setTemplateName(result.data.name);
+            _setCanvasContent(result.data.content || []);
+            setTemplateId(result.data.id);
+            setLastSaved(new Date(result.data.updated_at));
+            // Reset history for the loaded template
+            setHistory([result.data.content || []]);
+            setHistoryIndex(0);
+        } else {
+            toast({
+                title: 'Error al Cargar',
+                description: result.error || 'No se pudo encontrar la plantilla.',
+                variant: 'destructive',
+            });
+            // Keep editor empty for new template creation
+            setIsInitialNameModalOpen(true);
+        }
+        setIsLoading(false);
+        setLoadingAction(null);
+    };
+
+    if (templateIdFromUrl) {
+        loadTemplate(templateIdFromUrl);
+    } else {
+        // No ID in URL, it's a new template
+        const timer = setTimeout(() => setIsLoading(false), 1500);
+        if (!isLoading) {
+            setIsInitialNameModalOpen(true);
+        }
+        return () => clearTimeout(timer);
     }
-    
+  }, [searchParams, toast, isLoading]);
+  
+  useEffect(() => {
     const getUserId = async () => {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -4462,9 +4495,7 @@ export default function CreateTemplatePage() {
         }
     };
     getUserId();
-
-    return () => clearTimeout(timer);
-  }, [isLoading]);
+  }, []);
   
   const ThemeToggle = () => (
     <TooltipProvider>
@@ -6676,9 +6707,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
-    
-
-
-
-
