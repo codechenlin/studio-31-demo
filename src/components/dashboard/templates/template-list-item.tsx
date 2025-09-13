@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
-import { TemplatePreviewModal } from './template-preview-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TemplateListItemProps {
@@ -28,7 +27,6 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
   const [isConfirmingEdit, setIsConfirmingEdit] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
   const [newName, setNewName] = useState(template.name);
   const [isSaving, startSaving] = useTransition();
 
@@ -76,7 +74,7 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
               <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setIsPreviewing(true)}><Eye className="mr-2"/>Previsualizar</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => window.open(`/dashboard/templates/preview/${template.id}`, '_blank')}><Eye className="mr-2"/>Previsualizar</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsConfirmingEdit(true)}><Brush className="mr-2"/>Editar</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsRenaming(true)}><FileSignature className="mr-2"/>Renombrar</DropdownMenuItem>
               {/* <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem> */}
@@ -116,12 +114,6 @@ export function TemplateListItem({ template, onTemplateUpdate }: TemplateListIte
               </DialogFooter>
           </DialogContent>
       </Dialog>
-      
-      <TemplatePreviewModal 
-        isOpen={isPreviewing}
-        onOpenChange={setIsPreviewing}
-        template={template}
-      />
     </>
   );
 }
@@ -136,4 +128,3 @@ export function TemplateListItemSkeleton() {
         </TableRow>
     );
 }
-

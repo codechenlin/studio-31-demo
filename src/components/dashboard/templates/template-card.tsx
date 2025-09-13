@@ -148,12 +148,12 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                              )}
                         </div>
                     </div>
-                     <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute bottom-2 right-2 text-[#F00000] border border-[#F00000] hover:bg-destructive/10"
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute bottom-2 right-2 text-destructive border-destructive/50 hover:bg-transparent hover:text-[#F00000] hover:border-[#F00000]"
                         onClick={() => setIsDeleting(true)}
-                      >
+                    >
                         <Trash2 className="size-5"/>
                     </Button>
                 </div>
