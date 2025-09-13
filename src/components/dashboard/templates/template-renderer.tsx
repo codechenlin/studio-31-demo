@@ -107,6 +107,140 @@ const renderFragment = (fragment: any) => {
     return content;
 };
 
+const TimerComponent = ({ payload }: { payload: any }) => {
+    const { duration, design, styles } = payload;
+    
+    if (!duration || !styles) return null;
+
+    const timeData = [
+      { label: 'Días', value: duration.days, max: 31 },
+      { label: 'Horas', value: duration.hours, max: 24 },
+      { label: 'Minutos', value: duration.minutes, max: 60 },
+      { label: 'Segundos', value: duration.seconds, max: 60 },
+    ];
+    
+    const getProgress = (value: number, max: number) => {
+      if (max === 0) return 0;
+      return value / max;
+    };
+  
+    const renderDigital = () => {
+      const baseStyle: React.CSSProperties = {
+        borderRadius: `${styles.borderRadius}px`,
+        color: styles.numberColor,
+        fontFamily: styles.fontFamily,
+      };
+      if (styles.background.type === 'solid') {
+        baseStyle.backgroundColor = styles.background.color1;
+      } else {
+        const { direction, color1, color2 } = styles.background;
+        if (direction === 'radial') {
+          baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+        } else {
+          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+          baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
+      }
+  
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '4px', fontSize: `${styles.scale * 16}px` }}>
+          {timeData.map(unit => (
+            <div key={unit.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ ...baseStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', width: '4em', height: '4em', fontSize: '2em', fontWeight: 'bold' }}>
+                {String(unit.value || 0).padStart(2, '0')}
+              </div>
+              <p style={{ fontSize: '0.75em', marginTop: '4px', color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  
+    const renderAnalog = () => {
+      const { background } = styles;
+  
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', padding: '4px', fontSize: `${styles.scale * 16}px` }}>
+          {timeData.map(unit => (
+            <div key={unit.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '6em', height: '7em' }}>
+              <div style={{ position: 'relative', width: '100%', height: '6em' }}>
+                <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 100 100">
+                   <defs>
+                    {background.type === 'gradient' && (
+                        <linearGradient id={`analog-grad-${unit.label}`} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2 || background.color1} />
+                        </linearGradient>
+                    )}
+                   </defs>
+                  <circle strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" style={{ color: 'hsl(var(--muted))', opacity: 0.2 }} />
+                  <circle
+                    strokeWidth={styles.strokeWidth}
+                    cx="50" cy="50" r="40" fill="transparent"
+                    strokeDasharray={2 * Math.PI * 40}
+                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.value, unit.max))}
+                    transform="rotate(-90 50 50)"
+                    strokeLinecap="round"
+                    stroke={background.type === 'solid' ? background.color1 : `url(#analog-grad-${unit.label})`}
+                  />
+                  <text x="50" y="50" textAnchor="middle" dy="0.3em" style={{ fontSize: '1.25em', fontWeight: 'bold', fill: styles.numberColor, fontFamily: styles.fontFamily }}>
+                    {String(unit.value || 0).padStart(2, '0')}
+                  </text>
+                </svg>
+              </div>
+              <p style={{ fontSize: '0.75em', marginTop: '-0.5em', color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  
+    const renderMinimalist = () => {
+        const { background } = styles;
+        const pathLength = 400;
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: styles.fontFamily, fontSize: `${styles.scale * 14}px`, gap: '4px' }}>
+                {timeData.map((unit) => (
+                    <div key={unit.label} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '5em', height: '5em' }}>
+                         <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 120 120">
+                            <defs>
+                                {background.type === 'gradient' && (
+                                    <linearGradient id={`minimalist-grad-${unit.label}`} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                                        <stop offset="0%" stopColor={background.color1} />
+                                        <stop offset="100%" stopColor={background.color2 || background.color1} />
+                                    </linearGradient>
+                                )}
+                            </defs>
+                            <path d="M 10,10 H 110 V 110 H 10 Z" fill="none" stroke="hsl(var(--ai-track))" strokeWidth={styles.strokeWidth} strokeLinejoin="round" strokeLinecap="round" />
+                            <path
+                                d="M 10,10 H 110 V 110 H 10 Z"
+                                fill="none"
+                                stroke={background.type === 'solid' ? background.color1 : `url(#minimalist-grad-${unit.label})`}
+                                strokeWidth={styles.strokeWidth}
+                                strokeLinejoin="round"
+                                strokeLinecap="round"
+                                strokeDasharray={pathLength}
+                                strokeDashoffset={pathLength * (1 - getProgress(unit.value, unit.max))}
+                            />
+                        </svg>
+                        <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                             <span style={{ fontSize: '1.5em', color: styles.numberColor, fontWeight: 300 }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                             <p style={{ textTransform: 'uppercase', letterSpacing: '0.1em', paddingTop: '8px', color: styles.labelColor, fontSize: `${styles.minimalistLabelSize * 0.6}em` }}>{unit.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    switch (design) {
+      case 'analog': return renderAnalog();
+      case 'minimalist': return renderMinimalist();
+      case 'digital':
+      default:
+        return renderDigital();
+    }
+}
 
 const renderBlock = (block: Block, colCount: number = 1) => {
   const { type, payload } = block;
@@ -255,7 +389,7 @@ const renderBlock = (block: Block, colCount: number = 1) => {
     }
 
     case 'timer':
-        return <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-md">⏳ El contador se mostrará como una imagen estática en el correo final.</div>;
+        return <TimerComponent payload={payload} />;
 
     case 'switch': {
         const { design, scale, alignment, paddingY, styles, isOn, hookText } = payload;
