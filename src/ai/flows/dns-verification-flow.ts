@@ -12,14 +12,15 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import dns from 'node:dns/promises';
 
+export type DnsVerificationInput = z.infer<typeof DnsVerificationInputSchema>;
 const DnsVerificationInputSchema = z.object({
   domain: z.string().describe('The domain name to verify.'),
   expectedTxt: z
     .string()
     .describe('The full expected TXT record value, e.g., "domain.com,code=xyz123".'),
 });
-export type DnsVerificationInput = z.infer<typeof DnsVerificationInputSchema>;
 
+export type DnsVerificationOutput = z.infer<typeof DnsVerificationOutputSchema>;
 const DnsVerificationOutputSchema = z.object({
   isVerified: z.boolean().describe('Whether the DNS verification was successful.'),
   reason: z
@@ -27,7 +28,7 @@ const DnsVerificationOutputSchema = z.object({
     .optional()
     .describe('The reason for verification failure, if applicable.'),
 });
-export type DnsVerificationOutput = z.infer<typeof DnsVerificationOutputSchema>;
+
 
 export async function verifyDns(
   input: DnsVerificationInput
