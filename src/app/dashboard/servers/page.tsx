@@ -1,203 +1,159 @@
 
 "use client";
 
-import React, { useState } from 'react';
-import { useForm, FormProvider, useFormContext, type SubmitHandler, type FieldValues } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, CheckCircle, KeyRound, Lock, Server, Sparkles, Wand2 } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot } from "lucide-react";
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
-// Schemas for each provider
-const awsSchema = z.object({
-  apiKey: z.string().min(1, "API Key es requerida."),
-  apiSecret: z.string().min(1, "API Secret es requerido."),
-});
-const mailgunSchema = z.object({
-  apiKey: z.string().min(1, "API Key es requerida."),
-  domain: z.string().min(1, "Dominio es requerido."),
-});
-const sendgridSchema = z.object({
-  apiKey: z.string().min(1, "API Key es requerida."),
-});
-const elasticemailSchema = z.object({
-  apiKey: z.string().min(1, "API Key es requerida."),
-});
-const blastengineSchema = z.object({
-  username: z.string().min(1, "Username es requerido."),
-  apiKey: z.string().min(1, "API Key es requerida."),
-});
-const sparkpostSchema = z.object({
-  apiKey: z.string().min(1, "API Key es requerida."),
-});
-const smtpSchema = z.object({
-  host: z.string().min(1, "Host es requerido."),
-  port: z.string().min(1, "Puerto es requerido."),
-  username: z.string().min(1, "Usuario es requerido."),
-  password: z.string().min(1, "Contraseña es requerida."),
-});
+const providers = [
+  {
+    id: 'smtp',
+    name: 'SMTP Genérico',
+    description: 'Conéctate a cualquier servidor de correo usando credenciales SMTP.',
+    icon: Mail,
+    connected: false,
+    colors: 'from-cyan-500/10 to-blue-500/10',
+    borderColor: 'hover:border-cyan-400'
+  },
+  {
+    id: 'blastengine',
+    name: 'Blastengine',
+    description: 'Integra el potente servicio de envío de correo de Blastengine.',
+    icon: Zap,
+    connected: false,
+    colors: 'from-purple-500/10 to-indigo-500/10',
+    borderColor: 'hover:border-purple-400'
+  },
+  {
+    id: 'sparkpost',
+    name: 'SparkPost',
+    description: 'Utiliza la plataforma de entrega de correo de SparkPost.',
+    icon: Code,
+    connected: false,
+    colors: 'from-orange-500/10 to-amber-500/10',
+    borderColor: 'hover:border-orange-400'
+  },
+  {
+    id: 'elasticemail',
+    name: 'Elastic Email',
+    description: 'Conecta con Elastic Email para envíos masivos y marketing.',
+    icon: Bot,
+    connected: false,
+    colors: 'from-green-500/10 to-emerald-500/10',
+    borderColor: 'hover:border-green-400'
+  },
+];
 
-type ProviderSchema = 
-  | typeof awsSchema
-  | typeof mailgunSchema
-  | typeof sendgridSchema
-  | typeof elasticemailSchema
-  | typeof blastengineSchema
-  | typeof sparkpostSchema
-  | typeof smtpSchema;
+const cardVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  })
+};
 
-const providerConfig = {
-  aws: { schema: awsSchema, fields: [{name: 'apiKey', label: 'Access Key ID', type: 'text'}, {name: 'apiSecret', label: 'Secret Access Key', type: 'password'}]},
-  mailgun: { schema: mailgunSchema, fields: [{name: 'apiKey', label: 'API Key', type: 'password'}, {name: 'domain', label: 'Tu Dominio', type: 'text'}]},
-  sendgrid: { schema: sendgridSchema, fields: [{name: 'apiKey', label: 'API Key', type: 'password'}]},
-  elasticemail: { schema: elasticemailSchema, fields: [{name: 'apiKey', label: 'API Key', type: 'password'}]},
-  blastengine: { schema: blastengineSchema, fields: [{name: 'username', label: 'Username', type: 'text'}, {name: 'apiKey', label: 'API Key', type: 'password'}]},
-  sparkpost: { schema: sparkpostSchema, fields: [{name: 'apiKey', label: 'API Key', type: 'password'}]},
-  smtp: { schema: smtpSchema, fields: [{name: 'host', label: 'Host SMTP', type: 'text'}, {name: 'port', label: 'Puerto', type: 'text'}, {name: 'username', label: 'Usuario', type: 'text'}, {name: 'password', label: 'Contraseña', type: 'password'}]},
-} as const;
+const Particle = () => {
+    const style = {
+      '--size': `${Math.random() * 1.5 + 0.5}px`,
+      '--x-start': `${Math.random() * 100}%`,
+      '--x-end': `${Math.random() * 200 - 50}%`,
+      '--y-start': `${Math.random() * 100}%`,
+      '--y-end': `${Math.random() * 200 - 50}%`,
+      '--duration': `${Math.random() * 4 + 3}s`,
+      '--delay': `-${Math.random() * 7}s`,
+    } as React.CSSProperties;
+    return <div className="particle" style={style} />;
+};
 
-type ProviderName = keyof typeof providerConfig;
-
-
-interface ProviderFormProps<T extends FieldValues> {
-  provider: ProviderName;
-  onSubmit: SubmitHandler<T>;
-}
-
-function ProviderForm<T extends FieldValues>({ provider, onSubmit }: ProviderFormProps<T>) {
-  const { toast } = useToast();
-  const config = providerConfig[provider];
-  
-  const methods = useForm<T>({
-    resolver: zodResolver(config.schema as any),
-    defaultValues: config.fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {})
-  });
-
-  const [isConnected, setIsConnected] = useState(false);
-
-  const handleFormSubmit: SubmitHandler<T> = (data) => {
-    console.log(`Connecting ${provider} with data:`, data);
-    // Here you would call the actual API integration logic
-    toast({
-      title: `Conexión Exitosa con ${provider.toUpperCase()}`,
-      description: "El proveedor ha sido configurado correctamente.",
-    });
-    setIsConnected(true);
-    onSubmit(data);
-  };
-  
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
-            {(config.fields as {name: string, label: string, type: string}[]).map((field) => (
-               <FormField
-                key={field.name}
-                control={methods.control}
-                name={field.name as any}
-                render={({ field: formField }) => (
-                  <FormItem>
-                    <FormLabel>{field.label}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <Input 
-                            type={field.type} 
-                            placeholder={field.type === 'password' ? '••••••••••••••••' : `Tu ${field.label}`} 
-                            {...formField} 
-                            className="pl-10" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-        </div>
-        <div className="flex justify-end">
-            <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity min-w-[150px]"
-                disabled={isConnected}
-            >
-              {isConnected ? (
-                <>
-                    <CheckCircle className="mr-2" />
-                    Conectado
-                </>
-              ) : (
-                <>
-                    <ArrowRight className="mr-2" />
-                    Conectar
-                </>
-              )}
-            </Button>
-        </div>
-      </form>
-    </FormProvider>
-  );
-}
 
 export default function ServersPage() {
 
-  const handleConnect = (provider: ProviderName) => (data: FieldValues) => {
-    console.log(`Provider: ${provider}`, data);
-  };
-
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground flex items-center gap-2">
-            <Server className="size-8"/>
-            Servidores y Proveedores
-          </h1>
-          <p className="text-muted-foreground">Conecta tus servicios de envío de correo para empezar a crear campañas.</p>
-        </div>
+    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
+       <style>{`
+        @keyframes particle-move {
+          0% { transform: translate(var(--x-start), var(--y-start)); opacity: 1; }
+          100% { transform: translate(var(--x-end), var(--y-end)); opacity: 0; }
+        }
+        .particle {
+          position: absolute;
+          width: var(--size);
+          height: var(--size);
+          background: hsl(var(--primary) / 0.5);
+          border-radius: 50%;
+          animation: particle-move var(--duration) var(--delay) linear infinite;
+          will-change: transform, opacity;
+        }
+      `}</style>
+      
+      <div className="absolute inset-0 z-0 opacity-20 dark:opacity-30 pointer-events-none">
+          {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+      </div>
+      
+      <div className="relative z-10">
+        <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground flex items-center gap-2">
+          <Server className="size-8"/>
+          Servidores y Proveedores
+        </h1>
+        <p className="text-muted-foreground mt-1">Conecta tus servicios de envío de correo para empezar a crear campañas.</p>
       </div>
 
-       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wand2 className="text-primary"/>
-            <span>Configuración de Proveedor</span>
-          </CardTitle>
-          <CardDescription>
-            Selecciona un proveedor de la lista e introduce tus credenciales para integrarlo con Mailflow AI.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="aws" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto">
-              {Object.keys(providerConfig).map((p) => (
-                <TabsTrigger key={p} value={p} className="capitalize py-2 text-xs md:text-sm">{p === 'smtp' ? 'SMTP Genérico' : p}</TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {Object.keys(providerConfig).map((p) => (
-              <TabsContent key={p} value={p}>
-                <Card className="bg-background/50 border-none shadow-none mt-4">
-                  <CardHeader>
-                    <CardTitle className="capitalize">{p === 'smtp' ? 'Conectar a un Servidor SMTP' : `Conectar con ${p}`}</CardTitle>
-                    <CardDescription>
-                      Introduce tus credenciales de API para {p === 'smtp' ? 'tu servidor SMTP' : p}. Tus claves se guardarán de forma segura.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ProviderForm provider={p as ProviderName} onSubmit={handleConnect(p as ProviderName)} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 md:gap-8">
+        {providers.map((provider, i) => (
+          <motion.div
+            key={provider.id}
+            custom={i}
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+          >
+            <div className={cn(
+              "group relative flex flex-col h-full rounded-xl border border-border/20 bg-card/50 backdrop-blur-sm overflow-hidden transition-all duration-300",
+              provider.borderColor,
+              "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
+            )}>
+              <div className={cn("absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br", provider.colors)} />
+              
+              <div className="flex-1 p-6 z-10">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                       <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                           <provider.icon className="size-8 text-primary"/>
+                       </div>
+                        <div>
+                           <h2 className="text-xl font-bold text-foreground">{provider.name}</h2>
+                           <div className="mt-1">
+                             {provider.connected ? (
+                               <span className="text-xs font-semibold text-green-400 px-2 py-1 bg-green-500/10 rounded-full">Conectado</span>
+                             ) : (
+                               <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
+                             )}
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                <p className="text-muted-foreground mt-4 text-sm">{provider.description}</p>
+              </div>
+
+              <div className="p-6 pt-0 z-10 mt-auto">
+                 <Button className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity">
+                    <span className="absolute -inset-full animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#AD00EC_0%,#009AFF_50%,#AD00EC_100%)] opacity-0 transition-opacity duration-500 group-hover/btn:opacity-100" />
+                    <span className="relative flex items-center gap-2">
+                      Conectar Ahora <ChevronRight className="size-4" />
+                    </span>
+                 </Button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </main>
   );
 }
