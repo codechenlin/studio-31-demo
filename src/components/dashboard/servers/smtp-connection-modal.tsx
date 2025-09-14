@@ -134,7 +134,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (type === 'mandatory') {
         await Promise.all([
             checkRecord('@', 'TXT', 'v=spf1', setSpfStatus),
-            checkRecord('default._domainkey', 'TXT', 'v=DKIM1', setDkimStatus),
+            checkRecord('default._domainkey', 'CNAME', undefined, setDkimStatus),
             checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
         ]);
     } else {
@@ -330,10 +330,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                               onChange={(e) => setDomain(e.target.value)}
                           />
                       </div>
+                       <div className='flex justify-center pt-8'>
+                         <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
+                           Siguiente <ArrowRight className="ml-2"/>
+                         </Button>
+                       </div>
                     </div>
-                     <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
-                      Siguiente <ArrowRight className="ml-2"/>
-                    </Button>
                 </div>
             )
         case 2:
@@ -364,21 +366,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line">{infoContent[infoViewRecord].description}</p>
                         
-                        <AnimatePresence>
-                        {showRecommendation && (
-                            <motion.div 
-                              initial={{opacity: 0, height: 0, marginTop: 0}} 
-                              animate={{opacity: 1, height: 'auto', marginTop: '1rem'}} 
-                              exit={{opacity: 0, height: 0, marginTop: 0}}
-                              transition={{ duration: 0.3 }}
-                              className="text-left p-3 bg-muted/50 rounded-md font-mono text-xs border overflow-hidden"
-                            >
-                                <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
-                                <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
-                            </motion.div>
-                        )}
+                         <AnimatePresence>
+                          {showRecommendation && (
+                              <motion.div 
+                                initial={{opacity: 0, y: -10}} 
+                                animate={{opacity: 1, y: 0}} 
+                                exit={{opacity: 0, y: -10}}
+                                transition={{ duration: 0.3 }}
+                                className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border overflow-hidden"
+                              >
+                                  <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
+                                  <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
+                              </motion.div>
+                          )}
                         </AnimatePresence>
-                        
+
                         <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
                            <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>{showRecommendation ? 'Ocultar' : 'Ver'} Ejemplo</Button>
@@ -410,46 +412,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         )}
                     </div>
                   </div>
-                </div>
-            )
-        case 4:
-            return (
-                <div className="space-y-3 h-full flex flex-col justify-start pt-8">
-                    <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
-                    <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
-                    <div className="space-y-4 flex-grow pt-4">
-                        <FormField control={form.control} name="host" render={({ field }) => (
-                            <FormItem>
-                                <Label className='text-left w-full'>Host</Label>
-                                <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-                         <FormField control={form.control} name="port" render={({ field }) => (
-                            <FormItem>
-                                <Label className='text-left w-full'>Puerto</Label>
-                                <FormControl><div className="relative"><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></div></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-                        
-                        <FormField control={form.control} name="encryption" render={({ field }) => (
-                            <FormItem><Label>Cifrado</Label><FormControl>
-                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                            </RadioGroup>
-                            </FormControl><FormMessage /></FormItem>
-                        )}/>
-
-                        <FormField control={form.control} name="username" render={({ field }) => (
-                            <FormItem><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="password" render={({ field }) => (
-                            <FormItem><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-                        )}/>
-                    </div>
                 </div>
             )
         default: return null;
@@ -518,6 +480,73 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     );
   };
 
+
+  const Step4Form = () => (
+     <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-2 h-full">
+         {/* Central Panel */}
+        <div className="p-8 flex flex-col h-full">
+          <motion.div
+            key="step4-center"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="h-full flex flex-col"
+          >
+             <div className="space-y-3 h-full flex flex-col justify-start pt-8">
+                <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
+                <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
+                <div className="space-y-4 flex-grow pt-4">
+                    <FormField control={form.control} name="host" render={({ field }) => (
+                        <FormItem>
+                            <Label className='text-left w-full'>Host</Label>
+                            <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                     <FormField control={form.control} name="port" render={({ field }) => (
+                        <FormItem>
+                            <Label className='text-left w-full'>Puerto</Label>
+                            <FormControl><div className="relative"><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></div></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                    
+                    <FormField control={form.control} name="encryption" render={({ field }) => (
+                        <FormItem><Label>Cifrado</Label><FormControl>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                        </RadioGroup>
+                        </FormControl><FormMessage /></FormItem>
+                    )}/>
+
+                    <FormField control={form.control} name="username" render={({ field }) => (
+                        <FormItem><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormItem><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+                    )}/>
+                </div>
+            </div>
+          </motion.div>
+        </div>
+        {/* Right Panel */}
+        <div className="h-full">
+            <motion.div
+                key="step4-right"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="h-full"
+              >
+              {renderRightPanelContent()}
+            </motion.div>
+        </div>
+      </form>
+    </Form>
+  );
 
   const renderRightPanelContent = () => {
     const allMandatoryHealthChecksDone = dkimStatus !== 'idle' && dkimStatus !== 'verifying' && spfStatus !== 'idle' && spfStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
@@ -642,7 +671,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
               </div>
             )}
             {currentStep === 4 && (
-              <Form {...form}>
                 <div className="w-full h-full flex flex-col justify-between">
                     <div className="p-4 border rounded-lg bg-muted/30 flex-grow flex flex-col">
                       <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
@@ -687,7 +715,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       )}
                   </div>
                 </div>
-              </Form>
             )}
             </motion.div>
         </AnimatePresence>
@@ -699,6 +726,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
 
   const renderContent = () => {
+    if (currentStep === 4) {
+      return (
+        <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-1 gap-0 h-[700px]" showCloseButton={false}>
+          <Step4Form />
+        </DialogContent>
+      );
+    }
+
     return (
        <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
@@ -734,5 +769,3 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
-
-    
