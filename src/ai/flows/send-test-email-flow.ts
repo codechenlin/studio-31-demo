@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import nodemailer from 'nodemailer';
 
-export const SendTestEmailInputSchema = z.object({
+const SendTestEmailInputSchema = z.object({
   host: z.string(),
   port: z.number(),
   secure: z.boolean(),
@@ -25,7 +25,7 @@ export const SendTestEmailInputSchema = z.object({
 });
 export type SendTestEmailInput = z.infer<typeof SendTestEmailInputSchema>;
 
-export const SendTestEmailOutputSchema = z.object({
+const SendTestEmailOutputSchema = z.object({
   success: z.boolean(),
   messageId: z.string().optional(),
   error: z.string().optional(),

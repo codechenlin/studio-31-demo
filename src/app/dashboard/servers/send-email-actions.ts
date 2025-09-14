@@ -5,7 +5,20 @@ import {
     sendTestEmail, 
     type SendTestEmailInput 
 } from '@/ai/flows/send-test-email-flow';
-import { SendTestEmailInputSchema } from '@/ai/flows/send-test-email-flow';
+import { z } from 'zod';
+
+// Zod schema for input validation, moved here from the flow file.
+const SendTestEmailInputSchema = z.object({
+  host: z.string(),
+  port: z.number(),
+  secure: z.boolean(),
+  auth: z.object({
+    user: z.string(),
+    pass: z.string(),
+  }),
+  from: z.string(),
+  to: z.string(),
+});
 
 
 export async function sendTestEmailAction(input: SendTestEmailInput) {
