@@ -212,29 +212,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     switch (currentStep) {
         case 1:
             return (
-                 <div className="space-y-4 h-full flex flex-col justify-start">
-                    <h3 className="text-lg font-semibold">Paso 1: Introduce tu Dominio</h3>
-                    <p className="text-sm text-muted-foreground">
-                    Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
-                    </p>
-                    <div className="space-y-2 pt-4">
-                      <Label htmlFor="domain">Tu Dominio</Label>
-                      <div className="relative">
-                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                          <Input 
-                              id="domain" 
-                              placeholder="ejemplo.com" 
-                              className="pl-10 h-12 text-base"
-                              value={domain}
-                              onChange={(e) => setDomain(e.target.value)}
-                          />
+                 <div className="space-y-4 h-full flex flex-col">
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-semibold">Paso 1: Introduce tu Dominio</h3>
+                      <p className="text-sm text-muted-foreground">
+                      Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
+                      </p>
+                      <div className="space-y-2 pt-4">
+                        <Label htmlFor="domain">Tu Dominio</Label>
+                        <div className="relative">
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <Input 
+                                id="domain" 
+                                placeholder="ejemplo.com" 
+                                className="pl-10 h-12 text-base"
+                                value={domain}
+                                onChange={(e) => setDomain(e.target.value)}
+                            />
+                        </div>
                       </div>
                     </div>
+                    <Button className="w-full h-12 text-base" onClick={handleStartVerification}>
+                        Siguiente <ArrowRight className="ml-2"/>
+                    </Button>
                 </div>
             )
         case 2:
             return (
-                 <div className="space-y-4">
+                 <div className="space-y-4 h-full flex flex-col justify-center">
                     <h3 className="text-lg font-semibold">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
                         Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.
@@ -254,18 +259,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )
         case 3:
             return (
-                <div className="space-y-4">
+                <div className="space-y-4 h-full flex flex-col justify-center">
                     <h3 className="text-lg font-semibold">Paso 3: Salud del Dominio</h3>
                     <p className="text-sm text-muted-foreground">Verificaremos registros SPF y DKIM para asegurar una alta entregabilidad. Si fallan, te daremos los valores a configurar.</p>
                 </div>
             )
         case 4:
             return (
-                <div className="space-y-4">
+                <div className="space-y-3 h-full flex flex-col">
                      <h3 className="text-lg font-semibold">Paso 4: Configurar Credenciales</h3>
                      <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                     <Form {...form}>
-                        <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="space-y-3">
+                        <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="space-y-3 flex-grow">
                            <div className="grid grid-cols-2 gap-4">
                              <FormField control={form.control} name="host" render={({ field }) => (
                                 <FormItem><Label>Host</Label><FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.ejemplo.com" {...field} /></div></FormControl><FormMessage /></FormItem>
@@ -300,19 +305,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     return (
         <div className="relative p-6 border-l h-full flex flex-col justify-between items-center text-center bg-muted/20">
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-50"/>
              <div className="w-full">
                 <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-4"><div className="size-2 rounded-full bg-green-400 animate-pulse"/>Estado del Proceso</div>
                 
                 <AnimatePresence mode="wait">
                 {currentStep === 1 && (
-                    <motion.div key="step1-info" {...cardAnimation} className="text-center">
+                     <motion.div key="step1-info" {...cardAnimation} className="text-center">
                          <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                         <h4 className="font-bold">Empecemos</h4>
                         <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
-                        <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
-                            Siguiente <ArrowRight className="ml-2"/>
-                        </Button>
                     </motion.div>
                 )}
                 {currentStep === 2 && (
@@ -327,7 +328,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     onClick={handleCheckVerification} 
                                     disabled={verificationStatus === 'verifying'}
                                 >
-                                    {verificationStatus === 'verifying' ? 'Verificando...' : 'Verificar ahora'}
+                                    {verificationStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/>Verificando...</> : 'Verificar ahora'}
                                 </Button>
                             </motion.div>
                         )}
@@ -485,4 +486,3 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
-
