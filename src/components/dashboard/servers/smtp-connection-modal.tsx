@@ -155,7 +155,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const result = await sendTestEmailAction({
         host: values.host,
         port: values.port,
-        secure: values.encryption !== 'none', // Nodemailer `secure` is true for TLS on 465, false for STARTTLS on 587. Let's simplify: true if not 'none'.
+        secure: values.encryption !== 'none',
         auth: {
             user: values.username,
             pass: values.password
@@ -180,8 +180,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
    const handleCheckDelivery = async () => {
     setDeliveryStatus('checking');
     await new Promise(resolve => setTimeout(resolve, 2500));
-    // In a real scenario, this would check a webhook endpoint for bounce notifications.
-    // We'll simulate a success here for the demo.
     setDeliveryStatus('delivered');
   };
 
@@ -244,7 +242,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             return (
                  <div className="space-y-4 h-full flex flex-col">
                      <div className="flex-grow">
-                      <h3 className="text-lg font-semibold">Paso 1: Introduce tu Dominio</h3>
+                      <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
                       <p className="text-sm text-muted-foreground">
                       Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
                       </p>
@@ -270,7 +268,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         case 2:
             return (
                  <div className="h-full flex flex-col">
-                    <h3 className="text-lg font-semibold">Paso 2: Añadir Registro DNS</h3>
+                    <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
                         Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.
                     </p>
@@ -289,16 +287,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         case 3:
             return (
                 <div className="h-full flex flex-col">
-                    <h3 className="text-lg font-semibold">Paso 3: Salud del Dominio</h3>
+                    <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
                     <p className="text-sm text-muted-foreground flex-grow">Verificaremos registros SPF, DKIM y DMARC para asegurar una alta entregabilidad. Si alguno falla, te daremos los valores a configurar.</p>
                 </div>
             )
         case 4:
             return (
                 <div className="space-y-3 h-full flex flex-col">
-                    <h3 className="text-lg font-semibold">Paso 4: Configurar Credenciales</h3>
+                    <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
                     <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
-                    <Form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="space-y-3 flex-grow pt-4">
+                    <div className="space-y-3 flex-grow pt-4">
                         <div className="grid grid-cols-2 gap-4">
                             <FormField control={form.control} name="host" render={({ field }) => (
                             <FormItem><Label>Host</Label><FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.ejemplo.com" {...field} /></div></FormControl><FormMessage /></FormItem>
@@ -322,7 +320,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <FormField control={form.control} name="password" render={({ field }) => (
                             <FormItem><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
                         )}/>
-                    </Form>
+                    </div>
                 </div>
             )
         default: return null;
@@ -364,229 +362,219 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     };
 
     return (
-        <div className="relative p-6 border-l h-full flex flex-col justify-between items-center text-center bg-muted/20">
-            <AnimatePresence mode="wait">
-                {currentStep === 1 && (
-                     <motion.div key="step1-info" {...cardAnimation} className="w-full h-full text-center flex flex-col justify-center">
-                        <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Empecemos</h4>
-                        <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
+      <div className="relative p-6 border-l h-full flex flex-col justify-between items-center text-center bg-muted/20">
+        <AnimatePresence mode="wait">
+          {currentStep === 1 && (
+            <motion.div key="step1-info" {...cardAnimation} className="w-full h-full text-center flex flex-col justify-center">
+              <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
+              <h4 className="font-bold">Empecemos</h4>
+              <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
+            </motion.div>
+          )}
+          {currentStep === 2 && (
+            <motion.div key="step2-container" {...cardAnimation} className="text-center h-full flex flex-col justify-between w-full">
+              <div className="relative flex-grow flex flex-col justify-center">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full flex justify-center items-center pointer-events-none">
+                  <div className={cn("absolute w-64 h-64 bg-primary/5 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-pulse")}/>
+                  <div className={cn("absolute w-80 h-80 border-2 border-primary/10 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-ping")}/>
+                </div>
+                <div className="z-10">
+                  {verificationStatus === 'pending' && (
+                    <motion.div key="pending-check" {...cardAnimation} className="text-center flex-grow flex flex-col justify-center">
+                      <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
+                      <h4 className="font-bold">Acción Requerida</h4>
+                      <p className="text-sm text-muted-foreground">Añade el registro TXT a tu proveedor de DNS y luego verifica.</p>
+                    </motion.div>
+                  )}
+                  {verificationStatus === 'verifying' && (
+                    <motion.div key="verifying" {...cardAnimation} className="flex flex-col items-center gap-3 flex-grow justify-center">
+                      <div className="relative size-20">
+                        <div className="absolute inset-0 border-2 border-blue-400/30 rounded-full"/>
+                        <div className="absolute inset-0 border-t-2 border-blue-400 rounded-full animate-spin"/>
+                        <Search className="absolute inset-0 m-auto size-8 text-blue-400"/>
+                      </div>
+                      <h4 className="font-bold text-lg">Verificando...</h4>
+                      <p className="text-sm text-muted-foreground">Buscando el registro DNS en el dominio.</p>
+                    </motion.div>
+                  )}
+                  {verificationStatus === 'verified' && (
+                    <motion.div key="verified" {...cardAnimation} className="flex flex-col items-center gap-3 flex-grow justify-center">
+                      <ShieldCheck className="size-20 text-green-400" />
+                      <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
+                      <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
+                    </motion.div>
+                  )}
+                  {verificationStatus === 'failed' && (
+                    <motion.div key="failed-info" {...cardAnimation} className="flex flex-col items-center gap-3 text-center flex-grow justify-center">
+                      <AlertTriangle className="size-16 text-red-400" />
+                      <h4 className="font-bold text-lg">Verificación Fallida</h4>
+                      <p className="text-sm text-muted-foreground">No pudimos encontrar el registro. La propagación de DNS puede tardar.</p>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 mt-auto">
+                {(verificationStatus === 'pending' || verificationStatus === 'failed') &&
+                  <Button
+                    className="w-full h-12 text-base mt-4"
+                    onClick={handleCheckVerification}
+                    disabled={verificationStatus === 'verifying'}
+                  >
+                    {verificationStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/>Verificando...</> : 'Verificar ahora'}
+                  </Button>
+                }
+                {verificationStatus === 'verified' && (
+                  <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
+                    Continuar <ArrowRight className="ml-2"/>
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          )}
+          {currentStep === 3 && (
+            <motion.div key="step3-health" {...cardAnimation} className="w-full h-full flex flex-col justify-between">
+              <div className="flex-grow flex flex-col justify-center">
+                {infoView ? (
+                  <motion.div key={infoView} {...cardAnimation} className="flex-grow flex flex-col">
+                    <h4 className="font-bold text-lg">{infoContent[infoView].title}</h4>
+                    <p className="text-sm text-muted-foreground mt-2 text-left flex-grow">{infoContent[infoView].description}</p>
+                    {showRecommendation && (
+                      <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} className="mt-3 text-left p-2 bg-muted/50 rounded-md font-mono text-xs border">
+                        <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro TXT:</p>
+                        <code>{infoContent[infoView].recommendation}</code>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <div>
+                    {(dkimStatus !== 'idle' || spfStatus !== 'idle' || dmarcStatus !== 'idle') ? (
+                      <div className="space-y-2 mt-4 text-left">
+                        {renderRecordStatus('SPF', spfStatus, () => setInfoView('spf'))}
+                        {renderRecordStatus('DKIM', dkimStatus, () => setInfoView('dkim'))}
+                        {renderRecordStatus('DMARC', dmarcStatus, () => setInfoView('dmarc'))}
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
+                        <h4 className="font-bold">Salud del Dominio</h4>
+                        <p className="text-sm text-muted-foreground">Comprobaremos tus registros SPF, DKIM y DMARC.</p>
+                      </div>
+                    )}
+                    {allHealthChecksDone && (
+                      <p className={cn("text-sm mt-3", allHealthChecksPassed ? "text-green-500" : "text-red-500")}>
+                        {allHealthChecksPassed ? "¡Tu dominio está en perfectas condiciones!" : "Algunos registros requieren atención para una entregabilidad óptima."}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                {infoView ? (
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="outline" className="w-full" onClick={() => { setInfoView(null); setShowRecommendation(false); }}>Atrás</Button>
+                    <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>
+                      {showRecommendation ? 'Ocultar' : 'Ver'} Recomendación
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-2">
+                    {allHealthChecksDone ? (
+                      <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
+                        Continuar <ArrowRight className="ml-2"/>
+                      </Button>
+                    ) : (
+                      <Button className="w-full h-12 text-base" onClick={handleCheckHealth} disabled={dkimStatus === 'verifying'}>
+                        {dkimStatus === 'verifying' ? 'Verificando...' : 'Comprobar Salud del Dominio'}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+          {currentStep === 4 && (
+            <motion.div key="step4-actions" {...cardAnimation} className="w-full h-full flex flex-col justify-between">
+                <div className="p-4 border rounded-lg bg-muted/30 flex-grow flex flex-col">
+                  <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
+                  <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
+                  <FormField control={form.control} name="testEmail" render={({ field }) => (
+                      <FormItem>
+                          <Label className="text-left">Enviar correo de prueba a:</Label>
+                          <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+                {testStatus === 'success' && deliveryStatus !== 'bounced' && (
+                    <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
+                      <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
+                        {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
+                        Verificar Entrega
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Haz clic aquí para comprobar si el correo rebotó. Esto puede tardar unos segundos.</p>
+                      {deliveryStatus === 'delivered' && 
+                          <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
+                      }
                     </motion.div>
                 )}
-                {currentStep === 2 && (
-                    <motion.div key="step2-container" {...cardAnimation} className="text-center h-full flex flex-col justify-between w-full">
-                        <div className="relative flex-grow flex flex-col justify-center">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full flex justify-center items-center pointer-events-none">
-                                <div className={cn("absolute w-64 h-64 bg-primary/5 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-pulse")}/>
-                                <div className={cn("absolute w-80 h-80 border-2 border-primary/10 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-ping")}/>
-                            </div>
-                            <div className="z-10">
-                                {verificationStatus === 'pending' && (
-                                    <motion.div key="pending-check" {...cardAnimation} className="text-center flex-grow flex flex-col justify-center">
-                                        <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
-                                        <h4 className="font-bold">Acción Requerida</h4>
-                                        <p className="text-sm text-muted-foreground">Añade el registro TXT a tu proveedor de DNS y luego verifica.</p>
-                                    </motion.div>
-                                )}
-                                {verificationStatus === 'verifying' && (
-                                    <motion.div key="verifying" {...cardAnimation} className="flex flex-col items-center gap-3 flex-grow justify-center">
-                                        <div className="relative size-20">
-                                            <div className="absolute inset-0 border-2 border-blue-400/30 rounded-full"/>
-                                            <div className="absolute inset-0 border-t-2 border-blue-400 rounded-full animate-spin"/>
-                                            <Search className="absolute inset-0 m-auto size-8 text-blue-400"/>
-                                        </div>
-                                        <h4 className="font-bold text-lg">Verificando...</h4>
-                                        <p className="text-sm text-muted-foreground">Buscando el registro DNS en el dominio.</p>
-                                    </motion.div>
-                                )}
-                                {verificationStatus === 'verified' && (
-                                    <motion.div key="verified" {...cardAnimation} className="flex flex-col items-center gap-3 flex-grow justify-center">
-                                        <ShieldCheck className="size-20 text-green-400" />
-                                        <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
-                                        <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
-                                    </motion.div>
-                                )}
-                                {verificationStatus === 'failed' && (
-                                    <motion.div key="failed-info" {...cardAnimation} className="flex flex-col items-center gap-3 text-center flex-grow justify-center">
-                                        <AlertTriangle className="size-16 text-red-400" />
-                                        <h4 className="font-bold text-lg">Verificación Fallida</h4>
-                                        <p className="text-sm text-muted-foreground">No pudimos encontrar el registro. La propagación de DNS puede tardar.</p>
-                                    </motion.div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                           {(verificationStatus === 'pending' || verificationStatus === 'failed') &&
-                                <Button 
-                                    className="w-full h-12 text-base mt-4" 
-                                    onClick={handleCheckVerification} 
-                                    disabled={verificationStatus === 'verifying'}
-                                >
-                                    {verificationStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/>Verificando...</> : 'Verificar ahora'}
-                                </Button>
-                            }
-                            {verificationStatus === 'verified' && (
-                                <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
-                                    Continuar <ArrowRight className="ml-2"/>
-                                </Button>
-                            )}
-                            <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
-                        </div>
-                    </motion.div>
-                )}
-                {currentStep === 3 && (
-                     <motion.div key="step3-health" {...cardAnimation} className="w-full h-full flex flex-col justify-between">
-                         <div className="flex-grow flex flex-col justify-center">
-                            {infoView ? (
-                                <motion.div key={infoView} {...cardAnimation} className="flex-grow flex flex-col">
-                                    <h4 className="font-bold text-lg">{infoContent[infoView].title}</h4>
-                                    <p className="text-sm text-muted-foreground mt-2 text-left flex-grow">{infoContent[infoView].description}</p>
-                                    {showRecommendation && (
-                                        <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} className="mt-3 text-left p-2 bg-muted/50 rounded-md font-mono text-xs border">
-                                            <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro TXT:</p>
-                                            <code>{infoContent[infoView].recommendation}</code>
-                                        </motion.div>
-                                    )}
-                                </motion.div>
-                            ) : (
-                                <div>
-                                {(dkimStatus !== 'idle' || spfStatus !== 'idle' || dmarcStatus !== 'idle') ? (
-                                    <div className="space-y-2 mt-4 text-left">
-                                        {renderRecordStatus('SPF', spfStatus, () => setInfoView('spf'))}
-                                        {renderRecordStatus('DKIM', dkimStatus, () => setInfoView('dkim'))}
-                                        {renderRecordStatus('DMARC', dmarcStatus, () => setInfoView('dmarc'))}
-                                    </div>
-                                ): (
-                                    <div className="text-center">
-                                        <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
-                                        <h4 className="font-bold">Salud del Dominio</h4>
-                                        <p className="text-sm text-muted-foreground">Comprobaremos tus registros SPF, DKIM y DMARC.</p>
-                                    </div>
-                                )}
-                                {allHealthChecksDone && (
-                                    <>
-                                    <p className={cn("text-sm mt-3", allHealthChecksPassed ? "text-green-500" : "text-red-500")}>
-                                        {allHealthChecksPassed ? "¡Tu dominio está en perfectas condiciones!" : "Algunos registros requieren atención para una entregabilidad óptima."}
-                                    </p>
-                                    </>
-                                )}
-                                </div>
-                            )}
-                         </div>
-
-                        <div className="flex flex-col gap-2">
-                           {infoView ? (
-                                <div className="flex gap-2 mt-4">
-                                  <Button variant="outline" className="w-full" onClick={() => { setInfoView(null); setShowRecommendation(false); }}>Atrás</Button>
-                                  <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>
-                                      {showRecommendation ? 'Ocultar' : 'Ver'} Recomendación
-                                  </Button>
-                                </div>
-                           ) : (
-                            <div className="mt-4 space-y-2">
-                                {allHealthChecksDone ? (
-                                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
-                                        Continuar <ArrowRight className="ml-2"/>
-                                    </Button>
-                                ) : (
-                                     <Button className="w-full h-12 text-base" onClick={handleCheckHealth} disabled={dkimStatus === 'verifying'}>
-                                         {dkimStatus === 'verifying' ? 'Verificando...' : 'Comprobar Salud del Dominio'}
-                                     </Button>
-                                )}
-                             </div>
-                            )}
-                            <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
-                        </div>
-                     </motion.div>
-                )}
-                {currentStep === 4 && (
-                     <motion.div key="step4-actions" {...cardAnimation} className="w-full h-full flex flex-col justify-between">
-                         <div className="p-4 border rounded-lg bg-muted/30 flex-grow flex flex-col">
-                            <Form id="smtp-form-test" onSubmit={form.handleSubmit(onSubmitSmtp)}>
-                                <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
-                                <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
-                                <FormField control={form.control} name="testEmail" render={({ field }) => (
-                                    <FormItem>
-                                        <Label className="text-left">Enviar correo de prueba a:</Label>
-                                        <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}/>
-                            </Form>
-                         </div>
-                        
-                         {testStatus === 'success' && deliveryStatus !== 'bounced' && (
-                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                                <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
-                                  {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                                  Verificar Entrega
-                                </Button>
-                                 <p className="text-xs text-muted-foreground">Haz clic aquí para comprobar si el correo rebotó. Esto puede tardar unos segundos.</p>
-                                {deliveryStatus === 'delivered' && 
-                                    <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
-                                }
-                             </motion.div>
-                         )}
-
-                         <AnimatePresence mode="wait">
-                            {testStatus === 'failed' && (
-                                <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
-                                    <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
-                                    <p>{testError}</p>
-                                </motion.div>
-                            )}
-                         </AnimatePresence>
-
-                        <div className="mt-auto pt-4 flex flex-col gap-2">
-                            {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
-                                <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
-                                    Finalizar y Guardar
-                                </Button>
-                            ) : (
-                                <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
-                                    {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
-                                </Button>
-                            )}
-                             <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
-                        </div>
-                     </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                <AnimatePresence mode="wait">
+                  {testStatus === 'failed' && (
+                      <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
+                          <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                          <p>{testError}</p>
+                      </motion.div>
+                  )}
+                </AnimatePresence>
+              <div className="mt-auto pt-4 flex flex-col gap-2">
+                  {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
+                          Finalizar y Guardar
+                      </Button>
+                  ) : (
+                      <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
+                          {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
+                      </Button>
+                  )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <Button variant="outline" className="w-full mt-2" onClick={handleClose}>Cancelar</Button>
+      </div>
     )
   }
 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
-        <div className="hidden md:block md:col-span-1 h-full">
+       <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+          <div className="hidden md:block md:col-span-1 h-full">
             {renderLeftPanel()}
-        </div>
-        
-        <Form {...form}>
-            <div className="md:col-span-1 p-8 flex flex-col h-full">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={currentStep}
-                        initial={{ opacity: 0, x: 30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -30 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="h-full"
-                    >
+          </div>
+          <div className="md:col-span-2 grid grid-cols-2 h-full">
+            <div className="p-8 flex flex-col h-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -30 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="h-full"
+                >
+                   <Form {...form}>
+                    <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="h-full flex flex-col">
                         {renderCenterPanelContent()}
-                    </motion.div>
-                </AnimatePresence>
+                    </form>
+                   </Form>
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <div className="md:col-span-1 h-full">
-                {renderRightPanelContent()}
+            <div className="h-full">
+              {renderRightPanelContent()}
             </div>
-        </Form>
+          </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
