@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import dns from 'node:dns/promises';
 
-export const DnsVerificationInputSchema = z.object({
+const DnsVerificationInputSchema = z.object({
   domain: z.string().describe('The domain name to verify.'),
   expectedTxt: z
     .string()
@@ -20,7 +20,7 @@ export const DnsVerificationInputSchema = z.object({
 });
 export type DnsVerificationInput = z.infer<typeof DnsVerificationInputSchema>;
 
-export const DnsVerificationOutputSchema = z.object({
+const DnsVerificationOutputSchema = z.object({
   isVerified: z.boolean().describe('Whether the DNS verification was successful.'),
   reason: z
     .string()
