@@ -28,5 +28,3 @@ export async function verifyDnsAction(input: DnsVerificationInput) {
     return { success: false, error: errorMessage };
   }
 }
-
-    
