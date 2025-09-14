@@ -9,17 +9,20 @@ import { z } from 'zod';
 
 const actionSchema = z.object({
   domain: z.string(),
-  expectedTxt: z.string(),
+  recordType: z.enum(['TXT', 'MX', 'CNAME']),
+  name: z.string(),
+  expectedValue: z.string().optional(),
 });
+
 
 export async function verifyDnsAction(input: DnsVerificationInput) {
   try {
     const validatedInput = actionSchema.parse(input);
     const result = await verifyDns(validatedInput);
     if (result.isVerified) {
-      return { success: true };
+      return { success: true, data: result.foundRecords };
     } else {
-      return { success: false, error: result.reason };
+      return { success: false, error: result.reason, data: result.foundRecords };
     }
   } catch (error) {
     console.error('DNS verification action error:', error);
@@ -28,3 +31,5 @@ export async function verifyDnsAction(input: DnsVerificationInput) {
     return { success: false, error: errorMessage };
   }
 }
+
+    

@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow to verify DNS TXT records for domain ownership.
+ * @fileOverview A flow to verify DNS records for domain ownership and health.
  *
  * - verifyDns - A function that handles the DNS verification process.
  * - DnsVerificationInput - The input type for the verifyDns function.
@@ -15,20 +15,17 @@ import dns from 'node:dns/promises';
 export type DnsVerificationInput = z.infer<typeof DnsVerificationInputSchema>;
 const DnsVerificationInputSchema = z.object({
   domain: z.string().describe('The domain name to verify.'),
-  expectedTxt: z
-    .string()
-    .describe('The full expected TXT record value, e.g., "domain.com,code=xyz123".'),
+  recordType: z.enum(['TXT', 'MX', 'CNAME']),
+  name: z.string().describe('The name of the record to look for.'),
+  expectedValue: z.string().optional().describe('The expected value to find in the record.'),
 });
 
 export type DnsVerificationOutput = z.infer<typeof DnsVerificationOutputSchema>;
 const DnsVerificationOutputSchema = z.object({
   isVerified: z.boolean().describe('Whether the DNS verification was successful.'),
-  reason: z
-    .string()
-    .optional()
-    .describe('The reason for verification failure, if applicable.'),
+  reason: z.string().optional().describe('The reason for verification failure, if applicable.'),
+  foundRecords: z.array(z.string()).optional().describe('The records that were found.'),
 });
-
 
 export async function verifyDns(
   input: DnsVerificationInput
@@ -42,39 +39,65 @@ const dnsVerificationFlow = ai.defineFlow(
     inputSchema: DnsVerificationInputSchema,
     outputSchema: DnsVerificationOutputSchema,
   },
-  async ({ domain, expectedTxt }) => {
+  async ({ domain, recordType, name, expectedValue }) => {
     try {
-      // The TXT record name is fixed for our service
-      const txtRecordName = `_foxmiu-verification.${domain}`;
-      const records = await dns.resolveTxt(txtRecordName);
-
-      // dns.resolveTxt returns an array of arrays of strings (for multi-string records)
-      // We need to flatten it to check for our value.
-      const found = records.flat().some((record) => record === expectedTxt);
-
-      if (found) {
-        return {
-          isVerified: true,
-        };
-      } else {
-        return {
-          isVerified: false,
-          reason: `No se encontró el registro TXT esperado. Se esperaba '${expectedTxt}'. Asegúrese de que el registro se haya propagado.`,
-        };
+      const fqdn = name.endsWith(domain) ? name : `${name}.${domain}`;
+      
+      let records: string[] | dns.MxRecord[] | dns.SoaRecord | undefined;
+      
+      switch (recordType) {
+        case 'TXT':
+          records = (await dns.resolveTxt(fqdn)).flat();
+          break;
+        case 'MX':
+          records = await dns.resolveMx(domain); // MX records are on the root domain
+          break;
+        case 'CNAME':
+            records = await dns.resolveCname(fqdn);
+            break;
+        default:
+          throw new Error(`Unsupported record type: ${recordType}`);
       }
+
+      if (recordType === 'MX') {
+        if (records && records.length > 0) {
+            return { isVerified: true, foundRecords: (records as dns.MxRecord[]).map(r => `${r.priority} ${r.exchange}`) };
+        }
+        return { isVerified: false, reason: 'No se encontraron registros MX.' };
+      }
+
+      const flatRecords = Array.isArray(records) ? records.flat() : [records];
+      
+      if (!flatRecords || flatRecords.length === 0) {
+        return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
+      }
+
+      if (expectedValue) {
+        const found = flatRecords.some(record => record.includes(expectedValue));
+        if (found) {
+          return { isVerified: true, foundRecords: flatRecords };
+        } else {
+          return { isVerified: false, reason: `No se encontró el valor esperado.`, foundRecords: flatRecords };
+        }
+      }
+
+      // If no expected value, just finding any record is a success.
+      return { isVerified: true, foundRecords: flatRecords };
+
     } catch (error: any) {
-      // Common error codes: ENOTFOUND (domain not found), ENODATA (no TXT record for that name)
       if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
         return {
           isVerified: false,
-          reason: `No se encontraron registros TXT para _foxmiu-verification.${domain}. Verifique el nombre del registro.`,
+          reason: `No se encontraron registros ${recordType} para ${name}.${domain}. Verifique el nombre del registro.`,
         };
       }
       console.error('DNS lookup error:', error);
       return {
         isVerified: false,
-        reason: `Ocurrió un error al buscar DNS: ${error.message}. Por favor, inténtelo de nuevo más tarde.`,
+        reason: `Ocurrió un error al buscar DNS: ${error.message}.`,
       };
     }
   }
 );
+
+    
