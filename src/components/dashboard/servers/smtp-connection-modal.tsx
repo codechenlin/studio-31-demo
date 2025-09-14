@@ -54,7 +54,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     username: z.string().email("Debe ser un correo válido."),
     password: z.string().min(1, "La contraseña es requerida."),
     testEmail: z.string().email("El correo de prueba debe ser válido.")
-  }).refine(data => data.username.endsWith(`@${domain}`), {
+  }).refine(data => !domain || data.username.endsWith(`@${domain}`), {
     message: `El correo debe pertenecer al dominio verificado (${domain})`,
     path: ["username"],
   });
@@ -544,14 +544,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     )
   }
 
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-       <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
-          <div className="hidden md:block md:col-span-1 h-full">
-            {renderLeftPanel()}
-          </div>
-          <div className="md:col-span-2 grid grid-cols-2 h-full">
+  const renderContent = () => {
+    if (currentStep === 4) {
+      return (
+        <Form {...form}>
+          <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="grid grid-cols-2 h-full">
             <div className="p-8 flex flex-col h-full">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -562,17 +559,50 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="h-full"
                 >
-                   <Form {...form}>
-                    <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="h-full flex flex-col">
-                        {renderCenterPanelContent()}
-                    </form>
-                   </Form>
+                  {renderCenterPanelContent()}
                 </motion.div>
               </AnimatePresence>
             </div>
             <div className="h-full">
               {renderRightPanelContent()}
             </div>
+          </form>
+        </Form>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-2 h-full">
+        <div className="p-8 flex flex-col h-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="h-full"
+            >
+              {renderCenterPanelContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <div className="h-full">
+          {renderRightPanelContent()}
+        </div>
+      </div>
+    );
+  };
+
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+       <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+          <div className="hidden md:block md:col-span-1 h-full">
+            {renderLeftPanel()}
+          </div>
+          <div className="md:col-span-2 h-full">
+            {renderContent()}
           </div>
       </DialogContent>
     </Dialog>
