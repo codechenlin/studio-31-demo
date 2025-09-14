@@ -91,7 +91,7 @@ export function CategoryManagerModal({ isOpen, onOpenChange, template, allTempla
         startSaving(async () => {
             const result = await deleteCategory(categoryToDelete);
             if(result.success) {
-                toast({ title: 'Categoría Eliminada', description: `La categoría "${categoryToDelete}" ha sido eliminada de todas las plantillas.`, className: 'bg-green-500 text-white' });
+                toast({ title: 'Categoría Eliminada', description: `La categoría "${categoryToDelete}" ha sido eliminada de todas las plantillas.`, className: 'bg-[#00CB07] border-none text-white' });
                 onTemplateUpdate(); // This will re-fetch templates and update categories
                 setCategoryToDelete(null);
             } else {
