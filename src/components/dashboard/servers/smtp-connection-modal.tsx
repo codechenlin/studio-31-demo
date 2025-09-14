@@ -82,6 +82,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const handleCheckVerification = async () => {
     setVerificationStatus('verifying');
+    await new Promise(resolve => setTimeout(resolve, 500)); // Short delay for UX
     const result = await verifyDnsAction({
       domain,
       expectedTxt: txtRecordValue,
@@ -211,7 +212,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     switch (currentStep) {
         case 1:
             return (
-                 <div className="space-y-4 h-full flex flex-col">
+                 <div className="space-y-4 h-full flex flex-col justify-start">
                     <h3 className="text-lg font-semibold">Paso 1: Introduce tu Dominio</h3>
                     <p className="text-sm text-muted-foreground">
                     Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
@@ -229,10 +230,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           />
                       </div>
                     </div>
-                    <div className="flex-grow" />
-                    <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
-                      Verificar Dominio <ArrowRight className="ml-2"/>
-                    </Button>
                 </div>
             )
         case 2:
@@ -313,47 +310,58 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                         <h4 className="font-bold">Empecemos</h4>
                         <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
-                    </motion.div>
-                )}
-                {currentStep === 2 && verificationStatus === 'pending' && (
-                    <motion.div key="pending-check" {...cardAnimation} className="text-center">
-                        <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Acción Requerida</h4>
-                        <p className="text-sm text-muted-foreground">Añade el registro TXT a tu proveedor de DNS y luego verifica.</p>
-                         <Button className="w-full h-12 text-base mt-4" onClick={handleCheckVerification}>
-                            Verificar ahora
+                        <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
+                            Siguiente <ArrowRight className="ml-2"/>
                         </Button>
                     </motion.div>
                 )}
-                {currentStep === 2 && verificationStatus === 'verifying' && (
-                    <motion.div key="verifying" {...cardAnimation} className="flex flex-col items-center gap-3">
-                        <div className="relative size-20">
-                            <div className="absolute inset-0 border-2 border-blue-400/30 rounded-full"/>
-                            <div className="absolute inset-0 border-t-2 border-blue-400 rounded-full animate-spin"/>
-                            <Search className="absolute inset-0 m-auto size-8 text-blue-400"/>
-                        </div>
-                        <h4 className="font-bold text-lg">Verificando...</h4>
-                        <p className="text-sm text-muted-foreground">Buscando el registro DNS en el dominio.</p>
-                    </motion.div>
-                )}
-                {currentStep === 2 && verificationStatus === 'verified' && (
-                    <motion.div key="verified" {...cardAnimation} className="flex flex-col items-center gap-3">
-                        <ShieldCheck className="size-20 text-green-400" />
-                        <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
-                        <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
-                         <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
-                            Continuar <ArrowRight className="ml-2"/>
-                        </Button>
-                    </motion.div>
-                )}
-                {currentStep === 2 && verificationStatus === 'failed' && (
-                    <motion.div key="failed" {...cardAnimation} className="flex flex-col items-center gap-3">
-                        <AlertTriangle className="size-20 text-red-400" />
-                        <h4 className="font-bold text-lg">Verificación Fallida</h4>
-                        <p className="text-sm text-muted-foreground">No pudimos encontrar el registro. La propagación de DNS puede tardar.</p>
-                         <Button variant="outline" className="w-full mt-2 h-12 text-base" onClick={handleCheckVerification}>
-                            Reintentar Verificación
-                        </Button>
+                {currentStep === 2 && (
+                    <motion.div key="step2-container" {...cardAnimation} className="text-center">
+                        {verificationStatus === 'pending' && (
+                             <motion.div key="pending-check" {...cardAnimation} className="text-center">
+                                <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
+                                <h4 className="font-bold">Acción Requerida</h4>
+                                <p className="text-sm text-muted-foreground">Añade el registro TXT a tu proveedor de DNS y luego verifica.</p>
+                                <Button 
+                                    className="w-full h-12 text-base mt-4" 
+                                    onClick={handleCheckVerification} 
+                                    disabled={verificationStatus === 'verifying'}
+                                >
+                                    {verificationStatus === 'verifying' ? 'Verificando...' : 'Verificar ahora'}
+                                </Button>
+                            </motion.div>
+                        )}
+                        {verificationStatus === 'verifying' && (
+                            <motion.div key="verifying" {...cardAnimation} className="flex flex-col items-center gap-3">
+                                <div className="relative size-20">
+                                    <div className="absolute inset-0 border-2 border-blue-400/30 rounded-full"/>
+                                    <div className="absolute inset-0 border-t-2 border-blue-400 rounded-full animate-spin"/>
+                                    <Search className="absolute inset-0 m-auto size-8 text-blue-400"/>
+                                </div>
+                                <h4 className="font-bold text-lg">Verificando...</h4>
+                                <p className="text-sm text-muted-foreground">Buscando el registro DNS en el dominio.</p>
+                            </motion.div>
+                        )}
+                        {verificationStatus === 'verified' && (
+                            <motion.div key="verified" {...cardAnimation} className="flex flex-col items-center gap-3">
+                                <ShieldCheck className="size-20 text-green-400" />
+                                <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
+                                <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
+                                <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
+                                    Continuar <ArrowRight className="ml-2"/>
+                                </Button>
+                            </motion.div>
+                        )}
+                        {verificationStatus === 'failed' && (
+                            <motion.div key="failed" {...cardAnimation} className="flex flex-col items-center gap-3">
+                                <AlertTriangle className="size-20 text-red-400" />
+                                <h4 className="font-bold text-lg">Verificación Fallida</h4>
+                                <p className="text-sm text-muted-foreground">No pudimos encontrar el registro. La propagación de DNS puede tardar.</p>
+                                <Button variant="outline" className="w-full mt-2 h-12 text-base" onClick={handleCheckVerification}>
+                                    Reintentar Verificación
+                                </Button>
+                            </motion.div>
+                        )}
                     </motion.div>
                 )}
                 {currentStep === 3 && (
@@ -477,3 +485,4 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
+
