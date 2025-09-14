@@ -38,11 +38,12 @@ import { cn } from '@/lib/utils';
 
 interface TemplateCardProps {
     template: TemplateWithAuthor;
+    allTemplates: TemplateWithAuthor[];
     onTemplateUpdate: () => void;
     onPreview: () => void;
 }
 
-export function TemplateCard({ template, onTemplateUpdate, onPreview }: TemplateCardProps) {
+export function TemplateCard({ template, allTemplates, onTemplateUpdate, onPreview }: TemplateCardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isRenaming, setIsRenaming] = useState(false);
@@ -109,8 +110,8 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
             <Card className="overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:border-primary/50 hover:-translate-y-1 flex flex-col">
                 <CardContent className="p-0">
                     <div className="aspect-video bg-muted/30 relative flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 w-full h-full">
-                          <TemplateRenderer content={template.content.slice(0, 1)} asCover />
+                       <div className="absolute inset-0 w-full h-full">
+                          <TemplateRenderer content={template.content?.slice(0, 1)} asCover />
                         </div>
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
                            <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={onPreview}>
@@ -144,7 +145,7 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                          <div className="flex items-center gap-2 flex-wrap">
                             <Tags className="size-4"/>
                              {template.categories && template.categories.length > 0 ? (
-                                template.categories.map(cat => <Badge key={cat} variant="secondary">{cat}</Badge>)
+                                template.categories.map(cat => <Badge key={cat} style={{backgroundColor: '#1700E6'}}>{cat}</Badge>)
                              ) : (
                                 <span>Sin categoría</span>
                              )}
@@ -155,25 +156,25 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                             variant="ghost"
                             size="icon"
                             className={cn(
-                              "size-8 bg-transparent border text-[#E18700] border-[#E18700]",
+                              "group/c-btn size-8 bg-transparent border-2 text-[#E18700] border-[#E18700]",
                               "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
                               "transition-colors"
                             )}
                             onClick={() => setIsManagingCategories(true)}
                           >
-                            <Tags className="size-4" />
+                            <Tags className="size-4 transition-colors text-[#E18700] group-hover/c-btn:text-[#00CB07]" />
                         </Button>
                          <Button
                             variant="ghost"
                             size="icon"
-                            className={cn(
-                              "size-8 bg-transparent border text-[#F00000] border-[#F00000]",
+                             className={cn(
+                              "group/d-btn size-8 bg-transparent border-2 text-[#F00000] border-[#F00000]",
                               "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
                               "transition-colors"
                             )}
                             onClick={() => setIsDeleting(true)}
                           >
-                            <Trash2 className="size-4" />
+                            <Trash2 className="size-4 transition-colors text-[#F00000] group-hover/d-btn:text-[#00CB07]" />
                         </Button>
                     </div>
                 </div>
@@ -242,6 +243,7 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                 isOpen={isManagingCategories}
                 onOpenChange={setIsManagingCategories}
                 template={template}
+                allTemplates={allTemplates}
                 onTemplateUpdate={onTemplateUpdate}
             />
         </>

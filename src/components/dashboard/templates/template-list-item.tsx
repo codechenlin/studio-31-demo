@@ -157,7 +157,7 @@ export function TemplateListItem({ template, onTemplateUpdate, onPreview }: Temp
               </AlertDialogHeader>
               <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isSaving}>
+                  <AlertDialogAction onClick={handleDelete} disabled={isSaving} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       {isSaving ? 'Eliminando...' : 'Sí, eliminar'}
                   </AlertDialogAction>
               </AlertDialogFooter>

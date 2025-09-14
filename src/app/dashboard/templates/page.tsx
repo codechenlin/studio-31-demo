@@ -50,7 +50,7 @@ export default function TemplatesPage() {
       .filter(template => template.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .filter(template => 
           selectedCategories.length === 0 ||
-          (template.categories && selectedCategories.some(cat => template.categories.includes(cat)))
+          (template.categories && selectedCategories.every(cat => template.categories.includes(cat)))
       );
 
     return (
@@ -144,7 +144,7 @@ export default function TemplatesPage() {
                 ) : layout === 'grid' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTemplates.map(template => (
-                           <TemplateCard key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} onPreview={() => setPreviewTemplate(template)} />
+                           <TemplateCard key={template.id} template={template} allTemplates={templates} onTemplateUpdate={fetchTemplatesData} onPreview={() => setPreviewTemplate(template)} />
                         ))}
                     </div>
                 ) : (

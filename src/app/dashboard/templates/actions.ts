@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -122,35 +121,6 @@ export async function getTemplateById(templateId: string): Promise<{ success: bo
   }
 }
 
-export async function getAllCategories(): Promise<{ success: boolean; data?: string[]; error?: string }> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: 'Usuario no autenticado.' };
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('templates')
-      .select('categories')
-      .eq('user_id', user.id);
-
-    if (error) throw error;
-    
-    const allCategoriesSet = new Set<string>();
-    data.forEach(item => {
-      if (Array.isArray(item.categories)) {
-        item.categories.forEach(cat => allCategoriesSet.add(cat));
-      }
-    });
-
-    return { success: true, data: Array.from(allCategoriesSet) };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 
 export async function renameTemplate(templateId: string, newName: string) {
     const supabase = createClient();
@@ -215,3 +185,41 @@ export async function deleteTemplate(templateId: string) {
     }
 }
 
+export async function deleteCategory(categoryName: string) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Usuario no autenticado.' };
+
+    try {
+        // 1. Find all templates that have this category
+        const { data: templatesToUpdate, error: fetchError } = await supabase
+            .from('templates')
+            .select('id, categories')
+            .eq('user_id', user.id)
+            .contains('categories', [categoryName]);
+
+        if (fetchError) throw fetchError;
+
+        // 2. Prepare the updates
+        const updates = templatesToUpdate.map(template => ({
+            id: template.id,
+            categories: template.categories.filter((c: string) => c !== categoryName),
+            updated_at: new Date().toISOString()
+        }));
+
+        // 3. Upsert the changes
+        if (updates.length > 0) {
+            const { error: updateError } = await supabase
+                .from('templates')
+                .upsert(updates);
+            
+            if (updateError) throw updateError;
+        }
+
+        revalidatePath('/dashboard/templates');
+        return { success: true };
+    } catch (error: any) {
+        console.error(`Error deleting category "${categoryName}":`, error);
+        return { success: false, error: `No se pudo eliminar la categoría: ${error.message}` };
+    }
+}
