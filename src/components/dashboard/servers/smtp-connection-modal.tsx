@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ import { verifyDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { generateDkimKeys } from '@/ai/flows/dkim-generation-flow';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -29,7 +30,6 @@ type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
-
 const generateVerificationCode = () => `demo_${Math.random().toString(36).substring(2, 10)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
@@ -39,7 +39,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
-  // Health check statuses
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
   const [spfStatus, setSpfStatus] = useState<HealthCheckStatus>('idle');
   const [dkimStatus, setDkimStatus] = useState<HealthCheckStatus>('idle');
@@ -54,6 +53,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [testError, setTestError] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
+  const [dkimData, setDkimData] = useState<{ record: string; selector: string } | null>(null);
+  const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
 
 
   const smtpFormSchema = z.object({
@@ -130,14 +131,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     ) => {
         setStatus('verifying');
         const result = await verifyDnsAction({ domain, recordType, name, expectedValue });
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000)); // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
         setStatus(result.success ? 'verified' : 'failed');
     };
 
     if (type === 'mandatory') {
         await Promise.all([
             checkRecord('@', 'TXT', 'v=spf1', setSpfStatus),
-            checkRecord('default._domainkey', 'TXT', undefined, setDkimStatus),
+            checkRecord('foxmiu._domainkey', 'TXT', undefined, setDkimStatus),
             checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
         ]);
     } else {
@@ -148,6 +149,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         ]);
     }
   }
+
+  const handleGenerateDkim = async () => {
+    setIsGeneratingDkim(true);
+    try {
+      const result = await generateDkimKeys({ domain, selector: 'foxmiu' });
+      setDkimData({ record: result.publicKeyRecord, selector: result.selector });
+    } catch (error: any) {
+      toast({
+        title: 'Error al generar DKIM',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingDkim(false);
+    }
+  };
 
   const handleCopy = (textToCopy: string) => {
     navigator.clipboard.writeText(textToCopy);
@@ -384,6 +401,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', spfStatus, 'spf')}
                             {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
                             {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
+                             <div className="pt-2">
+                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                    <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
+                                    <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
+                                    <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones?</li>
+                                </ul>
+                            </div>
                           </>
                         ) : (
                           <>
@@ -466,7 +491,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const Step4Form = () => (
      <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-2 h-full">
-         {/* Central Panel */}
         <div className="p-8 flex flex-col h-full">
           <motion.div
             key="step4-center"
@@ -514,7 +538,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             </div>
           </motion.div>
         </div>
-        {/* Right Panel */}
         <div className="h-full">
             <motion.div
                 key="step4-right"
@@ -756,6 +779,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         isOpen={!!activeInfoModal}
         onOpenChange={() => setActiveInfoModal(null)}
         onCopy={handleCopy}
+        dkimData={dkimData}
+        onGenerateDkim={handleGenerateDkim}
+        isGeneratingDkim={isGeneratingDkim}
       />
     </>
   );
@@ -767,13 +793,19 @@ function DnsInfoModal({
   domain,
   isOpen,
   onOpenChange,
-  onCopy
+  onCopy,
+  dkimData,
+  onGenerateDkim,
+  isGeneratingDkim,
 }: {
   recordType: InfoViewRecord | null,
   domain: string,
   isOpen: boolean,
   onOpenChange: () => void,
-  onCopy: (text: string) => void
+  onCopy: (text: string) => void,
+  dkimData: { record: string; selector: string } | null,
+  onGenerateDkim: () => void,
+  isGeneratingDkim: boolean,
 }) {
     if(!recordType) return null;
 
@@ -782,49 +814,69 @@ function DnsInfoModal({
         let recordValue = '';
         switch(recordType) {
             case 'spf':
-                recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
+                recordValue = `v=spf1 include:_spf.google.com ~all`;
                 return (
                     <div className="space-y-4 text-sm">
-                        <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (GoDaddy, Cloudflare, etc.).</p>
+                        <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                         <div className={baseClass}><span>Host: @</span></div>
                         <div className={baseClass}><span>Tipo: TXT</span></div>
                         <div className={baseClass}><span>TTL: 3600</span></div>
                         <div className={baseClass}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
                         <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                            <p>Si ya usas otros servicios de correo (ej. Google Workspace), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com ~all`</p>
+                            <p>Si ya usas otros servicios de correo (ej. Foxmiu.com), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
                         </div>
                     </div>
                 )
              case 'dkim':
-                recordValue = `v=DKIM1; k=rsa; p=PUBLIC_KEY...`; // Placeholder
                 return (
                     <div className="space-y-4 text-sm">
                          <p>Debido a que DKIM requiere una clave única, nuestro sistema la generará por ti. Haz clic en el botón para crear tu registro DKIM personalizado.</p>
-                          <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Registro DKIM Generado:</p>
-                            <span className="text-muted-foreground">(Aún no implementado)</span>
-                         </div>
-                         <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90">
-                            <Dna className="mr-2"/> Generar Registro DKIM
+                         <AnimatePresence>
+                          {dkimData && (
+                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
+                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                                <p className="font-bold text-white/90">Host/Nombre:</p>
+                                <div className="w-full flex justify-between items-center">
+                                  <span>{dkimData.selector}._domainkey</span>
+                                  <Button size="icon" variant="ghost" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button>
+                                </div>
+                              </div>
+                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                                <p className="font-bold text-white/90">Tipo de Registro:</p>
+                                <span>TXT</span>
+                              </div>
+                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                                <p className="font-bold text-white/90">Valor del Registro:</p>
+                                <div className="w-full flex justify-between items-start">
+                                  <span className="break-all pr-2">{dkimData.record}</span>
+                                  <Button size="icon" variant="ghost" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                         </AnimatePresence>
+                         <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90" onClick={onGenerateDkim} disabled={isGeneratingDkim}>
+                            {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <Dna className="mr-2"/>}
+                            {dkimData ? "Volver a Generar Registro" : "Generar Registro DKIM"}
                          </Button>
                     </div>
                 )
              case 'dmarc':
                 recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
                  const dmarcParts = {
-                    "v=DMARC1": "Versión del protocolo.",
-                    "p=reject": "Rechaza correos que no pasen la alineación.",
+                    "v=DMARC1": "Versión del protocolo DMARC.",
+                    "p=reject": "Rechaza cualquier correo que no pase SPF o DKIM alineados.",
                     "pct=100": "Aplica la política al 100% de los correos.",
-                    "rua=mailto:...": "Dirección para reportes agregados.",
-                    "ruf=mailto:...": "Dirección para reportes forenses.",
-                    "sp=reject": "Política estricta para subdominios.",
+                    "rua=mailto:...": "Dirección para recibir reportes agregados (estadísticas).",
+                    "ruf=mailto:...": "Dirección para recibir reportes forenses (detalles de fallos).",
+                    "sp=reject": "Aplica la misma política estricta a subdominios.",
                     "aspf=s / adkim=s": "Alineación estricta para SPF y DKIM.",
                 };
                 return (
                      <div className="space-y-4 text-sm">
-                        <p>Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca. Añade este registro TXT:</p>
+                        <p>Es crucial usar un registro DMARC estricto para evitar suplantaciones y que tus correos se etiqueten como spam, mejorando tu marca.</p>
                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
                            <div className="w-full flex justify-between items-center"><span>Host: _dmarc</span></div>
                            <div className="w-full flex justify-between items-center"><span>Tipo: TXT</span></div>
@@ -832,6 +884,7 @@ function DnsInfoModal({
                            <div className="w-full flex justify-between items-start"><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
                         </div>
                         <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
+                           <p className='font-bold mb-2'>Explicación de cada parte:</p>
                            <ul className="space-y-1">
                             {Object.entries(dmarcParts).map(([key, value]) => (
                                <li key={key} className="flex items-start gap-2">
@@ -869,5 +922,3 @@ function DnsInfoModal({
         </Dialog>
     )
 }
-
-    
