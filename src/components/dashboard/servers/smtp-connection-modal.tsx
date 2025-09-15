@@ -455,20 +455,29 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         status = 'idle'; text = 'ESPERANDO ACCIÓN';
       }
     } else if (currentStep === 3) {
-       const isVerifying = [dkimStatus, spfStatus, dmarcStatus, mxStatus, bimiStatus, vmcStatus].some(s => s === 'verifying');
-      const allMandatoryDone = spfStatus !== 'idle' && dkimStatus !== 'idle' && dmarcStatus !== 'idle';
+      const isMandatoryVerifying = [spfStatus, dkimStatus, dmarcStatus].some(s => s === 'verifying');
+      const isOptionalVerifying = [mxStatus, bimiStatus, vmcStatus].some(s => s === 'verifying');
+      const allMandatoryDone = spfStatus !== 'idle' && dkimStatus !== 'idle' && dmarcStatus !== 'idle' && !isMandatoryVerifying;
       const anyMandatoryFailed = spfStatus === 'failed' || dkimStatus === 'failed' || dmarcStatus === 'failed';
+      const allOptionalDone = mxStatus !== 'idle' && bimiStatus !== 'idle' && vmcStatus !== 'idle' && !isOptionalVerifying;
 
-      if (isVerifying) {
-        status = 'processing'; text = 'ANALIZANDO SALUD';
-      } else if (allMandatoryDone) {
-        if (anyMandatoryFailed) {
-          status = 'error'; text = 'REQUIERE ATENCIÓN';
+      if (healthCheckStep === 'mandatory') {
+        if (isMandatoryVerifying) {
+          status = 'processing'; text = 'ANALIZANDO OBLIGATORIOS';
+        } else if (allMandatoryDone) {
+          status = anyMandatoryFailed ? 'error' : 'success';
+          text = anyMandatoryFailed ? 'OBLIGATORIOS REQUIEREN ATENCIÓN' : 'OBLIGATORIOS OK';
         } else {
-          status = 'success'; text = 'REGISTROS OBLIGATORIOS OK';
+          status = 'idle'; text = 'LISTO PARA CHEQUEO';
         }
-      } else {
-        status = 'idle'; text = 'LISTO PARA CHEQUEO';
+      } else { // optional
+        if (isOptionalVerifying) {
+          status = 'processing'; text = 'ANALIZANDO OPCIONALES';
+        } else if (allOptionalDone) {
+          status = 'success'; text = 'OPCIONALES REVISADOS';
+        } else {
+          status = 'idle'; text = 'LISTO PARA CHEQUEO OPCIONAL';
+        }
       }
     } else if (currentStep === 4) {
       if (testStatus === 'testing' || deliveryStatus === 'checking') {
@@ -823,190 +832,235 @@ function DnsInfoModal({
 }) {
     if(!recordType) return null;
 
-    const getRecordContent = () => {
-        const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
-        let recordValue = '';
-        switch(recordType) {
-            case 'spf':
-                recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
-                return (
-                    <div className="space-y-4 text-sm">
-                        <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
-                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Host/Nombre:</p>
-                            <span>@</span>
-                        </div>
-                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Tipo de Registro:</p>
-                            <span>TXT</span>
-                        </div>
-                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                           <p className="font-bold text-white/90">Valor del Registro:</p>
-                           <div className="w-full flex justify-between items-center">
-                             <span className="truncate">{recordValue}</span>
-                             <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
-                           </div>
-                        </div>
-                        <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                            <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                            <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.dominio.com -all`</p>
+    const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
+    
+    const renderSpfContent = () => {
+        const recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
+        return (
+            <div className="space-y-4 text-sm">
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Host/Nombre:</p>
+                    <span>@</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                   <p className="font-bold text-white/90">Valor del Registro:</p>
+                   <div className="w-full flex justify-between items-center">
+                     <span className="truncate">{recordValue}</span>
+                     <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                   </div>
+                </div>
+                <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                    <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                </div>
+            </div>
+        );
+    };
+
+    const renderDkimContent = () => (
+        <div className="space-y-4 text-sm">
+            <p>Debido a que DKIM requiere una clave única, nuestro sistema la generará por ti. Haz clic en el botón para crear tu registro DKIM personalizado.</p>
+            <AnimatePresence>
+            {dkimData && (
+                <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Host/Nombre:</p>
+                    <div className="w-full flex justify-between items-center">
+                    <span>{dkimData.selector}._domainkey</span>
+                    <Button size="icon" variant="ghost" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button>
+                    </div>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor del Registro:</p>
+                    <div className="w-full flex justify-between items-start">
+                    <span className="break-all pr-2">{dkimData.record}</span>
+                    <Button size="icon" variant="ghost" className="shrink-0 self-start" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                    </div>
+                </div>
+                </motion.div>
+            )}
+            </AnimatePresence>
+            <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90" onClick={onGenerateDkim} disabled={isGeneratingDkim}>
+                {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <Dna className="mr-2"/>}
+                {dkimData ? "Volver a Generar Registro" : "Generar Registro DKIM"}
+            </Button>
+        </div>
+    );
+    
+    const renderDmarcContent = () => {
+         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
+         const dmarcParts = {
+            "v=DMARC1": "Versión del protocolo DMARC.",
+            "p=reject": "Rechaza cualquier correo que no pase SPF o DKIM alineados.",
+            "pct=100": "Aplica la política al 100% de los correos.",
+            "rua=mailto:...": "Dirección para recibir reportes agregados (estadísticas).",
+            "ruf=mailto:...": "Dirección para recibir reportes forenses (detalles de fallos).",
+            "sp=reject": "Aplica la misma política estricta a subdominios.",
+            "aspf=s": "Alineación SPF estricta (el dominio del SPF debe coincidir exactamente con el “From:” visible).",
+            "adkim=s": "Alineación DKIM estricta (el dominio de la firma DKIM debe coincidir exactamente con el “From:” visible).",
+        };
+        return (
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div className="space-y-4">
+                    <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90">Host/Nombre:</p>
+                        <span>_dmarc</span>
+                    </div>
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90">Tipo de Registro:</p>
+                        <span>TXT</span>
+                    </div>
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90">Valor del Registro:</p>
+                        <div className="w-full flex justify-between items-start">
+                        <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
+                        <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                         </div>
                     </div>
-                )
-             case 'dkim':
-                return (
-                    <div className="space-y-4 text-sm">
-                         <p>Debido a que DKIM requiere una clave única, nuestro sistema la generará por ti. Haz clic en el botón para crear tu registro DKIM personalizado.</p>
-                         <AnimatePresence>
-                          {dkimData && (
-                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
-                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                                <p className="font-bold text-white/90">Host/Nombre:</p>
-                                <div className="w-full flex justify-between items-center">
-                                  <span>{dkimData.selector}._domainkey</span>
-                                  <Button size="icon" variant="ghost" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button>
-                                </div>
-                              </div>
-                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                                <p className="font-bold text-white/90">Tipo de Registro:</p>
-                                <span>TXT</span>
-                              </div>
-                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                                <p className="font-bold text-white/90">Valor del Registro:</p>
-                                <div className="w-full flex justify-between items-start">
-                                  <span className="break-all pr-2">{dkimData.record}</span>
-                                  <Button size="icon" variant="ghost" className="shrink-0 self-start" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                         </AnimatePresence>
-                         <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90" onClick={onGenerateDkim} disabled={isGeneratingDkim}>
-                            {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <Dna className="mr-2"/>}
-                            {dkimData ? "Volver a Generar Registro" : "Generar Registro DKIM"}
-                         </Button>
-                    </div>
-                )
-             case 'dmarc':
-                const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
-                 const dmarcParts = {
-                    "v=DMARC1": "Versión del protocolo DMARC.",
-                    "p=reject": "Rechaza cualquier correo que no pase SPF o DKIM alineados.",
-                    "pct=100": "Aplica la política al 100% de los correos.",
-                    "rua=mailto:...": "Dirección para recibir reportes agregados (estadísticas).",
-                    "ruf=mailto:...": "Dirección para recibir reportes forenses (detalles de fallos).",
-                    "sp=reject": "Aplica la misma política estricta a subdominios.",
-                    "aspf=s": "Alineación SPF estricta (el dominio del SPF debe coincidir exactamente con el “From:” visible).",
-                    "adkim=s": "Alineación DKIM estricta (el dominio de la firma DKIM debe coincidir exactamente con el “From:” visible).",
-                };
-                return (
-                     <div className="flex flex-col md:flex-row gap-6 text-sm">
-                        <div className="w-full md:w-1/2 space-y-4">
-                             <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
-                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                               <p className="font-bold text-white/90">Host/Nombre:</p>
-                               <span>_dmarc</span>
-                             </div>
-                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                               <p className="font-bold text-white/90">Tipo de Registro:</p>
-                               <span>TXT</span>
-                             </div>
-                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                               <p className="font-bold text-white/90">Valor del Registro:</p>
-                               <div className="w-full flex justify-between items-start">
-                                 <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
-                                 <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
-                               </div>
-                             </div>
-                        </div>
-                        <div className="w-full md:w-1/2 text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
-                           <p className='font-bold mb-2 text-white'>Explicación de cada parte:</p>
-                           <ul className="space-y-1">
-                            {Object.entries(dmarcParts).map(([key, value]) => (
-                               <li key={key} className="flex items-start gap-2">
-                                <Check className="size-3 mt-0.5 shrink-0 text-blue-300"/>
-                                <span><span className="font-mono text-white/90">{key.replace('...', `@${domain}`)}</span> → {value}</span>
-                               </li>
-                            ))}
-                           </ul>
-                        </div>
-                    </div>
-                )
-             case 'mx':
-                const mxValue = 'foxmiu.email';
-                return (
-                     <div className="space-y-4 text-sm">
-                        <p>Para recibir correos electrónicos en tu dominio (ej: `contacto@{domain}`), necesitas un registro MX que apunte a un servidor de correo. Añade este registro para usar nuestro servicio de correo entrante.</p>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Host/Nombre:</p><span>@</span>
-                         </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
-                         </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Valor/Destino:</p>
-                             <div className="w-full flex justify-between items-center">
-                                 <span className="truncate">{mxValue}</span>
-                                 <Button size="icon" variant="ghost" onClick={() => onCopy(mxValue)}><Copy className="size-4"/></Button>
-                             </div>
-                         </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Prioridad:</p><span>0</span>
-                         </div>
-                         <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
-                            <p className="font-bold mb-1">En resumen</p>
-                            <p>Es como poner la dirección exacta de tu buzón para que el cartero sepa dónde dejar las cartas.</p>
-                        </div>
-                    </div>
-                );
-             case 'bimi':
-                return (
-                     <div className="space-y-4 text-sm">
-                        <p>Este es un ejemplo de un registro BIMI apuntando a un archivo SVG Portable/Secure (SVG P/S), basado en SVG Tiny 1.2.</p>
-                        <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20 space-y-1">
-                          <p className="font-bold text-white mb-1">Requisitos del archivo SVG:</p>
-                          <p>◦ **Peso máximo:** No debe superar 32 KB.</p>
-                          <p>◦ **Lienzo cuadrado:** Relación de aspecto 1:1 (ej. 1000×1000 px).</p>
-                          <p>◦ **Fondo sólido:** Evita transparencias.</p>
-                          <p>◦ **Sin elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
-                          <p>◦ **Alojamiento:** Debe ser accesible via HTTPS en una URL pública.</p>
-                        </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
-                         </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
-                         </div>
-                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                            <p className="font-bold text-white/90">Valor:</p>
-                            <div className="w-full flex justify-between items-center">
-                                 <span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg;</span>
-                                 <Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg;')}><Copy className="size-4"/></Button>
-                             </div>
-                         </div>
-                        <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
-                          <p className="font-bold mb-1">En resumen</p>
-                          <p>Es como poner un letrero luminoso con tu logo en la puerta de tu oficina de correos para que todos lo vean.</p>
-                        </div>
-                    </div>
-                );
-            default:
-                return <p>Información no disponible para este tipo de registro.</p>
-        }
+                </div>
+                <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
+                    <p className='font-bold mb-2 text-white'>Explicación de cada parte:</p>
+                    <ul className="space-y-1">
+                    {Object.entries(dmarcParts).map(([key, value]) => (
+                        <li key={key} className="flex items-start gap-2">
+                        <Check className="size-3 mt-0.5 shrink-0 text-blue-300"/>
+                        <span><span className="font-mono text-white/90">{key.replace('...', `@${domain}`)}</span> → {value}</span>
+                        </li>
+                    ))}
+                    </ul>
+                </div>
+            </div>
+        );
     }
+    
+    const renderMxContent = () => {
+        const mxValue = 'foxmiu.email';
+        return (
+             <div className="space-y-4 text-sm">
+                <p>Para recibir correos electrónicos en tu dominio (ej: `contacto@{domain}`), necesitas un registro MX que apunte a un servidor de correo. Añade este registro para usar nuestro servicio de correo entrante.</p>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Host/Nombre:</p><span>@</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor/Destino:</p>
+                     <div className="w-full flex justify-between items-center">
+                         <span className="truncate">{mxValue}</span>
+                         <Button size="icon" variant="ghost" onClick={() => onCopy(mxValue)}><Copy className="size-4"/></Button>
+                     </div>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Prioridad:</p><span>0</span>
+                 </div>
+                 <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
+                    <p className="font-bold mb-1">En resumen</p>
+                    <p>Es como poner la dirección exacta de tu buzón para que el cartero sepa dónde dejar las cartas.</p>
+                </div>
+            </div>
+        );
+    };
+
+    const renderBimiContent = () => (
+         <div className="grid md:grid-cols-2 gap-6 text-sm">
+            <div className="space-y-4">
+                 <p>Este es un ejemplo de un registro BIMI apuntando a un archivo SVG Portable/Secure (SVG P/S), basado en SVG Tiny 1.2.</p>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor:</p>
+                    <div className="w-full flex justify-between items-center">
+                         <span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg;</span>
+                         <Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg;')}><Copy className="size-4"/></Button>
+                     </div>
+                 </div>
+                <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
+                  <p className="font-bold mb-1">En resumen</p>
+                  <p>Es como poner un letrero luminoso con tu logo en la puerta de tu oficina de correos para que todos lo vean.</p>
+                </div>
+            </div>
+            <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20 space-y-1">
+                <p className="font-bold text-white mb-1">Requisitos del archivo SVG:</p>
+                <p>◦ **Peso máximo:** No debe superar 32 KB.</p>
+                <p>◦ **Lienzo cuadrado:** Relación de aspecto 1:1 (ej. 1000×1000 px).</p>
+                <p>◦ **Fondo sólido:** Evita transparencias.</p>
+                <p>◦ **Sin elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
+                <p>◦ **Alojamiento:** Debe ser accesible via HTTPS en una URL pública.</p>
+            </div>
+        </div>
+    );
+    
+    const renderVmcContent = () => (
+         <div className="grid md:grid-cols-2 gap-6 text-sm">
+            <div className="space-y-4">
+                <p>VMC es un certificado digital que confirma que eres el dueño legítimo de la marca y del logo. Es requerido por Gmail y otros para mostrar tu logo.</p>
+                <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20 space-y-1">
+                    <p className="font-bold text-white mb-1">Cómo funciona:</p>
+                    <p>1. Lo compras y validas con una autoridad certificadora.</p>
+                    <p>2. Lo enlazas en tu registro BIMI (`a=`) junto con tu logo.</p>
+                </div>
+                <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
+                  <p className="font-bold mb-1">En resumen</p>
+                  <p>Es como un título de propiedad que demuestra que ese logo es tuyo.</p>
+                </div>
+            </div>
+            <div className="space-y-4">
+                <p className="font-semibold text-white">Ejemplo de registro BIMI con VMC:</p>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
+                 </div>
+                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor:</p>
+                    <div className="w-full flex justify-between items-start">
+                         <span className="break-all pr-2">v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado-vmc.pem</span>
+                         <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado-vmc.pem')}><Copy className="size-4"/></Button>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    );
+
+    const contentMap = {
+        spf: { title: "Registro SPF", content: renderSpfContent() },
+        dkim: { title: "Registro DKIM", content: renderDkimContent() },
+        dmarc: { title: "Registro DMARC", content: renderDmarcContent() },
+        mx: { title: "Registro MX", content: renderMxContent() },
+        bimi: { title: "Registro BIMI", content: renderBimiContent() },
+        vmc: { title: "Certificado VMC", content: renderVmcContent() },
+    };
+
+    const { title, content } = contentMap[recordType];
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl bg-black/50 backdrop-blur-xl border-primary/20 text-white">
+            <DialogContent className="sm:max-w-3xl bg-black/50 backdrop-blur-xl border-primary/20 text-white">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-lg">
                         <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
-                        Instrucciones para Registro {recordType.toUpperCase()}
+                        Instrucciones para {title}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
-                    {getRecordContent()}
+                    {content}
                 </div>
                 <DialogFooter className="sm:justify-between">
                      <Button type="button" variant="outline" onClick={onOpenChange}>
@@ -1017,5 +1071,7 @@ function DnsInfoModal({
         </Dialog>
     )
 }
+
+    
 
     
