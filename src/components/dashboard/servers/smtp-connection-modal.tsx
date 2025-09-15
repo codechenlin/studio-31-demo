@@ -29,7 +29,7 @@ type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
-const generateVerificationCode = () => `demo_${Math.random().toString(36).substring(2, 10)}`;
+const generateVerificationCode = () => `fxu_${Math.random().toString(36).substring(2, 10)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -381,8 +381,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <h3 className="text-lg font-bold mb-2">{title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
                         
+                        <AnimatePresence>
+                          {showExample && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="mt-4 p-4 rounded-md border bg-muted/40 text-xs"
+                            >
+                              <p className='font-bold mb-2'>Ejemplo de Registro:</p>
+                              <pre className='whitespace-pre-wrap font-mono text-foreground/80'>
+                                {infoViewRecord === 'spf' && `Host: @\nTipo: TXT\nValor: "v=spf1 include:_spf.google.com ~all"`}
+                                {infoViewRecord === 'dkim' && `Host: foxmiu._domainkey\nTipo: TXT\nValor: "v=DKIM1; k=rsa; p=..."`}
+                                {infoViewRecord === 'dmarc' && `Host: _dmarc\nTipo: TXT\nValor: "v=DMARC1; p=none; rua=mailto:..."`}
+                              </pre>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
                         <div className="flex gap-2 mt-auto">
-                           <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowExample(false); }}>Atrás</Button>
+                           <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
                            <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
                         </div>
                     </div>
@@ -503,18 +521,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
                 <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                 <div className="space-y-4 flex-grow pt-4">
-                    <FormField control={form.control} name="host" render={({ field }) => (
-                        <FormItem>
-                            <Label className='text-left w-full'>Host</Label>
-                            <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
-                            <FormMessage />
+                     <FormField control={form.control} name="host" render={({ field }) => (
+                        <FormItem className="space-y-1">
+                           <Label>Host</Label>
+                           <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
+                           <FormMessage />
                         </FormItem>
                     )}/>
                      <FormField control={form.control} name="port" render={({ field }) => (
-                        <FormItem>
-                            <Label className='text-left w-full'>Puerto</Label>
-                            <FormControl><div className="relative"><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></div></FormControl>
-                            <FormMessage />
+                        <FormItem className="space-y-1">
+                           <Label>Puerto</Label>
+                           <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl>
+                           <FormMessage />
                         </FormItem>
                     )}/>
                     
@@ -529,10 +547,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}/>
 
                     <FormField control={form.control} name="username" render={({ field }) => (
-                        <FormItem><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+                        <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="password" render={({ field }) => (
-                        <FormItem><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+                        <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
                     )}/>
                 </div>
             </div>
@@ -818,10 +836,21 @@ function DnsInfoModal({
                 return (
                     <div className="space-y-4 text-sm">
                         <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
-                        <div className={baseClass}><span>Host: @</span></div>
-                        <div className={baseClass}><span>Tipo: TXT</span></div>
-                        <div className={baseClass}><span>TTL: 3600</span></div>
-                        <div className={cn(baseClass, "flex-wrap h-auto")}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Host/Nombre:</p>
+                            <span>@</span>
+                        </div>
+                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Tipo de Registro:</p>
+                            <span>TXT</span>
+                        </div>
+                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                           <p className="font-bold text-white/90">Valor del Registro:</p>
+                           <div className="w-full flex justify-between items-center">
+                             <span className="truncate">{recordValue}</span>
+                             <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                           </div>
+                        </div>
                         <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <p className="font-bold mb-1">Importante: Unificación de SPF</p>
                             <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
@@ -864,7 +893,7 @@ function DnsInfoModal({
                     </div>
                 )
              case 'dmarc':
-                recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
+                const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
                  const dmarcParts = {
                     "v=DMARC1": "Versión del protocolo DMARC.",
                     "p=reject": "Rechaza cualquier correo que no pase SPF o DKIM alineados.",
@@ -876,21 +905,32 @@ function DnsInfoModal({
                     "adkim=s": "Alineación DKIM estricta.",
                 };
                 return (
-                     <div className="space-y-4 text-sm">
-                        <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
-                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                           <div className="w-full flex justify-between items-center"><span>Host: _dmarc</span></div>
-                           <div className="w-full flex justify-between items-center"><span>Tipo: TXT</span></div>
-                           <div className="w-full flex justify-between items-center"><span>TTL: 3600</span></div>
-                           <div className="w-full flex justify-between items-start"><span className="break-all pr-2">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div className="space-y-4">
+                             <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
+                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                               <p className="font-bold text-white/90">Host/Nombre:</p>
+                               <span>_dmarc</span>
+                             </div>
+                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                               <p className="font-bold text-white/90">Tipo de Registro:</p>
+                               <span>TXT</span>
+                             </div>
+                             <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                               <p className="font-bold text-white/90">Valor del Registro:</p>
+                               <div className="w-full flex justify-between items-start">
+                                 <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
+                                 <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                               </div>
+                             </div>
                         </div>
                         <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
-                           <p className='font-bold mb-2'>Explicación de cada parte:</p>
+                           <p className='font-bold mb-2 text-white'>Explicación de cada parte:</p>
                            <ul className="space-y-1">
                             {Object.entries(dmarcParts).map(([key, value]) => (
                                <li key={key} className="flex items-start gap-2">
                                 <Check className="size-3 mt-0.5 shrink-0 text-blue-300"/>
-                                <span><span className="font-mono text-white/90">{key.replace('...', `@${domain}`)}</span> &rarr; {value}</span>
+                                <span><span className="font-mono text-white/90">{key.replace('...', `@${domain}`)}</span> → {value}</span>
                                </li>
                             ))}
                            </ul>
