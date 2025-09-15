@@ -253,15 +253,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
         },
         mx: {
-          title: "Registro MX (Mail Exchange)",
-          description: "Los registros MX son fundamentales para la entrega de correo electrónico. Indican a otros sistemas de correo qué servidores son responsables de recibir correos electrónicos en nombre de tu dominio. Sin registros MX correctos, no podrías recibir correos electrónicos.",
+          title: "Registro MX",
+          description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Foxmiu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
         },
         bimi: {
-          title: "Registro BIMI (Brand Indicators for Message Identification)",
-          description: "BIMI es un estándar emergente que permite mostrar el logotipo de tu marca junto a tus correos electrónicos en las bandejas de entrada de los proveedores compatibles. Para implementarlo, necesitas tener DMARC configurado con una política estricta ('quarantine' o 'reject') y tu logotipo debe estar en formato SVG Tiny 1.2 alojado en una URL pública (HTTPS).",
+          title: "Registro BIMI",
+          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG TINY con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
         },
         vmc: {
-          title: "Certificado VMC (Verified Mark Certificate)",
+          title: "Certificado VMC",
           description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
         },
     };
@@ -380,25 +380,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="h-full flex flex-col justify-start pt-8">
                         <h3 className="text-lg font-bold mb-2">{title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
-                        
-                        <AnimatePresence>
-                          {showExample && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="mt-4 p-4 rounded-md border bg-muted/40 text-xs"
-                            >
-                              <p className='font-bold mb-2'>Ejemplo de Registro:</p>
-                              <pre className='whitespace-pre-wrap font-mono text-foreground/80'>
-                                {infoViewRecord === 'spf' && `Host: @\nTipo: TXT\nValor: "v=spf1 include:_spf.google.com ~all"`}
-                                {infoViewRecord === 'dkim' && `Host: foxmiu._domainkey\nTipo: TXT\nValor: "v=DKIM1; k=rsa; p=..."`}
-                                {infoViewRecord === 'dmarc' && `Host: _dmarc\nTipo: TXT\nValor: "v=DMARC1; p=none; rua=mailto:..."`}
-                              </pre>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
                         <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
                            <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
@@ -410,7 +391,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="h-full flex flex-col justify-start pt-8">
                   <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
-                    <p className="text-sm text-muted-foreground">Verificaremos registros para asegurar una alta entregabilidad. Si alguno falla, te daremos los valores a configurar.</p>
+                    <p className="text-sm text-muted-foreground">Verificaremos registros de tu dominio para asegurar una alta entregabilidad, y te proporcionaremos los registros DNS que deberás añadir a tu dominio.</p>
 
                     <div className="space-y-3 mt-4">
                         {healthCheckStep === 'mandatory' ? (
@@ -434,6 +415,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('MX', mxStatus, 'mx')}
                             {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
                             {renderRecordStatus('VMC', vmcStatus, 'vmc')}
+                             <div className="pt-2">
+                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                    <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
+                                    <li><span className="font-semibold">BIMI:</span> ¿Qué logotipo oficial debe mostrarse junto a mis correos en la bandeja de entrada?</li>
+                                    <li><span className="font-semibold">VMC:</span> ¿Hay un certificado que demuestre que ese logotipo y la marca son míos?</li>
+                                </ul>
+                            </div>
                           </>
                         )}
                     </div>
@@ -682,7 +671,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                  )}
                  {healthCheckStep === 'mandatory' && allMandatoryHealthChecksDone && (
                     <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')} disabled={!allMandatoryHealthChecksPassed}>
-                      Continuar a Opcionales <ArrowRight className="ml-2"/>
+                      Siguiente <ArrowRight className="ml-2"/>
                     </Button>
                  )}
                  {healthCheckStep === 'optional' && allOptionalHealthChecksDone && (
@@ -901,11 +890,11 @@ function DnsInfoModal({
                     "rua=mailto:...": "Dirección para recibir reportes agregados (estadísticas).",
                     "ruf=mailto:...": "Dirección para recibir reportes forenses (detalles de fallos).",
                     "sp=reject": "Aplica la misma política estricta a subdominios.",
-                    "aspf=s": "Alineación SPF estricta.",
-                    "adkim=s": "Alineación DKIM estricta.",
+                    "aspf=s": "Alineación SPF estricta (el dominio del SPF debe coincidir exactamente con el “From:” visible).",
+                    "adkim=s": "Alineación DKIM estricta (el dominio de la firma DKIM debe coincidir exactamente con el “From:” visible).",
                 };
                 return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                         <div className="space-y-4">
                              <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -937,6 +926,33 @@ function DnsInfoModal({
                         </div>
                     </div>
                 )
+             case 'mx':
+                const mxValue = 'foxmiu.email';
+                return (
+                     <div className="space-y-4 text-sm">
+                        <p>Para recibir correos electrónicos en tu dominio (ej: `contacto@{domain}`), necesitas un registro MX que apunte a un servidor de correo. Añade este registro para usar nuestro servicio de correo entrante.</p>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Host/Nombre:</p><span>@</span>
+                         </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
+                         </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Valor/Destino:</p>
+                             <div className="w-full flex justify-between items-center">
+                                 <span className="truncate">{mxValue}</span>
+                                 <Button size="icon" variant="ghost" onClick={() => onCopy(mxValue)}><Copy className="size-4"/></Button>
+                             </div>
+                         </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Prioridad:</p><span>0</span>
+                         </div>
+                         <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
+                            <p className="font-bold mb-1">En resumen</p>
+                            <p>Es como poner la dirección exacta de tu buzón para que el cartero sepa dónde dejar las cartas.</p>
+                        </div>
+                    </div>
+                );
             default:
                 return <p>Información no disponible para este tipo de registro.</p>
         }
