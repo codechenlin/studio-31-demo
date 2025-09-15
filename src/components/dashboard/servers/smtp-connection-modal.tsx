@@ -380,13 +380,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="h-full flex flex-col justify-start pt-8">
                         <h3 className="text-lg font-bold mb-2">{title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
-                        <AnimatePresence>
-                          {showExample && (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                              {/* TODO: Add example here */}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <motion.div>
+                            {showExample && infoViewRecord === 'spf' && (
+                                <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                                    <p>Si ya usas otros servicios de correo (ej. Google Workspace), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.google.com include:spf.otrodominio.com -all`</p>
+                                </div>
+                            )}
+                        </motion.div>
                         <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
                            <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
@@ -840,7 +842,7 @@ function DnsInfoModal({
             <div className="space-y-4 text-sm">
                 <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Host/Nombre:</p>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
                 </div>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -870,10 +872,9 @@ function DnsInfoModal({
             {dkimData && (
                 <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Host/Nombre:</p>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button></p>
                     <div className="w-full flex justify-between items-center">
                     <span>{dkimData.selector}._domainkey</span>
-                    <Button size="icon" variant="ghost" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -884,7 +885,7 @@ function DnsInfoModal({
                     <p className="font-bold text-white/90">Valor del Registro:</p>
                     <div className="w-full flex justify-between items-start">
                     <span className="break-all pr-2">{dkimData.record}</span>
-                    <Button size="icon" variant="ghost" className="shrink-0 self-start" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                    <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
                 </motion.div>
@@ -914,7 +915,7 @@ function DnsInfoModal({
                 <div className="space-y-4">
                     <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                        <p className="font-bold text-white/90">Host/Nombre:</p>
+                        <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
                         <span>_dmarc</span>
                     </div>
                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -925,7 +926,7 @@ function DnsInfoModal({
                         <p className="font-bold text-white/90">Valor del Registro:</p>
                         <div className="w-full flex justify-between items-start">
                         <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
-                        <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                        <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                         </div>
                     </div>
                 </div>
@@ -950,7 +951,8 @@ function DnsInfoModal({
              <div className="space-y-4 text-sm">
                 <p>Para recibir correos electrónicos en tu dominio (ej: `contacto@{domain}`), necesitas un registro MX que apunte a un servidor de correo. Añade este registro para usar nuestro servicio de correo entrante.</p>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Host/Nombre:</p><span>@</span>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+                    <span>@</span>
                  </div>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
@@ -963,7 +965,8 @@ function DnsInfoModal({
                      </div>
                  </div>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Prioridad:</p><span>0</span>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Prioridad:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('0')}><Copy className="size-4"/></Button></p>
+                    <span>0</span>
                  </div>
                  <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
                     <p className="font-bold mb-1">En resumen</p>
@@ -978,7 +981,8 @@ function DnsInfoModal({
             <div className="space-y-4">
                  <p>Este es un ejemplo de un registro BIMI apuntando a un archivo SVG Portable/Secure (SVG P/S), basado en SVG Tiny 1.2.</p>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('default._bimi')}><Copy className="size-4"/></Button></p>
+                    <span>default._bimi</span>
                  </div>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
@@ -1000,7 +1004,8 @@ function DnsInfoModal({
                 <p>◦ **Peso máximo:** No debe superar 32 KB.</p>
                 <p>◦ **Lienzo cuadrado:** Relación de aspecto 1:1 (ej. 1000×1000 px).</p>
                 <p>◦ **Fondo sólido:** Evita transparencias.</p>
-                <p>◦ **Sin elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
+                <p>◦ **Formato vectorial puro:** No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos.</p>
+                <p>◦ **Elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
                 <p>◦ **Alojamiento:** Debe ser accesible via HTTPS en una URL pública.</p>
             </div>
         </div>
@@ -1023,7 +1028,8 @@ function DnsInfoModal({
             <div className="space-y-4">
                 <p className="font-semibold text-white">Ejemplo de registro BIMI con VMC:</p>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('default._bimi')}><Copy className="size-4"/></Button></p>
+                    <span>default._bimi</span>
                  </div>
                  <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
@@ -1032,7 +1038,7 @@ function DnsInfoModal({
                     <p className="font-bold text-white/90">Valor:</p>
                     <div className="w-full flex justify-between items-start">
                          <span className="break-all pr-2">v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado-vmc.pem</span>
-                         <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado-vmc.pem')}><Copy className="size-4"/></Button>
+                         <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado-vmc.pem')}><Copy className="size-4"/></Button>
                      </div>
                  </div>
             </div>
@@ -1071,6 +1077,8 @@ function DnsInfoModal({
         </Dialog>
     )
 }
+
+    
 
     
 
