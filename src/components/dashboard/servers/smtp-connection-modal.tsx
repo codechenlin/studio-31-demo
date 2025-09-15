@@ -327,7 +327,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     switch (currentStep) {
         case 1:
             return (
-                 <div className="h-full flex flex-col justify-start pt-8">
+                 <div className="h-full flex flex-col justify-start">
                     <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
                     <p className="text-sm text-muted-foreground">
                     Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
@@ -354,7 +354,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )
         case 2:
             return (
-                 <div className="h-full flex flex-col justify-start pt-8">
+                 <div className="h-full flex flex-col justify-start">
                    <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
@@ -367,7 +367,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         </div>
                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                             <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                            <p className="flex justify-between items-center break-all">{txtRecordValue} <Copy className="size-4 cursor-pointer ml-2" onClick={() => handleCopy(txtRecordValue)}/></p>
+                            <div className="flex justify-between items-center">
+                                <span className="break-all pr-2">{txtRecordValue}</span>
+                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0" onClick={() => handleCopy(txtRecordValue)}>
+                                    <Copy className="size-4 cursor-pointer"/>
+                                </Button>
+                            </div>
                         </div>
                     </div>
                    </div>
@@ -377,7 +382,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             if (infoViewRecord) {
                  const { title, description } = infoContent[infoViewRecord];
                  return (
-                    <div className="h-full flex flex-col justify-start pt-8">
+                    <div className="h-full flex flex-col justify-start">
                         <h3 className="text-lg font-bold mb-2">{title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
                         <motion.div>
@@ -397,7 +402,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )
             }
             return (
-                <div className="h-full flex flex-col justify-start pt-8">
+                <div className="h-full flex flex-col justify-start">
                   <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
                     <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
@@ -524,7 +529,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="h-full flex flex-col"
           >
-             <div className="space-y-3 h-full flex flex-col justify-start pt-8">
+             <div className="space-y-3 h-full flex flex-col justify-start">
                 <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
                 <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                 <div className="space-y-4 flex-grow pt-4">
@@ -770,7 +775,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             {renderLeftPanel()}
           </div>
           <div className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
-            <div className="p-8 flex flex-col h-full">
+            <div className="p-8 flex flex-col h-full justify-start">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -885,7 +890,7 @@ function DnsInfoModal({
                     <p className="font-bold text-white/90">Valor del Registro:</p>
                     <div className="w-full flex justify-between items-start">
                     <span className="break-all pr-2">{dkimData.record}</span>
-                    <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                    <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
                 </motion.div>
