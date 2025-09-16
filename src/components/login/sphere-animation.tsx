@@ -32,7 +32,7 @@ export function SphereAnimation() {
   const colors = useMemo(() => {
     if (!mounted) return [];
     return isDarkMode 
-      ? ['#C0C0C0', '#F5F5F5', '#E5E4E2'] // Dark mode colors
+      ? ['#FFAF00', '#FFFFFF', '#00ADEC'] // Dark mode colors
       : ['#FFAF00', '#000000', '#B300FF']; // Light mode colors
   }, [isDarkMode, mounted]);
 
