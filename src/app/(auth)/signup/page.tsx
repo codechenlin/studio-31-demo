@@ -25,13 +25,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Eye, EyeOff, Fingerprint, BrainCircuit } from "lucide-react";
+import { User, Mail, Eye, EyeOff } from "lucide-react";
 import React from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/context/language-context";
 import { Logo } from "@/components/common/logo";
 import { SphereAnimation } from "@/components/login/sphere-animation";
-import Image from "next/image";
 import { motion } from 'framer-motion';
 
 const formSchema = z.object({
@@ -84,36 +83,35 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="w-screen h-screen flex bg-background">
-        <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden">
-          <div className="absolute top-8 left-8">
+    <div className="w-screen h-screen flex flex-col justify-center items-center bg-background p-10 overflow-hidden relative">
+        <div className="absolute top-8 left-8">
             <Logo />
-          </div>
-          <SphereAnimation />
+        </div>
+        <SphereAnimation />
 
-          <div className="w-full max-w-sm z-10">
-             <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
-              <CardHeader className="text-center px-6 pt-6">
+        <div className="w-full max-w-sm z-10">
+            <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
+            <CardHeader className="text-center px-6 pt-6">
                 <motion.div
-                  className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
-                  animate={{
+                className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
+                animate={{
                     scale: [1, 1.05, 1],
                     boxShadow: [
-                      '0 0 15px #00ADEC00',
-                      '0 0 25px #00ADEC',
-                      '0 0 15px #00ADEC00',
+                    '0 0 15px #00ADEC00',
+                    '0 0 25px #00ADEC',
+                    '0 0 15px #00ADEC00',
                     ]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                  <User className="size-8" style={{ color: '#00ADEC' }} />
+                <User className="size-8" style={{ color: '#00ADEC' }} />
                 </motion.div>
                 <CardTitle className="text-3xl font-bold">{t('signup_create_account')}</CardTitle>
                 <CardDescription>
                     {t('signup_description')}
                 </CardDescription>
-              </CardHeader>
-              <CardContent className="px-6 pb-6">
+            </CardHeader>
+            <CardContent className="px-6 pb-6">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
@@ -184,9 +182,9 @@ export default function SignupPage() {
                         </Button>
                     </form>
                 </Form>
-              </CardContent>
-              <CardFooter className="px-6 pb-6">
-                 <div className="text-center text-sm text-muted-foreground w-full">
+            </CardContent>
+            <CardFooter className="px-6 pb-6">
+                <div className="text-center text-sm text-muted-foreground w-full">
                     <p>
                     {t('signup_already_account')}{" "}
                         <Link
@@ -197,30 +195,16 @@ export default function SignupPage() {
                         </Link>
                     </p>
                 </div>
-              </CardFooter>
-              <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+            </CardFooter>
+            <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-accent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="h-full bg-gradient-to-r from-primary to-accent"
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                 />
-              </div>
+            </div>
             </Card>
-          </div>
         </div>
-        <div className="w-1/2 h-full relative overflow-hidden">
-          <Image
-            src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
-            alt="AI generated marketing posts collage"
-            fill
-            className="object-cover"
-            sizes="50vw"
-            priority
-          />
-           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        </div>
-      </div>
+    </div>
   );
 }
-
-    

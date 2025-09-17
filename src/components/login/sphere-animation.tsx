@@ -43,11 +43,11 @@ export function SphereAnimation() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let width = canvas.width = window.innerWidth / 2;
+    let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
 
     const resizeHandler = () => {
-      width = canvas.width = window.innerWidth / 2;
+      width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     };
     window.addEventListener('resize', resizeHandler);

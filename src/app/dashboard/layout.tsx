@@ -83,7 +83,6 @@ const menuItems = [
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
-  { href: "/demo", label: "API Campaña", icon: Code },
 ];
 
 function FloatingActionButton() {
@@ -329,7 +328,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   // This prevents the main dashboard layout from wrapping the template editor or demo page
-  if (pathname.startsWith('/dashboard/templates/create') || pathname === '/demo') {
+  if (pathname.startsWith('/dashboard/templates/create')) {
     return <>{children}</>;
   }
   
