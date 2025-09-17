@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, BrainCircuit } from "lucide-react";
+import { Eye, EyeOff, Fingerprint } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
@@ -111,14 +111,14 @@ export default function LoginPage() {
                   animate={{
                     scale: [1, 1.05, 1],
                     boxShadow: [
-                      '0 0 10px #AD00EC00, 0 0 10px #1700E600',
-                      '0 0 20px #AD00EC88, 0 0 20px #1700E688',
-                      '0 0 10px #AD00EC00, 0 0 10px #1700E600'
+                      '0 0 10px #1700E600',
+                      '0 0 20px #1700E688',
+                      '0 0 10px #1700E600'
                     ]
                   }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                  <BrainCircuit className="size-8" style={{ color: '#E0C8FF'}} />
+                  <Fingerprint className="size-8" style={{ color: '#E0C8FF'}} />
                 </motion.div>
                 <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
                 <CardDescription>
