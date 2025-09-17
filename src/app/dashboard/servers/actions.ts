@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 const actionSchema = z.object({
   domain: z.string(),
-  recordType: z.enum(['TXT', 'MX', 'CNAME']),
+  recordType: z.enum(['TXT', 'MX', 'CNAME', 'SPF', 'DMARC']),
   name: z.string(),
   expectedValue: z.string().optional(),
 });

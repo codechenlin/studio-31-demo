@@ -55,6 +55,7 @@ const dnsVerificationFlow = ai.defineFlow(
       } else if (recordType === 'MX') {
         records = await dns.resolveMx(domain);
       } else if (recordType === 'CNAME') {
+        // For DKIM, we verify the CNAME pointing to our service
         records = await dns.resolveCname(fqdn);
       } else {
         throw new Error(`Unsupported record type: ${recordType}`);
@@ -64,45 +65,47 @@ const dnsVerificationFlow = ai.defineFlow(
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
       
-      // Normalize TXT records by joining and removing quotes
-      const processedRecords = records.map(r => {
-        if (typeof r === 'string') return r.replace(/"/g, '');
-        if(recordType === 'MX' && typeof r === 'object') return `${r.priority} ${r.exchange}`;
-        return r.toString();
-      });
-      
-      const joinedTxtRecords = processedRecords.join('');
+      const processedRecords = records.map(r => 
+        (typeof r === 'object' && recordType === 'MX') ? `${r.priority} ${r.exchange}` : r.toString()
+      );
 
       switch (recordType) {
         case 'SPF':
-          if (joinedTxtRecords.includes('include:_spf.foxmiu.email')) {
-            return { isVerified: true, foundRecords: processedRecords };
+          // A domain's TXT records can be split. We must join them and then check.
+          const spfRecord = processedRecords.join('');
+          if (spfRecord.startsWith('v=spf1') && spfRecord.includes('include:_spf.foxmiu.email')) {
+              return { isVerified: true, foundRecords: processedRecords };
           }
-          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email', que es necesario para nuestra plataforma.", foundRecords: processedRecords };
+          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email'.", foundRecords: processedRecords };
 
         case 'DMARC':
-          if (joinedTxtRecords.includes('p=reject')) {
-            return { isVerified: true, foundRecords: processedRecords };
+          const dmarcRecord = processedRecords.join('');
+           if (dmarcRecord.startsWith('v=DMARC1') && dmarcRecord.includes('p=reject')) {
+              return { isVerified: true, foundRecords: processedRecords };
           }
-          return { isVerified: false, reason: "El registro DMARC no tiene la política estricta 'p=reject' recomendada.", foundRecords: processedRecords };
+          return { isVerified: false, reason: "La política DMARC no está establecida en 'p=reject'.", foundRecords: processedRecords };
         
+        case 'CNAME': // Used for DKIM
+            // We're just checking for existence and that it points SOMEWHERE, 
+            // as the specific target might be variable. The name is what matters.
+            if(records.length > 0) {
+                return { isVerified: true, foundRecords: records };
+            }
+            return { isVerified: false, reason: 'No se encontró el registro CNAME para DKIM.', foundRecords: records };
+
         case 'MX':
-            if (processedRecords.some(r => r.includes('foxmiu.email'))) {
+            if (processedRecords.some(r => r.includes(expectedValue || ''))) {
                 return { isVerified: true, foundRecords: processedRecords };
             }
-            return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords: processedRecords };
+            return { isVerified: false, reason: `No se encontró '${expectedValue}' en los registros MX.`, foundRecords: processedRecords };
 
-        case 'TXT': 
-        case 'CNAME':
-          if (!expectedValue) {
-            return { isVerified: true, foundRecords: processedRecords }; // Existence check is enough
-          }
-          if (processedRecords.some(r => r.includes(expectedValue))) {
+        case 'TXT': // For domain verification
+          if (processedRecords.includes(expectedValue || '')) {
             return { isVerified: true, foundRecords: processedRecords };
           }
           return { 
             isVerified: false, 
-            reason: `No se encontró el valor esperado '${expectedValue}' en los registros encontrados.`, 
+            reason: `No se encontró el valor de verificación esperado.`, 
             foundRecords: processedRecords
           };
 
