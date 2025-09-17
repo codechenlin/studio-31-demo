@@ -50,71 +50,63 @@ const dnsVerificationFlow = ai.defineFlow(
       
       let records: any[] = [];
       
-      // Resolve DNS records based on the specific type
-      switch (recordType) {
-        case 'SPF':
-        case 'DMARC':
-        case 'TXT':
-          records = (await dns.resolveTxt(fqdn)).flat();
-          break;
-        case 'MX':
-          // For MX, we resolve on the root domain, not a subdomain like '_dmarc'
-          records = await dns.resolveMx(domain);
-          break;
-        case 'CNAME':
-          records = await dns.resolveCname(fqdn);
-          break;
-        default:
-          throw new Error(`Unsupported record type: ${recordType}`);
+      if (recordType === 'SPF' || recordType === 'DMARC' || recordType === 'TXT') {
+        records = (await dns.resolveTxt(fqdn)).flat();
+      } else if (recordType === 'MX') {
+        records = await dns.resolveMx(domain);
+      } else if (recordType === 'CNAME') {
+        records = await dns.resolveCname(fqdn);
+      } else {
+        throw new Error(`Unsupported record type: ${recordType}`);
       }
 
       if (!records || records.length === 0) {
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
+      
+      // Normalize TXT records by joining and removing quotes
+      const processedRecords = records.map(r => {
+        if (typeof r === 'string') return r.replace(/"/g, '');
+        if(recordType === 'MX' && typeof r === 'object') return `${r.priority} ${r.exchange}`;
+        return r.toString();
+      });
+      const joinedTxtRecords = processedRecords.join('');
 
-      // Convert records to a simple string array for output
-      const foundRecords = (recordType === 'MX')
-        ? records.map(r => `${r.priority} ${r.exchange}`)
-        : records.map(r => r.toString());
-
-      // Custom verification logic based on the specific recordType
       switch (recordType) {
         case 'SPF':
-          if (foundRecords.some(r => r.includes('include:_spf.foxmiu.email'))) {
-            return { isVerified: true, foundRecords };
+          if (joinedTxtRecords.includes('include:_spf.foxmiu.email')) {
+            return { isVerified: true, foundRecords: processedRecords };
           }
-          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email', que es necesario para nuestra plataforma.", foundRecords };
+          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email', que es necesario para nuestra plataforma.", foundRecords: processedRecords };
 
         case 'DMARC':
-          if (foundRecords.some(r => r.includes('p=reject'))) {
-            return { isVerified: true, foundRecords };
+          if (joinedTxtRecords.includes('p=reject')) {
+            return { isVerified: true, foundRecords: processedRecords };
           }
-          return { isVerified: false, reason: "El registro DMARC no tiene la política estricta 'p=reject' recomendada.", foundRecords };
+          return { isVerified: false, reason: "El registro DMARC no tiene la política estricta 'p=reject' recomendada.", foundRecords: processedRecords };
         
         case 'MX':
-            if ((records as dns.MxRecord[]).some(r => r.exchange.includes('foxmiu.email'))) {
-                return { isVerified: true, foundRecords };
+            if (processedRecords.some(r => r.includes('foxmiu.email'))) {
+                return { isVerified: true, foundRecords: processedRecords };
             }
-            return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords };
+            return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords: processedRecords };
 
-        // Generic verification for TXT (domain ownership) and CNAME
         case 'TXT': 
         case 'CNAME':
           if (!expectedValue) {
-            return { isVerified: true, foundRecords }; // Existence check is enough
+            return { isVerified: true, foundRecords: processedRecords }; // Existence check is enough
           }
-          if (foundRecords.some(r => r.includes(expectedValue))) {
-            return { isVerified: true, foundRecords };
+          if (processedRecords.some(r => r.includes(expectedValue))) {
+            return { isVerified: true, foundRecords: processedRecords };
           }
           return { 
             isVerified: false, 
             reason: `No se encontró el valor esperado '${expectedValue}' en los registros encontrados.`, 
-            foundRecords 
+            foundRecords: processedRecords
           };
 
         default:
-           // Fallback for any other types, should not be reached with current enum
-           return { isVerified: true, foundRecords };
+           return { isVerified: true, foundRecords: processedRecords };
       }
 
     } catch (error: any) {
