@@ -3,7 +3,6 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useTheme } from 'next-themes';
 
 export function SphereAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,12 +42,17 @@ export function SphereAnimation() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    let container = canvas.parentElement;
+    if(!container) return;
+    
+    let width = canvas.width = container.offsetWidth;
+    let height = canvas.height = container.offsetHeight;
 
     const resizeHandler = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+        if(container) {
+          width = canvas.width = container.offsetWidth;
+          height = canvas.height = container.offsetHeight;
+        }
     };
     window.addEventListener('resize', resizeHandler);
 
@@ -159,5 +163,3 @@ export function SphereAnimation() {
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-20 dark:opacity-30 pointer-events-none" />;
 }
-
-    

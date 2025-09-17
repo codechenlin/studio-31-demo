@@ -96,129 +96,140 @@ export default function LoginPage() {
   return (
     <>
       <LoadingModal isOpen={isLoading} variant="login" />
-      <div className="w-screen h-screen flex flex-col justify-center items-center bg-background p-10 overflow-hidden relative">
-        <div className="absolute top-8 left-8 z-20">
-            <Logo />
-        </div>
-        <SphereAnimation />
+      <div className="w-screen h-screen flex bg-background">
+        <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden">
+            <div className="absolute top-8 left-8 z-20">
+                <Logo />
+            </div>
+            <SphereAnimation />
 
-        <div className="w-full max-w-sm z-10">
-             <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
-              <CardHeader className="text-center px-6 pt-6">
-                <motion.div
-                  className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
-                  animate={{
-                    scale: [1, 1.05, 1],
-                    boxShadow: [
-                      '0 0 15px #00ADEC00',
-                      '0 0 25px #00ADEC',
-                      '0 0 15px #00ADEC00',
-                    ]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <Fingerprint className="size-8" style={{ color: '#00ADEC' }} />
-                </motion.div>
-                <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
-                <CardDescription>
-                  {t('login_enter_credentials')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-6 pb-6">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('email')}</FormLabel>
-                          <FormControl>
-                              <Input
-                                placeholder="you@example.com"
-                                {...field}
-                                className="bg-background/70 border-border/50"
-                              />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>{t('password')}</FormLabel>
-                            <Link
-                              href="/forgot-password"
-                              className="text-sm font-medium text-primary hover:underline"
-                            >
-                              {t('forgot_password_link')}
-                            </Link>
-                          </div>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                type={isPasswordVisible ? "text" : "password"}
-                                placeholder="••••••••"
-                                {...field}
-                                className="pr-10 bg-background/70 border-border/50"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
-                                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                              >
-                                {isPasswordVisible ? (
-                                  <EyeOff className="size-4" />
-                                ) : (
-                                  <Eye className="size-4" />
-                                )}
-                                <span className="sr-only">
-                                  {isPasswordVisible ? "Hide password" : "Show password"}
-                                </span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90 transition-opacity" disabled={isPending}>
-                      {isPending ? t('login_signing_in') : t('login_sign_in_button')}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-              <CardFooter className="px-6 pb-6">
-                 <div className="text-center text-sm text-muted-foreground w-full">
-                  <p>
-                    {t('login_no_account')}{" "}
-                    <Link
-                      href="/signup"
-                      className="font-medium text-primary hover:underline"
+            <div className="w-full max-w-sm z-10">
+                <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
+                <CardHeader className="text-center px-6 pt-6">
+                    <motion.div
+                    className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
+                    animate={{
+                        scale: [1, 1.05, 1],
+                        boxShadow: [
+                        '0 0 15px #00ADEC00',
+                        '0 0 25px #00ADEC',
+                        '0 0 15px #00ADEC00',
+                        ]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     >
-                      {t('sign_up_link')}
-                    </Link>
-                  </p>
+                    <Fingerprint className="size-8" style={{ color: '#00ADEC' }} />
+                    </motion.div>
+                    <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
+                    <CardDescription>
+                    {t('login_enter_credentials')}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                    <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('email')}</FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="you@example.com"
+                                    {...field}
+                                    className="bg-background/70 border-border/50"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>{t('password')}</FormLabel>
+                                <Link
+                                href="/forgot-password"
+                                className="text-sm font-medium text-primary hover:underline"
+                                >
+                                {t('forgot_password_link')}
+                                </Link>
+                            </div>
+                            <FormControl>
+                                <div className="relative">
+                                <Input
+                                    type={isPasswordVisible ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    {...field}
+                                    className="pr-10 bg-background/70 border-border/50"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
+                                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                                >
+                                    {isPasswordVisible ? (
+                                    <EyeOff className="size-4" />
+                                    ) : (
+                                    <Eye className="size-4" />
+                                    )}
+                                    <span className="sr-only">
+                                    {isPasswordVisible ? "Hide password" : "Show password"}
+                                    </span>
+                                </Button>
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90 transition-opacity" disabled={isPending}>
+                        {isPending ? t('login_signing_in') : t('login_sign_in_button')}
+                        </Button>
+                    </form>
+                    </Form>
+                </CardContent>
+                <CardFooter className="px-6 pb-6">
+                    <div className="text-center text-sm text-muted-foreground w-full">
+                    <p>
+                        {t('login_no_account')}{" "}
+                        <Link
+                        href="/signup"
+                        className="font-medium text-primary hover:underline"
+                        >
+                        {t('sign_up_link')}
+                        </Link>
+                    </p>
+                    </div>
+                </CardFooter>
+                <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+                    <motion.div
+                    className="h-full bg-gradient-to-r from-primary to-accent"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    />
                 </div>
-              </CardFooter>
-              <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-accent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              </div>
-            </Card>
+                </Card>
+            </div>
+        </div>
+        <div className="w-1/2 h-full relative overflow-hidden">
+            <Image
+                src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
+                alt="AI generated marketing posts collage"
+                fill
+                className="object-cover"
+                sizes="50vw"
+                priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>
     </>
   );
 }
-
-    
