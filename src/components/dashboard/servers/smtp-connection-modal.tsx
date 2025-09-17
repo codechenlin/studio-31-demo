@@ -14,7 +14,7 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -104,26 +104,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const handleCheckVerification = async () => {
     setVerificationStatus('verifying');
     
-    // This action should be simple and fast. We are removing the AI from this part.
-    // The action will do a simple DNS lookup for the TXT record.
-    const { success, error } = await new Promise<{success: boolean, error?: string}>(resolve => setTimeout(() => {
-        // Mock response for now. In a real scenario, this would call a server action.
-        if (domain) {
-            console.log("Verifying domain:", domain, "with code:", txtRecordValue);
-            resolve({ success: true });
-        } else {
-            resolve({ success: false, error: "El dominio está vacío." });
-        }
-    }, 2000));
+    const result = await verifyDomainOwnershipAction({
+        domain,
+        expectedValue: txtRecordValue,
+    });
     
-    if (success) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (result.success) {
       setVerificationStatus('verified');
       form.setValue('username', `ejemplo@${domain}`);
     } else {
       setVerificationStatus('failed');
       toast({
         title: "Verificación Fallida",
-        description: error || "No se pudo encontrar el registro TXT de verificación.",
+        description: result.error || "No se pudo encontrar el registro TXT de verificación.",
         variant: "destructive",
       });
     }
@@ -472,17 +467,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 `}</style>
                                 <Button
                                     variant="outline"
-                                    className="w-full h-12 relative overflow-hidden group"
+                                    className="w-full h-12 relative overflow-hidden group text-base font-semibold bg-gradient-to-r from-primary to-accent text-white"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
-                                    <div className="absolute inset-0 ai-button-scan opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <div className="relative flex items-center justify-center gap-2">
-                                        <div className="flex gap-1 items-center">
-                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
-                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
-                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
-                                        </div>
+                                    <div className="absolute inset-0 ai-button-scan" />
+                                    <div className="relative flex items-center justify-center gap-4 text-white">
                                         Análisis de la IA
+                                        <div className="flex gap-1 items-center">
+                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
+                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
+                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
+                                        </div>
                                     </div>
                                 </Button>
                                </div>
@@ -696,8 +691,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const StatusIndicator = () => {
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
-     const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
-    const allMandatoryHealthChecksDone = spfStatus === 'verified' && dkimStatus === 'verified' && dmarcStatus === 'verified';
+    const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
+    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
 
     if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
@@ -707,7 +702,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else if (currentStep === 3) {
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (allMandatoryHealthChecksDone) {
-          const hasError = spfStatus === 'failed' || dkimStatus === 'failed' || dmarcStatus === 'failed';
+          const hasError = spfStatus === 'unverified' || dkimStatus === 'unverified' || dmarcStatus === 'unverified' || spfStatus === 'not-found' || dkimStatus === 'not-found' || dmarcStatus === 'not-found';
           status = hasError ? 'error' : 'success';
           text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
         }
@@ -945,3 +940,4 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
