@@ -13,6 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Form,
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, BrainCircuit } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
@@ -32,6 +33,7 @@ import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import Image from "next/image";
+import { motion } from 'framer-motion';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -102,8 +104,22 @@ export default function LoginPage() {
           <SphereAnimation />
 
           <div className="w-full max-w-sm z-10">
-            <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl">
-              <CardHeader className="text-left px-6 pt-6">
+             <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
+              <CardHeader className="text-center px-6 pt-6">
+                <motion.div
+                  className="inline-block p-3 mx-auto border-2 border-primary/20 rounded-full bg-primary/10 mb-4"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    boxShadow: [
+                      '0 0 10px #AD00EC00, 0 0 10px #1700E600',
+                      '0 0 20px #AD00EC88, 0 0 20px #1700E688',
+                      '0 0 10px #AD00EC00, 0 0 10px #1700E600'
+                    ]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <BrainCircuit className="size-8" style={{ color: '#E0C8FF'}} />
+                </motion.div>
                 <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
                 <CardDescription>
                   {t('login_enter_credentials')}
@@ -178,7 +194,9 @@ export default function LoginPage() {
                     </Button>
                   </form>
                 </Form>
-                 <div className="text-center text-sm text-muted-foreground mt-8">
+              </CardContent>
+              <CardFooter className="px-6 pb-6">
+                 <div className="text-center text-sm text-muted-foreground w-full">
                   <p>
                     {t('login_no_account')}{" "}
                     <Link
@@ -189,7 +207,14 @@ export default function LoginPage() {
                     </Link>
                   </p>
                 </div>
-              </CardContent>
+              </CardFooter>
+              <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-primary to-accent"
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </div>
             </Card>
           </div>
         </div>
