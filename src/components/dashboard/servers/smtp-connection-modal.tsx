@@ -127,23 +127,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const checkRecord = async (
       name: string, 
       recordType: 'SPF' | 'DMARC' | 'MX' | 'CNAME' | 'TXT', 
-      setStatus: React.Dispatch<React.SetStateAction<HealthCheckStatus>>
+      setStatus: React.Dispatch<React.SetStateAction<HealthCheckStatus>>,
+      expectedValue?: string
     ) => {
         setStatus('verifying');
-        const result = await verifyDnsAction({ domain, recordType, name });
+        const result = await verifyDnsAction({ domain, recordType, name, expectedValue });
         await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
         setStatus(result.success ? 'verified' : 'failed');
     };
 
     if (type === 'mandatory') {
         await Promise.all([
-            checkRecord('@', 'SPF', setSpfStatus),
+            checkRecord('@', 'SPF', setSpfStatus, 'include:_spf.foxmiu.email'),
             checkRecord('foxmiu._domainkey', 'CNAME', setDkimStatus),
-            checkRecord('_dmarc', 'DMARC', setDmarcStatus),
+            checkRecord('_dmarc', 'DMARC', setDmarcStatus, 'p=reject'),
         ]);
     } else {
         await Promise.all([
-            checkRecord(domain, 'MX', setMxStatus),
+            checkRecord(domain, 'MX', setMxStatus, 'foxmiu.email'),
             checkRecord(`default._bimi.${domain}`, 'TXT', setBimiStatus),
             checkRecord(`bimi.${domain}`, 'TXT', setVmcStatus),
         ]);
@@ -277,17 +278,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
+                 <motion.div
+                    animate={{ rotate: isVerified ? 0 : [0, 360, 0, -360, 0] }}
+                    transition={{ duration: 10, repeat: isVerified ? 0 : Infinity, ease: "linear" }}
+                    className={cn(isVerified && "hidden")}
+                  >
+                     <Layers className="size-5 text-primary"/>
+                 </motion.div>
+                  {isVerified && <CheckCircle className="size-5 text-green-400" />}
+
                 <span className="font-semibold text-base text-white/90">{domain}</span>
-                 <div className="relative flex items-center justify-center w-5 h-5">
-                    {isVerified ? (
-                        <CheckCircle className="text-green-400 size-5" />
-                    ) : (
-                        <>
-                           <div className="absolute w-full h-full rounded-full bg-primary/30 animate-pulse" style={{ animationDuration: '2s' }}/>
-                           <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                        </>
-                    )}
-                 </div>
             </div>
         </div>
     )
@@ -322,8 +322,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                  <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
                  <DialogDescription className="text-muted-foreground mt-1">{currentStepDesc}</DialogDescription>
                   
-                  {currentStep > 1 && <DomainStatusIndicator />}
-
                   <ul className="space-y-4 mt-8">
                     {stepInfo.map((step, index) => {
                         const stepNumber = index + 1;
@@ -349,6 +347,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         );
                     })}
                   </ul>
+                   <div className="relative w-full h-px my-6 bg-border/20">
+                     <div className="tech-scanner w-[50px]" style={{background: 'linear-gradient(90deg, transparent, var(--color-active-led-start), var(--color-active-led-end), transparent)'}}/>
+                  </div>
+
+                  {currentStep > 1 && <DomainStatusIndicator />}
               </div>
 
               <div className="text-xs text-muted-foreground mt-4">
@@ -1082,3 +1085,4 @@ function DnsInfoModal({
     )
 }
     
+
