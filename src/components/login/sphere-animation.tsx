@@ -69,9 +69,8 @@ export function SphereAnimation() {
     
     let mouse = { x: 0, y: 0 };
     const mouseMoveHandler = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left - width / 2;
-        mouse.y = e.clientY - rect.top - height / 2;
+        mouse.x = e.clientX - width / 2;
+        mouse.y = e.clientY - height / 2;
     };
     document.addEventListener('mousemove', mouseMoveHandler);
 
@@ -156,7 +155,7 @@ export function SphereAnimation() {
       cancelAnimationFrame(animationFrameId);
     };
 
-  }, [colors]);
+  }, [colors, mounted]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-20 dark:opacity-30 pointer-events-none" />;
 }
