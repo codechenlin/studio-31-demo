@@ -10,15 +10,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsHealth, type DnsHealthInput } from '@/ai/flows/dns-verification-flow';
+import { verifyDomainOwnershipAction, verifyDnsHealthAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { generateDkimKeys } from '@/ai/flows/dkim-generation-flow';
+import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
+import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -30,14 +32,7 @@ type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
-type DnsAnalysis = {
-    spfStatus: "verified" | "unverified" | "not-found";
-    dkimStatus: "verified" | "unverified" | "not-found";
-    dmarcStatus: "verified" | "unverified" | "not-found";
-    analysis: string;
-}
-
-const generateVerificationCode = () => `fxu_${Math.random().toString(36).substring(2, 10)}`;
+const generateVerificationCode = () => `foxmiu_${Math.random().toString(36).substring(2, 10)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -47,24 +42,23 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsAnalysis | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | null>(null);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
 
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
-  const [infoViewRecord, setInfoViewRecord] = useState<InfoViewRecord | null>(null);
-
-  const [testError, setTestError] = useState('');
-  const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
-  const [dkimData, setDkimData] = useState<{ publicKeyRecord: string; selector: string } | null>(null);
+  const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [testError, setTestError] = useState('');
+  const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
 
   useEffect(() => {
-    if (domain) {
+    if (domain && !dkimData) {
       handleGenerateDkim();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain]);
+  }, [domain, dkimData]);
 
 
   const smtpFormSchema = z.object({
@@ -107,16 +101,30 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setCurrentStep(2);
   };
   
-   const handleCheckVerification = async () => {
-     setVerificationStatus('verifying');
-     // We are removing the automatic DNS check for domain verification
-     // and just trust the user to proceed.
-     await new Promise(resolve => setTimeout(resolve, 1500));
-     setVerificationStatus('verified');
-     form.setValue('username', `ejemplo@${domain}`);
+  const handleCheckVerification = async () => {
+    setVerificationStatus('verifying');
+    
+    const result = await verifyDomainOwnershipAction({
+      domain,
+      expectedValue: txtRecordValue,
+    });
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (result.success) {
+      setVerificationStatus('verified');
+      form.setValue('username', `ejemplo@${domain}`);
+    } else {
+      setVerificationStatus('failed');
+      toast({
+        title: "Verificación Fallida",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
   };
   
-   const handleCheckHealth = async () => {
+  const handleCheckHealth = async () => {
     if (!dkimData) {
       toast({
         title: "Error",
@@ -129,18 +137,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
 
-    const result = await verifyDnsHealth({
+    const result = await verifyDnsHealthAction({
       domain,
       dkimPublicKey: dkimData.publicKeyRecord,
     });
     
-    setHealthCheckStatus(result ? 'verified' : 'failed');
-    if (result) {
-      setDnsAnalysis(result);
+    setHealthCheckStatus(result.success ? 'verified' : 'failed');
+    if (result.success && result.data) {
+      setDnsAnalysis(result.data);
     } else {
         toast({
             title: "Error de Análisis",
-            description: "La IA no pudo procesar los registros. Revisa tu clave de API de Gemini y la configuración de red.",
+            description: result.error || "La IA no pudo procesar los registros. Revisa tu clave de API de Gemini y la configuración de red.",
             variant: "destructive",
         })
     }
@@ -182,7 +190,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setHealthCheckStatus('idle');
         setDnsAnalysis(null);
         setTestStatus('idle');
-        setInfoViewRecord(null);
         form.reset();
         setTestError('');
         setDeliveryStatus('idle');
@@ -424,19 +431,60 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   )}
                   {currentStep === 3 && (
                       <>
-                      <h3 className="text-lg font-semibold mb-1">Análisis de Salud del Dominio por IA</h3>
+                      <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
                       <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
                       <div className="space-y-3 mt-4 flex-grow">
                           <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
                           {renderRecordStatus('SPF', dnsAnalysis?.spfStatus || 'idle', 'spf')}
                           {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
                           {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
-                          {dnsAnalysis && healthCheckStatus !== 'verifying' && (
-                             <motion.div initial={{ opacity: 0, y: 10}} animate={{ opacity: 1, y: 0 }} className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary-foreground/90">
-                                <p className="font-bold text-primary mb-1 flex items-center gap-2"><Info /> Análisis de la IA:</p>
-                                <p className="text-xs whitespace-pre-line">{dnsAnalysis.analysis}</p>
-                            </motion.div>
-                          )}
+                          
+                          <div className="pt-2">
+                            <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                            <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
+                                <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
+                                <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
+                            </ul>
+                           </div>
+                           
+                           {dnsAnalysis && healthCheckStatus !== 'verifying' && (
+                               <div className="pt-4">
+                                <style>{`
+                                    @keyframes button-scan {
+                                        0% { background-position: -200% 0; }
+                                        100% { background-position: 200% 0; }
+                                    }
+                                    .ai-button-scan {
+                                        background: linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent);
+                                        background-size: 200% 100%;
+                                        animation: button-scan 3s linear infinite;
+                                    }
+                                    @keyframes thinking-dots {
+                                        0%, 100% { transform: translateY(0); }
+                                        25% { transform: translateY(-3px); }
+                                        50% { transform: translateY(0); }
+                                        75% { transform: translateY(3px); }
+                                    }
+                                `}</style>
+                                <Button
+                                    variant="outline"
+                                    className="w-full h-12 relative overflow-hidden group"
+                                    onClick={() => setIsAnalysisModalOpen(true)}
+                                >
+                                    <div className="absolute inset-0 ai-button-scan opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="relative flex items-center justify-center gap-2">
+                                        <div className="flex gap-1 items-center">
+                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
+                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
+                                            <span className="size-1.5 bg-primary rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
+                                        </div>
+                                        Análisis de la IA
+                                    </div>
+                                </Button>
+                               </div>
+                           )}
+
                       </div>
                       </>
                   )}
@@ -712,6 +760,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         dkimData={dkimData}
         isGeneratingDkim={isGeneratingDkim}
       />
+      <AiAnalysisModal 
+        isOpen={isAnalysisModalOpen}
+        onOpenChange={setIsAnalysisModalOpen}
+        analysis={dnsAnalysis?.analysis || null}
+      />
     </>
   );
 }
@@ -731,7 +784,7 @@ function DnsInfoModal({
   isOpen: boolean,
   onOpenChange: () => void,
   onCopy: (text: string) => void,
-  dkimData: { publicKeyRecord: string; selector: string } | null,
+  dkimData: DkimGenerationOutput | null,
   isGeneratingDkim: boolean,
 }) {
     if(!recordType) return null;
@@ -852,4 +905,37 @@ function DnsInfoModal({
         </Dialog>
     )
 }
+
+function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full">
+                           <BrainCircuit className="text-cyan-400" />
+                        </div>
+                        Diagnóstico Detallado de la IA
+                    </DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                    <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line">
+                        {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button onClick={() => onOpenChange(false)} className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold">Entendido</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+    
+
     
