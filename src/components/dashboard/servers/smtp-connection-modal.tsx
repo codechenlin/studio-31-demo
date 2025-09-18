@@ -522,7 +522,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
     const allRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
 
     return (
@@ -543,7 +542,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                      <Button
-                        className="w-full h-12 text-base mt-4"
+                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white"
                         onClick={handleStartVerification}
                         disabled={!domain}
                       >
@@ -663,7 +662,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
-                        className="w-full h-12 text-base mt-4 bg-purple-900 text-white hover:bg-[#AD00EC]"
+                        className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC]"
                         onClick={handleCheckVerification}
                         disabled={verificationStatus === 'verifying'}
                       >
@@ -684,7 +683,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros</>}
                             </Button>
                          
-                         {allMandatoryHealthChecksDone && allRecordsVerified && healthCheckStep === 'mandatory' && (
+                         {allRecordsVerified && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
@@ -695,7 +694,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 <Button variant="outline" className="w-full" onClick={() => setHealthCheckStep('mandatory')}>
                                     Volver a Obligatorios
                                 </Button>
-                                <Button className="w-full bg-purple-900 hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
+                                <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
                                     Ir a Configuración SMTP <ArrowRight className="ml-2"/>
                                 </Button>
                             </>
@@ -734,21 +733,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
     
-    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
     if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
       } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
     } else if (currentStep === 3) {
-      
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
-      } else if (allMandatoryHealthChecksDone) {
+      } else if (healthCheckStatus === 'verified') {
           const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
-          const hasError = spfStatus === 'unverified' || dkimStatus === 'unverified' || dmarcStatus === 'unverified' || spfStatus === 'not-found' || dkimStatus === 'not-found' || dmarcStatus === 'not-found';
+          const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
           status = hasError ? 'error' : 'success';
           text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
         }
+       else if (healthCheckStatus === 'failed') {
+            status = 'error'; text = 'FALLO EN EL ANÁLISIS';
+       }
        else {
         status = 'idle';
         text = 'LISTO PARA CHEQUEO';
