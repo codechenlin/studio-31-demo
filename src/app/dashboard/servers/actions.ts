@@ -30,24 +30,42 @@ export async function verifyDnsAction(input: DnsHealthInput) {
 const verifyDomainOwnershipSchema = z.object({
   domain: z.string(),
   expectedValue: z.string(),
+  recordType: z.enum(['TXT', 'MX', 'CNAME', 'SPF', 'DMARC', 'BIMI', 'VMC']),
+  name: z.string(),
 });
 
 export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDomainOwnershipSchema>) {
   try {
-    const { domain, expectedValue } = verifyDomainOwnershipSchema.parse(input);
-    const records = await dns.resolveTxt(domain);
-    const isVerified = records.some(record => record.includes(expectedValue));
+    const { domain, expectedValue, recordType, name } = verifyDomainOwnershipSchema.parse(input);
+    const fullName = name === '@' ? domain : `${name}.${domain}`;
+    
+    if (recordType === 'MX') {
+        const records = await dns.resolveMx(domain);
+        const isVerified = records.some(record => record.exchange.includes(expectedValue));
+        return { success: isVerified, error: isVerified ? undefined : 'No se pudo encontrar el registro MX esperado.' };
+    }
+
+    const records = await dns.resolveTxt(fullName);
+    const flatRecords = records.map(r => r.join(''));
+
+    let isVerified = false;
+    if (recordType === 'BIMI' || recordType === 'VMC') {
+        isVerified = flatRecords.some(r => r.includes(expectedValue));
+    } else {
+        isVerified = flatRecords.some(r => r.includes(expectedValue));
+    }
     
     if (isVerified) {
       return { success: true };
     } else {
-      return { success: false, error: 'No se pudo encontrar el registro TXT de verificación. Asegúrate de que se haya propagado correctamente.' };
+      return { success: false, error: `No se pudo encontrar el registro ${recordType} de verificación. Asegúrate de que se haya propagado correctamente.` };
     }
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-      return { success: false, error: 'No se encontraron registros TXT para el dominio.' };
+      return { success: false, error: `No se encontraron registros TXT para ${name === '@' ? domain : `${name}.${domain}`}.` };
     }
     console.error('Domain ownership verification error:', error);
     return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
   }
 }
+

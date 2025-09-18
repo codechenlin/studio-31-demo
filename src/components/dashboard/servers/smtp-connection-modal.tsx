@@ -48,6 +48,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
 
+  const [optionalRecordStatus, setOptionalRecordStatus] = useState({
+      mx: 'idle' as HealthCheckStatus,
+      bimi: 'idle' as HealthCheckStatus,
+      vmc: 'idle' as HealthCheckStatus
+  });
+
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
@@ -110,6 +116,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const result = await verifyDomainOwnershipAction({
         domain,
         expectedValue: txtRecordValue,
+        recordType: 'TXT',
+        name: '@'
     });
     
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -168,6 +176,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   }
 
+  const handleCheckOptionalHealth = async () => {
+    const checkRecord = async (
+        name: string,
+        recordType: 'MX' | 'BIMI' | 'VMC',
+        expectedValue: string,
+        stateKey: keyof typeof optionalRecordStatus
+    ) => {
+        setOptionalRecordStatus(prev => ({...prev, [stateKey]: 'verifying'}));
+        const result = await verifyDomainOwnershipAction({ domain, name, recordType, expectedValue });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+        setOptionalRecordStatus(prev => ({...prev, [stateKey]: result.success ? 'verified' : 'failed'}));
+    };
+
+    checkRecord(domain, 'MX', 'foxmiu.email', 'mx');
+    checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi');
+    checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc');
+  }
+
   const handleGenerateDkim = async () => {
     if (!domain) return;
     setIsGeneratingDkim(true);
@@ -212,6 +238,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setDkimData(null);
         setShowNotification(false);
         setHealthCheckStep('mandatory');
+        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
     }, 300);
   }
   
@@ -345,11 +372,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
-  const renderRecordStatus = (name: string, status: "verified" | "unverified" | "not-found" | 'idle', recordKey: InfoViewRecord) => (
+  const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
       <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
           <span className='font-semibold'>{name}</span>
           <div className="flex items-center gap-2">
-            {healthCheckStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+            {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
             <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
           </div>
       </div>
@@ -460,9 +487,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           ) : (
                           <>
                              <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
-                             {renderRecordStatus('MX', 'idle', 'mx')}
-                             {renderRecordStatus('BIMI', 'idle', 'bimi')}
-                             {renderRecordStatus('VMC', 'idle', 'vmc')}
+                             {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
+                             {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
+                             {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                           </>
                           )}
                           
@@ -473,7 +500,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
+                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -522,7 +549,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
+    const allMandatoryRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -530,7 +557,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         <div className="w-full flex-grow flex flex-col justify-center">
             <AnimatePresence mode="wait">
               <motion.div
-                  key={`step-content-${currentStep}`}
+                  key={`step-content-${currentStep}-${healthCheckStep}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -599,16 +626,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </div>
                   </div>
                 )}
-                {currentStep === 3 && (
+                {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
                      <div className="text-center">
                         <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Salud del Dominio</h4>
+                        <h4 className="font-bold">Registros Obligatorios</h4>
                         <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
                     </div>
                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
                       <Info className="size-5 shrink-0 mt-0.5" />
                       <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
+                    </div>
+                  </div>
+                )}
+                 {currentStep === 3 && healthCheckStep === 'optional' && (
+                  <div className="w-full flex-grow flex flex-col justify-center">
+                     <div className="text-center">
+                        <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
+                        <h4 className="font-bold">Registros Opcionales</h4>
+                        <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
                     </div>
                   </div>
                 )}
@@ -676,14 +712,23 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}
                     {currentStep === 3 && (
                         <div className="flex flex-col gap-2">
-                            <Button 
-                                className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
-                                onClick={handleCheckHealth} disabled={healthCheckStatus === 'verifying'}
-                            >
-                            {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros</>}
-                            </Button>
+                            {healthCheckStep === 'mandatory' ? (
+                                <Button 
+                                    className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
+                                    onClick={handleCheckHealth} disabled={healthCheckStatus === 'verifying'}
+                                >
+                                {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Obligatorios</>}
+                                </Button>
+                            ) : (
+                                <Button 
+                                    className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
+                                    onClick={handleCheckOptionalHealth} disabled={Object.values(optionalRecordStatus).some(s => s === 'verifying')}
+                                >
+                                {Object.values(optionalRecordStatus).some(s => s === 'verifying') ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
+                                </Button>
+                            )}
                          
-                         {allRecordsVerified && healthCheckStep === 'mandatory' && (
+                         {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
@@ -695,7 +740,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     Volver a Obligatorios
                                 </Button>
                                 <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
-                                    Ir a Configuración SMTP <ArrowRight className="ml-2"/>
+                                    Siguiente <ArrowRight className="ml-2"/>
                                 </Button>
                             </>
                          )}
@@ -848,9 +893,18 @@ function DnsInfoModal({
         title: "Registro DMARC",
         description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
       },
-      mx: { title: "", description: ""}, // Not used yet
-      bimi: { title: "", description: ""},
-      vmc: { title: "", description: ""},
+       mx: {
+        title: "Registro MX",
+        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Foxmiu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+      },
+      bimi: {
+        title: "Registro BIMI",
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+      },
+      vmc: {
+        title: "Certificado VMC",
+        description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+      },
     }
 
     const renderSpfContent = () => {
@@ -935,13 +989,69 @@ function DnsInfoModal({
         );
     }
 
+    const renderMxContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+          <span>@</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Prioridad:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('0')}><Copy className="size-4"/></Button></p>
+          <span>0</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor/Destino:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">foxmiu.email</span><Button size="icon" variant="ghost" onClick={() => onCopy('foxmiu.email')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+    const renderBimiContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>default._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg</span><Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+
+    const renderVmcContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>default._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="break-all pr-2">v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem</span><Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+
     const contentMap = {
         spf: { title: "Registro SPF", content: renderSpfContent() },
         dkim: { title: "Registro DKIM", content: renderDkimContent() },
         dmarc: { title: "Registro DMARC", content: renderDmarcContent() },
-        mx: { title: "Registro MX", content: <p>Instrucciones para MX...</p> },
-        bimi: { title: "Registro BIMI", content: <p>Instrucciones para BIMI...</p> },
-        vmc: { title: "Certificado VMC", content: <p>Instrucciones para VMC...</p> },
+        mx: { title: "Registro MX", content: renderMxContent() },
+        bimi: { title: "Registro BIMI", content: renderBimiContent() },
+        vmc: { title: "Certificado VMC", content: renderVmcContent() },
     };
 
     const { title, content } = contentMap[recordType];
