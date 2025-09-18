@@ -77,17 +77,6 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <div className="w-screen h-screen flex bg-background">
-         <div className="w-1/2 h-full relative overflow-hidden">
-            <Image
-                src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
-                alt="AI generated marketing posts collage"
-                fill
-                className="object-cover"
-                sizes="50vw"
-                priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        </div>
         <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden">
             <div className="absolute top-8 left-8 z-20">
                 <Logo />
@@ -161,6 +150,17 @@ export default function ForgotPasswordPage() {
                 </div>
                 </Card>
             </div>
+        </div>
+        <div className="w-1/2 h-full relative overflow-hidden">
+            <Image
+                src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
+                alt="AI generated marketing posts collage"
+                fill
+                className="object-cover"
+                sizes="50vw"
+                priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>
     </>
