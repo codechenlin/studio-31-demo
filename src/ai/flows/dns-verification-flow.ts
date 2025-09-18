@@ -33,7 +33,8 @@ export async function verifyDnsHealth(
     return await dnsHealthCheckFlow(input);
   } catch (error) {
     console.error("Flow execution failed:", error);
-    return null;
+    // Propagate the original error message
+    throw error;
   }
 }
 
@@ -70,22 +71,22 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `You are an expert in DNS and email deliverability. Analyze the following DNS records for the domain {{domain}}.
+        prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español. Analiza los siguientes registros DNS para el dominio {{domain}}.
 
-        Expected Ideal Setup:
-        - SPF Record: Must be a TXT record containing "include:_spf.foxmiu.email".
-        - DKIM Record: Must be a TXT record at "foxmiu._domainkey.{{domain}}" with the value being exactly "{{dkimPublicKey}}".
-        - DMARC Record: Must be a TXT record at "_dmarc.{{domain}}" containing the tag "p=reject". A policy of "quarantine" or "none" is not secure enough and should be marked as unverified.
+        Configuración Ideal Esperada:
+        - Registro SPF: Debe ser un registro TXT que contenga "include:_spf.foxmiu.email".
+        - Registro DKIM: Debe ser un registro TXT en "foxmiu._domainkey.{{domain}}" con el valor exacto de "{{dkimPublicKey}}".
+        - Registro DMARC: Debe ser un registro TXT en "_dmarc.{{domain}}" que contenga la etiqueta "p=reject". Una política de "quarantine" o "none" no es suficientemente segura y debe marcarse como no verificada.
 
-        DNS Records Found:
-        - Records found at {{domain}} (for SPF): {{{spfRecords}}}
-        - Records found at foxmiu._domainkey.{{domain}} (for DKIM): {{{dkimRecords}}}
-        - Records found at _dmarc.{{domain}} (for DMARC): {{{dmarcRecords}}}
+        Registros DNS Encontrados:
+        - Registros encontrados en {{domain}} (para SPF): {{{spfRecords}}}
+        - Registros encontrados en foxmiu._domainkey.{{domain}} (para DKIM): {{{dkimRecords}}}
+        - Registros encontrados en _dmarc.{{domain}} (para DMARC): {{{dmarcRecords}}}
 
-        Your Task:
-        1. Compare the found records with the ideal setup.
-        2. Determine the status for each record (verified, unverified, not-found). A record is "unverified" if it exists but does not meet the ideal setup (e.g., DMARC has p=quarantine).
-        3. Provide a brief and clear analysis in 'analysis'. If everything is correct, congratulate the user. If something is wrong, explain the specific problem and how to fix it simply.
+        Tu Tarea (en español):
+        1. Compara los registros encontrados con la configuración ideal.
+        2. Determina el estado de cada registro (verified, unverified, not-found). Un registro es "unverified" si existe pero no cumple con la configuración ideal (ej., DMARC tiene p=quarantine).
+        3. Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
         `
     });
 
@@ -98,7 +99,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
     });
 
     if (!output) {
-      throw new Error("AI failed to generate an analysis.");
+      throw new Error("La IA no pudo generar un análisis.");
     }
     
     return output;

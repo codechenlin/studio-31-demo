@@ -60,7 +60,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       handleGenerateDkim();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain, dkimData]);
+  }, [domain]);
 
 
   const smtpFormSchema = z.object({
@@ -140,19 +140,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setDnsAnalysis(null);
     setShowNotification(false);
 
-    const result = await verifyDnsAction({
-      domain,
-      dkimPublicKey: dkimData.publicKeyRecord,
-    });
-    
-    setHealthCheckStatus(result.success ? 'verified' : 'failed');
-    if (result.success && result.data) {
-      setDnsAnalysis(result.data);
-      setShowNotification(true);
-    } else {
-        toast({
-            title: "Análisis Fallido",
-            description: result.error || "La IA no pudo procesar los registros. Revisa tu clave de API de Gemini y la configuración de red.",
+    try {
+      const result = await verifyDnsAction({
+        domain,
+        dkimPublicKey: dkimData.publicKeyRecord,
+      });
+      
+      setHealthCheckStatus(result.success ? 'verified' : 'failed');
+      if (result.success && result.data) {
+        setDnsAnalysis(result.data);
+        setShowNotification(true);
+      } else {
+          toast({
+              title: "Análisis Fallido",
+              description: result.error || "La IA no pudo procesar los registros. Revisa tu clave de API de Gemini y la configuración de red.",
+              variant: "destructive",
+          })
+      }
+    } catch (error: any) {
+       setHealthCheckStatus('failed');
+       toast({
+            title: "Error en el Análisis",
+            description: error.message || "Ocurrió un error inesperado al contactar el servicio de IA.",
             variant: "destructive",
         })
     }
@@ -978,7 +987,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
-                        className="text-white bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00CE07]"
+                        className="text-white bg-[#00CB07] hover:bg-[#009A05]"
                     >
                         Entendido
                     </Button>
