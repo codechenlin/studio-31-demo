@@ -5,6 +5,11 @@ import {
   verifyDnsHealth,
   type DnsHealthInput,
 } from '@/ai/flows/dns-verification-flow';
+import {
+  verifyOptionalDnsHealth,
+  type OptionalDnsHealthInput,
+} from '@/ai/flows/optional-dns-verification-flow';
+
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 
@@ -26,6 +31,24 @@ export async function verifyDnsAction(input: DnsHealthInput) {
     return { success: false, error: errorMessage };
   }
 }
+
+const optionalDnsActionSchema = z.object({
+  domain: z.string().describe('El nombre de dominio a verificar.'),
+});
+
+export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
+  try {
+    const validatedInput = optionalDnsActionSchema.parse(input);
+    const result = await verifyOptionalDnsHealth(validatedInput);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Optional DNS verification action error:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred.';
+    return { success: false, error: errorMessage };
+  }
+}
+
 
 const verifyDomainOwnershipSchema = z.object({
   domain: z.string(),
@@ -49,7 +72,9 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     const flatRecords = records.map(r => r.join(''));
 
     let isVerified = false;
-    if (recordType === 'BIMI' || recordType === 'VMC') {
+    if (recordType === 'VMC') {
+        isVerified = flatRecords.some(r => r.includes("v=BIMI1;") && r.includes("a="));
+    } else if (recordType === 'BIMI') {
         isVerified = flatRecords.some(r => r.includes("v=BIMI1;"));
     } else {
         isVerified = flatRecords.some(r => r.includes(expectedValue));
@@ -68,9 +93,3 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
   }
 }
-
-
-
-
-
-    

@@ -14,12 +14,13 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
+import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -43,7 +44,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | OptionalDnsHealthOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
@@ -176,7 +177,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   }
 
-  const handleCheckOptionalHealth = async () => {
+  const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
     const checkRecord = async (
         name: string,
         recordType: 'MX' | 'BIMI' | 'VMC',
@@ -187,11 +188,30 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         const result = await verifyDomainOwnershipAction({ domain, name, recordType, expectedValue });
         await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
         setOptionalRecordStatus(prev => ({...prev, [stateKey]: result.success ? 'verified' : 'failed'}));
+        return result.success;
     };
 
-    checkRecord('@', 'MX', 'foxmiu.email', 'mx');
-    checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi');
-    checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc');
+    setHealthCheckStatus('verifying');
+    await Promise.all([
+      checkRecord('@', 'MX', 'foxmiu.email', 'mx'),
+      checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi'),
+      checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc')
+    ]);
+    setHealthCheckStatus('verified');
+
+    if (runAiAnalysis) {
+      const result = await verifyOptionalDnsAction({ domain });
+       if (result.success && result.data) {
+        setDnsAnalysis(result.data);
+        setShowNotification(true);
+      } else {
+          toast({
+              title: "Análisis Fallido",
+              description: result.error || "La IA no pudo procesar los registros opcionales.",
+              variant: "destructive",
+          })
+      }
+    }
   }
 
   const handleGenerateDkim = async () => {
@@ -480,9 +500,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', dnsAnalysis?.spfStatus || 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
+                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
                           </>
                           ) : (
                           <>
@@ -500,7 +520,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
+                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -524,7 +544,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                      {showNotification && (
                                         <div 
                                             className="absolute -top-2 -right-2 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                            style={{ backgroundColor: (dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified') ? '#00CB07' : '#F00000' }}
+                                            style={{ backgroundColor: (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified' ? '#00CB07' : '#F00000' }}
                                         >
                                             1
                                         </div>
@@ -549,7 +569,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allMandatoryRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
+    const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -722,7 +742,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
-                                    onClick={handleCheckOptionalHealth} disabled={Object.values(optionalRecordStatus).some(s => s === 'verifying')}
+                                    onClick={() => handleCheckOptionalHealth(true)} disabled={Object.values(optionalRecordStatus).some(s => s === 'verifying')}
                                 >
                                 {Object.values(optionalRecordStatus).some(s => s === 'verifying') ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
@@ -736,9 +756,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
                          {healthCheckStep === 'optional' && (
                             <>
-                                <Button variant="outline" className="w-full" onClick={() => setHealthCheckStep('mandatory')}>
-                                    Volver a Obligatorios
-                                </Button>
                                 <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
                                     Siguiente <ArrowRight className="ml-2"/>
                                 </Button>
@@ -786,10 +803,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else if (currentStep === 3) {
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (healthCheckStatus === 'verified') {
-          const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
+          const {spfStatus, dkimStatus, dmarcStatus} = (dnsAnalysis as DnsHealthOutput) || {};
           const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
-          status = hasError ? 'error' : 'success';
-          text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
+          if (healthCheckStep === 'mandatory') {
+            status = hasError ? 'error' : 'success';
+            text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
+          } else {
+             status = 'success';
+             text = 'ANÁLISIS OPCIONAL COMPLETO'
+          }
         }
        else if (healthCheckStatus === 'failed') {
             status = 'error'; text = 'FALLO EN EL ANÁLISIS';
@@ -1139,4 +1161,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
-    
