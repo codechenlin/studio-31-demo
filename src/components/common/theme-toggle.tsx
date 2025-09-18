@@ -39,18 +39,15 @@ export function ThemeToggle() {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      className="group/button rounded-full size-10 bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-primary to-accent/80 dark:hover:bg-gradient-to-r dark:from-primary dark:to-accent/80"
-    >
-      {isDarkMode ? (
-        <Sun className="size-5 text-white" />
-      ) : (
-        <Moon className="size-5 text-black group-hover/button:text-white" />
-      )}
-      <span className="sr-only">Cambiar tema</span>
-    </Button>
+    <button onClick={toggleTheme} className="futuristic-auth-button group/button">
+        <div className="grid-glow"></div>
+        <div className="scan-line"></div>
+        {isDarkMode ? (
+            <Sun className="size-5 text-white transition-all group-hover/button:text-yellow-300 group-hover/button:drop-shadow-[0_0_5px_#facc15]"/>
+        ) : (
+            <Moon className="size-5 text-white transition-all group-hover/button:text-purple-300 group-hover/button:drop-shadow-[0_0_5px_#c084fc]"/>
+        )}
+        <span className="sr-only">Cambiar tema</span>
+    </button>
   );
 }

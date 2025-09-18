@@ -197,7 +197,7 @@ body {
 
     .ai-core-button {
       background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
-      border: 1px solid transparent;
+      border: 1px solid #00ADEC;
       backdrop-filter: blur(4px);
       transition: background-color 0.3s, border-color 0.3s;
     }
@@ -211,6 +211,11 @@ body {
        animation-play-state: running;
     }
 
+    .ai-core-button:hover .ai-core-border-animation {
+      animation-play-state: paused;
+      opacity: 0;
+    }
+
     .ai-core {
         position: absolute;
         top: 50%;
@@ -221,6 +226,7 @@ body {
         border-radius: 50%;
         z-index: 0;
         animation: ai-core-pulse 4s infinite ease-in-out;
+        transition: transform 0.3s ease-in-out;
     }
     
     @keyframes rotating-border {
@@ -248,6 +254,7 @@ body {
       z-index: -1;
       border-radius: inherit;
       filter: blur(3px);
+      transition: opacity 0.3s ease-in-out;
     }
     
     @keyframes thinking-pulse {
@@ -346,6 +353,36 @@ body {
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
     }
+
+    .futuristic-auth-button {
+      @apply relative size-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300;
+      @apply bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm;
+      border: 1px solid;
+      border-image: linear-gradient(to bottom right, hsl(var(--primary)/0.4), hsl(var(--accent)/0.4)) 1;
+    }
+    .futuristic-auth-button:hover {
+      border-image: linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent))) 1;
+      box-shadow: 0 0 15px hsl(var(--primary)/0.5);
+    }
+    .futuristic-auth-button .grid-glow {
+      @apply absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300;
+      @apply bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)] dark:bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)];
+      @apply bg-[length:16px_16px];
+      mask-image: radial-gradient(ellipse at center, white 20%, transparent 80%);
+      animation: pulse-glow 3s infinite ease-in-out;
+    }
+    .futuristic-auth-button .scan-line {
+      @apply absolute top-0 left-0 w-[10px] h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100;
+      animation: scan-horizontal 2.5s infinite ease-in-out;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+    @keyframes scan-horizontal {
+      0% { transform: translateX(-10px); }
+      100% { transform: translateX(40px); }
+    }
 }
 
-
+    
