@@ -40,13 +40,15 @@ export function ThemeToggle() {
 
   return (
     <button onClick={toggleTheme} className="futuristic-auth-button group/button">
-        <div className="grid-glow"></div>
-        <div className="scan-line"></div>
-        {isDarkMode ? (
-            <Sun className="size-5 text-white transition-all group-hover/button:text-yellow-300 group-hover/button:drop-shadow-[0_0_5px_#facc15]"/>
-        ) : (
-            <Moon className="size-5 text-white transition-all group-hover/button:text-purple-300 group-hover/button:drop-shadow-[0_0_5px_#c084fc]"/>
-        )}
+        <div>
+            <div className="grid-glow"></div>
+            <div className="scan-line"></div>
+            {isDarkMode ? (
+                <Sun className="size-5 text-white transition-all group-hover/button:text-yellow-300 group-hover/button:drop-shadow-[0_0_5px_#facc15]"/>
+            ) : (
+                <Moon className="size-5 text-white transition-all group-hover/button:text-purple-300 group-hover/button:drop-shadow-[0_0_5px_#c084fc]"/>
+            )}
+        </div>
         <span className="sr-only">Cambiar tema</span>
     </button>
   );
