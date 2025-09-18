@@ -50,7 +50,7 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
 
     let isVerified = false;
     if (recordType === 'BIMI' || recordType === 'VMC') {
-        isVerified = flatRecords.some(r => r.includes(expectedValue));
+        isVerified = flatRecords.some(r => r.includes("v=BIMI1;"));
     } else {
         isVerified = flatRecords.some(r => r.includes(expectedValue));
     }
@@ -68,4 +68,5 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
   }
 }
+
 
