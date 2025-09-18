@@ -46,6 +46,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
 
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
@@ -210,6 +211,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setIsCancelConfirmOpen(false);
         setDkimData(null);
         setShowNotification(false);
+        setHealthCheckStep('mandatory');
     }, 300);
   }
   
@@ -448,10 +450,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
                       <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
                       <div className="space-y-3 mt-4 flex-grow">
-                          <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                          {renderRecordStatus('SPF', dnsAnalysis?.spfStatus || 'idle', 'spf')}
-                          {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
-                          {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
+                          {healthCheckStep === 'mandatory' ? (
+                          <>
+                            <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
+                            {renderRecordStatus('SPF', dnsAnalysis?.spfStatus || 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
+                          </>
+                          ) : (
+                          <>
+                             <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
+                             {renderRecordStatus('MX', 'idle', 'mx')}
+                             {renderRecordStatus('BIMI', 'idle', 'bimi')}
+                             {renderRecordStatus('VMC', 'idle', 'vmc')}
+                          </>
+                          )}
                           
                           <div className="pt-2 text-xs text-muted-foreground">
                             <h5 className="font-bold text-sm mb-1">🔗 Cómo trabajan juntos</h5>
@@ -462,32 +475,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                            
                            {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4 flex justify-center">
-                                <button
-                                    className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
-                                    onClick={() => {
-                                        setIsAnalysisModalOpen(true);
-                                        setShowNotification(false);
-                                    }}
-                                >
-                                    {showNotification && (
+                                <div className="relative">
+                                    <button
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
+                                        onClick={() => {
+                                            setIsAnalysisModalOpen(true);
+                                            setShowNotification(false);
+                                        }}
+                                    >
+                                        <div className="ai-core-border-animation group-hover:hidden"></div>
+                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                            <div className="flex gap-1 items-end h-4">
+                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                            </div>
+                                            <span className="text-sm font-semibold">Análisis de la IA</span>
+                                        </div>
+                                    </button>
+                                     {showNotification && (
                                         <div 
-                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            className="absolute -top-2 -right-2 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                             style={{ backgroundColor: (dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified') ? '#00CB07' : '#F00000' }}
                                         >
                                             1
                                         </div>
                                     )}
-                                    <div className="ai-core-border-animation group-hover:hidden"></div>
-                                    <div className="ai-core group-hover:scale-125"></div>
-                                    <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                        <div className="flex gap-1 items-end h-4">
-                                            <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
-                                            <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
-                                            <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
-                                        </div>
-                                        <span className="text-sm font-semibold">Análisis de la IA</span>
-                                    </div>
-                                </button>
+                                </div>
                                </div>
                            )}
 
@@ -507,7 +522,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allMandatoryHealthChecksDone = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
+    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
+    const allRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -660,7 +676,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </Button>
                     )}
                     {currentStep === 3 && (
-                        <>
+                        <div className="flex flex-col gap-2">
                             <Button 
                                 className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
                                 onClick={handleCheckHealth} disabled={healthCheckStatus === 'verifying'}
@@ -669,11 +685,23 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </Button>
                          
                          {allMandatoryHealthChecksDone && (
-                            <Button className="w-full bg-[#9400D3] hover:bg-[#7A00B3] text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
-                                Ir a Configuración SMTP <ArrowRight className="ml-2"/>
-                            </Button>
+                             <>
+                                {healthCheckStep === 'mandatory' ? (
+                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
+                                    Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
+                                </Button>
+                                ) : (
+                                <Button variant="outline" className="w-full" onClick={() => setHealthCheckStep('mandatory')}>
+                                    Volver a Obligatorios
+                                </Button>
+                                )}
+                             
+                                <Button className="w-full bg-[#9400D3] hover:bg-[#7A00B3] text-white" onClick={() => setCurrentStep(4)}>
+                                    Ir a Configuración SMTP <ArrowRight className="ml-2"/>
+                                </Button>
+                             </>
                          )}
-                        </>
+                        </div>
                     )}
                     {currentStep === 4 && (
                          <>
@@ -987,7 +1015,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
-                        className="text-white bg-[#00CB07] hover:bg-[#009A05]"
+                        className="text-white bg-green-800 hover:bg-[#00CB07] hover:text-white"
                     >
                         Entendido
                     </Button>
