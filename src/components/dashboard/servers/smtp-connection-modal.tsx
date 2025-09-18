@@ -189,7 +189,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setOptionalRecordStatus(prev => ({...prev, [stateKey]: result.success ? 'verified' : 'failed'}));
     };
 
-    checkRecord(domain, 'MX', 'foxmiu.email', 'mx');
+    checkRecord('@', 'MX', 'foxmiu.email', 'mx');
     checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi');
     checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc');
   }
@@ -504,7 +504,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
-                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
                                         onClick={() => {
                                             setIsAnalysisModalOpen(true);
                                             setShowNotification(false);
@@ -911,7 +911,7 @@ function DnsInfoModal({
         const recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (GoDaddy, Cloudflare, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
@@ -926,6 +926,11 @@ function DnsInfoModal({
                      <span className="truncate">{recordValue}</span>
                      <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                    </div>
+                </div>
+                 <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                    <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
                 </div>
             </div>
         );
@@ -1117,7 +1122,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                     </DialogTitle>
                 </DialogHeader>
                  <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
-                     <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar">
+                     <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar break-words">
                         {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
                     </div>
                 </ScrollArea>
@@ -1133,3 +1138,5 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
+    
