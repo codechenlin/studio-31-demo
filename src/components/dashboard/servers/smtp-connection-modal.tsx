@@ -315,7 +315,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         );
                     })}
                   </ul>
-                   <div className="relative w-full h-px my-6 bg-border/20 overflow-hidden">
+                   <div className="relative w-full h-[2px] my-6 bg-border/20 overflow-hidden">
                      <div className="tech-scanner w-[50px] bg-gradient-to-r from-transparent via-primary to-transparent" />
                   </div>
 
@@ -448,30 +448,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                            
                            {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4">
-                                <style>{`
-                                    @keyframes button-scan {
-                                        0% { background-position: -200% 0; }
-                                        100% { background-position: 200% 0; }
-                                    }
-                                    @keyframes thinking-dots {
-                                        0%, 100% { transform: translateY(0); }
-                                        25% { transform: translateY(-3px); }
-                                        50% { transform: translateY(0); }
-                                        75% { transform: translateY(3px); }
-                                    }
-                                `}</style>
                                 <Button
                                     variant="outline"
                                     className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
-                                    <div className="absolute inset-0 ai-button-scan bg-gradient-to-r from-primary to-accent" />
                                     <div className="relative flex items-center justify-center gap-4 text-white">
                                         Análisis de la IA
-                                        <div className="flex gap-1.5 items-center">
-                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
-                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
-                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
+                                        <div className="flex gap-1.5 items-end h-6">
+                                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
                                         </div>
                                     </div>
                                 </Button>
@@ -672,7 +659,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
                          </>
                     )}
-                     <Button variant="outline" className="w-full h-12 text-base bg-transparent hover:bg-white/10 hover:text-white" onClick={() => setIsCancelConfirmOpen(true)}>
+                     <Button 
+                        variant="outline"
+                        className="w-full h-12 text-base border-[#F00000] bg-transparent text-white dark:text-white hover:bg-[#F00000] hover:text-white dark:hover:text-white dark:text-foreground"
+                        onClick={() => setIsCancelConfirmOpen(true)}
+                     >
                         Cancelar
                     </Button>
                 </div>
@@ -907,22 +898,6 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
-                <style>{`
-                    @keyframes icon-pulse {
-                        0%, 100% { transform: scale(1); box-shadow: 0 0 15px 0px hsla(var(--primary), 0.5); }
-                        50% { transform: scale(1.05); box-shadow: 0 0 30px 10px hsla(var(--primary), 0.5); }
-                    }
-                    .icon-pulse-animation {
-                        animation: icon-pulse 2.5s infinite ease-in-out;
-                    }
-                    @keyframes sound-wave {
-                        0% { transform: scaleY(0.4); }
-                        25% { transform: scaleY(1); }
-                        50% { transform: scaleY(0.2); }
-                        75% { transform: scaleY(0.7); }
-                        100% { transform: scaleY(0.4); }
-                    }
-                `}</style>
                 <div className="absolute inset-0 z-0 opacity-10">
                     <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
                 </div>
@@ -963,6 +938,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
 
 
 
