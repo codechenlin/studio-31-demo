@@ -266,14 +266,12 @@ body {
     }
 
     .futuristic-auth-button {
-      @apply relative size-10 rounded-full flex items-center justify-center cursor-pointer p-0.5;
-      @apply bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm;
-      background-clip: content-box;
+      @apply relative size-10 rounded-full flex items-center justify-center cursor-pointer p-0 bg-transparent;
       transition: all 0.3s ease;
     }
     .futuristic-auth-button::before {
       content: '';
-      @apply absolute inset-0 rounded-full -m-0.5;
+      @apply absolute inset-0 rounded-full -z-10;
       background: conic-gradient(from var(--angle), hsl(var(--primary)/0.4), hsl(var(--accent)/0.4), hsl(var(--primary)/0.4));
       animation: rotating-border 4s linear infinite;
       transition: all 0.3s ease;
@@ -285,7 +283,7 @@ body {
     }
     
     .futuristic-auth-button > div { /* This targets the inner container for the icon */
-        @apply w-full h-full rounded-full bg-card/60 dark:bg-zinc-800/60 flex items-center justify-center;
+        @apply w-full h-full rounded-full bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm flex items-center justify-center;
     }
     
     .futuristic-auth-button .grid-glow {
