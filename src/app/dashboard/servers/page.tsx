@@ -108,11 +108,14 @@ export default function ServersPage() {
           will-change: transform, opacity;
         }
          @keyframes scanner {
-          0%, 100% {
-            transform: translateX(-100%) skewX(-15deg);
+          0% {
+            transform: translateX(-150%) skewX(-15deg);
           }
           50% {
-            transform: translateX(100%) skewX(-15deg);
+            transform: translateX(150%) skewX(-15deg);
+          }
+          100% {
+            transform: translateX(-150%) skewX(-15deg);
           }
         }
       `}</style>
@@ -171,7 +174,7 @@ export default function ServersPage() {
                     onClick={() => handleConnectClick(provider.id)}
                     className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity"
                   >
-                    <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover/btn:opacity-100 group-hover/btn:animate-[scanner_5s_ease-in-out_infinite]" />
+                    <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-80 animate-[scanner_3s_ease-in-out_infinite]" />
                     <span className="relative flex items-center gap-2">
                       Conectar Ahora <ChevronRight className="size-4" />
                     </span>
@@ -185,4 +188,3 @@ export default function ServersPage() {
     </>
   );
 }
-

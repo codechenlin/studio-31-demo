@@ -448,7 +448,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           </div>
                            
                            {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
-                               <div className="pt-4">
+                               <div className="pt-4 flex justify-center">
                                 <button
                                     className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
                                     onClick={() => setIsAnalysisModalOpen(true)}
@@ -456,12 +456,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <div className="ai-core-border-animation group-hover:hidden"></div>
                                     <div className="ai-core group-hover:scale-125"></div>
                                     <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                        <span className="text-sm font-semibold">Análisis de la IA</span>
                                         <div className="flex gap-1 items-end h-4">
                                             <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
                                             <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
                                             <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
                                         </div>
+                                        <span className="text-sm font-semibold">Análisis de la IA</span>
                                     </div>
                                 </button>
                                </div>
@@ -638,7 +638,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     {currentStep === 3 && (
                         <>
                             <Button 
-                                className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
+                                className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
                                 onClick={handleCheckHealth} disabled={healthCheckStatus === 'verifying'}
                             >
                             {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros</>}
@@ -948,10 +948,10 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                         </div>
                         Diagnóstico Detallado de la IA
                         <div className="flex items-end gap-0.5 h-6">
-                            <span className="w-1 h-2/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
-                            <span className="w-1 h-full bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
-                            <span className="w-1 h-3/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
-                             <span className="w-1 h-4/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                             <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
                         </div>
                     </DialogTitle>
                 </DialogHeader>
@@ -963,7 +963,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
-                        className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00CE07] text-white"
+                        className="text-white bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00CE07]"
                     >
                         Entendido
                     </Button>
