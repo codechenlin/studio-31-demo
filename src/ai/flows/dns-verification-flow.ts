@@ -72,23 +72,24 @@ const dnsHealthCheckFlow = ai.defineFlow(
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
         prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español.
-        Tu única tarea es analizar los registros SPF, DKIM y DMARC para el dominio {{domain}}. Ignora por completo cualquier otro registro TXT que no sea para SPF, DKIM o DMARC (ej. verificaciones de Google, Yandex, Bing, etc.).
-        Todos los registros deben ser de tipo TXT.
+        Tu única tarea es analizar los registros SPF, DKIM y DMARC para el dominio {{domain}}. 
+        
+        Regla de Oro para SPF: Un registro TXT solo se considera un registro SPF si y solo si comienza con "v=spf1". CUALQUIER OTRO REGISTRO TXT DEBE SER IGNORADO POR COMPLETO para el análisis de SPF.
 
         Configuración Ideal Esperada para los Registros Obligatorios:
-        - Registro SPF:
+        1.  Registro SPF:
             - Host/Nombre: @
-            - Debe existir solo UN registro SPF. Si hay más de uno, es un error grave.
+            - DEBE existir solo UN registro TXT que comience con "v=spf1". Si hay más de uno, es un error grave.
             - El Valor del Registro debe comenzar con "v=spf1", contener "include:_spf.daybuu.com", y terminar con un mecanismo como "-all".
-            - Puedes encontrar otros mecanismos como 'include:', 'ip4:', 'a:', 'mx:'. Esto es correcto y se llama unificar. No lo marques como error. Simplemente verifica que nuestro 'include' esté presente.
+            - El registro puede contener otros mecanismos como 'include:spf.otro.com', 'ip4:', 'a:', 'mx:'. Esto es correcto y se llama unificar. No lo marques como error. Simplemente verifica que nuestro 'include' esté presente.
             - Ejemplo de registro unificado válido: 'v=spf1 include:spf.otro.com include:_spf.daybuu.com -all'
 
-        - Registro DKIM:
+        2.  Registro DKIM:
             - Host/Nombre: daybuu._domainkey.{{domain}}
             - Pueden existir múltiples registros DKIM con diferentes selectores; tu trabajo es verificar únicamente el que corresponde a "daybuu".
             - Valor del Registro debe ser exactamente: "{{dkimPublicKey}}". Verifica que contenga "v=DKIM1;", "k=rsa;", y que la clave pública en "p=" coincida.
 
-        - Registro DMARC:
+        3.  Registro DMARC:
             - Host/Nombre: _dmarc.{{domain}}
             - Debe existir solo UN registro DMARC.
             - Valor del Registro debe contener: "v=DMARC1;", "p=reject;", "pct=100;", "sp=reject;".
@@ -96,15 +97,16 @@ const dnsHealthCheckFlow = ai.defineFlow(
             - La etiqueta 'adkim' debe ser 's' o 'r'.
 
         Registros DNS Encontrados:
-        - Registros encontrados en {{domain}} (para SPF): {{{spfRecords}}}
-        - Registros encontrados en daybuu._domainkey.{{domain}} (para DKIM): {{{dkimRecords}}}
-        - Registros encontrados en _dmarc.{{domain}} (para DMARC): {{{dmarcRecords}}}
+        - Registros TXT encontrados en {{domain}}: {{{spfRecords}}}
+        - Registros TXT encontrados en daybuu._domainkey.{{domain}}: {{{dkimRecords}}}
+        - Registros TXT encontrados en _dmarc.{{domain}}: {{{dmarcRecords}}}
 
         Tu Tarea (en español):
-        1. Compara rigurosamente los registros encontrados con la configuración ideal. Un registro es "unverified" si existe pero no cumple con CUALQUIERA de las reglas (sintaxis, valores requeridos, unicidad, etc.).
-        2. Determina el estado de cada registro (verified, unverified, not-found).
-        3. Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
-        4. Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio, así: "v=DKIM1; k=rsa; p=MIIBIjA...".
+        1.  Para SPF: Primero, filtra la lista de registros en {{domain}} y quédate solo con los que empiezan con "v=spf1". Ignora todos los demás. Luego, aplica las reglas de verificación a los que quedaron.
+        2.  Compara rigurosamente los registros encontrados (SPF, DKIM, DMARC) con la configuración ideal. Un registro es "unverified" si existe pero no cumple con CUALQUIERA de las reglas (sintaxis, valores requeridos, unicidad, etc.).
+        3.  Determina el estado de cada registro (verified, unverified, not-found).
+        4.  Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
+        5.  Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio, así: "v=DKIM1; k=rsa; p=MIIBIjA...".
         `
     });
 
