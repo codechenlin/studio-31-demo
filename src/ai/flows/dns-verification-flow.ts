@@ -80,16 +80,23 @@ const dnsHealthCheckFlow = ai.defineFlow(
 
         Sigue estas reglas estrictamente:
 
-        1. SPF:
-        - Identificación: Busca registros TXT en {{domain}} que empiecen EXACTAMENTE con "v=spf1". Si ninguno lo hace, el estado es "not-found".
-        - Unicidad: SOLO puede existir UN registro SPF. Si encuentras más de uno que empiece con "v=spf1", es un error grave y el estado es "unverified".
-        - Verificación de Contenido:
-            - El Host/Nombre debe ser @.
-            - Debe contener la cadena "include:_spf.daybuu.com".
-            - Debe terminar EXACTAMENTE con "-all".
-            - Puede contener otros mecanismos como 'a:', 'mx:', 'ip4:', 'ip6:', 'include:'. Esto es correcto y no es un error.
-            - El número total de mecanismos (include, a, mx, etc.) no debe exceder los 8.
-        - Estado: Si cumple todas las reglas, es "verified". Si existe pero falla en CUALQUIER regla (sintaxis, contenido, unicidad, etc.), es "unverified".
+        1.  Verificación de SPF:
+            *   Paso 1: Identificación.
+                *   Busca registros TXT en {{domain}} que empiecen EXACTAMENTE con "v=spf1". Si ninguno lo hace, el estado es "not-found".
+            *   Paso 2: Unicidad.
+                *   SOLO puede existir UN registro SPF. Si encuentras más de uno que empiece con "v=spf1", es un error grave y el estado es "unverified". En tu análisis, explica que deben unificarse.
+            *   Paso 3: Verificación de Contenido y Estructura.
+                *   Host/Nombre: Debe ser @.
+                *   Contenido Requerido: Debe contener la cadena "include:_spf.daybuu.com".
+                *   Final Requerido: Debe terminar EXACTAMENTE con "-all". Un final con ~all o ?all es sintácticamente válido pero no ideal; debes marcarlo como advertencia que requiere mejora, pero no un fallo total si todo lo demás es correcto.
+                *   Sintaxis General: Analiza que la estructura sea lógica. Puede contener otros mecanismos como 'a:', 'mx:', 'ip4:', 'ip6:', y otros 'include:'. Esto es correcto.
+            *   Paso 4: Verificación del Límite de Búsquedas DNS (Regla Crucial).
+                *   Cuenta el número total de mecanismos que implican una búsqueda DNS: 'include', 'a', 'mx', 'exists', y 'redirect'.
+                *   El número total de estos mecanismos NO DEBE EXCEDER 10.
+                *   Si el recuento total supera 10, el registro es inválido y el estado es "unverified". Explica en tu análisis: "El registro SPF es inválido porque supera el límite de 10 búsquedas DNS. Esto suele ocurrir al incluir servicios complejos. El usuario debe simplificar sus mecanismos para cumplir el límite."
+            *   Paso 5: Estado Final.
+                *   'verified': Si cumple TODAS las reglas (unicidad, contenido, final y límite de 10 búsquedas).
+                *   'unverified': Si falla en CUALQUIER regla.
 
         2. DKIM:
         - Identificación: Busca registros TXT en daybuu._domainkey.{{domain}}.
