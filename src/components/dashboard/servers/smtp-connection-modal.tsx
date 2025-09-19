@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -1007,10 +1007,10 @@ function DnsInfoModal({
     );
     
     const renderDmarcContent = () => {
-         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
+         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes-rua@${domain}; ruf=mailto:reportes-ruf@${domain}; sp=reject; aspf=s; adkim=s`;
          return (
              <div className="grid md:grid-cols-2 gap-6 text-sm">
-                <div>
+                <div className="space-y-4">
                   <h4 className="font-semibold text-base mb-2">Instrucciones</h4>
                   <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
                   <div className="space-y-3">
@@ -1030,14 +1030,26 @@ function DnsInfoModal({
                         </div>
                     </div>
                   </div>
+                  <div className="mt-4 p-3 bg-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3">
+                      <MailQuestion className="size-10 shrink-0 text-cyan-400 mt-1" />
+                      <div>
+                          <h5 className="font-bold text-cyan-300 mb-1">¡Importante! Crear Correos para Reportes</h5>
+                          <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC.</p>
+                          <ul className="list-disc pl-4 mt-2 font-mono">
+                              <li>`rua=mailto:<strong className="text-white">reportes-rua@{domain}</strong>`</li>
+                              <li>`ruf=mailto:<strong className="text-white">reportes-ruf@{domain}</strong>`</li>
+                          </ul>
+                          <p className="mt-2">Puedes personalizar estos correos, pero asegúrate de que existan y estén configurados en tu registro DNS.</p>
+                      </div>
+                  </div>
                 </div>
                 <div className="text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-2">
                     <h4 className="font-bold text-base text-white/90 mb-2">Explicación de cada parte:</h4>
                     <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
                     <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
                     <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
-                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados.</p>
-                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses.</p>
+                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (resúmenes XML).</p>
+                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (copias de correos fallidos).</p>
                     <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
                     <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (dominio coincide).</p>
                     <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (dominio coincide).</p>
@@ -1118,7 +1130,7 @@ function DnsInfoModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isDmarc ? "sm:max-w-3xl" : "sm:max-w-xl")}>
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isDmarc ? "sm:max-w-4xl" : "sm:max-w-xl")}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-lg">
                         <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
@@ -1175,7 +1187,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                         </div>
                     </DialogTitle>
                 </DialogHeader>
-                <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-center gap-3">
+                <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
                     <AlertCircle className="size-8 text-amber-400 shrink-0" />
                     <p className="text-xs text-amber-200/90">
                         <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
@@ -1198,3 +1210,4 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
