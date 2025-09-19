@@ -159,7 +159,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
-        setShowNotification(true);
+        const hasError = result.data.spfStatus !== 'verified' || result.data.dkimStatus !== 'verified' || result.data.dmarcStatus !== 'verified';
+        setShowNotification(hasError);
       } else {
           toast({
               title: "Análisis Fallido",
@@ -198,12 +199,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc')
     ]);
     setHealthCheckStatus('verified');
-
+    
+    setShowNotification(false);
     if (runAiAnalysis) {
       const result = await verifyOptionalDnsAction({ domain });
        if (result.success && result.data) {
         setDnsAnalysis(result.data);
-        setShowNotification(true);
+        const hasError = result.data.mxStatus !== 'verified' || result.data.bimiStatus !== 'verified' || result.data.vmcStatus !== 'verified';
+        if (hasError) {
+          setShowNotification(true);
+        }
       } else {
           toast({
               title: "Análisis Fallido",
@@ -543,7 +548,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     </button>
                                      {showNotification && (
                                         <div 
-                                            className="absolute -top-2 -right-2 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                             style={{ backgroundColor: '#F00000' }}
                                         >
                                             1
@@ -900,7 +905,7 @@ function DnsInfoModal({
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
     
-    const infoMap: Record<InfoViewRecord, { title: string, description: string }}> = {
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
       spf: {
         title: "Registro SPF",
         description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
@@ -1159,5 +1164,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
-
-    
