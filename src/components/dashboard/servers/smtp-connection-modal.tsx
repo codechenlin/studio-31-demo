@@ -1009,35 +1009,40 @@ function DnsInfoModal({
     const renderDmarcContent = () => {
          const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
          return (
-            <div className="space-y-4 text-sm">
-                <p>Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
-                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
-                    <span>_dmarc</span>
-                </div>
-                <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Tipo de Registro:</p>
-                    <span>TXT</span>
-                </div>
-                <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Valor del Registro:</p>
-                    <div className="w-full flex justify-between items-start">
-                    <p className="break-all pr-2">{recordValue}</p>
-                    <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+             <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <h4 className="font-semibold text-base mb-2">Instrucciones</h4>
+                  <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
+                  <div className="space-y-3">
+                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
+                        <span>_dmarc</span>
                     </div>
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90">Tipo de Registro:</p>
+                        <span>TXT</span>
+                    </div>
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                        <p className="font-bold text-white/90">Valor del Registro:</p>
+                        <div className="w-full flex justify-between items-start">
+                        <p className="break-all pr-2">{recordValue}</p>
+                        <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                        </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs text-cyan-300/80 p-3 mt-2 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-1">
-                    <p className="font-bold mb-1">Explicación de cada parte:</p>
+                <div className="text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-2">
+                    <h4 className="font-bold text-base text-white/90 mb-2">Explicación de cada parte:</h4>
                     <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
                     <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
                     <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
-                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (estadísticas).</p>
-                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (detalles de fallos).</p>
+                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados.</p>
+                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses.</p>
                     <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
-                    <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (el dominio debe coincidir).</p>
-                    <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (el dominio debe coincidir).</p>
+                    <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (dominio coincide).</p>
+                    <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (dominio coincide).</p>
+                    <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca.</p>
                 </div>
-                <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
             </div>
         );
     }
@@ -1109,10 +1114,11 @@ function DnsInfoModal({
 
     const { title, content } = contentMap[recordType];
     const { title: infoTitle, description: infoDescription } = infoMap[recordType];
+    const isDmarc = recordType === 'dmarc';
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-3xl bg-black/50 backdrop-blur-xl border-primary/20 text-white">
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isDmarc ? "sm:max-w-3xl" : "sm:max-w-xl")}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-lg">
                         <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
@@ -1187,5 +1193,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
-
-    
