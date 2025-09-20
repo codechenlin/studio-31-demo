@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -69,6 +68,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [showSmtpErrorNotification, setShowSmtpErrorNotification] = useState(false);
   
   const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
+  const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -150,6 +150,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
         variant: "destructive",
       });
+      setShowDkimAcceptWarning(true);
       return;
     }
     
@@ -289,7 +290,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       setTestStatus('success');
       toast({
         title: "¡Conexión Exitosa!",
-        description: `Correo de prueba despachado a ${values.testEmail}.`,
+        description: `Correo de prueba despachado a ${values.testEmail}`,
         style: { backgroundColor: '#00CB07', color: 'white' },
         className: 'border-none'
       })
@@ -303,6 +304,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
    const handleCheckDelivery = async () => {
     setDeliveryStatus('checking');
     await new Promise(resolve => setTimeout(resolve, 2500));
+    // Here you would typically have a webhook or polling mechanism
+    // to check if the email was actually delivered. We'll simulate success.
     setDeliveryStatus('delivered');
   };
 
@@ -328,7 +331,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const DomainStatusIndicator = () => {
     if (currentStep < 2) return null;
     
-    const isConfigFinished = currentStep === 4;
+    const isConfigFinished = currentStep === 4 && testStatus === 'success';
 
     return (
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
@@ -419,7 +422,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           <span className='font-semibold'>{name}</span>
           <div className="flex items-center gap-2">
             {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
-            <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+            <div className="relative">
+              <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+              {recordKey === 'dkim' && showDkimAcceptWarning && (
+                <div className="absolute -top-1 -right-1 size-3 rounded-full flex items-center justify-center text-xs font-bold text-white animate-ping bg-red-500"></div>
+              )}
+            </div>
           </div>
       </div>
   );
@@ -610,6 +618,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
+    const isTestSuccessful = testStatus === 'success';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -779,7 +788,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     </button>
                                      {showSmtpErrorNotification && (
                                         <div 
-                                            className="absolute top-0 right-[calc(50%-70px)] size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                             style={{ backgroundColor: '#F00000' }}
                                         >
                                             !
@@ -806,7 +815,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </Button>
                     }
                     {currentStep === 2 && verificationStatus === 'verified' && (
-                      <Button className="w-full mt-2 bg-green-500 hover:bg-[#00CB07] text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
+                      <Button className="w-full mt-2 bg-green-500 hover:bg-[#00CB07] text-white h-12 text-base border-2 border-[#21F700] hover:border-[#21F700]" onClick={() => setCurrentStep(3)}>
                         Continuar <ArrowRight className="ml-2"/>
                       </Button>
                     )}
@@ -846,29 +855,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
                         </div>
                     )}
-                    {currentStep === 4 && (
-                         <>
-                         {(testStatus === 'success' && (deliveryStatus === 'delivered' || form.getValues('encryption') === 'none')) ? (
-                             <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
-                                 Finalizar y Guardar
-                             </Button>
-                         ) : (
-                             <Button 
-                                onClick={form.handleSubmit(onSubmitSmtp)} 
-                                className="w-full h-12 text-base text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
-                                disabled={testStatus === 'testing'}
-                             >
-                                 {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
-                             </Button>
-                         )}
-                         </>
+                    {currentStep === 4 && !isTestSuccessful && (
+                         <Button 
+                            onClick={form.handleSubmit(onSubmitSmtp)} 
+                            className="w-full h-12 text-base text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
+                            disabled={testStatus === 'testing'}
+                         >
+                             {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
+                         </Button>
                     )}
                      <Button 
                         variant="outline"
-                        className="w-full h-12 text-base bg-transparent border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
-                        onClick={() => setIsCancelConfirmOpen(true)}
+                        className={cn(
+                          "w-full h-12 text-base bg-transparent transition-colors",
+                           isTestSuccessful 
+                           ? "border-[#21F700] text-white hover:bg-[#00CB07]"
+                           : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
+                        )}
+                        onClick={isTestSuccessful ? handleClose : () => setIsCancelConfirmOpen(true)}
                      >
-                        Cancelar
+                        {isTestSuccessful ? 'Finalizar' : 'Cancelar'}
                     </Button>
                 </div>
               </motion.div>
@@ -959,7 +965,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         isGeneratingDkim={isGeneratingDkim}
         onRegenerateDkim={handleGenerateDkim}
         acceptedKey={acceptedDkimKey}
-        onAcceptKey={setAcceptedDkimKey}
+        onAcceptKey={(key) => {
+          setAcceptedDkimKey(key);
+          setShowDkimAcceptWarning(false);
+        }}
       />
       <AiAnalysisModal 
         isOpen={isAnalysisModalOpen}
@@ -999,6 +1008,7 @@ function DnsInfoModal({
   acceptedKey: string | null;
   onAcceptKey: (key: string) => void;
 }) {
+    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
     if(!recordType) return null;
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
@@ -1064,6 +1074,10 @@ function DnsInfoModal({
         <div className="space-y-4">
            <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
             <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+             <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                <p className="font-bold mb-1">¡Atención!</p>
+                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave para que la verificación DKIM funcione.</p>
+            </div>
             <div className={cn(baseClass, "flex-col items-start gap-1")}>
                <div className="font-bold text-white/90 flex justify-between w-full items-center">
                 <span>Clave Aceptada:</span>
@@ -1079,7 +1093,7 @@ function DnsInfoModal({
                </div>
             </div>
             <div className="flex gap-2">
-                <Button onClick={onRegenerateDkim} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                <Button onClick={() => setConfirmRegenerate(true)} disabled={isGeneratingDkim} className="w-full" variant="outline">
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
@@ -1121,6 +1135,20 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
+         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}>Sí, generar nueva</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
     );
     
@@ -1379,4 +1407,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
