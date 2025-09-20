@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
+import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
@@ -62,6 +63,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [testError, setTestError] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
+
+  const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
+  const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -268,6 +272,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setShowNotification(false);
         setHealthCheckStep('mandatory');
         setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
+        setIsSmtpErrorAnalysisModalOpen(false);
+        setSmtpErrorAnalysis(null);
     }, 300);
   }
   
@@ -292,7 +298,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       toast({
         title: "¡Conexión Exitosa!",
         description: `Correo de prueba despachado a ${values.testEmail}.`,
-        className: 'bg-green-500 text-white border-none'
+        style: { backgroundColor: '#00CB07', color: 'white' },
+        className: 'border-none'
       })
     } else {
        setTestStatus('failed');
@@ -304,6 +311,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setDeliveryStatus('checking');
     await new Promise(resolve => setTimeout(resolve, 2500));
     setDeliveryStatus('delivered');
+  };
+
+  const handleSmtpErrorAnalysis = async () => {
+    if (!testError) return;
+    setSmtpErrorAnalysis(null);
+    setIsSmtpErrorAnalysisModalOpen(true);
+    const result = await analyzeSmtpErrorAction({ error: testError });
+    if (result.success && result.data) {
+        setSmtpErrorAnalysis(result.data.analysis);
+    } else {
+        setSmtpErrorAnalysis(result.error || 'No se pudo generar un análisis.');
+    }
   };
 
   const cardAnimation = {
@@ -703,9 +722,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && form.getValues('encryption') !== 'none' && (
+                        {testStatus === 'success' && deliveryStatus !== 'bounced' && (
                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                                <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
+                                <Button 
+                                  className="w-full text-white bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00ADEC]"
+                                  style={{
+                                    backgroundImage: 'linear-gradient(to right, #AD00EC, #00ADEC)',
+                                  }}
+                                  onMouseOver={(e) => e.currentTarget.style.backgroundImage = 'linear-gradient(to right, #00ADEC, #00ADEC)'}
+                                  onMouseOut={(e) => e.currentTarget.style.backgroundImage = 'linear-gradient(to right, #AD00EC, #00ADEC)'}
+                                  onClick={handleCheckDelivery} 
+                                  disabled={deliveryStatus === 'checking'}
+                                >
                                 {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
                                 Verificar Entrega
                                 </Button>
@@ -716,9 +744,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         )}
                         <AnimatePresence>
                         {testStatus === 'failed' && (
-                            <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
-                                <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
-                                <p>{testError}</p>
+                            <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
+                                <div className="relative">
+                                    <button
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                        onClick={handleSmtpErrorAnalysis}
+                                    >
+                                        <div className="ai-core-border-animation group-hover:hidden"></div>
+                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                            <div className="flex gap-1 items-end h-4">
+                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                            </div>
+                                            <span className="text-sm font-semibold">Análisis de la IA</span>
+                                        </div>
+                                    </button>
+                                    <div 
+                                        className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                        style={{ backgroundColor: '#F00000' }}
+                                    >
+                                        1
+                                    </div>
+                                </div>
+                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs" style={{color: '#F00000'}}>
+                                    <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                                    <p>{testError}</p>
+                                </div>
                             </motion.div>
                         )}
                         </AnimatePresence>
@@ -772,12 +825,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}
                     {currentStep === 4 && (
                          <>
-                         {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
+                         {(testStatus === 'success' && (deliveryStatus === 'delivered' || form.getValues('encryption') === 'none')) ? (
                              <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
                                  Finalizar y Guardar
                              </Button>
                          ) : (
-                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#00CB07] text-white" disabled={testStatus === 'testing'}>
+                             <Button 
+                                onClick={form.handleSubmit(onSubmitSmtp)} 
+                                className="w-full h-12 text-base text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
+                                disabled={testStatus === 'testing'}
+                             >
                                  {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                              </Button>
                          )}
@@ -883,6 +940,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         isOpen={isAnalysisModalOpen}
         onOpenChange={setIsAnalysisModalOpen}
         analysis={dnsAnalysis?.analysis || null}
+      />
+      <SmtpErrorAnalysisModal
+        isOpen={isSmtpErrorAnalysisModalOpen}
+        onOpenChange={setIsSmtpErrorAnalysisModalOpen}
+        analysis={smtpErrorAnalysis}
       />
     </>
   );
@@ -1007,57 +1069,57 @@ function DnsInfoModal({
     );
     
     const renderDmarcContent = () => {
-         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes-rua@${domain}; ruf=mailto:reportes-ruf@${domain}; sp=reject; aspf=s; adkim=s`;
-         return (
-             <div className="grid md:grid-cols-2 gap-6 text-sm">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-base mb-2">Instrucciones</h4>
-                  <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
-                  <div className="space-y-3">
-                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                        <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
-                        <span>_dmarc</span>
-                    </div>
+        const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes-rua@${domain}; ruf=mailto:reportes-ruf@${domain}; sp=reject; aspf=s; adkim=s`;
+        return (
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
+               <div className="space-y-4">
+                 <h4 className="font-semibold text-base mb-2">Instrucciones</h4>
+                 <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
+                 <div className="space-y-3">
                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                        <p className="font-bold text-white/90">Tipo de Registro:</p>
-                        <span>TXT</span>
-                    </div>
-                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                        <p className="font-bold text-white/90">Valor del Registro:</p>
-                        <div className="w-full flex justify-between items-start">
-                        <p className="break-all pr-2">{recordValue}</p>
-                        <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
-                        </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3">
-                      <MailQuestion className="size-10 shrink-0 text-cyan-400 mt-1" />
-                      <div>
-                          <h5 className="font-bold text-cyan-300 mb-1">¡Importante! Crear Correos para Reportes</h5>
-                          <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC.</p>
-                          <ul className="list-disc pl-4 mt-2 font-mono">
-                              <li>`rua=mailto:<strong className="text-white">reportes-rua@{domain}</strong>`</li>
-                              <li>`ruf=mailto:<strong className="text-white">reportes-ruf@{domain}</strong>`</li>
-                          </ul>
-                          <p className="mt-2">Puedes personalizar estos correos, pero asegúrate de que existan y estén configurados en tu registro DNS.</p>
-                      </div>
-                  </div>
-                </div>
-                <div className="text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-2">
-                    <h4 className="font-bold text-base text-white/90 mb-2">Explicación de cada parte:</h4>
-                    <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
-                    <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
-                    <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
-                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (resúmenes XML).</p>
-                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (copias de correos fallidos).</p>
-                    <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
-                    <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (dominio coincide).</p>
-                    <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (dominio coincide).</p>
-                    <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca.</p>
-                </div>
-            </div>
-        );
-    }
+                       <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
+                       <span>_dmarc</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Tipo de Registro:</p>
+                       <span>TXT</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Valor del Registro:</p>
+                       <div className="w-full flex justify-between items-start">
+                       <p className="break-all pr-2">{recordValue}</p>
+                       <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                       </div>
+                   </div>
+                 </div>
+                 <div className="mt-4 p-3 bg-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3">
+                     <MailQuestion className="size-10 shrink-0 text-cyan-400 mt-1" />
+                     <div>
+                         <h5 className="font-bold text-cyan-300 mb-1">¡Importante! Crear Correos para Reportes</h5>
+                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC.</p>
+                         <ul className="list-disc pl-4 mt-2 font-mono">
+                             <li>`rua=mailto:<strong className="text-white">reportes-rua@{domain}</strong>`</li>
+                             <li>`ruf=mailto:<strong className="text-white">reportes-ruf@{domain}</strong>`</li>
+                         </ul>
+                         <p className="mt-2">Puedes personalizar estos correos, pero asegúrate de que existan y estén configurados en tu registro DNS.</p>
+                     </div>
+                 </div>
+               </div>
+               <div className="text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-2">
+                   <h4 className="font-bold text-base text-white/90 mb-2">Explicación de cada parte:</h4>
+                   <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
+                   <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
+                   <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
+                   <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (resúmenes XML).</p>
+                   <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (copias de correos fallidos).</p>
+                   <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
+                   <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (dominio coincide).</p>
+                   <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (dominio coincide).</p>
+                   <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca.</p>
+               </div>
+           </div>
+       );
+   }
 
     const renderMxContent = () => (
       <div className="space-y-4 text-sm">
@@ -1187,7 +1249,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                         </div>
                     </DialogTitle>
                 </DialogHeader>
-                <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
+                 <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
                     <AlertCircle className="size-8 text-amber-400 shrink-0" />
                     <p className="text-xs text-amber-200/90">
                         <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
@@ -1211,3 +1273,40 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                    </DialogTitle>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+    
