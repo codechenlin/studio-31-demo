@@ -23,7 +23,7 @@ const DnsHealthOutputSchema = z.object({
   spfStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the SPF record.'),
   dkimStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the DKIM record.'),
   dmarcStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the DMARC record.'),
-  analysis: z.string().describe('A natural language analysis of the findings, explaining what is wrong and how to fix it, if needed. Be concise and direct.'),
+  analysis: z.string().describe('A natural language analysis of the findings, explaining what is wrong and how to fix it, if needed. Be concise and direct. Respond in Spanish and always use emojis.'),
 });
 
 export async function verifyDnsHealth(
@@ -71,76 +71,54 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Instrucción para la IA: Analiza un registro TXT de un dominio y determina si es un registro SPF válido siguiendo estas reglas estrictas:
+        prompt: `Eres un experto en DNS y seguridad de correo electrónico. Analiza los siguientes registros DNS para el dominio {{{domain}}} y determina su estado de salud para el envío de correos. Responde siempre en español y utiliza emojis para que tu análisis sea más claro y amigable.
 
-1. Identificación del registro SPF
-Si no existe ningún registro TXT que comience con v=spf1, ignóralo y continúa con otros registros.
-Si sí comienza con v=spf1, procede a la verificación.
+Contexto de los Registros (en formato JSON):
+- Registros SPF encontrados en el dominio raíz: {{{spfRecords}}}
+- Registros DKIM encontrados en daybuu._domainkey.{{{domain}}}: {{{dkimRecords}}}
+- Registros DMARC encontrados en _dmarc.{{{domain}}}: {{{dmarcRecords}}}
+- Clave pública DKIM esperada: {{{dkimPublicKey}}}
 
-2. Reglas de validación
-El registro debe comenzar con v=spf1 como primera cadena.
-El registro debe contener la cadena include:_spf.daybuu en cualquier posición del registro, antes o después de otros mecanismos que inicien con:
-include:
-ip4:
-ip6:
-a
-mx o de cualquier otra cadena o servicio de correo.
-El registro debe terminar con -all como última cadena.
-Puede incluir mecanismos de otros servicios de correo, siempre que estén unificados en un solo registro SPF, pero lo importante es que se encuentre la cadena include:_spf.daybuu.
-Solo se permiten los mecanismos:
-include:
-ip4:
-ip6:
-a
-mx
-Los mecanismos permitidos pueden repetirse o combinarse libremente, pero el total de mecanismos (sin contar v=spf1 y -all) no puede exceder 8.
+Sigue estas reglas ESTRICTAS para tu análisis:
 
-3. Validación estructural
-Analiza la sintaxis y estructura completa para detectar si el registro está mal formado, incluso si contiene las cadenas correctas.
-Solo puede existir un registro SPF por dominio. Si hay más de uno, la verificación falla y debe unificarse en un único registro que incluya todos los mecanismos permitidos.
+1.  **Análisis SPF (Sender Policy Framework):**
+    *   **Estado \`not-found\`**: Si el array \`spfRecords\` está vacío o no contiene ningún registro que empiece con \`v=spf1\`.
+    *   **Estado \`unverified\`**:
+        *   Si hay más de un registro SPF (más de un string que empiece con \`v=spf1\`). ¡SOLO PUEDE HABER UNO! 🚨
+        *   Si el registro no contiene \`include:_spf.daybuu.com\`.
+        *   Si el registro no termina con un mecanismo \`all\` válido, preferiblemente \`-all\` (RECHAZAR) o \`~all\` (FALLO SUAVE).
+        *   Si el registro supera el límite de 10 búsquedas DNS. Explica esto con la analogía de la mochila: "Imagina que el límite de 10 búsquedas es como una mochila con 10 espacios. Si Google Workspace ya usa 9, y añades otro servicio que necesita 3, ¡la mochila se rompe y el SPF falla!".
+    *   **Estado \`verified\`**: Si existe un único registro SPF que cumple con tener \`v=spf1\`, \`include:_spf.daybuu.com\` y un mecanismo \`all\` final. ✅
 
-4. Resultado esperado
-Considera "verificado con éxito" cualquier registro SPF que cumpla todas las reglas anteriores, incluso si incluye mecanismos de otros servicios de correo, siempre que include:_spf.daybuu esté presente y las demás condiciones se cumplan. TAMBIEN Si al analizar el registro SPF detectas que supera el límite de 10 búsquedas DNS, explica al usuario de forma clara y sencilla lo siguiente:
-Motivo del fallo:
-El estándar SPF (definido en el documento oficial RFC 7208) establece un máximo de 10 búsquedas DNS durante la verificación.
-Esto se hace para evitar sobrecarga en los servidores y que la validación sea rápida.
-Todos los servidores de correo (Gmail, Outlook, Zoho, etc.) aplican este mismo límite.
-Ejemplo fácil de entender:
-Imagina que el límite de 10 búsquedas es como una mochila con 10 espacios.
-Google Workspace, solo con su include:_spf.google.com, mete 8 o 9 cosas en la mochila.
-Si luego quieres añadir otro servicio que ocupa 3 espacios, ya no cabe todo → la mochila se rompe y el SPF falla.
-Cómo funciona la búsqueda DNS:
-Cada vez que el SPF usa mecanismos como include:, a, mx, ptr, exists o redirect=, el servidor tiene que hacer una pregunta DNS para saber qué IPs están autorizadas.
-Si se necesitan más de 10 preguntas, el servidor deja de preguntar y marca el SPF como fallido.
-Por qué seguir las sugerencias de la IA:
-La IA puede ayudarte a optimizar el registro SPF para que no supere el límite.
-Esto puede implicar unificar servicios en un solo registro, reducir includes innecesarios o reemplazarlos por rangos de IP (ip4: o ip6:).
-Seguir estas sugerencias asegura que tu SPF pase la verificación y que tus correos no sean rechazados.
-Dato adicional:
-Algunos servicios son “devoradores” de búsquedas DNS porque usan muchos include: anidados.
-El más común es Google Workspace, Microsoft 365, Salesforce que por sí solo puede consumir casi todo el límite. 2. DKIM Puede haber varios registros en el mismo dominio, cada uno con un selector diferente.
-No se unifican; cada registro es independiente.
-Verificar que el Host/Nombre sea daybuu._domainkey.
-El valor debe contener:
-v=DKIM1;
-k=rsa;
-p= seguido de la clave pública generada para ese dominio.
-Confirmar que la clave coincide con la generada por el proyecto para ese dominio.
-Si se responde al usuario con el registro DKIM, mostrar solo el inicio del valor así: v=DKIM1; k=rsa; p=MIIBIjA... (indicando con ... que es más largo).
-DMARC Solo un registro por dominio o subdominio. Host/Nombre debe ser _dmarc.
-El valor debe contener:
-v=DMARC1;
-p=reject;
-pct=100;
-sp=reject;
-aspf= con valor s (válido para dominio principal) o r (válido para subdominio).
-adkim= con valor s (válido para dominio principal) o r (válido para subdominio).
+2.  **Análisis DKIM (DomainKeys Identified Mail):**
+    *   **Estado \`not-found\`**: Si el array \`dkimRecords\` está vacío.
+    *   **Estado \`unverified\`**:
+        *   Si ningún registro contiene la etiqueta \`v=DKIM1;\`.
+        *   Si ningún registro contiene la etiqueta \`k=rsa;\`.
+        *   Si la clave pública en la etiqueta \`p=\` **no coincide exactamente** con la \`dkimPublicKey\` esperada. ¡Debe ser una coincidencia perfecta! 🕵️‍♂️
+    *   **Estado \`verified\`**: Si se encuentra al menos un registro que contiene \`v=DKIM1;\`, \`k=rsa;\` y la clave pública en \`p=\` es idéntica a la \`dkimPublicKey\` esperada. ✅
 
-Instrucciones adicionales:
-No analizar ni responder sobre registros que no sean SPF, DKIM, DMARC.
-Cumplir estrictamente con las reglas anteriores para determinar si un registro es válido o no.
-En el análisis, indicar claramente si el registro cumple o no con cada requisito y, si no cumple, explicar qué falta o está mal. tambien añade que la IA debe añadir en sus respuesta en el Diagnóstico Detallado de la IA, analisis de la IA en su respuestas al usuario emojis
-`
+3.  **Análisis DMARC (Domain-based Message Authentication, Reporting, and Conformance):**
+    *   **Estado \`not-found\`**: Si el array \`dmarcRecords\` está vacío.
+    *   **Estado \`unverified\`**:
+        *   Si el registro no empieza con \`v=DMARC1;\`.
+        *   Si falta la etiqueta de política \`p=\` o no es \`p=quarantine\` o \`p=reject\`. La política \`p=none\` es válida pero no recomendada para producción.
+    *   **Estado \`verified\`**: Si existe un registro que empieza con \`v=DMARC1;\` y tiene una política \`p=\` válida (\`quarantine\` o \`reject\` son ideales). ✅
+
+**Formato de la Respuesta en el campo \`analysis\`:**
+
+Genera un resumen claro y conciso. Para cada registro (SPF, DKIM, DMARC), indica su estado y, si está \`unverified\` o \`not-found\`, explica el problema específico y cómo solucionarlo.
+
+**Ejemplo de Análisis:**
+"
+### Análisis Detallado ախ
+✅ **SPF:** ¡Tu registro SPF está correctamente configurado! Permite que nuestros servidores envíen correos en tu nombre.
+
+❌ **DKIM:** No hemos podido verificar tu firma DKIM. La clave pública en tu DNS no coincide con la que esperábamos. Asegúrate de copiar y pegar la clave correcta desde nuestras instrucciones.
+
+⚠️ **DMARC:** Tienes un registro DMARC, pero su política es \`p=none\`. Te recomendamos cambiarla a \`p=quarantine\` o \`p=reject\` para proteger mejor tu dominio contra la suplantación de identidad.
+"
+`,
     });
 
     const { output } = await expertPrompt({
