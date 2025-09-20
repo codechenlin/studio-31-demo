@@ -617,7 +617,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                      <Button
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white"
+                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
                         onClick={handleStartVerification}
                         disabled={!domain}
                       >
@@ -726,11 +726,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
                                 <Button 
                                   className="w-full text-white bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00ADEC]"
-                                  style={{
-                                    backgroundImage: 'linear-gradient(to right, #AD00EC, #00ADEC)',
-                                  }}
-                                  onMouseOver={(e) => e.currentTarget.style.backgroundImage = 'linear-gradient(to right, #00ADEC, #00ADEC)'}
-                                  onMouseOut={(e) => e.currentTarget.style.backgroundImage = 'linear-gradient(to right, #AD00EC, #00ADEC)'}
                                   onClick={handleCheckDelivery} 
                                   disabled={deliveryStatus === 'checking'}
                                 >
@@ -762,14 +757,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         </div>
                                     </button>
                                     <div 
-                                        className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                        className="absolute top-0 right-0 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                         style={{ backgroundColor: '#F00000' }}
                                     >
                                         1
                                     </div>
                                 </div>
-                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs" style={{color: '#F00000'}}>
-                                    <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs" style={{color: '#FFCDCD'}}>
+                                    <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
                                     <p>{testError}</p>
                                 </div>
                             </motion.div>
@@ -811,7 +806,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             )}
                          
                          {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => {
+                              setHealthCheckStep('optional');
+                              setHealthCheckStatus('idle'); // Reset status for next step
+                              setShowNotification(false);
+                            }}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -1283,12 +1282,24 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
                  <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
                 <DialogHeader className="z-10">
-                    <DialogTitle className="flex items-center gap-3 text-xl">
-                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
-                           <BrainCircuit className="text-red-400" />
+                    <div className="flex items-center justify-between">
+                        <DialogTitle className="flex items-center gap-3 text-xl">
+                            <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                               <BrainCircuit className="text-red-400" />
+                            </div>
+                            Análisis de Error SMTP
+                            <div className="flex items-end gap-0.5 h-6">
+                                <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                                <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                                <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                                <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                            </div>
+                        </DialogTitle>
+                        <div className="flex items-center gap-2 text-sm text-green-300">
+                            EN LÍNEA
+                            <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
                         </div>
-                        Análisis de Error SMTP
-                    </DialogTitle>
+                    </div>
                 </DialogHeader>
                  <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
                      <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
@@ -1308,5 +1319,6 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
+    
 
     
