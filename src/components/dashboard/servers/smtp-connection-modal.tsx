@@ -308,9 +308,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
    const handleCheckDelivery = async () => {
     setDeliveryStatus('checking');
+    // This is a simulation. In a real-world scenario, this would
+    // involve a webhook or an API call to a service that tracks email delivery.
     await new Promise(resolve => setTimeout(resolve, 2500));
-    // Here you would typically have a webhook or polling mechanism
-    // to check if the email was actually delivered. We'll simulate success.
+    // Simulate a successful delivery for the demo
     setDeliveryStatus('delivered');
   };
 
@@ -430,7 +431,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             <div className="relative">
               <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
               {recordKey === 'dkim' && showDkimAcceptWarning && (
-                <div className="absolute -top-1 -right-1 size-3 rounded-full flex items-center justify-center text-xs font-bold text-white animate-ping bg-red-500"></div>
+                 <div className="absolute -top-1 -right-1">
+                    <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                        <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                    </div>
+                </div>
               )}
             </div>
           </div>
@@ -1085,9 +1090,12 @@ function DnsInfoModal({
         <div className="space-y-4">
            <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
             <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
-            <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                <p className="font-bold mb-1">¡Atención!</p>
-                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave para que la verificación DKIM funcione.</p>
+             <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-2">
+              <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+              <div>
+                <p className="font-bold mb-1 text-amber-300">¡Atención!</p>
+                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación DKIM funcione.</p>
+              </div>
             </div>
             <div className={cn(baseClass, "flex-col items-start gap-1")}>
                <div className="font-bold text-white/90 flex justify-between w-full items-center">
