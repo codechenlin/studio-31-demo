@@ -97,7 +97,8 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
         Instrucciones adicionales:
         No analizar ni responder sobre registros que no sean MX, BIMI o VMC.
         Cumplir estrictamente con las reglas anteriores para determinar si un registro es válido o no.
-        En el análisis, indicar claramente si el registro cumple o no con cada requisito y, si no cumple, explicar qué falta o está mal. tambien añade que la IA debe añadir en sus respuesta en el Diagnóstico Detallado de la IA, analisis de la IA en su respuestas al usuario emojis`
+        En el análisis, indicar claramente si el registro cumple o no con cada requisito y, si no cumple, explicar qué falta o está mal. tambien añade que la IA debe añadir en sus respuesta en el Diagnóstico Detallado de la IA, analisis de la IA en su respuestas al usuario emojis
+        `
     });
 
     const { output } = await expertPrompt({
@@ -113,6 +114,3 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     return output;
   }
 );
-`
-    
-    
