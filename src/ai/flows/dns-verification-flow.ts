@@ -87,7 +87,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
         - **Identificación:** De la lista 'Todos los registros TXT encontrados', filtra y considera **únicamente** los registros que comiencen exactamente con la cadena \`v=spf1 \`. Los demás registros TXT (como 'google-site-verification' o 'daybuu-verificacion') DEBEN SER IGNORADOS para el análisis SPF.
         - **Análisis de Cantidad:**
           - Si después de filtrar no encuentras ningún registro SPF, el estado es \`not-found\`.
-          - Si encuentras más de un registro SPF, el estado es \`unverified\` y debes explicar que solo puede existir un registro SPF por dominio.
+          - Si encuentras más de un registro que comience con \`v=spf1 \`, el estado es \`unverified\` y debes explicar que solo puede existir un registro SPF por dominio.
         - **Reglas de Validación (si solo hay un registro SPF):**
             1.  El registro DEBE comenzar con \`v=spf1 \`.
             2.  El registro DEBE contener la cadena \`include:_spf.daybuu.com\`.
