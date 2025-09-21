@@ -70,7 +70,7 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     
     const [mxRecords, bimiRecords] = await Promise.all([
       getMxRecords(domain),
-      getTxtRecords(`default._bimi.${domain}`),
+      getTxtRecords(`daybuu._bimi.${domain}`),
     ]);
 
     const expertPrompt = ai.definePrompt({
@@ -90,7 +90,15 @@ Análisis del Registro MX:
     *   Si no se encuentra ningún registro MX, marca 'mxStatus' como 'not-found' 🧐.
 
 Análisis del Registro BIMI:
-(Instrucciones pendientes)
+
+1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector 'daybuu._bimi'. Solo puede existir uno con este selector.
+2.  **Validación de Contenido**: El registro encontrado debe contener las siguientes cadenas:
+    *   \`v=BIMI1;\`
+    *   \`l=https:\` (para el enlace del logotipo).
+3.  **Resultado**: 
+    *   Si el registro existe y contiene ambas cadenas, marca 'bimiStatus' como 'verified' ✅.
+    *   Si existe pero falta alguna de las cadenas, 'unverified' ❌.
+    *   Si no se encuentra, 'not-found' 🧐.
 
 Análisis del Registro VMC:
 (Instrucciones pendientes)
@@ -98,7 +106,7 @@ Análisis del Registro VMC:
 Registros a analizar:
 - Dominio: {{{domain}}}
 - Registros MX: {{{mxRecords}}}
-- Registros BIMI (default._bimi): {{{bimiRecords}}}
+- Registros BIMI (daybuu._bimi): {{{bimiRecords}}}
 `,
     });
 
