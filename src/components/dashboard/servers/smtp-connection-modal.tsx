@@ -1060,7 +1060,7 @@ function DnsInfoModal({
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Daybuu.com, Cloudflare.com, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
@@ -1249,8 +1249,8 @@ function DnsInfoModal({
       <div className="space-y-4 text-sm">
         <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
