@@ -82,6 +82,7 @@ Análisis del Registro MX:
 
 1.  **Identificación**: Busca en 'mxRecords' los registros para el dominio principal. Puede haber varios.
 2.  **Validación**: Para que la verificación sea exitosa, al menos uno de los registros MX encontrados debe cumplir con estas dos condiciones simultáneamente:
+    *   El Host/Nombre debe pertenecer al dominio principal (sin subdominios ni selectores).
     *   La propiedad 'exchange' debe ser exactamente \`daybuu.com\`.
     *   La propiedad 'priority' debe ser exactamente \`0\`.
 3.  **Resultado**: 
@@ -101,7 +102,16 @@ Análisis del Registro BIMI:
     *   Si no se encuentra, 'not-found' 🧐.
 
 Análisis del Registro VMC:
-(Instrucciones pendientes)
+
+1.  **Identificación**: El VMC es parte del registro BIMI. Busca dentro de 'bimiRecords' para el selector 'daybuu._bimi'.
+2.  **Validación**: Para que un VMC se considere válido, el registro BIMI debe contener AMBAS cadenas:
+    *   \`v=BIMI1;\`
+    *   \`a=https:\` (esta es la parte del certificado VMC).
+3.  **Contexto**: Explica que el VMC es un certificado digital que verifica la autenticidad de la marca y su logotipo. Es un complemento de seguridad para BIMI que aumenta la confianza y la probabilidad de que el logo se muestre en proveedores como Gmail.
+4.  **Resultado**: 
+    *   Si el registro existe y contiene ambas cadenas ('v=BIMI1;' y 'a=https:'), marca 'vmcStatus' como 'verified' ✅.
+    *   Si el registro existe pero no contiene la cadena 'a=https:', marca 'vmcStatus' como 'unverified' ❌.
+    *   Si no se encuentra ningún registro para 'daybuu._bimi', marca 'vmcStatus' como 'not-found' 🧐.
 
 Registros a analizar:
 - Dominio: {{{domain}}}
