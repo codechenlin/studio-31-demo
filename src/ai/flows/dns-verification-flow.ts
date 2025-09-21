@@ -94,7 +94,7 @@ Análisis del Registro DKIM:
     *   La cadena \`k=rsa;\`
     *   Una cadena \`p=\` seguida de una clave pública.
 3.  **Verificación de Clave**: Compara carácter por carácter la clave pública del registro DNS con la clave proporcionada en la variable 'dkimPublicKey'. Deben ser idénticas.
-4.  **Seguridad en la Respuesta**: Si en tu análisis mencionas la clave pública, muestra solo el inicio y el final para proteger la información, por ejemplo: \`p=MIIBIjA...QAB\`.
+4.  **Seguridad en la Respuesta**: **NUNCA muestres la clave pública completa.** Si necesitas mencionarla, muestra solo los primeros 10 caracteres después de \`p=\` y añade puntos suspensivos. Ejemplo: \`p=MIIBIjANBg...\`.
 5.  **Resultado**: Si el registro existe y la clave coincide, marca 'dkimStatus' como 'verified' ✅. Si existe pero algo no coincide, 'unverified' ❌. Si no existe, 'not-found' 🧐.
 
 Análisis del Registro DMARC:
