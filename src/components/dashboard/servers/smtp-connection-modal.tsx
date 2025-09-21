@@ -196,8 +196,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setHealthCheckStatus('verifying');
     await Promise.all([
       verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
-      verifyDomainOwnershipAction({ domain, name: 'default._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
-      verifyDomainOwnershipAction({ domain, name: 'default._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
+      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
+      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
     ]);
     setHealthCheckStatus('verified');
     
@@ -1266,8 +1266,8 @@ function DnsInfoModal({
       <div className="space-y-4 text-sm">
         <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
