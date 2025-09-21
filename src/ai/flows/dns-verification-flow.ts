@@ -97,8 +97,20 @@ Análisis del Registro DKIM:
 4.  **Seguridad en la Respuesta**: Si en tu análisis mencionas la clave pública, muestra solo el inicio y el final para proteger la información, por ejemplo: \`p=MIIBIjA...QAB\`.
 5.  **Resultado**: Si el registro existe y la clave coincide, marca 'dkimStatus' como 'verified' ✅. Si existe pero algo no coincide, 'unverified' ❌. Si no existe, 'not-found' 🧐.
 
+Análisis del Registro DMARC:
+
+1.  **Identificación**: Busca en 'dmarcRecords' un registro para el host '_dmarc'. Solo puede existir uno.
+2.  **Validación de Contenido**: El registro debe contener las siguientes cadenas y valores exactos:
+    *   \`v=DMARC1;\`
+    *   \`p=reject;\`
+    *   \`pct=100;\` (Opcional, pero si existe debe ser 100)
+    *   \`sp=reject;\`
+    *   \`aspf=s;\` (o \`r\` para subdominios)
+    *   \`adkim=s;\` (o \`r\` para subdominios)
+3.  **Resultado**: Si el registro existe y cumple todas las reglas, marca 'dmarcStatus' como 'verified' ✅. Si existe pero algo no coincide, 'unverified' ❌. Si no existe, 'not-found' 🧐.
+
 Formato de Respuesta:
-Genera un análisis en formato de lista, explicando el estado de cada registro (SPF, DKIM, etc.) de forma clara, directa y siempre usando emojis.
+Genera un análisis en formato de lista, explicando el estado de cada registro (SPF, DKIM, DMARC) de forma clara, directa y siempre usando emojis.
 
 Registros a analizar:
 - Dominio: {{{domain}}}
@@ -112,9 +124,9 @@ Registros a analizar:
     const { output } = await expertPrompt({
         domain,
         dkimPublicKey,
-        txtRecords: JSON.stringify(txtRecords),
-        dkimRecords: JSON.stringify(dkimRecords),
-        dmarcRecords: JSON.stringify(dmarcRecords),
+        txtRecords: txtRecords.join('\n'),
+        dkimRecords: dkimRecords.join('\n'),
+        dmarcRecords: dmarcRecords.join('\n'),
     });
 
     if (!output) {
