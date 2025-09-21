@@ -75,7 +75,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
         Eres un experto en DNS y seguridad de correo electrónico. Tu tarea es analizar los registros DNS para el dominio {{{domain}}} y determinar si son válidos. Debes seguir las reglas que se te proporcionan de manera estricta. Responde siempre en español y utiliza emojis para que tu análisis sea claro y amigable.
 
         Registros DNS a analizar (formato JSON):
-        - Registros SPF encontrados en el dominio raíz: {{{spfRecords}}}
+        - Todos los registros TXT encontrados en el dominio raíz: {{{spfRecords}}}
         - Registros DKIM encontrados en daybuu._domainkey.{{{domain}}}: {{{dkimRecords}}}
         - Registros DMARC encontrados en _dmarc.{{{domain}}}: {{{dmarcRecords}}}
         - Clave pública DKIM esperada: {{{dkimPublicKey}}}
@@ -84,17 +84,16 @@ const dnsHealthCheckFlow = ai.defineFlow(
 
         ---
         **1. Análisis de Registro SPF**
-        - **Identificación:** Busca cualquier registro TXT que comience con \`v=spf1\`. Si no encuentras ninguno, el estado es \`not-found\`. Si encuentras más de uno, el estado es \`unverified\` y debes explicar que solo puede existir un registro SPF.
-        - **Reglas de Validación (si solo hay un registro):**
-            1.  El registro DEBE comenzar con \`v=spf1\` como primera cadena.
+        - **Identificación:** De la lista 'Todos los registros TXT encontrados', filtra y considera **únicamente** los registros que comiencen exactamente con la cadena \`v=spf1 \`. Los demás registros TXT (como 'google-site-verification' o 'daybuu-verificacion') DEBEN SER IGNORADOS para el análisis SPF.
+        - **Análisis de Cantidad:**
+          - Si después de filtrar no encuentras ningún registro SPF, el estado es \`not-found\`.
+          - Si encuentras más de un registro SPF, el estado es \`unverified\` y debes explicar que solo puede existir un registro SPF por dominio.
+        - **Reglas de Validación (si solo hay un registro SPF):**
+            1.  El registro DEBE comenzar con \`v=spf1 \`.
             2.  El registro DEBE contener la cadena \`include:_spf.daybuu.com\`.
-            3.  El registro DEBE terminar con \`-all\` como última cadena.
+            3.  El registro DEBE terminar con \`-all\`.
         - **Resultado Esperado:** Si las 3 reglas se cumplen, el estado es \`verified\`. Si alguna falla, el estado es \`unverified\`.
-        - **Límite de Búsquedas DNS (SUPER IMPORTANTE):** Si detectas que el registro SPF podría superar el límite de 10 búsquedas DNS (especialmente si ves \`include:_spf.google.com\`, \`include:spf.protection.outlook.com\`, etc.), DEBES explicar al usuario lo siguiente en tu análisis:
-            - **Motivo del Fallo:** "El estándar SPF (RFC 7208) limita las validaciones a un máximo de 10 búsquedas DNS para evitar sobrecargas. Todos los servicios de correo (Gmail, Outlook, etc.) aplican este límite."
-            - **Analogía Fácil:** "Imagina que el límite es una mochila con 10 espacios. Si Google Workspace ya usa 8 o 9 espacios y añades otro servicio que necesita 3, ¡la mochila se rompe y el SPF falla! 🎒"
-            - **Explicación Técnica:** "Cada mecanismo como \`include:\`, \`a\`, \`mx\`, etc., consume una búsqueda. Si se necesitan más de 10, el SPF se considera inválido."
-            - **Por qué seguir tu sugerencia:** "Te ayudaré a optimizar tu registro para no superar el límite, unificando servicios o reemplazando \`include\` por rangos de IP (\`ip4:\` o \`ip6:\`)."
+        - **Límite de Búsquedas DNS:** Si el registro SPF contiene \`include:\` de servicios como Google Workspace o Microsoft 365, DEBES mencionar la posibilidad de exceder el límite de 10 búsquedas DNS, explicando que cada 'include' consume una búsqueda y que servicios grandes pueden usar varias, poniendo en riesgo la validez del registro.
 
         ---
         **2. Análisis de Registro DKIM**
@@ -116,6 +115,8 @@ const dnsHealthCheckFlow = ai.defineFlow(
             3.  El valor DEBE contener \`pct=100;\`.
             4.  El valor DEBE contener \`sp=reject;\`.
             5.  El valor DEBE contener \`aspf=s;\` y \`adkim=s;\`.
+            6.  El valor DEBE contener \`rua=mailto:reportes@{{{domain}}}\`.
+            7.  El valor DEBE contener \`ruf=mailto:fallas@{{{domain}}}\`.
         - **Resultado Esperado:** \`verified\` si cumple todo, \`unverified\` si falta algo, \`not-found\` si no existe.
 
         ---
