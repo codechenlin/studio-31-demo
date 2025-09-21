@@ -194,14 +194,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
     setHealthCheckStatus('verifying');
+    setDnsAnalysis(null);
+    setShowNotification(false);
+
     await Promise.all([
       verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
       verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
       verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
     ]);
+    
     setHealthCheckStatus('verified');
     
-    setShowNotification(false);
     if (runAiAnalysis) {
       const result = await verifyOptionalDnsAction({ domain });
        if (result.success && result.data) {
@@ -561,7 +564,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
+                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -813,6 +816,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}
                     {currentStep === 3 && (
                         <div className="flex flex-col gap-2">
+                           {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
+                              <div className="p-2.5 mb-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 text-sm font-semibold flex items-center justify-center gap-2">
+                                <CheckCircle />
+                                ¡Todos los registros obligatorios están verificados!
+                              </div>
+                            )}
                             {healthCheckStep === 'mandatory' ? (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
@@ -829,7 +838,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 </Button>
                             )}
                          
-                         {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
+                         {healthCheckStatus === 'verified' && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
                               setHealthCheckStep('optional');
                               setHealthCheckStatus('idle'); // Reset status for next step
@@ -1430,6 +1439,8 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
 
     
 
