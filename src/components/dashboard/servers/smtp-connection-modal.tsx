@@ -63,7 +63,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [testError, setTestError] = useState('');
-  const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
 
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
@@ -72,7 +72,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
-  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -172,13 +171,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
         const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
-        setShowNotification(!allVerified);
-        if (allVerified) {
-             toast({
-                title: "¡Registros Verificados!",
-                description: "Todos los registros obligatorios son correctos.",
-                className: 'bg-[#00CB07] border-none text-white'
-            })
+        if (!allVerified) {
+          setShowNotification(true);
         }
       } else {
           toast({
@@ -225,6 +219,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
               description: result.error || "La IA no pudo procesar los registros opcionales.",
               variant: "destructive",
           })
+          setDnsAnalysis(null); // Ensure it's null on failure
       }
     }
   }
@@ -268,7 +263,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setTestStatus('idle');
         form.reset();
         setTestError('');
-        setDeliveryStatus('idle');
         setActiveInfoModal(null);
         setIsCancelConfirmOpen(false);
         setDkimData(null);
@@ -285,7 +279,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
     setTestStatus('testing');
-    setDeliveryStatus('idle');
     setTestError('');
     setSmtpErrorAnalysis(null);
     setShowSmtpErrorNotification(false);
@@ -313,21 +306,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         style: { backgroundColor: '#00CB07', color: 'white' },
         className: 'border-none'
       });
-      if(isSecure){
-        handleCheckDelivery();
-      }
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
        setShowSmtpErrorNotification(true);
     }
   }
-
-   const handleCheckDelivery = async () => {
-    setDeliveryStatus('checking');
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    setDeliveryStatus('delivered');
-  };
 
   const handleSmtpErrorAnalysis = async () => {
     if (!testError) return;
@@ -713,6 +697,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                 {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
+                      {allMandatoryRecordsVerified && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                        >
+                          <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                          <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                            <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                              <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                            </motion.div>
+                            <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                            <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
+                          </div>
+                        </motion.div>
+                      )}
                      <div className="text-center">
                         <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                         <h4 className="font-bold">Registros Obligatorios</h4>
@@ -759,35 +759,31 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {isTestSuccessful && <DeliveryTimeline status={deliveryStatus} />}
+                        {isTestSuccessful && isConnectionSecure && <DeliveryTimeline />}
 
                         <AnimatePresence>
                         {testStatus === 'failed' && (
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
-                               <div className="relative">
+                               <div className="relative pt-4 flex justify-center">
                                     <button
-                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
                                         onClick={handleSmtpErrorAnalysis}
+                                        style={{'--ai-glow-start': 'hsl(0 100% 50%)', '--ai-glow-end': 'hsl(0 100% 60%)'} as React.CSSProperties}
                                     >
-                                        <div className="ai-core-border-animation group-hover:hidden"></div>
-                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-800 opacity-80 group-hover:opacity-100 transition-opacity" />
                                         <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                            <div className="flex gap-1 items-end h-4">
-                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
-                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
-                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
-                                            </div>
-                                            <span className="text-sm font-semibold">Análisis de la IA</span>
+                                            <BrainCircuit className="size-5" />
+                                            <span className="text-sm font-semibold">Análisis de IA del Error</span>
                                         </div>
+                                         {showSmtpErrorNotification && (
+                                            <div className="absolute -top-2 -right-2">
+                                                <div className="relative flex h-5 w-5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 items-center justify-center text-xs font-bold text-white">!</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </button>
-                                    {showSmtpErrorNotification && (
-                                        <div className="absolute -top-1.5 -right-1.5">
-                                            <div className="relative size-5 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
-                                                !
-                                                <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="p-2 mt-4 rounded-lg text-center text-xs" style={{backgroundColor: '#DA0000'}}>
                                     <h4 className="font-bold flex items-center justify-center gap-2" style={{color: '#FFCDCD'}}><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
@@ -815,15 +811,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}
                     {currentStep === 3 && (
                         <div className="flex flex-col gap-2">
-                           {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                              <div 
-                                className="p-2.5 mb-2 rounded-lg text-white text-sm font-semibold flex items-center justify-center gap-2 border-2 border-[#21F700]"
-                                style={{backgroundColor: '#00CB07'}}
-                              >
-                                <CheckCircle />
-                                ¡Todos los registros obligatorios están verificados!
-                              </div>
-                            )}
                             {healthCheckStep === 'mandatory' ? (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
@@ -920,9 +907,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         text = 'LISTO PARA CHEQUEO';
       }
     } else if (currentStep === 4) {
-      if (testStatus === 'testing' || deliveryStatus === 'checking') { status = 'processing'; text = 'PROBANDO CONEXIÓN';
-      } else if (testStatus === 'success' && deliveryStatus === 'delivered') { status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
-      } else if (testStatus === 'success') { status = 'success'; text = 'CONEXIÓN EXITOSA';
+      if (testStatus === 'testing') { status = 'processing'; text = 'PROBANDO CONEXIÓN';
+      } else if (testStatus === 'success') { status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
       } else if (testStatus === 'failed') { status = 'error'; text = 'FALLO DE CONEXIÓN';
       } else { status = 'idle'; text = 'LISTO PARA PRUEBA'; }
     }
@@ -1015,9 +1001,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
-function DeliveryTimeline({ status }: { status: 'idle' | 'checking' | 'delivered' | 'bounced' }) {
-    const sent = status === 'checking' || status === 'delivered' || status === 'bounced';
-    const delivered = status === 'delivered';
+function DeliveryTimeline() {
 
     return (
         <motion.div
@@ -1029,10 +1013,10 @@ function DeliveryTimeline({ status }: { status: 'idle' | 'checking' | 'delivered
             <div className="flex items-center gap-2">
                 {/* Step 1: Sent */}
                 <div className="flex flex-col items-center">
-                    <div className={cn("flex items-center justify-center size-8 rounded-full border-2", sent ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500")}>
-                        {sent ? <Send size={16} /> : <Send size={16} />}
+                    <div className="flex items-center justify-center size-8 rounded-full border-2 border-green-400 bg-green-500/20 text-green-300">
+                        <Send size={16} />
                     </div>
-                    <p className={cn("text-xs mt-1", sent ? "text-green-300" : "text-gray-500")}>Enviado</p>
+                    <p className="text-xs mt-1 text-green-300">Enviado</p>
                 </div>
                 
                 {/* Connector */}
@@ -1040,26 +1024,39 @@ function DeliveryTimeline({ status }: { status: 'idle' | 'checking' | 'delivered
                     <motion.div 
                         className="absolute top-0 left-0 h-full bg-green-400"
                         initial={{ width: '0%' }}
-                        animate={{ width: sent ? '100%' : '0%' }}
+                        animate={{ width: '100%'}}
                         transition={{ delay: 0.5, duration: 1 }}
                     />
                 </div>
                 
                 {/* Step 2: Delivered */}
                  <div className="flex flex-col items-center">
-                    <div className={cn("flex items-center justify-center size-8 rounded-full border-2", delivered ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500")}>
-                        {status === 'checking' ? <Loader2 size={16} className="animate-spin" /> : <MailCheck size={16} />}
-                    </div>
-                     <p className={cn("text-xs mt-1", delivered ? "text-green-300" : "text-gray-500")}>
-                        {status === 'checking' ? 'Verificando...' : 'Entregado'}
-                    </p>
+                    <motion.div 
+                      className="flex items-center justify-center size-8 rounded-full border-2 border-gray-600 text-gray-500"
+                      initial={{ borderColor: 'hsl(var(--muted-foreground))', color: 'hsl(var(--muted-foreground))' }}
+                      animate={{ borderColor: '#22c55e', color: '#86efac' }}
+                      transition={{ delay: 1.5 }}
+                    >
+                        <MailCheck size={16} />
+                    </motion.div>
+                     <motion.p 
+                      className="text-xs mt-1 text-gray-500"
+                      initial={{ color: 'hsl(var(--muted-foreground))' }}
+                      animate={{ color: '#86efac' }}
+                      transition={{ delay: 1.5 }}
+                     >
+                        Entregado
+                    </motion.p>
                 </div>
             </div>
-             {delivered && (
-                 <p className="text-xs text-center text-green-300/80 pt-2">
-                    ¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.
-                </p>
-            )}
+             <motion.p 
+                className="text-xs text-center text-green-300/80 pt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2 }}
+             >
+                ¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.
+            </motion.p>
         </motion.div>
     );
 }
@@ -1492,3 +1489,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
