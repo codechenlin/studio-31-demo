@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -24,8 +24,7 @@ import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Toast, ToastAction, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from '@/components/ui/toast';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ToastProvider, ToastViewport } from '@/components/ui/toast';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -313,7 +312,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         description: `Correo de prueba despachado a ${values.testEmail}`,
         style: { backgroundColor: '#00CB07', color: 'white' },
         className: 'border-none'
-      })
+      });
+      if(isSecure){
+        handleCheckDelivery();
+      }
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
@@ -323,10 +325,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
    const handleCheckDelivery = async () => {
     setDeliveryStatus('checking');
-    // This is a simulation. In a real-world scenario, this would
-    // involve a webhook or an API call to a service that tracks email delivery.
     await new Promise(resolve => setTimeout(resolve, 2500));
-    // Simulate a successful delivery for the demo
     setDeliveryStatus('delivered');
   };
 
@@ -750,29 +749,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && isConnectionSecure ? (
-                            <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                                <Button 
-                                  className="w-full text-white bg-gradient-to-r from-[#E18700] to-[#FFAB00] hover:bg-[#00ADEC]"
-                                  onClick={handleCheckDelivery} 
-                                  disabled={deliveryStatus === 'checking'}
-                                >
-                                {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                                Verificar Entrega
-                                </Button>
-                                {deliveryStatus === 'delivered' && 
-                                    <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
-                                }
-                            </motion.div>
-                        ) : testStatus === 'success' && !isConnectionSecure ? (
-                             <motion.div key="no-verify" {...cardAnimation} className="mt-4 p-3 bg-amber-500/10 text-amber-300 rounded-lg text-xs border border-amber-400/30 flex items-start gap-3">
-                                 <Info className="size-6 shrink-0 mt-0.5 text-amber-400" />
-                                 <div className="text-left">
-                                     <h5 className="font-bold text-amber-300">Verificación de Entrega no Disponible</h5>
-                                     <p>La verificación automática de entrega solo está habilitada para conexiones seguras (SSL/TLS).</p>
-                                 </div>
-                             </motion.div>
-                         ) : null}
+                        {isTestSuccessful && <DeliveryTimeline status={deliveryStatus} />}
+
                         <AnimatePresence>
                         {testStatus === 'failed' && (
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
@@ -793,7 +771,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         </div>
                                     </button>
                                      {showSmtpErrorNotification && (
-                                        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4">
+                                        <div className="absolute -top-1.5 -right-1.5">
                                             <div className="relative size-5 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
                                                 !
                                                 <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
@@ -1024,6 +1002,54 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
+function DeliveryTimeline({ status }: { status: 'idle' | 'checking' | 'delivered' | 'bounced' }) {
+    const sent = status === 'checking' || status === 'delivered' || status === 'bounced';
+    const delivered = status === 'delivered';
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 space-y-3 text-left"
+        >
+            <p className="text-sm font-semibold text-center">Línea de Tiempo de Entrega</p>
+            <div className="flex items-center gap-2">
+                {/* Step 1: Sent */}
+                <div className="flex flex-col items-center">
+                    <div className={cn("flex items-center justify-center size-8 rounded-full border-2", sent ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500")}>
+                        {sent ? <Send size={16} /> : <Send size={16} />}
+                    </div>
+                    <p className={cn("text-xs mt-1", sent ? "text-green-300" : "text-gray-500")}>Enviado</p>
+                </div>
+                
+                {/* Connector */}
+                <div className="flex-1 h-0.5 bg-gray-600 relative overflow-hidden">
+                    <motion.div 
+                        className="absolute top-0 left-0 h-full bg-green-400"
+                        initial={{ width: '0%' }}
+                        animate={{ width: sent ? '100%' : '0%' }}
+                        transition={{ delay: 0.5, duration: 1 }}
+                    />
+                </div>
+                
+                {/* Step 2: Delivered */}
+                 <div className="flex flex-col items-center">
+                    <div className={cn("flex items-center justify-center size-8 rounded-full border-2", delivered ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500")}>
+                        {status === 'checking' ? <Loader2 size={16} className="animate-spin" /> : <MailCheck size={16} />}
+                    </div>
+                     <p className={cn("text-xs mt-1", delivered ? "text-green-300" : "text-gray-500")}>
+                        {status === 'checking' ? 'Verificando...' : 'Entregado'}
+                    </p>
+                </div>
+            </div>
+             {delivered && (
+                 <p className="text-xs text-center text-green-300/80 pt-2">
+                    ¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.
+                </p>
+            )}
+        </motion.div>
+    );
+}
 
 function DnsInfoModal({
   recordType,
@@ -1453,13 +1479,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-    
-
-    
-
-    
-
-
-    
-
