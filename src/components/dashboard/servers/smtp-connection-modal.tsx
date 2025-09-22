@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -302,16 +303,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (result.success) {
       setTestStatus('success');
-      setDeliveryStatus('sent');
-      // Simulate checking for bounce
-      setTimeout(() => {
-        if (result.error?.includes('rejected') || result.error?.includes('bounce')) {
-            setDeliveryStatus('bounced');
-            setTestError(result.error);
-        } else {
-            setDeliveryStatus('delivered');
-        }
-      }, 3500);
+      setDeliveryStatus('delivered');
       toast({
         title: "¡Conexión Exitosa!",
         description: `Correo de prueba despachado a ${values.testEmail}`,
@@ -321,6 +313,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
+       setDeliveryStatus('bounced');
     }
   }
 
@@ -806,9 +799,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </div>
                             <button
                                 onClick={handleSmtpErrorAnalysis}
-                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white bg-gradient-to-r from-[#F00000] to-[#F07000] hover:to-[#F07000]"
+                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                                style={{
+                                    background: 'linear-gradient(to right, #F00000, #F07000)',
+                                }}
                             >
-                                <div className="ai-button-scan absolute inset-0"/>
+                                <div 
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover/error-btn:opacity-100 transition-opacity"
+                                    style={{
+                                        animation: 'button-scan 2s linear infinite'
+                                    }}
+                                />
                                 <div className="relative z-10 flex items-center justify-center gap-2">
                                     <div className="flex items-end gap-0.5 h-4">
                                         <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
@@ -1117,7 +1118,8 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
                             const result = await analyzeSmtpErrorAction({ error: testError });
                             setSmtpErrorAnalysis(result.success && result.data ? result.data.analysis : result.error || 'No se pudo generar un análisis.');
                         }}
-                        className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white bg-gradient-to-r from-[#F00000] to-[#F07000] hover:to-[#F07000]"
+                        className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                        style={{ background: 'linear-gradient(to right, #F00000, #F07000)' }}
                     >
                         <div className="ai-button-scan absolute inset-0"/>
                         <div className="relative z-10 flex items-center justify-center gap-2">
@@ -1294,12 +1296,12 @@ function DnsInfoModal({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                  className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                <Button 
+                    onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
                 >
                     Sí, generar nueva
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -1561,6 +1563,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
 
 
 

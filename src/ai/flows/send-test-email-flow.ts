@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A flow to send a test email via SMTP.
@@ -73,6 +74,9 @@ const sendTestEmailFlow = ai.defineFlow(
         html: '<b>¡Tu conexión SMTP está funcionando correctamente!</b>',
       });
 
+      // This part is tricky. Nodemailer's "success" only means the email was *accepted* for delivery.
+      // It doesn't guarantee it wasn't bounced. We check for bounce-related error messages in the catch block.
+      // If no error is thrown, we assume it's sent.
       return {
         success: true,
         messageId: info.messageId,
