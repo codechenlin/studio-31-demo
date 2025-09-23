@@ -23,7 +23,7 @@ export default function BouncesPage() {
                 Buzón de Rebotes
               </h1>
               <div className="relative flex items-center justify-center size-8 ml-2">
-                  <Database className="text-red-500/80 size-7" />
+                  <ShieldAlert className="text-red-500/80 size-7" />
                   <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
               </div>
           </div>

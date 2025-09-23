@@ -31,7 +31,7 @@ export default function SpamPage() {
                 Bandeja de Spam
               </h1>
                <div className="relative flex items-center justify-center size-8 ml-2">
-                  <Database className="text-amber-500/80 size-7" />
+                  <MailWarning className="text-amber-500/80 size-7" />
                   <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse" />
               </div>
             </div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export default function MainInboxPage() {
   return (
@@ -33,8 +34,12 @@ export default function MainInboxPage() {
           </p>
         </header>
 
-        <Card className="bg-card/80 backdrop-blur-sm dark:border-border/50 shadow-lg mb-6 relative overflow-hidden dark:bg-card/80 border-primary/20">
-          <div className="absolute inset-0 dark:hidden bg-gradient-to-r from-primary/10 to-accent/10" />
+        <Card className={cn(
+          "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
+          "dark:border-border/50 border-primary/20",
+          "dark:bg-card/80",
+          "bg-gradient-to-r from-primary/10 to-accent/10"
+        )}>
           <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
             <div className="flex-1 flex items-center gap-4 w-full">
               <Select defaultValue="domain1">
@@ -74,10 +79,18 @@ export default function MainInboxPage() {
                 <div className="absolute inset-8 bg-primary/5 rounded-full animate-pulse"></div>
                 <MailCheck className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
             </div>
-            <h2 className="text-2xl font-bold mt-8 text-black dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-primary dark:to-accent">Buzón Principal Listo</h2>
-            <p className="text-black/80 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-primary/80 dark:to-accent/80 mt-2 max-w-md">
-                Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
-            </p>
+             <div className="dark:hidden p-4 bg-black/5 backdrop-blur-sm rounded-lg border border-border/20 mt-8">
+              <h2 className="text-2xl font-bold mt-8 text-black dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-primary dark:to-accent">Buzón Principal Listo</h2>
+              <p className="text-black/80 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-primary/80 dark:to-accent/80 mt-2 max-w-md">
+                  Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
+              </p>
+            </div>
+            <div className="hidden dark:block mt-8">
+                 <h2 className="text-2xl font-bold text-black dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-primary dark:to-accent">Buzón Principal Listo</h2>
+                <p className="text-black/80 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-primary/80 dark:to-accent/80 mt-2 max-w-md">
+                    Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
+                </p>
+            </div>
         </div>
       </div>
     </main>
