@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { MailWarning, Database, Search, ChevronDown, Filter } from 'lucide-react';
+import { MailWarning, Database, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,8 +38,9 @@ export default function SpamPage() {
           </p>
         </header>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg mb-6">
-          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
+        <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10" />
+          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
             <div className="flex-1 flex items-center gap-4 w-full">
               <Select defaultValue="domain1">
                 <SelectTrigger className="w-full md:w-[250px] bg-background/70">

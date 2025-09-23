@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { ShieldAlert, Database, Search, ChevronDown, Filter } from 'lucide-react';
+import { ShieldAlert, Database, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,7 +17,7 @@ export default function BouncesPage() {
       <div className="relative z-10">
         <header className="mb-8">
           <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-amber-400 flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-400 flex items-center gap-3">
                 <ShieldAlert className="size-8"/>
                 Buzón de Rebotes
               </h1>
@@ -32,8 +32,9 @@ export default function BouncesPage() {
           </p>
         </header>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg mb-6">
-          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
+        <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-rose-500/10" />
+          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
             <div className="flex-1 flex items-center gap-4 w-full">
               <Select defaultValue="domain1">
                 <SelectTrigger className="w-full md:w-[250px] bg-background/70">
