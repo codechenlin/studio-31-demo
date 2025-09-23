@@ -9,9 +9,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
+import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailView } from '@/components/dashboard/inbox/email-view';
+
+const mockBouncedEmails: Email[] = [
+    {
+      id: 'bounce-1',
+      from: 'Servidor de Correo',
+      subject: 'Fallo de Entrega: Campaña de Lanzamiento',
+      body: 'No se pudo entregar el correo a <strong>usuario.inexistente@dominiofalso.com</strong>. <br>Razón: El buzón de correo no existe (Error 550). <br><br> <img src="https://picsum.photos/seed/bounce1/600/300" data-ai-hint="error code" alt="Error" />',
+      snippet: 'No se pudo entregar el correo a...',
+      date: new Date(Date.now() - 1000 * 60 * 15),
+      read: true,
+    },
+    {
+      id: 'bounce-2',
+      from: 'Mail Delivery Subsystem',
+      subject: 'Delivery Status Notification (Failure)',
+      body: 'Your message to <strong>correo.lleno@servidor.com</strong> could not be delivered. <br>Reason: Mailbox full. <br><br> <img src="https://picsum.photos/seed/bounce2/600/300" data-ai-hint="data storage" alt="Almacenamiento" />',
+      snippet: 'Your message could not be delivered...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 8),
+      read: true,
+    },
+];
 
 export default function BouncesPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockBouncedEmails[0]);
 
   return (
     <>
@@ -98,17 +122,17 @@ export default function BouncesPage() {
             </CardContent>
         </Card>
 
-        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
-            <div className="relative w-48 h-48 flex items-center justify-center">
-                <div className="absolute inset-0 border-2 border-red-500/20 rounded-full animate-spin" style={{ animationDuration: '10s' }}></div>
-                <div className="absolute inset-4 border border-red-500/10 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}></div>
-                <div className="absolute inset-8 bg-red-500/5 rounded-full animate-pulse"></div>
-                <ShieldAlert className="relative z-10 size-20 text-red-400" style={{ filter: 'drop-shadow(0 0 10px #f43f5e)' }}/>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="md:col-span-1 lg:col-span-1">
+                <EmailList 
+                    emails={mockBouncedEmails}
+                    selectedEmail={selectedEmail}
+                    onSelectEmail={setSelectedEmail}
+                />
             </div>
-            <h2 className="text-2xl font-bold text-black dark:text-red-300 mt-8">Bandeja de Rebotes Vacía</h2>
-            <p className="text-black/70 dark:text-red-200/70 mt-2 max-w-md">
-              No se han detectado rebotes. Este es el lugar donde aparecerán los correos que no se pudieron entregar, permitiéndote diagnosticar y solucionar problemas.
-            </p>
+            <div className="md:col-span-2 lg:col-span-3">
+                <EmailView email={selectedEmail} />
+            </div>
         </div>
       </div>
     </main>

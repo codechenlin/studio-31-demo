@@ -10,9 +10,51 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
+import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailView } from '@/components/dashboard/inbox/email-view';
+
+const mockEmails: Email[] = [
+    {
+      id: '1',
+      from: 'Elena Rodriguez',
+      subject: '¡Bienvenido a Mailflow AI!',
+      body: 'Hola, estamos encantados de tenerte a bordo. Prepárate para llevar tu marketing por correo electrónico al siguiente nivel. <br><br> <img src="https://picsum.photos/seed/welcome/600/300" data-ai-hint="welcome party" alt="Bienvenida" />',
+      snippet: 'Prepárate para llevar tu marketing...',
+      date: new Date(Date.now() - 1000 * 60 * 5),
+      read: false,
+    },
+    {
+      id: '2',
+      from: 'Notificaciones de la Plataforma',
+      subject: 'Actualización de Seguridad Importante',
+      body: 'Hemos actualizado nuestros protocolos de seguridad. No se requiere ninguna acción por tu parte, pero te recomendamos revisar la nueva configuración de privacidad.',
+      snippet: 'Hemos actualizado nuestros protocolos...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 2),
+      read: false,
+    },
+    {
+      id: '3',
+      from: 'Equipo de Soporte',
+      subject: 'Re: Tu consulta sobre la API',
+      body: 'Hola, hemos recibido tu consulta sobre la integración de la API. Nuestro equipo la está revisando y te responderá en las próximas 24 horas. ¡Gracias por tu paciencia!',
+      snippet: 'Hemos recibido tu consulta...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 24),
+      read: true,
+    },
+    {
+      id: '4',
+      from: 'Análisis Semanal',
+      subject: '📈 Tu informe de rendimiento de la campaña está listo',
+      body: '¡Buenas noticias! Tu última campaña "Lanzamiento de Verano" superó las expectativas con una tasa de apertura del 35%. <br><br> <img src="https://picsum.photos/seed/analytics/600/300" data-ai-hint="data analytics" alt="Gráficos" />',
+      snippet: '¡Buenas noticias! Tu última campaña...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+      read: true,
+    },
+];
 
 export default function MainInboxPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockEmails[0]);
 
   return (
     <>
@@ -39,11 +81,11 @@ export default function MainInboxPage() {
             </p>
           </header>
 
-          <Card className={cn(
+           <Card className={cn(
             "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
             "dark:border-border/50 border-transparent",
-            "dark:bg-card/80",
-            "bg-gradient-to-r from-primary/10 to-accent/10 light:bg-gradient-to-r light:from-purple-100 light:to-cyan-100"
+            "light:bg-gradient-to-r light:from-purple-100 light:to-cyan-100",
+            "bg-gradient-to-r from-primary/10 to-accent/10 dark:from-primary/10 dark:to-accent/10"
           )}>
             <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-4 w-full md:w-auto">
@@ -74,7 +116,7 @@ export default function MainInboxPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70 dark:border-border/50 border-primary/30" />
               </div>
-              <Button variant="outline" className="w-full md:w-auto bg-background/70 dark:border-border/50 border-primary/30 dark:hover:bg-card/70 hover:bg-cyan-500 hover:text-white">
+              <Button variant="outline" className="w-full md:w-auto bg-background/70 dark:border-border/50 border-primary/30 hover:bg-cyan-500 hover:text-white">
                   <Tag className="mr-2 size-4" />
                   Etiquetas
               </Button>
@@ -106,20 +148,18 @@ export default function MainInboxPage() {
                   </div>
               </CardContent>
           </Card>
-
-          <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
-              <div className="relative w-48 h-48 flex items-center justify-center">
-                  <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
-                  <div className="absolute inset-4 border-primary/10 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}></div>
-                  <div className="absolute inset-8 bg-primary/5 rounded-full animate-pulse"></div>
-                  <Database className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
-              </div>
-              <div className="mt-8">
-                  <h2 className="text-2xl font-bold text-black dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-primary dark:to-accent">Buzón Principal Listo</h2>
-                  <p className="text-black/80 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-primary/80 dark:to-accent/80 mt-2 max-w-md">
-                      Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
-                  </p>
-              </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="md:col-span-1 lg:col-span-1">
+                <EmailList 
+                    emails={mockEmails}
+                    selectedEmail={selectedEmail}
+                    onSelectEmail={setSelectedEmail}
+                />
+            </div>
+            <div className="md:col-span-2 lg:col-span-3">
+              <EmailView email={selectedEmail} />
+            </div>
           </div>
         </div>
       </main>

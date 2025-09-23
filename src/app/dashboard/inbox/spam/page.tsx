@@ -9,9 +9,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
+import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailView } from '@/components/dashboard/inbox/email-view';
+
+const mockSpamEmails: Email[] = [
+    {
+      id: 'spam-1',
+      from: 'Gana $$$ Rápido',
+      subject: '¡Oportunidad ÚNICA que no puedes dejar pasar!',
+      body: 'Felicidades, has sido seleccionado para una oportunidad de inversión exclusiva. ¡Retornos garantizados del 500%! <br><br> <img src="https://picsum.photos/seed/spam1/600/300" data-ai-hint="money prize" alt="Premio" />',
+      snippet: 'Felicidades, has sido seleccionado...',
+      date: new Date(Date.now() - 1000 * 60 * 30),
+      read: false,
+    },
+    {
+      id: 'spam-2',
+      from: 'Soporte Técnico URGENTE',
+      subject: 'Alerta de Seguridad: Tu cuenta ha sido comprometida',
+      body: 'Detectamos actividad sospechosa en tu cuenta. Por favor, haz clic aquí para verificar tu identidad de inmediato. <br><br> <img src="https://picsum.photos/seed/spam2/600/300" data-ai-hint="security alert" alt="Alerta" />',
+      snippet: 'Detectamos actividad sospechosa...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 5),
+      read: false,
+    },
+];
 
 export default function SpamPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockSpamEmails[0]);
 
   return (
     <>
@@ -106,17 +130,17 @@ export default function SpamPage() {
             </CardContent>
         </Card>
 
-        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
-             <div className="relative w-48 h-48 flex items-center justify-center">
-                <div className="absolute inset-0 border-2 border-amber-500/20 rounded-full animate-spin" style={{ animationDuration: '7s' }}></div>
-                <div className="absolute inset-4 border border-amber-500/10 rounded-full animate-spin" style={{ animationDuration: '9s', animationDirection: 'reverse' }}></div>
-                <div className="absolute inset-8 bg-amber-500/5 rounded-full animate-pulse"></div>
-                <MailWarning className="relative z-10 size-20 text-amber-400" style={{ filter: 'drop-shadow(0 0 10px #f59e0b)' }}/>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="md:col-span-1 lg:col-span-1">
+                <EmailList 
+                    emails={mockSpamEmails}
+                    selectedEmail={selectedEmail}
+                    onSelectEmail={setSelectedEmail}
+                />
             </div>
-            <h2 className="text-2xl font-bold text-black dark:text-amber-300 mt-8">Bandeja de Spam Vacía</h2>
-            <p className="text-black/70 dark:text-amber-200/70 mt-2 max-w-md">
-              Nuestro sistema de IA no ha detectado correos sospechosos. Cuando lo haga, aparecerán aquí para tu revisión.
-            </p>
+            <div className="md:col-span-2 lg:col-span-3">
+                <EmailView email={selectedEmail} />
+            </div>
         </div>
       </div>
     </main>
