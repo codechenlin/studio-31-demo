@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { MailCheck, Database, Search } from 'lucide-react';
+import { MailCheck, Database, Search, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,7 +25,7 @@ export default function MainInboxPage() {
                 Buzón Principal
               </h1>
                <div className="relative flex items-center justify-center size-8 ml-2">
-                  <Database className="text-primary/70 size-7" />
+                  <MailCheck className="text-primary/70 size-7" />
                   <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
               </div>
             </div>
@@ -36,14 +36,14 @@ export default function MainInboxPage() {
 
         <Card className={cn(
           "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
-          "dark:border-border/50 border-primary/20",
+          "dark:border-border/50 border-transparent",
           "dark:bg-card/80",
           "bg-gradient-to-r from-primary/10 to-accent/10"
         )}>
-          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
-            <div className="flex-1 flex items-center gap-4 w-full">
+          <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4 w-full md:w-auto">
               <Select defaultValue="domain1">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70 dark:border-border/50 border-primary/30">
+                <SelectTrigger className="w-full sm:w-[200px] bg-background/70 dark:border-border/50 border-primary/30">
                   <div className="flex items-center gap-2">
                     <Database className="size-4" />
                     <SelectValue />
@@ -55,7 +55,7 @@ export default function MainInboxPage() {
                 </SelectContent>
               </Select>
                <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70 dark:border-border/50 border-primary/30">
+                <SelectTrigger className="w-full sm:w-[220px] bg-background/70 dark:border-border/50 border-primary/30">
                    <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -65,10 +65,14 @@ export default function MainInboxPage() {
                 </SelectContent>
               </Select>
             </div>
-             <div className="relative w-full md:w-auto md:min-w-[300px]">
+             <div className="relative w-full md:flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70 dark:border-border/50 border-primary/30" />
             </div>
+             <Button variant="outline" className="w-full md:w-auto bg-background/70 dark:border-border/50 border-primary/30 dark:hover:bg-card/70 hover:bg-primary/5">
+                <Tag className="mr-2 size-4" />
+                Etiquetas
+            </Button>
           </CardContent>
         </Card>
 
@@ -80,8 +84,8 @@ export default function MainInboxPage() {
                 <MailCheck className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
             </div>
              <div className="dark:hidden p-4 bg-black/5 backdrop-blur-sm rounded-lg border border-border/20 mt-8">
-              <h2 className="text-2xl font-bold mt-8 text-black dark:bg-clip-text dark:text-transparent dark:bg-gradient-to-r dark:from-primary dark:to-accent">Buzón Principal Listo</h2>
-              <p className="text-black/80 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-primary/80 dark:to-accent/80 mt-2 max-w-md">
+              <h2 className="text-2xl font-bold mt-8 text-black">Buzón Principal Listo</h2>
+              <p className="text-black/80 mt-2 max-w-md">
                   Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
               </p>
             </div>

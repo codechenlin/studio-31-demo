@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { ShieldAlert, Database, Search } from 'lucide-react';
+import { ShieldAlert, Database, Search, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,10 +34,10 @@ export default function BouncesPage() {
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-rose-500/10" />
-          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
-            <div className="flex-1 flex items-center gap-4 w-full">
+          <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4 w-full md:w-auto">
               <Select defaultValue="domain1">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70 border-red-500/30">
+                <SelectTrigger className="w-full sm:w-[200px] bg-background/70 border-red-500/30">
                   <div className="flex items-center gap-2">
                     <Database className="size-4" />
                     <SelectValue />
@@ -49,7 +49,7 @@ export default function BouncesPage() {
                 </SelectContent>
               </Select>
                <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70 border-red-500/30">
+                <SelectTrigger className="w-full sm:w-[220px] bg-background/70 border-red-500/30">
                    <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -59,10 +59,14 @@ export default function BouncesPage() {
                 </SelectContent>
               </Select>
             </div>
-             <div className="relative w-full md:w-auto md:min-w-[300px]">
+             <div className="relative w-full md:flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar por destinatario o asunto..." className="pl-10 bg-background/70 border-red-500/30" />
             </div>
+             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-red-500/30 hover:bg-red-500/10">
+                <Tag className="mr-2 size-4" />
+                Etiquetas
+            </Button>
           </CardContent>
         </Card>
 
