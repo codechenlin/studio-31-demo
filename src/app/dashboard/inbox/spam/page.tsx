@@ -81,8 +81,8 @@ export default function SpamPage() {
                 <div className="absolute inset-8 bg-amber-500/5 rounded-full animate-pulse"></div>
                 <MailWarning className="relative z-10 size-20 text-amber-400" style={{ filter: 'drop-shadow(0 0 10px #f59e0b)' }}/>
             </div>
-            <h2 className="text-2xl font-bold text-amber-300 mt-8">Bandeja de Spam Vacía</h2>
-            <p className="text-amber-200/70 mt-2 max-w-md">
+            <h2 className="text-2xl font-bold text-black dark:text-amber-300 mt-8">Bandeja de Spam Vacía</h2>
+            <p className="text-black/70 dark:text-amber-200/70 mt-2 max-w-md">
               Nuestro sistema de IA no ha detectado correos sospechosos. Cuando lo haga, aparecerán aquí para tu revisión.
             </p>
         </div>

@@ -73,8 +73,8 @@ export default function BouncesPage() {
                 <div className="absolute inset-8 bg-red-500/5 rounded-full animate-pulse"></div>
                 <ShieldAlert className="relative z-10 size-20 text-red-400" style={{ filter: 'drop-shadow(0 0 10px #f43f5e)' }}/>
             </div>
-            <h2 className="text-2xl font-bold text-red-300 mt-8">Bandeja de Rebotes Vacía</h2>
-            <p className="text-red-200/70 mt-2 max-w-md">
+            <h2 className="text-2xl font-bold text-black dark:text-red-300 mt-8">Bandeja de Rebotes Vacía</h2>
+            <p className="text-black/70 dark:text-red-200/70 mt-2 max-w-md">
               No se han detectado rebotes. Este es el lugar donde aparecerán los correos que no se pudieron entregar, permitiéndote diagnosticar y solucionar problemas.
             </p>
         </div>
