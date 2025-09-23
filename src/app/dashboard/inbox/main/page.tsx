@@ -2,12 +2,13 @@
 "use client";
 
 import React from 'react';
-import { MailCheck, Database, Search, Tag } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 export default function MainInboxPage() {
   return (
@@ -25,7 +26,7 @@ export default function MainInboxPage() {
                 Buzón Principal
               </h1>
                <div className="relative flex items-center justify-center size-8 ml-2">
-                  <MailCheck className="text-primary/70 size-7" />
+                  <Database className="text-primary/70 size-7" />
                   <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
               </div>
             </div>
@@ -35,7 +36,7 @@ export default function MainInboxPage() {
         </header>
 
         <Card className={cn(
-          "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
+          "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
           "dark:border-border/50 border-transparent",
           "dark:bg-card/80",
           "bg-gradient-to-r from-primary/10 to-accent/10"
@@ -69,11 +70,37 @@ export default function MainInboxPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70 dark:border-border/50 border-primary/30" />
             </div>
-             <Button variant="outline" className="w-full md:w-auto bg-background/70 dark:border-border/50 border-primary/30 dark:hover:bg-card/70 hover:bg-primary/5">
+             <Button variant="outline" className="w-full md:w-auto bg-background/70 dark:border-border/50 border-primary/30 dark:hover:bg-card/70 hover:bg-cyan-500 hover:text-white">
                 <Tag className="mr-2 size-4" />
                 Etiquetas
             </Button>
           </CardContent>
+        </Card>
+        
+        <Card className={cn(
+          "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
+          "dark:border-border/50 border-transparent",
+           "bg-gradient-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10"
+        )}>
+            <CardContent className="p-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="hover:bg-primary/20"><Square/></Button>
+                    <Separator orientation="vertical" className="h-6" />
+                    <Button variant="ghost" size="icon" className="hover:bg-primary/20"><RefreshCw/></Button>
+                </div>
+                 <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
+                        <span className="text-muted-foreground">1-50 de</span>
+                        <span className="font-bold text-foreground">12,345</span>
+                    </div>
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" className="hover:bg-primary/20"><ChevronLeft/></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-primary/20"><ChevronRight/></Button>
+                    </div>
+                    <Separator orientation="vertical" className="h-6" />
+                    <Button variant="ghost" size="icon" className="hover:bg-primary/20"><Shield /></Button>
+                </div>
+            </CardContent>
         </Card>
 
         <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">

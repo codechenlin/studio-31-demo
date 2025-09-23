@@ -2,11 +2,12 @@
 "use client";
 
 import React from 'react';
-import { ShieldAlert, Database, Search, Tag } from 'lucide-react';
+import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function BouncesPage() {
   return (
@@ -32,7 +33,7 @@ export default function BouncesPage() {
           </p>
         </header>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-6 relative overflow-hidden">
+        <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-rose-500/10" />
           <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-4 w-full md:w-auto">
@@ -63,11 +64,34 @@ export default function BouncesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar por destinatario o asunto..." className="pl-10 bg-background/70 border-red-500/30" />
             </div>
-             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-red-500/30 hover:bg-red-500/10">
+             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-red-500/30 hover:bg-cyan-500 hover:text-white">
                 <Tag className="mr-2 size-4" />
                 Etiquetas
             </Button>
           </CardContent>
+        </Card>
+        
+        <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-6 relative overflow-hidden">
+             <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-rose-500/5" />
+            <CardContent className="p-2 flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Square/></Button>
+                    <Separator orientation="vertical" className="h-6 bg-red-500/30" />
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><RefreshCw/></Button>
+                </div>
+                 <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
+                        <span className="text-muted-foreground">1-50 de</span>
+                        <span className="font-bold text-foreground">12,345</span>
+                    </div>
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronLeft/></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronRight/></Button>
+                    </div>
+                    <Separator orientation="vertical" className="h-6 bg-red-500/30" />
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Shield /></Button>
+                </div>
+            </CardContent>
         </Card>
 
         <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
