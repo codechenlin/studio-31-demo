@@ -16,10 +16,17 @@ export default function BouncesPage() {
       />
       <div className="relative z-10">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-amber-400 flex items-center gap-3">
-            <ShieldAlert className="size-8"/>
-            Buzón de Rebotes
-          </h1>
+          <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-amber-400 flex items-center gap-3">
+                <ShieldAlert className="size-8"/>
+                Buzón de Rebotes
+              </h1>
+              <div className="flex items-end gap-1 h-8">
+                  <span className="w-1 h-2/5 bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0s'}}/>
+                  <span className="w-1 h-full bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}/>
+                  <span className="w-1 h-3/5 bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}/>
+              </div>
+          </div>
           <p className="text-muted-foreground mt-1">
             Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
           </p>
@@ -55,10 +62,6 @@ export default function BouncesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar por destinatario o asunto..." className="pl-10 bg-background/70" />
             </div>
-            <Button variant="outline" className="w-full md:w-auto">
-              <Filter className="mr-2" />
-              Filtros Avanzados
-            </Button>
           </CardContent>
         </Card>
 

@@ -16,10 +16,17 @@ export default function MainInboxPage() {
       />
       <div className="relative z-10">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
-            <MailCheck className="size-8"/>
-            Buzón Principal
-          </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
+                <MailCheck className="size-8"/>
+                Buzón Principal
+              </h1>
+               <div className="flex items-end gap-1 h-8">
+                  <span className="w-1 h-2/5 bg-primary rounded-full animate-pulse" style={{animationDelay: '0s'}}/>
+                  <span className="w-1 h-full bg-primary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}/>
+                  <span className="w-1 h-3/5 bg-primary rounded-full animate-pulse" style={{animationDelay: '0.4s'}}/>
+              </div>
+            </div>
           <p className="text-muted-foreground mt-1">
             Aquí recibirás todos tus correos importantes y comunicaciones generales.
           </p>
@@ -55,10 +62,6 @@ export default function MainInboxPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70" />
             </div>
-            <Button variant="outline" className="w-full md:w-auto">
-              <Filter className="mr-2" />
-              Filtros
-            </Button>
           </CardContent>
         </Card>
 
