@@ -44,6 +44,10 @@ import {
   FilePlus,
   Leaf,
   Trees,
+  Inbox,
+  ShieldAlert,
+  MailWarning,
+  MailCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +65,16 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/component
 
 const menuItems = [
   { href: "/dashboard", label: "Escritorio", icon: LayoutDashboard },
+  { 
+    href: "/dashboard/inbox",
+    label: "Buzón",
+    icon: Inbox,
+    submenu: [
+      { href: "/dashboard/inbox/main", label: "Principal", icon: MailCheck },
+      { href: "/dashboard/inbox/spam", label: "Spam", icon: MailWarning },
+      { href: "/dashboard/inbox/bounces", label: "Rebotes", icon: ShieldAlert },
+    ]
+  },
   { 
     href: "/dashboard/campaigns", 
     label: "Campaña", 
