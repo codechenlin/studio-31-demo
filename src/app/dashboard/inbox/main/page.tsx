@@ -33,11 +33,12 @@ export default function MainInboxPage() {
           </p>
         </header>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg mb-6">
-          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4">
+        <Card className="bg-card/80 backdrop-blur-sm dark:border-border/50 shadow-lg mb-6 relative overflow-hidden dark:bg-card/80 border-primary/20">
+          <div className="absolute inset-0 dark:hidden bg-gradient-to-r from-primary/10 to-accent/10" />
+          <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
             <div className="flex-1 flex items-center gap-4 w-full">
               <Select defaultValue="domain1">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70">
+                <SelectTrigger className="w-full md:w-[250px] bg-background/70 dark:border-border/50 border-primary/30">
                   <div className="flex items-center gap-2">
                     <Database className="size-4" />
                     <SelectValue />
@@ -49,7 +50,7 @@ export default function MainInboxPage() {
                 </SelectContent>
               </Select>
                <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70">
+                <SelectTrigger className="w-full md:w-[250px] bg-background/70 dark:border-border/50 border-primary/30">
                    <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -61,7 +62,7 @@ export default function MainInboxPage() {
             </div>
              <div className="relative w-full md:w-auto md:min-w-[300px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70" />
+              <Input placeholder="Buscar en el buzón principal..." className="pl-10 bg-background/70 dark:border-border/50 border-primary/30" />
             </div>
           </CardContent>
         </Card>
@@ -69,7 +70,7 @@ export default function MainInboxPage() {
         <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
             <div className="relative w-48 h-48 flex items-center justify-center">
                 <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
-                <div className="absolute inset-4 border border-primary/10 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}></div>
+                <div className="absolute inset-4 border-primary/10 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}></div>
                 <div className="absolute inset-8 bg-primary/5 rounded-full animate-pulse"></div>
                 <MailCheck className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
             </div>
