@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
-import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 
 const mockEmails: Email[] = [
@@ -54,7 +54,19 @@ const mockEmails: Email[] = [
 
 export default function MainInboxPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockEmails[0]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+  const handleSelectEmail = (email: Email) => {
+    setSelectedEmail(email);
+  };
+  
+  const handleBackToList = () => {
+      setSelectedEmail(null);
+  }
+
+  if (selectedEmail) {
+      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+  }
 
   return (
     <>
@@ -84,8 +96,8 @@ export default function MainInboxPage() {
            <Card className={cn(
             "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
             "dark:border-border/50 border-transparent",
-            "light:bg-gradient-to-r light:from-purple-100 light:to-cyan-100",
-            "bg-gradient-to-r from-primary/10 to-accent/10 dark:from-primary/10 dark:to-accent/10"
+            "dark:from-primary/10 dark:to-accent/10",
+            "bg-gradient-to-r from-purple-100 to-cyan-100"
           )}>
             <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-4 w-full md:w-auto">
@@ -149,17 +161,10 @@ export default function MainInboxPage() {
               </CardContent>
           </Card>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div className="md:col-span-1 lg:col-span-1">
-                <EmailList 
-                    emails={mockEmails}
-                    selectedEmail={selectedEmail}
-                    onSelectEmail={setSelectedEmail}
-                />
-            </div>
-            <div className="md:col-span-2 lg:col-span-3">
-              <EmailView email={selectedEmail} />
-            </div>
+          <div className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
+            {mockEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockEmails.length - 1} />
+            ))}
           </div>
         </div>
       </main>
@@ -167,3 +172,5 @@ export default function MainInboxPage() {
     </>
   );
 }
+
+    

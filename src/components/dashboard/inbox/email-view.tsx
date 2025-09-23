@@ -1,35 +1,42 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { CornerDownLeft, Eye, EyeOff, FolderOpen, Trash2, Archive, Clock } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { type Email } from './email-list';
+import { type Email } from './email-list-item';
 
 interface EmailViewProps {
   email: Email | null;
+  onBack: () => void;
 }
 
-export function EmailView({ email }: EmailViewProps) {
+export function EmailView({ email, onBack }: EmailViewProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isReportingSpam, setIsReportingSpam] = useState(false);
   const [showImages, setShowImages] = useState(false);
-
-  useEffect(() => {
-    // Reset image visibility when a new email is selected
-    setShowImages(false);
-  }, [email]);
 
   if (!email) {
     return (
-      <Card className="h-full flex items-center justify-center bg-card/50">
-        <div className="text-center text-muted-foreground">
-          <FolderOpen className="mx-auto size-12 mb-4"/>
-          <p>Selecciona un correo para leerlo</p>
+       <div className="w-full h-full flex flex-col items-center justify-center bg-background text-muted-foreground p-8 text-center">
+            <FolderOpen className="size-16 mb-4"/>
+            <h2 className="text-xl font-semibold">Selecciona un correo para leerlo</h2>
+            <p>Tu correo seleccionado aparecerá aquí.</p>
         </div>
-      </Card>
     );
   }
 
@@ -53,42 +60,84 @@ export function EmailView({ email }: EmailViewProps) {
       });
 
   return (
-    <Card className="h-[70vh] flex flex-col">
-      <CardHeader className="p-4 border-b">
-        <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold truncate">{email.subject}</h2>
+    <>
+    <main className="flex-1 flex flex-col h-screen bg-background">
+        <header className="p-2 border-b flex items-center justify-between sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-2">
-                 <Button variant="ghost" size="icon"><Trash2 className="size-4"/></Button>
-                 <Button variant="ghost" size="icon"><Archive className="size-4"/></Button>
-                 <Button variant="ghost" size="icon"><Clock className="size-4"/></Button>
-                 <Button variant="ghost" size="icon"><CornerDownLeft className="size-4"/></Button>
+                <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft/></Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsDeleting(true)}><Trash2/></Button>
+                <Button variant="ghost" size="icon"><Star/></Button>
             </div>
-        </div>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>De: <span className="font-medium text-foreground">{email.from}</span></p>
-            <p>{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
-        </div>
-        {!showImages && email.body.includes('<img') && (
-            <div className="mt-2 p-2 rounded-md bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-between gap-2">
-                <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    <EyeOff className="inline-block mr-2 size-4"/>
-                    Se ha bloqueado la carga de imágenes para proteger tu privacidad.
-                </p>
-                <Button size="sm" variant="outline" className="shrink-0" onClick={() => setShowImages(true)}>
-                    <Eye className="mr-2 size-4"/>
-                    Cargar Imágenes
-                </Button>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
+                <Button variant="ghost" size="icon"><Languages/></Button>
             </div>
-        )}
-      </CardHeader>
-      <ScrollArea className="flex-1">
-        <CardContent className="p-6">
-          <div
-            className="prose dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-          />
-        </CardContent>
-      </ScrollArea>
-    </Card>
+        </header>
+
+        <ScrollArea className="flex-1">
+            <div className="p-4 md:p-8 max-w-4xl mx-auto">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">{email.subject}</h1>
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
+                    <p>De: <span className="font-medium text-foreground">{email.from}</span></p>
+                    <p>{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
+                </div>
+                
+                 {!showImages && email.body.includes('<img') && (
+                    <div className="mb-6 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-between gap-2">
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                            <EyeOff className="inline-block mr-2 size-4"/>
+                            Se ha bloqueado la carga de imágenes para proteger tu privacidad.
+                        </p>
+                        <Button size="sm" variant="outline" className="shrink-0" onClick={() => setShowImages(true)}>
+                            <Eye className="mr-2 size-4"/>
+                            Cargar Imágenes
+                        </Button>
+                    </div>
+                )}
+                
+                <div
+                    className="prose dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: sanitizedBody }}
+                />
+            </div>
+        </ScrollArea>
+    </main>
+
+    {/* Delete Confirmation Modal */}
+    <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmas la eliminación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El correo se eliminará permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { /* Lógica de eliminación aquí */ setIsDeleting(false); onBack(); }}>
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    
+    {/* Report Spam Modal */}
+    <AlertDialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reportar como Spam</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Deseas mover también todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, solo este correo</AlertDialogCancel>
+            <AlertDialogAction>Sí, y futuros correos</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
+
+    

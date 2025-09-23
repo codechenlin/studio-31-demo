@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
-import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 
 const mockSpamEmails: Email[] = [
@@ -35,7 +35,19 @@ const mockSpamEmails: Email[] = [
 
 export default function SpamPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockSpamEmails[0]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+  const handleSelectEmail = (email: Email) => {
+    setSelectedEmail(email);
+  };
+  
+  const handleBackToList = () => {
+      setSelectedEmail(null);
+  }
+
+  if (selectedEmail) {
+      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+  }
 
   return (
     <>
@@ -130,17 +142,10 @@ export default function SpamPage() {
             </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div className="md:col-span-1 lg:col-span-1">
-                <EmailList 
-                    emails={mockSpamEmails}
-                    selectedEmail={selectedEmail}
-                    onSelectEmail={setSelectedEmail}
-                />
-            </div>
-            <div className="md:col-span-2 lg:col-span-3">
-                <EmailView email={selectedEmail} />
-            </div>
+         <div className="bg-card/60 backdrop-blur-sm border border-amber-500/20 rounded-lg shadow-lg">
+            {mockSpamEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockSpamEmails.length - 1} />
+            ))}
         </div>
       </div>
     </main>
@@ -148,3 +153,5 @@ export default function SpamPage() {
     </>
   );
 }
+
+    
