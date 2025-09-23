@@ -60,13 +60,13 @@ export function EmailView({ email, onBack }: EmailViewProps) {
         `;
       });
 
-  const buttonClass = "size-10 rounded-lg bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
+  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
 
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-lg z-10">
-          <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-800/80 backdrop-blur-sm border border-border/20 flex items-center justify-between">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 flex justify-center">
+          <div className="p-2 rounded-xl bg-card/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-primary/20 flex items-center justify-center gap-4 w-full max-w-lg">
             <div className="flex items-center gap-2">
                 <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
@@ -80,7 +80,7 @@ export function EmailView({ email, onBack }: EmailViewProps) {
         </header>
 
         <ScrollArea className="flex-1">
-            <div className="p-4 md:p-8 max-w-4xl mx-auto pt-24">
+            <div className="p-4 md:p-8 max-w-4xl mx-auto">
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">{email.subject}</h1>
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
                     <p>De: <span className="font-medium text-foreground">{email.from}</span></p>
