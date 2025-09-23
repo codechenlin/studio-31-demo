@@ -1,16 +1,20 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
 
 export default function BouncesPage() {
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+
   return (
+    <>
     <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
       {/* Background Animation */}
       <div 
@@ -89,7 +93,7 @@ export default function BouncesPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Shield /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
                 </div>
             </CardContent>
         </Card>
@@ -108,5 +112,7 @@ export default function BouncesPage() {
         </div>
       </div>
     </main>
+    <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
+    </>
   );
 }
