@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, ShieldLock, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
+import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filter-settings-modal';
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 
@@ -54,10 +55,17 @@ const mockEmails: Email[] = [
 
 export default function MainInboxPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
 
   const handleSelectEmail = (email: Email) => {
-    setSelectedEmail(email);
+    // Mark email as read when selected
+    const updatedEmail = { ...email, read: true };
+    const emailIndex = mockEmails.findIndex(e => e.id === email.id);
+    if(emailIndex !== -1) {
+        mockEmails[emailIndex] = updatedEmail;
+    }
+    setSelectedEmail(updatedEmail);
   };
   
   const handleBackToList = () => {
@@ -137,7 +145,6 @@ export default function MainInboxPage() {
           
           <Card className={cn(
             "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
-            "dark:border-border/50 border-transparent",
             "bg-gradient-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10"
           )}>
               <CardContent className="p-2 flex items-center justify-between">
@@ -145,6 +152,7 @@ export default function MainInboxPage() {
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20"><Square/></Button>
                       <Separator orientation="vertical" className="h-6" />
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20"><RefreshCw/></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-primary/20"><Star/></Button>
                   </div>
                   <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -156,7 +164,8 @@ export default function MainInboxPage() {
                           <Button variant="ghost" size="icon" className="hover:bg-primary/20"><ChevronRight/></Button>
                       </div>
                       <Separator orientation="vertical" className="h-6" />
-                      <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSecurityModalOpen(true)}><ShieldLock /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                   </div>
               </CardContent>
           </Card>
@@ -169,8 +178,7 @@ export default function MainInboxPage() {
         </div>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
+      <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     </>
   );
 }
-
-    

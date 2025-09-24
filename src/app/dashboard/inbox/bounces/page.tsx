@@ -2,13 +2,14 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield } from 'lucide-react';
+import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, ShieldLock, Filter, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
+import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filter-settings-modal';
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 
@@ -35,6 +36,7 @@ const mockBouncedEmails: Email[] = [
 
 export default function BouncesPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
 
   const handleSelectEmail = (email: Email) => {
@@ -119,6 +121,7 @@ export default function BouncesPage() {
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Square/></Button>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><RefreshCw/></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Star/></Button>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -130,7 +133,8 @@ export default function BouncesPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20" onClick={() => setIsSecurityModalOpen(true)}><ShieldLock /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                 </div>
             </CardContent>
         </Card>
@@ -143,6 +147,7 @@ export default function BouncesPage() {
       </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
+    <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     </>
   );
 }
