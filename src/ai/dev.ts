@@ -8,4 +8,5 @@ import '@/ai/flows/send-test-email-flow.ts';
 import '@/ai/flows/dkim-generation-flow.ts';
 import '@/ai/flows/optional-dns-verification-flow.ts';
 import '@/ai/flows/smtp-error-analysis-flow.ts';
+import '@/ai/flows/spam-checker-flow.ts';
     
