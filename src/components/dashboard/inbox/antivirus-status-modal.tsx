@@ -28,76 +28,103 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-zinc-900/90 backdrop-blur-2xl border-2 border-blue-500/20 text-white overflow-hidden" showCloseButton={false}>
-        <div className="absolute inset-0 z-0 opacity-20">
-           <div className="absolute inset-0 bg-grid-blue-500/30 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-        </div>
-         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
-
-        <DialogHeader className="z-10 text-center pt-8">
-          <motion.div 
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 20 }}
-            className="flex justify-center mb-4"
-          >
-            <div className="relative p-4 rounded-full bg-blue-900/50 border-2 border-blue-500/50">
-               <Shield className="text-blue-300 size-10" />
-               <div className="absolute inset-0 rounded-full animate-ping border-2 border-blue-400/50" />
-            </div>
-          </motion.div>
-          <DialogTitle className="text-3xl font-bold">
-            Sistema Antivirus Activo
-          </DialogTitle>
-          <DialogDescription className="text-blue-200/70 text-lg">
-            Estás protegido por nuestro escudo de seguridad ClamAV.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-lg bg-black/30 border border-blue-400/20 space-y-4">
-                <h3 className="font-semibold text-lg text-blue-300 flex items-center gap-2"><Server /> Estado del Servicio</h3>
-                 <div className="flex items-center gap-3 p-3 rounded-md bg-green-500/10 border border-green-400/20">
-                    <div className="relative flex items-center justify-center">
-                        <div className="absolute w-full h-full bg-green-500/30 rounded-full animate-ping"/>
-                        <CheckCircle className="size-5 text-green-400" />
+      <DialogContent className="max-w-5xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-blue-500/30 text-white overflow-hidden" showCloseButton={false}>
+          <style>{`
+            .scanner-grid {
+              background-image:
+                linear-gradient(to right, hsl(210 50% 30% / 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, hsl(210 50% 30% / 0.15) 1px, transparent 1px);
+              background-size: 1rem 1rem;
+            }
+            .scanner-light {
+              width: 150%;
+              height: 100px;
+              background: radial-gradient(ellipse 50% 100% at 50% 0%, hsl(190 100% 50% / 0.4), transparent 70%);
+              animation: scan-anim 4s infinite linear;
+              will-change: transform;
+            }
+            @keyframes scan-anim {
+              0% { transform: translateY(-100px); }
+              100% { transform: translateY(calc(100% + 100px)); }
+            }
+            .dot-highlight {
+              animation: dot-pulse 1.5s infinite;
+            }
+            @keyframes dot-pulse {
+              0%, 100% { background-color: hsl(190 100% 50% / 0.5); box-shadow: 0 0 4px hsl(190 100% 50%); }
+              50% { background-color: hsl(210 100% 70% / 0.8); box-shadow: 0 0 8px hsl(210 100% 70%); }
+            }
+          `}</style>
+        <div className="grid grid-cols-1 md:grid-cols-2 h-full">
+            {/* Left Panel: AI Animation */}
+            <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
+                <div className="absolute inset-0 scanner-grid" />
+                <div className="absolute inset-0 scanner-light" />
+                <motion.div 
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }}
+                    className="relative z-10 flex flex-col items-center text-center"
+                >
+                    <div className="relative p-4 rounded-full bg-blue-900/50 border-2 border-blue-500/50 mb-4">
+                       <Shield className="text-blue-300 size-12" />
+                       <div className="absolute inset-0 rounded-full animate-ping border-2 border-blue-400/50" />
                     </div>
-                    <span className="text-sm font-medium text-white/90">Operativo</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-md bg-gray-500/10 border border-gray-400/20">
-                    <Clock className="size-5 text-gray-400" />
-                    <span className="text-sm font-medium text-white/90">
-                        {isClient ? `Activo desde: ${new Date().toLocaleDateString()}` : 'Cargando...'}
-                    </span>
+                    <h2 className="text-3xl font-bold text-white">Sistema Activo</h2>
+                    <p className="text-blue-200/70 text-lg">Protección en tiempo real</p>
+                    <div className="mt-6 flex items-center gap-3 p-3 rounded-md bg-green-500/10 border border-green-400/20">
+                        <div className="relative flex items-center justify-center">
+                            <div className="absolute w-full h-full bg-green-500/30 rounded-full animate-ping"/>
+                            <CheckCircle className="size-5 text-green-400" />
+                        </div>
+                        <span className="text-sm font-medium text-white/90">Operativo</span>
+                    </div>
+                </motion.div>
+                <div className="absolute bottom-4 left-4 right-4 z-10 p-2 bg-black/40 rounded-lg text-xs text-center text-blue-300/70 border border-blue-500/20">
+                  <p>Escaneo de amenazas activado...</p>
                 </div>
             </div>
-             <div className="space-y-4 p-6 rounded-lg bg-black/30 border border-blue-400/20">
-                <h3 className="font-semibold text-lg text-blue-300">Funciones Principales</h3>
-                 <ul className="space-y-3">
-                  {techItems.map((item, index) => (
-                    <motion.li
-                        key={item.name}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.15 + 0.5 }}
-                        className="flex items-start gap-3"
-                    >
-                        <CheckCircle className="size-5 text-blue-400 mt-0.5 shrink-0" />
-                        <p className="text-sm text-white/80">{item.info}</p>
-                    </motion.li>
-                  ))}
-                </ul>
+
+            {/* Right Panel: Content */}
+            <div className="flex flex-col h-full p-8">
+                <DialogHeader className="text-left">
+                    <DialogTitle className="text-2xl font-bold text-blue-300">
+                        Escudo de Seguridad ClamAV
+                    </DialogTitle>
+                    <DialogDescription className="text-blue-200/70">
+                        Tu sistema está protegido activamente contra virus, troyanos y malware.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 mt-6">
+                    <h3 className="font-semibold text-lg text-white/90 mb-4">Funciones Principales</h3>
+                     <ul className="space-y-4">
+                      {techItems.map((item, index) => (
+                        <motion.li
+                            key={item.name}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.15 + 0.3 }}
+                            className="flex items-start gap-4"
+                        >
+                            <CheckCircle className="size-6 text-blue-400 mt-0.5 shrink-0" />
+                            <div>
+                                <h4 className="font-semibold text-white">{item.name}</h4>
+                                <p className="text-sm text-white/70">{item.info}</p>
+                            </div>
+                        </motion.li>
+                      ))}
+                    </ul>
+                </div>
+                 <DialogFooter className="pt-4">
+                  <Button 
+                    onClick={() => onOpenChange(false)} 
+                    className="w-full text-white bg-blue-800 hover:bg-blue-700"
+                  >
+                    Entendido
+                  </Button>
+                </DialogFooter>
             </div>
         </div>
-
-        <DialogFooter className="z-10 pt-4">
-          <Button 
-            onClick={() => onOpenChange(false)} 
-            className="text-white bg-blue-800 hover:bg-blue-700"
-          >
-            Entendido
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
