@@ -102,4 +102,3 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
     </Dialog>
   );
 }
-
