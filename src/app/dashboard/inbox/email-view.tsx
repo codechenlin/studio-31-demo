@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,20 +14,29 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File, Virus, Loader2, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
+import { scanFileForViruses } from '@/ai/flows/virus-scan-flow';
+import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
 
 interface EmailViewProps {
   email: Email | null;
   onBack: () => void;
 }
 
+type ScanStatus = 'idle' | 'scanning' | 'clean' | 'infected' | 'error';
+
 export function EmailView({ email, onBack }: EmailViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReportingSpam, setIsReportingSpam] = useState(false);
   const [showImages, setShowImages] = useState(false);
+  const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
+  const [scanResult, setScanResult] = useState('');
+  const [isScanning, startScanTransition] = useTransition();
+  const { toast } = useToast();
 
   if (!email) {
     return (
@@ -37,6 +46,67 @@ export function EmailView({ email, onBack }: EmailViewProps) {
             <p>Tu correo seleccionado aparecerá aquí.</p>
         </div>
     );
+  }
+  
+  const extractAttachments = (body: string): { name: string; url: string, hint: string }[] => {
+    const matches = [...body.matchAll(/<img[^>]*src="([^"]*)"[^>]*data-ai-hint="([^"]*)"[^>]*alt="([^"]*)"/g)];
+    return matches.map(match => ({ url: match[1], hint: match[2], name: match[3] }));
+  };
+
+  const attachments = extractAttachments(email.body);
+
+  const handleScan = async (attachmentUrl: string, attachmentName: string) => {
+    setScanStatus('scanning');
+    setScanResult('');
+    
+    startScanTransition(async () => {
+        try {
+            // In a real app, you'd fetch the file content. Here we simulate it.
+            // For demonstration, we'll create a dummy data URI.
+            const dummyFileContent = "dummy_file_content_for_scanning";
+            const fileDataUri = `data:application/octet-stream;base64,${Buffer.from(dummyFileContent).toString('base64')}`;
+
+            const result = await scanFileForViruses({
+                fileName: attachmentName,
+                fileDataUri: fileDataUri,
+            });
+
+            if (result.error) {
+                setScanStatus('error');
+                setScanResult(result.error);
+                 toast({
+                    title: 'Error de Escaneo',
+                    description: result.error,
+                    variant: 'destructive',
+                });
+            } else if (result.isInfected) {
+                setScanStatus('infected');
+                setScanResult(`¡Amenaza detectada! Virus: ${result.viruses.join(', ')}`);
+                toast({
+                    title: '¡Peligro!',
+                    description: 'Se ha detectado un virus en el archivo adjunto.',
+                    variant: 'destructive',
+                });
+            } else {
+                setScanStatus('clean');
+                setScanResult('El archivo es seguro.');
+                 toast({
+                    title: 'Análisis Completo',
+                    description: 'No se encontraron amenazas en el archivo.',
+                    className: 'bg-green-500 text-white'
+                });
+            }
+
+        } catch (e: any) {
+            setScanStatus('error');
+            setScanResult('Ocurrió un error inesperado durante el escaneo.');
+            toast({
+                title: 'Error Inesperado',
+                description: e.message || 'No se pudo completar el análisis.',
+                variant: 'destructive',
+            });
+        }
+    });
   }
 
   const sanitizedBody = showImages
@@ -85,7 +155,7 @@ export function EmailView({ email, onBack }: EmailViewProps) {
                     <p>{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
                 </div>
                 
-                 {!showImages && email.body.includes('<img') && (
+                 {!showImages && attachments.length > 0 && (
                     <div className="mb-6 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-between gap-2">
                         <p className="text-xs text-yellow-700 dark:text-yellow-300">
                             <EyeOff className="inline-block mr-2 size-4"/>
@@ -102,6 +172,33 @@ export function EmailView({ email, onBack }: EmailViewProps) {
                     className="prose dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: sanitizedBody }}
                 />
+                 {attachments.length > 0 && (
+                    <>
+                        <Separator className="my-6" />
+                        <div className="space-y-4">
+                             <h3 className="font-semibold text-lg flex items-center gap-2">
+                                <File className="text-primary"/>
+                                Archivos Adjuntos ({attachments.length})
+                            </h3>
+                            <div className="p-4 border rounded-lg bg-muted/30">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-medium">{attachments[0].name}.jpg</p>
+                                    <Button onClick={() => handleScan(attachments[0].url, attachments[0].name)} disabled={isScanning}>
+                                        {isScanning ? <Loader2 className="mr-2 animate-spin"/> : <Virus className="mr-2"/>}
+                                        {isScanning ? 'Escaneando...' : 'Escanear con Antivirus'}
+                                    </Button>
+                                </div>
+                                {scanStatus !== 'idle' && (
+                                     <div className="mt-4 pt-4 border-t text-sm">
+                                        {scanStatus === 'clean' && <p className="text-green-500 flex items-center gap-2"><CheckCircle/> {scanResult}</p>}
+                                        {scanStatus === 'infected' && <p className="text-destructive flex items-center gap-2"><AlertTriangle/> {scanResult}</p>}
+                                        {scanStatus === 'error' && <p className="text-destructive flex items-center gap-2"><AlertTriangle/> {scanResult}</p>}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </ScrollArea>
     </main>

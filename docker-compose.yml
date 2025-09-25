@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  clamav:
+    image: clamav/clamav:latest
+    container_name: clamav
+    ports:
+      - "3310:3310"
+    restart: unless-stopped
+    volumes:
+      - clamav_data:/var/lib/clamav
+
+volumes:
+  clamav_data:
