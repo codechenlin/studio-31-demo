@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf } from 'lucide-react';
+import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,7 @@ import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-set
 import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filter-settings-modal';
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
+import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 
 const mockBouncedEmails: Email[] = [
     {
@@ -37,6 +38,7 @@ const mockBouncedEmails: Email[] = [
 export default function BouncesPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
+  const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
 
   const handleSelectEmail = (email: Email) => {
@@ -133,9 +135,9 @@ export default function BouncesPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20 border-2 border-transparent hover:border-red-500/50 text-red-500"><ShieldHalf /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500" onClick={() => setIsSecurityModalOpen(true)}><ShieldHalf /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                 </div>
             </CardContent>
         </Card>
@@ -149,6 +151,7 @@ export default function BouncesPage() {
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
+    <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
     </>
   );
 }
