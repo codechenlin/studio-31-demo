@@ -13,10 +13,10 @@ interface AntivirusStatusModalProps {
 }
 
 const techItems = [
-    { name: "Motor ClamAV", info: "Utilizamos el potente motor de código abierto ClamAV para detectar troyanos, virus, malware y otras amenazas maliciosas." },
-    { name: "Actualizaciones en Tiempo Real", info: "La base de datos de firmas de virus se actualiza constantemente para protegerte contra las amenazas más recientes." },
-    { name: "Escaneo de Adjuntos", info: "Cada archivo adjunto en los correos entrantes puede ser escaneado para verificar su seguridad antes de que lo descargues." },
-    { name: "Aislamiento en Docker", info: "El servicio se ejecuta en un contenedor Docker aislado, asegurando que cualquier posible amenaza esté contenida y no afecte tu sistema." }
+    { name: "Potente Motor de Análisis", info: "Utilizamos un avanzado motor de heurística para detectar troyanos, virus, malware y otras amenazas maliciosas en tiempo real." },
+    { name: "Inteligencia de Amenazas Global", info: "Nuestra base de datos se nutre de una red global, actualizándose diariamente contra las últimas ciberamenazas y sofisticadas técnicas de suplantación." },
+    { name: "Escaneo Profundo de Adjuntos", info: "Cada archivo adjunto puede ser inspeccionado a nivel binario, asegurando su integridad antes de que llegue a tu equipo." },
+    { name: "Arquitectura Aislada y Segura", info: "El servicio opera en un entorno de microservicios aislado, garantizando que cualquier amenaza potencial sea neutralizada sin afectar la integridad de tu sistema." }
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
@@ -37,6 +37,9 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
               background-size: 1rem 1rem;
             }
             .scanner-light {
+              position: absolute;
+              left: 50%;
+              transform: translateX(-50%);
               width: 150%;
               height: 100px;
               background: radial-gradient(ellipse 50% 100% at 50% 0%, hsl(190 100% 50% / 0.4), transparent 70%);
@@ -44,22 +47,15 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
               will-change: transform;
             }
             @keyframes scan-anim {
-              0% { transform: translateY(-100px); }
-              100% { transform: translateY(calc(100% + 100px)); }
-            }
-            .dot-highlight {
-              animation: dot-pulse 1.5s infinite;
-            }
-            @keyframes dot-pulse {
-              0%, 100% { background-color: hsl(190 100% 50% / 0.5); box-shadow: 0 0 4px hsl(190 100% 50%); }
-              50% { background-color: hsl(210 100% 70% / 0.8); box-shadow: 0 0 8px hsl(210 100% 70%); }
+              0% { top: -100px; }
+              100% { top: calc(100% + 100px); }
             }
           `}</style>
         <div className="grid grid-cols-1 md:grid-cols-2 h-full">
             {/* Left Panel: AI Animation */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
                 <div className="absolute inset-0 scanner-grid" />
-                <div className="absolute inset-0 scanner-light" />
+                <div className="scanner-light" />
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -79,6 +75,12 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         </div>
                         <span className="text-sm font-medium text-white/90">Operativo</span>
                     </div>
+                     <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="mt-8 w-full text-white bg-blue-800 hover:bg-blue-700"
+                      >
+                        Entendido
+                      </Button>
                 </motion.div>
                 <div className="absolute bottom-4 left-4 right-4 z-10 p-2 bg-black/40 rounded-lg text-xs text-center text-blue-300/70 border border-blue-500/20">
                   <p>Escaneo de amenazas activado...</p>
@@ -89,7 +91,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             <div className="flex flex-col h-full p-8">
                 <DialogHeader className="text-left">
                     <DialogTitle className="text-2xl font-bold text-blue-300">
-                        Escudo de Seguridad ClamAV
+                        Escudo de Seguridad de IA
                     </DialogTitle>
                     <DialogDescription className="text-blue-200/70">
                         Tu sistema está protegido activamente contra virus, troyanos y malware.
@@ -115,14 +117,6 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                       ))}
                     </ul>
                 </div>
-                 <DialogFooter className="pt-4">
-                  <Button 
-                    onClick={() => onOpenChange(false)} 
-                    className="w-full text-white bg-blue-800 hover:bg-blue-700"
-                  >
-                    Entendido
-                  </Button>
-                </DialogFooter>
             </div>
         </div>
       </DialogContent>
