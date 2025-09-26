@@ -38,17 +38,16 @@ const virusScanFlow = ai.defineFlow(
   },
   async ({ fileName, fileDataUri }) => {
     // This is the API endpoint you deployed on Coolify.
-    const apiUrl = 'http://apiantivirus.fanton.cloud/api/v1/scan';
+    const apiUrl = 'http://apiantivirus.fanton.cloud/scan';
 
     try {
-      // Convert data URI to a Buffer
+      // Convert data URI to a Buffer for sending.
       const base64Data = fileDataUri.split(',')[1];
       if (!base64Data) {
         throw new Error('Invalid data URI format.');
       }
       const buffer = Buffer.from(base64Data, 'base64');
       
-      // Use FormData to send the file as multipart/form-data
       const formData = new FormData();
       formData.append('file', new Blob([buffer]), fileName);
 
@@ -58,31 +57,27 @@ const virusScanFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
+        // Handle HTTP errors like 502, 500, etc.
         const errorText = await response.text();
         throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
       }
       
-      const resultText = (await response.text()).replace(/"/g, '').trim();
-
-      if (resultText === 'malicious') {
-        return {
-          isInfected: true,
-          viruses: ['Win.Test.EICAR_HDB-1 (detected)'], 
-        };
-      } else if (resultText === 'benign') {
-        return {
-          isInfected: false,
-          viruses: [],
-        };
-      } else {
-         // This handles unexpected responses from the API
-         throw new Error(`API returned an unknown state: ${resultText}`);
+      // The Node.js API returns a JSON object directly.
+      const result = await response.json();
+      
+      // We expect a structure like { isInfected: boolean, viruses: string[] }
+      if (typeof result.isInfected !== 'boolean' || !Array.isArray(result.viruses)) {
+          throw new Error('API returned an invalid response format.');
       }
+
+      return {
+          isInfected: result.isInfected,
+          viruses: result.viruses,
+      };
 
     } catch (error: any) {
       console.error('Virus Scan Flow Error:', error);
-      
-      // Unified error handling ensures no contradictory results.
+      // Ensure that a consistent error format is returned.
       return {
         isInfected: false,
         viruses: [],
