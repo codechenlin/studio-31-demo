@@ -13,8 +13,9 @@ import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filte
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
+import { cn } from '@/lib/utils';
 
-const mockBouncedEmails: Email[] = [
+const initialBouncedEmails: Email[] = [
     {
       id: 'bounce-1',
       from: 'Servidor de Correo',
@@ -23,6 +24,7 @@ const mockBouncedEmails: Email[] = [
       snippet: 'No se pudo entregar el correo a...',
       date: new Date(Date.now() - 1000 * 60 * 15),
       read: true,
+      starred: false,
     },
     {
       id: 'bounce-2',
@@ -32,14 +34,17 @@ const mockBouncedEmails: Email[] = [
       snippet: 'Your message could not be delivered...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 8),
       read: true,
+      starred: true,
     },
 ];
 
 export default function BouncesPage() {
+  const [emails, setEmails] = useState(initialBouncedEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [showStarred, setShowStarred] = useState(false);
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
@@ -48,6 +53,16 @@ export default function BouncesPage() {
   const handleBackToList = () => {
       setSelectedEmail(null);
   }
+
+  const handleToggleStar = (emailId: string) => {
+    setEmails(currentEmails => 
+        currentEmails.map(email => 
+            email.id === emailId ? { ...email, starred: !email.starred } : email
+        )
+    );
+  };
+
+  const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
 
   if (selectedEmail) {
       return <EmailView email={selectedEmail} onBack={handleBackToList} />
@@ -123,7 +138,16 @@ export default function BouncesPage() {
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Square/></Button>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><RefreshCw/></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-yellow-500/20 border-2 border-transparent hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20 border-2 dark:border-white border-black hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                    <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-3 h-3 rounded-full transition-all duration-300",
+                            showStarred ? "bg-lime-400 shadow-[0_0_8px_#a3e635]" : "bg-yellow-500/50"
+                        )}>
+                            <div className={cn("w-full h-full rounded-full", showStarred && "animate-pulse bg-lime-400")}></div>
+                        </div>
+                        {showStarred && <span className="text-xs font-medium text-lime-300 animate-pulse">Mostrando correos importantes</span>}
+                    </div>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -143,8 +167,8 @@ export default function BouncesPage() {
         </Card>
 
         <div className="bg-card/60 backdrop-blur-sm border border-red-500/20 rounded-lg shadow-lg">
-            {mockBouncedEmails.map((email, index) => (
-                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockBouncedEmails.length - 1} />
+            {displayedEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} onToggleStar={handleToggleStar} isFirst={index === 0} isLast={index === displayedEmails.length - 1} />
             ))}
         </div>
       </div>

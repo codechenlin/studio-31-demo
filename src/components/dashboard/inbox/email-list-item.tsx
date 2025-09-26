@@ -1,10 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { format, isToday, isThisWeek, isThisYear } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export interface Email {
   id: string;
@@ -14,6 +16,7 @@ export interface Email {
   snippet: string;
   date: Date;
   read: boolean;
+  starred: boolean;
 }
 
 interface EmailListItemProps {
@@ -21,12 +24,13 @@ interface EmailListItemProps {
   onSelect: (email: Email) => void;
   isFirst: boolean;
   isLast: boolean;
+  onToggleStar: (emailId: string) => void;
 }
 
-export function EmailListItem({ email, onSelect, isFirst, isLast }: EmailListItemProps) {
-  const [formattedDate, setFormattedDate] = useState('');
+export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }: EmailListItemProps) {
+  const [formattedDate, setFormattedDate] = React.useState('');
 
-  useEffect(() => {
+  React.useEffect(() => {
     const formatDate = (date: Date) => {
       if (isToday(date)) {
         return format(date, 'p', { locale: es });
@@ -68,11 +72,22 @@ export function EmailListItem({ email, onSelect, isFirst, isLast }: EmailListIte
          </div>
       </div>
 
-      <p className={cn("text-xs shrink-0", !email.read ? "text-primary font-bold" : "text-muted-foreground")}>
-        {formattedDate}
-      </p>
+      <div className="flex items-center gap-2">
+         <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 hover:bg-yellow-500/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleStar(email.id);
+            }}
+          >
+            <Star className={cn("size-4 text-muted-foreground transition-all", email.starred && "fill-yellow-400 text-yellow-400")} />
+          </Button>
+          <p className={cn("text-xs w-16 text-right shrink-0", !email.read ? "text-primary font-bold" : "text-muted-foreground")}>
+            {formattedDate}
+          </p>
+      </div>
     </button>
   );
 }
-
-    
