@@ -1,10 +1,10 @@
 
-"use client";
+      "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, ShieldCheck, Dna, Bot, Shield, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Bot, Shield, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DnsAnalysisModal } from './dns-analysis-modal';
@@ -33,24 +33,9 @@ const mockErrorDomains = [
     { name: 'test-env.dev', status: 'ok' },
 ];
 
-const Particle = () => {
-    const style = {
-      '--size': `${Math.random() * 2 + 1}px`,
-      '--x-start': `${Math.random() * 100}%`,
-      '--duration': `${Math.random() * 4 + 3}s`,
-      '--delay': `-${Math.random() * 7}s`,
-    } as React.CSSProperties;
-    return <div className="particle" style={style} />;
-};
-
 export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalProps) {
     const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const handleAnalyzeDomain = (domain: string) => {
         setSelectedDomain(domain);
@@ -62,58 +47,50 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
     if(status === 'ok') {
         return (
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-4xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-green-500/30 text-white overflow-hidden" showCloseButton={false}>
+                <DialogContent className="max-w-4xl w-full h-[600px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-green-500/30 text-white overflow-hidden" showCloseButton={false}>
                     <style>{`
-                        @keyframes particle-fall {
-                            from { transform: translateY(-20px); opacity: 1; }
-                            to { transform: translateY(105%); opacity: 0; }
+                        @keyframes pulse-glow-green {
+                          0%, 100% { box-shadow: 0 0 20px 5px hsl(140 100% 50% / 0.2), 0 0 40px 10px hsl(140 100% 50% / 0.1); }
+                          50% { box-shadow: 0 0 30px 10px hsl(140 100% 50% / 0.3), 0 0 50px 15px hsl(140 100% 50% / 0.2); }
                         }
-                        .particle {
-                            position: absolute;
-                            top: 0;
-                            left: var(--x-start);
-                            width: var(--size);
-                            height: var(--size);
-                            background: hsl(125 100% 70%);
-                            border-radius: 50%;
-                            animation: particle-fall var(--duration) var(--delay) linear infinite;
-                            will-change: transform, opacity;
-                            filter: blur(1px);
+                        @keyframes data-stream {
+                           0% { transform: translateY(-100%); }
+                           100% { transform: translateY(100%); }
                         }
-                        .neural-bg {
-                            background-color: #0a0a0a;
-                            background-image:
-                                radial-gradient(circle at 1px 1px, hsl(125 70% 50% / 0.1), transparent),
-                                radial-gradient(circle at 15px 15px, hsl(125 70% 50% / 0.1), transparent);
-                            background-size: 30px 30px;
+                        @keyframes light-sweep {
+                            0% { transform: translateY(-100%); }
+                            100% { transform: translateY(100%); }
                         }
                     `}</style>
-                    <div className="grid grid-cols-1 md:grid-cols-2 h-full">
-                        {/* Left Panel */}
-                        <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                             <div className="absolute inset-0 pointer-events-none">
-                                {isClient && Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
-                             </div>
-                            <motion.div 
-                                initial={{ scale: 0.5, opacity: 0 }} 
-                                animate={{ scale: 1, opacity: 1 }} 
-                                transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }} 
-                                className="relative z-10 flex flex-col items-center text-center"
-                            >
-                                <motion.div
-                                  animate={{ scale: [1, 1.05, 1], filter: ['drop-shadow(0 0 10px #00CB07)', 'drop-shadow(0 0 25px #00CB07)', 'drop-shadow(0 0 10px #00CB07)'] }}
-                                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                >
-                                  <ShieldCheck className="size-20 text-green-400" />
-                                </motion.div>
-                                <h2 className="text-3xl font-bold text-white mt-4">Todo en Orden</h2>
-                                <p className="text-green-200/70 text-lg mt-1">Todos tus dominios están verificados y saludables.</p>
-                            </motion.div>
+                    <div className="w-1/2 h-full flex flex-col items-center justify-center p-8 bg-black/30 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-grid-green-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]" />
+                        <div className="absolute inset-0 w-full h-full overflow-hidden">
+                            <div className="absolute top-0 left-1/4 h-full w-px bg-gradient-to-b from-green-500/0 via-green-500/50 to-green-500/0 animate-[data-stream_8s_linear_infinite]" />
+                            <div className="absolute top-0 left-3/4 h-full w-px bg-gradient-to-b from-green-500/0 via-green-500/50 to-green-500/0 animate-[data-stream_10s_linear_infinite_2s]" />
                         </div>
-                        {/* Right Panel */}
-                        <div className="flex flex-col h-full p-8 relative neural-bg">
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0" />
-                            <DialogHeader className="text-left z-10">
+                        <motion.div 
+                            initial={{ scale: 0.5, opacity: 0 }} 
+                            animate={{ scale: 1, opacity: 1 }} 
+                            transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }} 
+                            className="relative z-10 flex flex-col items-center text-center"
+                        >
+                            <div className="relative w-40 h-40 flex items-center justify-center">
+                                <div className="absolute inset-0 rounded-full border-2 border-green-500/20" />
+                                <div className="absolute inset-2 rounded-full border-2 border-green-500/30 animate-spin" style={{animationDuration: '10s'}}/>
+                                <div className="absolute inset-4 rounded-full border-2 border-green-500/40 animate-spin" style={{animationDuration: '8s', animationDirection: 'reverse'}}/>
+                                <div className="absolute inset-0 rounded-full animate-[pulse-glow-green_4s_infinite_ease-in-out]" />
+                                <Shield className="size-20 text-green-400" />
+                            </div>
+                            <h2 className="text-3xl font-bold text-white mt-4">Todo en Orden</h2>
+                            <p className="text-green-200/70 text-lg mt-1">Sistema de protección activo.</p>
+                        </motion.div>
+                    </div>
+
+                    <div className="w-1/2 h-full flex flex-col p-8 bg-zinc-900/50 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)]" />
+                        <div className="absolute top-0 left-0 w-40 h-full bg-gradient-to-r from-green-500/10 via-transparent to-transparent opacity-50 animate-[light-sweep_5s_infinite_ease-in-out]" />
+                         <div className="relative z-10 flex flex-col h-full">
+                            <DialogHeader className="text-left">
                                 <DialogTitle className="text-2xl font-bold text-green-300">
                                     Estado del Sistema: Óptimo
                                 </DialogTitle>
@@ -121,7 +98,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                     Nuestro sistema de vigilancia neuronal monitorea tus registros DNS 24/7 para asegurar la máxima entregabilidad.
                                 </DialogDescription>
                             </DialogHeader>
-                            <ScrollArea className="flex-1 mt-6 -mr-4 pr-4 custom-scrollbar z-10">
+                            <ScrollArea className="flex-1 mt-6 -mr-4 pr-4 custom-scrollbar">
                                <ul className="space-y-3">
                                   {mockOkDomains.map((domain, index) => (
                                     <motion.li
@@ -137,7 +114,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                   ))}
                                 </ul>
                             </ScrollArea>
-                            <DialogFooter className="pt-6 z-10">
+                            <DialogFooter className="pt-6">
                                 <Button onClick={() => onOpenChange(false)} className="w-full bg-green-800 hover:bg-[#00CB07] text-white">Cerrar</Button>
                             </DialogFooter>
                         </div>
@@ -155,30 +132,47 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
             domain={selectedDomain}
         />
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-red-500/30 text-white overflow-hidden" showCloseButton={false}>
-                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
-                    {/* Left Panel */}
-                    <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                        <div className="absolute inset-0 bg-grid-red-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-                        <div className="absolute inset-0 animate-[glitch_2s_infinite_steps(8)]" style={{backgroundImage: 'url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 10\'><line x1=\'0\' y1=\'5\' x2=\'100\' y2=\'5\' stroke=\'%23F0000033\' stroke-width=\'1\'/><line x1=\'0\' y1=\'8\' x2=\'100\' y2=\'8\' stroke=\'%23F0000022\' stroke-width=\'0.5\'/></svg>")'}}/>
-                        <style>{`@keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); } 60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } 100% { transform: translate(0); }}`}</style>
-                        <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }} className="relative z-10 flex flex-col items-center text-center">
-                            <motion.div 
-                                animate={{ scale: [1, 1.1, 1] }} 
-                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} 
-                                className="relative p-4 rounded-full mb-4"
-                            >
-                                <AlertCircle className="text-red-400 size-20" style={{ filter: 'drop-shadow(0 0 15px #F00000)' }}/>
-                                <div className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-ping"/>
-                            </motion.div>
-                            <h2 className="text-3xl font-bold text-white">Acción Requerida</h2>
-                            <p className="text-red-200/70 text-lg mt-1">Se han detectado errores en algunos dominios.</p>
-                        </motion.div>
-                    </div>
-                    {/* Right Panel */}
-                    <div className="flex flex-col h-full p-8 relative">
-                       <div className="absolute inset-0 bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-500/10 via-transparent to-transparent" />
-                        <DialogHeader className="text-left z-10">
+             <DialogContent className="max-w-4xl w-full h-[600px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-red-500/30 text-white overflow-hidden" showCloseButton={false}>
+                 <style>{`
+                    @keyframes pulse-glow-red {
+                      0%, 100% { box-shadow: 0 0 20px 5px hsl(0 100% 50% / 0.2), 0 0 40px 10px hsl(0 100% 50% / 0.1); }
+                      50% { box-shadow: 0 0 30px 10px hsl(0 100% 50% / 0.3), 0 0 50px 15px hsl(0 100% 50% / 0.2); }
+                    }
+                    @keyframes data-glitch {
+                      0% { clip-path: inset(10% 0 80% 0); }
+                      20% { clip-path: inset(90% 0 5% 0); }
+                      40% { clip-path: inset(40% 0 45% 0); }
+                      60% { clip-path: inset(70% 0 10% 0); }
+                      80% { clip-path: inset(25% 0 60% 0); }
+                      100% { clip-path: inset(10% 0 80% 0); }
+                    }
+                 `}</style>
+                 <div className="w-1/2 h-full flex flex-col items-center justify-center p-8 bg-black/30 relative overflow-hidden">
+                     <div className="absolute inset-0 bg-grid-red-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]" />
+                     <motion.div 
+                        initial={{ scale: 0.5, opacity: 0 }} 
+                        animate={{ scale: 1, opacity: 1 }} 
+                        transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }} 
+                        className="relative z-10 flex flex-col items-center text-center"
+                    >
+                        <div className="relative w-40 h-40 flex items-center justify-center">
+                            <div className="absolute inset-0 animate-[pulse-glow-red_3s_infinite_ease-in-out]" />
+                            <div className="absolute inset-0 animate-[data-glitch_1s_steps(2,end)_infinite]">
+                                <div className="absolute inset-0 rounded-full border-2 border-red-500/50" />
+                                <div className="absolute inset-2 rounded-full border-2 border-red-500/60" />
+                            </div>
+                            <AlertCircle className="size-20 text-red-400" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-white mt-4">Acción Requerida</h2>
+                        <p className="text-red-200/70 text-lg mt-1">Anomalías detectadas en el sistema.</p>
+                    </motion.div>
+                </div>
+                
+                 <div className="w-1/2 h-full flex flex-col p-8 bg-zinc-900/50 relative overflow-hidden">
+                     <div className="absolute top-0 left-0 w-full h-full bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)]" />
+                     <div className="absolute top-0 left-0 w-40 h-full bg-gradient-to-r from-red-500/10 via-transparent to-transparent opacity-50" />
+                     <div className="relative z-10 flex flex-col h-full">
+                        <DialogHeader className="text-left">
                             <DialogTitle className="text-2xl font-bold text-red-300">
                                 Diagnóstico de DNS
                             </DialogTitle>
@@ -186,7 +180,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                 Algunos de tus dominios tienen configuraciones incorrectas que podrían afectar la entrega de correos.
                             </DialogDescription>
                         </DialogHeader>
-                        <ScrollArea className="flex-1 mt-6 -mr-4 pr-4 custom-scrollbar z-10">
+                        <ScrollArea className="flex-1 mt-6 -mr-4 pr-4 custom-scrollbar">
                            <ul className="space-y-3">
                               {mockErrorDomains.map((domain, index) => (
                                 <motion.li
@@ -213,7 +207,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                               ))}
                             </ul>
                         </ScrollArea>
-                        <DialogFooter className="pt-6 z-10">
+                        <DialogFooter className="pt-6">
                             <Button onClick={() => onOpenChange(false)} className="w-full bg-red-800 hover:bg-red-700 text-white">Cerrar</Button>
                         </DialogFooter>
                     </div>
@@ -223,3 +217,5 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
         </>
     );
 }
+
+    
