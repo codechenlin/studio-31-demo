@@ -37,7 +37,6 @@ const Particle = () => {
     const style = {
       '--size': `${Math.random() * 2 + 1}px`,
       '--x-start': `${Math.random() * 100}%`,
-      '--x-end': `${Math.random() * 100}%`,
       '--duration': `${Math.random() * 4 + 3}s`,
       '--delay': `-${Math.random() * 7}s`,
     } as React.CSSProperties;
@@ -66,8 +65,8 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                 <DialogContent className="max-w-4xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-green-500/30 text-white overflow-hidden" showCloseButton={false}>
                     <style>{`
                         @keyframes particle-fall {
-                            from { transform: translateY(-10px); opacity: 1; }
-                            to { transform: translateY(100%); opacity: 0; }
+                            from { transform: translateY(-20px); opacity: 1; }
+                            to { transform: translateY(105%); opacity: 0; }
                         }
                         .particle {
                             position: absolute;
@@ -75,7 +74,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                             left: var(--x-start);
                             width: var(--size);
                             height: var(--size);
-                            background: hsl(125, 100%, 70%);
+                            background: hsl(125 100% 70%);
                             border-radius: 50%;
                             animation: particle-fall var(--duration) var(--delay) linear infinite;
                             will-change: transform, opacity;
