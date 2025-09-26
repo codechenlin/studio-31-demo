@@ -8,18 +8,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirusAction } from './actions';
-import { type VirusScanOutput } from '@/ai/flows/virus-scan-flow';
+import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
 
 const spamExamples = [
     "¡¡¡GANA DINERO RÁPIDO!!! Haz clic aquí para obtener tu premio millonario. Oferta por tiempo limitado. No te lo pierdas.",
     "Felicidades, has sido seleccionado para una oferta exclusiva. Compra ahora y obtén un 90% de descuento. ¡Actúa ya!",
     "Este no es un correo no deseado. Te contactamos para ofrecerte una increíble oportunidad de inversión con retornos garantizados."
 ];
+
+const eicarTestString = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
 
 export default function DemoPage() {
     const { toast } = useToast();
@@ -57,6 +59,8 @@ export default function DemoPage() {
      const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             setFile(event.target.files[0]);
+            setVirusResult(null);
+            setVirusError(null);
         }
     };
 
@@ -76,6 +80,15 @@ export default function DemoPage() {
             } else {
                 setVirusError(result.error || 'Ocurrió un error desconocido al escanear.');
             }
+        });
+    };
+    
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: "¡Texto Copiado!",
+            description: "El archivo de prueba EICAR está listo para ser pegado.",
+            className: 'bg-success-login border-none text-white'
         });
     };
 
@@ -169,6 +182,18 @@ export default function DemoPage() {
                         <CardDescription>Sube un archivo para escanearlo en busca de virus.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Cómo Probar</Label>
+                             <div className="p-3 text-xs text-blue-200 bg-blue-900/20 rounded-md border border-blue-500/30 space-y-2">
+                                <p>1. Copia la siguiente cadena de texto EICAR (es un archivo de prueba inofensivo).</p>
+                                <div className="flex gap-2">
+                                    <Input value={eicarTestString} readOnly className="font-mono text-xs h-8 bg-black/30"/>
+                                    <Button size="icon" className="h-8 w-8" variant="ghost" onClick={() => copyToClipboard(eicarTestString)}><Copy className="size-4"/></Button>
+                                </div>
+                                <p>2. Pega el texto en un nuevo archivo de texto y guárdalo (ej: `eicar.txt`).</p>
+                                <p>3. Sube ese archivo aquí para verificar la detección.</p>
+                            </div>
+                        </div>
                         <div>
                             <Label htmlFor="file-upload">Seleccionar Archivo</Label>
                             <div className="relative mt-1">
@@ -178,7 +203,6 @@ export default function DemoPage() {
                                 </span>
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">Puedes usar el archivo de prueba EICAR para simular una detección de virus.</p>
                         <Button onClick={handleVirusScan} disabled={isVirusScanning || !file} className="w-full">
                             {isVirusScanning ? <Loader2 className="mr-2 animate-spin"/> : <UploadCloud className="mr-2"/>}
                             Escanear Archivo
