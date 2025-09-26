@@ -9,15 +9,15 @@ services:
       - clamav_data:/var/lib/clamav
 
   api:
-    build: . # Coolify usará el Dockerfile en la raíz de tu repositorio Git
-    container_name: clamav_api
+    # Usamos la imagen pre-construida de Docker Hub, que es pública
+    image: briacdelaigue/clamav-api:latest
+    container_name: clamav_api_java
     restart: unless-stopped
     ports:
-      - "4000:4000" # Expone el puerto 4000 de la API a tu VPS
+      # La API de Java se ejecuta en el puerto 8080
+      - "8080:8080"
     environment:
-      # Puerto en el que se ejecuta la API dentro del contenedor
-      - PORT=4000
-      # Host y puerto del servicio ClamAV (se comunica por la red interna de Docker)
+      # Le decimos a la API de Java dónde encontrar el servicio ClamAV
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
     depends_on:
