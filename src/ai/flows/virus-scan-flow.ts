@@ -57,8 +57,16 @@ const virusScanFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: `El servidor respondió con un error ${response.status}.` }));
-        throw new Error(`Error from API: ${errorBody.error || response.statusText}`);
+        let errorBody;
+        try {
+            errorBody = await response.json();
+        } catch (e) {
+            // If the response is not JSON, use the text as the message.
+            const errorText = await response.text();
+            throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
+        }
+        // If the response is JSON, use the error message from the body.
+        throw new Error(`Error from API: ${errorBody.error || errorBody.details || response.statusText}`);
       }
 
       const result: { isInfected: boolean; viruses: string[] } = await response.json();
@@ -69,14 +77,13 @@ const virusScanFlow = ai.defineFlow(
       };
 
     } catch (error: any) {
-      console.error('Virus Scan API Error:', error);
+      console.error('Virus Scan Flow Error:', error);
       
-      let errorMessage = `Error al contactar el servicio de antivirus: ${error.message}`;
-
+      // Ensure that any error caught here results in a clear error output.
       return {
         isInfected: false,
         viruses: [],
-        error: errorMessage,
+        error: `Error al contactar el servicio de antivirus: ${error.message}`,
       };
     }
   }
