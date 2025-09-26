@@ -138,16 +138,9 @@ export default function BouncesPage() {
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><Square/></Button>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><RefreshCw/></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20 border-2 dark:border-white border-black hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
-                    <div className="flex items-center gap-2">
-                        <div className={cn(
-                            "w-3 h-3 rounded-full transition-all duration-300",
-                            showStarred ? "bg-lime-400 shadow-[0_0_8px_#a3e635]" : "bg-yellow-500/50"
-                        )}>
-                            <div className={cn("w-full h-full rounded-full", showStarred && "animate-pulse bg-lime-400")}></div>
-                        </div>
-                        {showStarred && <span className="text-xs font-medium text-lime-300 animate-pulse">Mostrando correos importantes</span>}
-                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20">
+                      <Star className={cn(showStarred ? "text-yellow-400 fill-yellow-400" : "text-foreground")}/>
+                    </Button>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
