@@ -4,11 +4,24 @@ services:
   clamav:
     image: clamav/clamav:latest
     container_name: clamav
-    ports:
-      - "3310:3310"
     restart: unless-stopped
     volumes:
       - clamav_data:/var/lib/clamav
+
+  api:
+    build: . # Coolify usará el Dockerfile en la raíz de tu repositorio Git
+    container_name: clamav_api
+    restart: unless-stopped
+    ports:
+      - "4000:4000" # Expone el puerto 4000 de la API a tu VPS
+    environment:
+      # Puerto en el que se ejecuta la API dentro del contenedor
+      - PORT=4000
+      # Host y puerto del servicio ClamAV (se comunica por la red interna de Docker)
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+    depends_on:
+      - clamav
 
 volumes:
   clamav_data:
