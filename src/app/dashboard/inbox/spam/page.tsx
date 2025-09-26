@@ -13,8 +13,9 @@ import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filte
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
+import { cn } from '@/lib/utils';
 
-const mockSpamEmails: Email[] = [
+const initialSpamEmails: Email[] = [
     {
       id: 'spam-1',
       from: 'Gana $$$ Rápido',
@@ -23,6 +24,7 @@ const mockSpamEmails: Email[] = [
       snippet: 'Felicidades, has sido seleccionado...',
       date: new Date(Date.now() - 1000 * 60 * 30),
       read: false,
+      starred: false,
     },
     {
       id: 'spam-2',
@@ -32,14 +34,17 @@ const mockSpamEmails: Email[] = [
       snippet: 'Detectamos actividad sospechosa...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 5),
       read: false,
+      starred: true,
     },
 ];
 
 export default function SpamPage() {
+  const [emails, setEmails] = useState(initialSpamEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [showStarred, setShowStarred] = useState(false);
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
@@ -49,8 +54,19 @@ export default function SpamPage() {
       setSelectedEmail(null);
   }
 
+  const handleToggleStar = (emailId: string) => {
+    setEmails(currentEmails => 
+        currentEmails.map(email => 
+            email.id === emailId ? { ...email, starred: !email.starred } : email
+        )
+    );
+  };
+
+  const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
+
+
   if (selectedEmail) {
-      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+      return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
   }
 
   return (
@@ -130,7 +146,16 @@ export default function SpamPage() {
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><Square/></Button>
                     <Separator orientation="vertical" className="h-6 bg-amber-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><RefreshCw/></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-yellow-500/20 border-2 border-transparent hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20 border-2 dark:border-white border-black hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                     <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-3 h-3 rounded-full transition-all duration-300",
+                            showStarred ? "bg-lime-400 shadow-[0_0_8px_#a3e635]" : "bg-yellow-500/50"
+                        )}>
+                            <div className={cn("w-full h-full rounded-full", showStarred && "animate-pulse bg-lime-400")}></div>
+                        </div>
+                        {showStarred && <span className="text-xs font-medium text-lime-300 animate-pulse">Mostrando correos importantes</span>}
+                    </div>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -150,8 +175,8 @@ export default function SpamPage() {
         </Card>
 
          <div className="bg-card/60 backdrop-blur-sm border border-amber-500/20 rounded-lg shadow-lg">
-            {mockSpamEmails.map((email, index) => (
-                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockSpamEmails.length - 1} />
+            {displayedEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} onToggleStar={handleToggleStar} isFirst={index === 0} isLast={index === displayedEmails.length - 1} />
             ))}
         </div>
       </div>

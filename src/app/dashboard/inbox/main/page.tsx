@@ -15,7 +15,7 @@ import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-li
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 
-const mockEmails: Email[] = [
+const initialEmails: Email[] = [
     {
       id: '1',
       from: 'Elena Rodriguez',
@@ -24,6 +24,7 @@ const mockEmails: Email[] = [
       snippet: 'Prepárate para llevar tu marketing...',
       date: new Date(Date.now() - 1000 * 60 * 5),
       read: false,
+      starred: true,
     },
     {
       id: 'threat-1',
@@ -46,6 +47,7 @@ const mockEmails: Email[] = [
       snippet: '¡Peligro! Se detectaron múltiples amenazas...',
       date: new Date(Date.now() - 1000 * 60 * 20),
       read: false,
+      starred: false,
     },
     {
       id: 'attachment-2',
@@ -66,6 +68,7 @@ const mockEmails: Email[] = [
       snippet: 'Se detectó y eliminó un archivo adjunto malicioso...',
       date: new Date(Date.now() - 1000 * 60 * 45),
       read: true,
+      starred: false,
     },
      {
       id: 'attachment-1',
@@ -81,6 +84,7 @@ const mockEmails: Email[] = [
       snippet: 'Adjunto la última versión de la propuesta de diseño...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
       read: true,
+      starred: false,
     },
     {
       id: '2',
@@ -90,6 +94,7 @@ const mockEmails: Email[] = [
       snippet: 'Hemos actualizado nuestros protocolos...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 2),
       read: false,
+      starred: false,
     },
     {
       id: '3',
@@ -99,6 +104,7 @@ const mockEmails: Email[] = [
       snippet: 'Hemos recibido tu consulta...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 24),
       read: true,
+      starred: true,
     },
     {
       id: '4',
@@ -108,21 +114,26 @@ const mockEmails: Email[] = [
       snippet: '¡Buenas noticias! Tu última campaña...',
       date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
       read: true,
+      starred: false,
     },
 ];
 
 export default function MainInboxPage() {
+  const [emails, setEmails] = useState(initialEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [showStarred, setShowStarred] = useState(false);
 
   const handleSelectEmail = (email: Email) => {
     // Mark email as read when selected
     const updatedEmail = { ...email, read: true };
-    const emailIndex = mockEmails.findIndex(e => e.id === email.id);
+    const emailIndex = emails.findIndex(e => e.id === email.id);
     if(emailIndex !== -1) {
-        mockEmails[emailIndex] = updatedEmail;
+        const newEmails = [...emails];
+        newEmails[emailIndex] = updatedEmail;
+        setEmails(newEmails);
     }
     setSelectedEmail(updatedEmail);
   };
@@ -131,8 +142,19 @@ export default function MainInboxPage() {
       setSelectedEmail(null);
   }
 
+  const handleToggleStar = (emailId: string) => {
+    setEmails(currentEmails => 
+        currentEmails.map(email => 
+            email.id === emailId ? { ...email, starred: !email.starred } : email
+        )
+    );
+  };
+
+  const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
+
+
   if (selectedEmail) {
-      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+      return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
   }
 
   return (
@@ -211,7 +233,16 @@ export default function MainInboxPage() {
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20"><Square/></Button>
                       <Separator orientation="vertical" className="h-6" />
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20"><RefreshCw/></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-yellow-500/20 border-2 border-transparent hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20 border-2 dark:border-white border-black hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
+                       <div className="flex items-center gap-2">
+                          <div className={cn(
+                              "w-3 h-3 rounded-full transition-all duration-300",
+                              showStarred ? "bg-lime-400 shadow-[0_0_8px_#a3e635]" : "bg-yellow-500/50"
+                          )}>
+                              <div className={cn("w-full h-full rounded-full", showStarred && "animate-pulse bg-lime-400")}></div>
+                          </div>
+                          {showStarred && <span className="text-xs font-medium text-lime-300 animate-pulse">Mostrando correos importantes</span>}
+                       </div>
                   </div>
                   <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -231,8 +262,8 @@ export default function MainInboxPage() {
           </Card>
           
           <div className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
-            {mockEmails.map((email, index) => (
-                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockEmails.length - 1} />
+            {displayedEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
             ))}
           </div>
         </div>
