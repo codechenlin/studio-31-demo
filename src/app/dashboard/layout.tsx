@@ -97,7 +97,7 @@ const menuItems = [
   },
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
-  { href: "/dashboard/demo", label: "Integración", icon: FileWarning },
+  { href: "/dashboard/integration", label: "Integración", icon: Plug },
 ];
 
 function FloatingActionButton() {
