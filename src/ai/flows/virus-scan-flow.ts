@@ -1,0 +1,83 @@
+
+'use server';
+/**
+ * @fileOverview A flow to scan a file for viruses using a remote ClamAV REST API.
+ *
+ * - scanFileForVirus - A function that handles the virus scanning process.
+ * - VirusScanInput - The input type for the scanFileForVirus function.
+ * - VirusScanOutput - The return type for the scanFileForVirus function.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+export const VirusScanInputSchema = z.object({
+  fileName: z.string().describe('The name of the file to scan.'),
+  fileBuffer: z.instanceof(Buffer).describe('The file content as a Buffer.'),
+});
+export type VirusScanInput = z.infer<typeof VirusScanInputSchema>;
+
+export const VirusScanOutputSchema = z.object({
+  isInfected: z.boolean().describe('Whether a virus was detected or not.'),
+  message: z.string().describe('A summary of the scan result.'),
+});
+export type VirusScanOutput = z.infer<typeof VirusScanOutputSchema>;
+
+export async function scanFileForVirus(
+  input: VirusScanInput
+): Promise<VirusScanOutput> {
+  return virusScanFlow(input);
+}
+
+const virusScanFlow = ai.defineFlow(
+  {
+    name: 'virusScanFlow',
+    inputSchema: VirusScanInputSchema,
+    outputSchema: VirusScanOutputSchema,
+  },
+  async ({ fileName, fileBuffer }) => {
+    const apiUrl = process.env.NEXT_PUBLIC_ANTIVIRUS_API_URL;
+    if (!apiUrl) {
+      throw new Error('La URL de la API de antivirus no está configurada en las variables de entorno.');
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', new Blob([fileBuffer]), fileName);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // Handle non-2xx responses by creating a clear error
+        const errorText = await response.text();
+        throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
+      }
+
+      const resultText = await response.text();
+      
+      // The API returns a simple string. We need to parse it.
+      if (resultText.trim() === '"malicious"') {
+        return {
+          isInfected: true,
+          message: `¡Peligro! Se encontró una amenaza en el archivo ${fileName}.`,
+        };
+      } else if (resultText.trim() === '"benign"') {
+        return {
+          isInfected: false,
+          message: 'El archivo es seguro. No se encontraron amenazas.',
+        };
+      } else {
+        // If the response is not what we expect, treat it as an error.
+        throw new Error(`Respuesta inesperada de la API: ${resultText}`);
+      }
+    } catch (error: any) {
+      console.error('Fallo en la llamada a la API de antivirus:', error);
+      // Ensure any caught error is re-thrown as a standard Error object
+      // to be handled by the action.
+      throw new Error(error.message || 'Error desconocido al contactar el servicio de antivirus.');
+    }
+  }
+);

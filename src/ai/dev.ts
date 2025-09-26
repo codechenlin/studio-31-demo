@@ -9,4 +9,5 @@ import '@/ai/flows/dkim-generation-flow.ts';
 import '@/ai/flows/optional-dns-verification-flow.ts';
 import '@/ai/flows/smtp-error-analysis-flow.ts';
 import '@/ai/flows/spam-checker-flow.ts';
+import '@/ai/flows/virus-scan-flow.ts';
     
