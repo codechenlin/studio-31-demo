@@ -3,10 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
+import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
+
+type ProviderStatus = 'ok' | 'error';
 
 const providers = [
   {
@@ -20,6 +23,7 @@ const providers = [
     domainsCount: 102,
     emailsCount: 5234,
     lastDnsCheck: 'hace 4h',
+    status: 'ok' as ProviderStatus,
   },
   {
     id: 'blastengine',
@@ -32,6 +36,7 @@ const providers = [
     domainsCount: 58,
     emailsCount: 8912,
     lastDnsCheck: 'hace 2h',
+    status: 'error' as ProviderStatus,
   },
   {
     id: 'sparkpost',
@@ -44,6 +49,7 @@ const providers = [
     domainsCount: 23,
     emailsCount: 3489,
     lastDnsCheck: 'hace 8h',
+     status: 'ok' as ProviderStatus,
   },
   {
     id: 'elasticemail',
@@ -56,6 +62,7 @@ const providers = [
     domainsCount: 76,
     emailsCount: 9102,
     lastDnsCheck: 'hace 1h',
+    status: 'error' as ProviderStatus,
   },
 ];
 
@@ -89,6 +96,8 @@ const Particle = () => {
 export default function ServersPage() {
   const [isClient, setIsClient] = useState(false);
   const [isSmtpModalOpen, setIsSmtpModalOpen] = useState(false);
+  const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -100,10 +109,20 @@ export default function ServersPage() {
     }
     // Handle other providers later
   };
+  
+  const handleStatusClick = (status: ProviderStatus) => {
+    setSelectedStatus(status);
+    setIsDnsModalOpen(true);
+  };
 
   return (
     <>
     <SmtpConnectionModal isOpen={isSmtpModalOpen} onOpenChange={setIsSmtpModalOpen} />
+    <DnsStatusModal 
+      isOpen={isDnsModalOpen} 
+      onOpenChange={setIsDnsModalOpen}
+      status={selectedStatus}
+    />
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
         @keyframes particle-move {
@@ -185,9 +204,26 @@ export default function ServersPage() {
                            </div>
                         </div>
                     </div>
-                     <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <Clock className="size-3" />
-                        <span>{provider.lastDnsCheck}</span>
+                     <div className="flex items-center gap-2">
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Clock className="size-3" />
+                          <span>{provider.lastDnsCheck}</span>
+                        </div>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className={cn("size-7 rounded-md border-2", 
+                            provider.status === 'ok' ? 'border-[#00CB07]/50' : 'border-[#F00000]/50',
+                            'hover:bg-card/50'
+                          )}
+                          onClick={() => handleStatusClick(provider.status)}
+                        >
+                          {provider.status === 'ok' ? (
+                            <CheckCircle className="size-5 text-[#00CB07]" style={{filter: 'drop-shadow(0 0 3px #00CB07)'}}/>
+                          ) : (
+                            <AlertCircle className="size-5 text-[#F00000]" style={{filter: 'drop-shadow(0 0 3px #F00000)'}}/>
+                          )}
+                        </Button>
                     </div>
                 </div>
                 <p className="text-muted-foreground mt-4 text-sm">{provider.description}</p>
