@@ -40,7 +40,9 @@ const virusScanFlow = ai.defineFlow(
   },
   async ({ fileName, fileDataUri }) => {
     try {
-      const clamscan = new ClamScan({
+      // Correctly initialize ClamScan and then call init with options
+      const clamscan = new ClamScan();
+      await clamscan.init({
         clamdscan: {
           host: 'localhost', // Connect to the host machine where Docker exposes the port
           port: 3310,
@@ -49,10 +51,11 @@ const virusScanFlow = ai.defineFlow(
         preference: 'clamdscan',
       });
 
-      await clamscan.init();
-
       // Convert data URI to a buffer
       const base64Data = fileDataUri.split(',')[1];
+      if (!base64Data) {
+        throw new Error('Invalid data URI format.');
+      }
       const buffer = Buffer.from(base64Data, 'base64');
       
       // Convert buffer to a readable stream
@@ -73,6 +76,7 @@ const virusScanFlow = ai.defineFlow(
         errorMessage = "No se pudo conectar al servicio de antivirus. Asegúrate de que el contenedor de Docker 'clamav' esté en funcionamiento y accesible en el puerto 3310.";
       }
       
+      // Return a structured error response
       return {
         isInfected: false,
         viruses: [],
