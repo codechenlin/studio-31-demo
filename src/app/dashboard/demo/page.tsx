@@ -185,7 +185,7 @@ export default function DemoPage() {
                         </Button>
                     </CardContent>
                     <CardFooter>
-                         {virusResult && (
+                         {virusResult && !virusError && (
                             <div className="w-full space-y-3 text-sm">
                                 <h4 className="font-bold">Resultado del Escaneo:</h4>
                                 {virusResult.isInfected ? (

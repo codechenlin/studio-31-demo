@@ -49,16 +49,16 @@ const virusScanFlow = ai.defineFlow(
         method: 'POST',
         body: formData,
       });
+      
+      const resultText = await response.text();
 
       if (!response.ok) {
-        // Handle non-2xx responses by creating a clear error
-        const errorText = await response.text();
-        throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
+        // La respuesta de la API de cyberphor es texto simple, incluso en errores.
+        // El cuerpo del error podría estar en `resultText`.
+        throw new Error(`Error from API (${response.status}): ${resultText || response.statusText}`);
       }
-
-      const resultText = await response.text();
       
-      // The API returns a simple string. We need to parse it.
+      // La API devuelve un texto simple: "malicious" o "benign".
       if (resultText.trim() === '"malicious"') {
         return {
           isInfected: true,
@@ -70,13 +70,13 @@ const virusScanFlow = ai.defineFlow(
           message: 'El archivo es seguro. No se encontraron amenazas.',
         };
       } else {
-        // If the response is not what we expect, treat it as an error.
+        // Si la respuesta no es lo que esperamos, lo tratamos como un error.
         throw new Error(`Respuesta inesperada de la API: ${resultText}`);
       }
     } catch (error: any) {
       console.error('Fallo en la llamada a la API de antivirus:', error);
-      // Ensure any caught error is re-thrown as a standard Error object
-      // to be handled by the action.
+      // Aseguramos que cualquier error capturado se vuelva a lanzar como un objeto Error estándar
+      // para ser manejado por la acción del servidor.
       throw new Error(error.message || 'Error desconocido al contactar el servicio de antivirus.');
     }
   }
