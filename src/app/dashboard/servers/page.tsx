@@ -3,11 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
+import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-modal';
 
 type ProviderStatus = 'ok' | 'error';
 
@@ -97,6 +98,7 @@ export default function ServersPage() {
   const [isClient, setIsClient] = useState(false);
   const [isSmtpModalOpen, setIsSmtpModalOpen] = useState(false);
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
+  const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export default function ServersPage() {
       onOpenChange={setIsDnsModalOpen}
       status={selectedStatus}
     />
+    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
         @keyframes particle-move {
@@ -193,14 +196,19 @@ export default function ServersPage() {
                              ) : (
                                <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
                              )}
-                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Globe className="size-3"/>
-                                <span>{provider.domainsCount}</span>
-                             </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Send className="size-3"/>
                                 <span>{provider.emailsCount}</span>
-                             </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs bg-black/10 hover:bg-primary/20 border-primary/20"
+                                  onClick={() => setIsDomainInfoModalOpen(true)}
+                                >
+                                  <Info className="mr-1 size-3"/>
+                                  Información
+                                </Button>
+                              </div>
                            </div>
                         </div>
                     </div>
