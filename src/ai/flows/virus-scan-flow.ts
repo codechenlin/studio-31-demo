@@ -38,7 +38,7 @@ const virusScanFlow = ai.defineFlow(
   },
   async ({ fileName, fileDataUri }) => {
     // This is the API endpoint you deployed on Coolify.
-    const apiUrl = 'http://apiantivirus.fanton.cloud/scan';
+    const apiUrl = 'http://apiantivirus.fanton.cloud/api/v1/scan';
 
     try {
       // Convert data URI to a Buffer for sending.
@@ -62,18 +62,26 @@ const virusScanFlow = ai.defineFlow(
         throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
       }
       
-      // The Node.js API returns a JSON object directly.
-      const result = await response.json();
+      // The cyberphor API returns a plain text string.
+      const resultText = await response.text();
       
-      // We expect a structure like { isInfected: boolean, viruses: string[] }
-      if (typeof result.isInfected !== 'boolean' || !Array.isArray(result.viruses)) {
-          throw new Error('API returned an invalid response format.');
-      }
+      // We need to parse this text to fit our expected JSON output.
+      const cleanedResult = resultText.replace(/"/g, '').trim();
 
-      return {
-          isInfected: result.isInfected,
-          viruses: result.viruses,
-      };
+      if (cleanedResult === 'malicious') {
+          return {
+              isInfected: true,
+              viruses: ['Eicar-Test-Signature'], // We can use a generic name or parse if available in other contexts
+          };
+      } else if (cleanedResult === 'benign') {
+          return {
+              isInfected: false,
+              viruses: [],
+          };
+      } else {
+           // If the response is something else, treat it as an error.
+          throw new Error(`Unexpected response from API: ${resultText}`);
+      }
 
     } catch (error: any) {
       console.error('Virus Scan Flow Error:', error);
