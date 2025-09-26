@@ -2,7 +2,8 @@
 'use server';
 
 import { checkSpam, type SpamCheckerInput } from '@/ai/flows/spam-checker-flow';
-import { scanFileForVirus, type VirusScanInput } from '@/ai/flows/virus-scan-flow';
+import { scanFileForVirus } from '@/ai/flows/virus-scan-flow';
+import { type VirusScanOutput, VirusScanInputSchema } from '@/ai/flows/virus-scan-types';
 import { z } from 'zod';
 
 const SpamCheckerInputSchema = z.object({
@@ -24,11 +25,7 @@ export async function checkSpamAction(input: SpamCheckerInput) {
   }
 }
 
-const VirusScanInputSchema = z.object({
-  file: z.instanceof(File),
-});
-
-export async function scanFileForVirusAction(formData: FormData) {
+export async function scanFileForVirusAction(formData: FormData): Promise<{ success: boolean; data?: VirusScanOutput, error?: string; }> {
   const file = formData.get('file') as File;
   if (!file) {
     return { success: false, error: 'No file provided.' };
@@ -46,6 +43,6 @@ export async function scanFileForVirusAction(formData: FormData) {
     return { success: true, data: result };
   } catch (error: any) {
     console.error('Virus scan action error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: `Error al contactar el servicio de antivirus: ${error.message}` };
   }
 }
