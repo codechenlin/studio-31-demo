@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
 import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-modal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 type ProviderStatus = 'ok' | 'error';
 
@@ -182,64 +184,74 @@ export default function ServersPage() {
             )}>
               <div className={cn("absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br", provider.colors)} />
               
-              <div className="flex-1 p-6 z-10">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                       <div className="relative">
-                           <Button
-                              variant="outline"
-                              size="sm"
-                              className="absolute -top-4 left-1/2 -translate-x-1/2 h-6 px-2 text-xs bg-background/50 hover:bg-primary/20 border-primary/20 backdrop-blur-sm opacity-50 group-hover:opacity-100 transition-opacity z-10"
-                              onClick={() => setIsDomainInfoModalOpen(true)}
-                            >
-                              <Info className="mr-1 size-3"/>
-                              Información
-                            </Button>
-                           <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="p-6 pb-0 z-10">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
                                <provider.icon className="size-8 text-primary"/>
                            </div>
-                       </div>
-                        <div>
-                           <h2 className="text-xl font-bold text-foreground">{provider.name}</h2>
-                           <div className="flex items-center gap-4 mt-2">
-                             {provider.connected ? (
-                               <span className="text-xs font-semibold text-green-400 px-2 py-1 bg-green-500/10 rounded-full flex items-center gap-1"><div className="size-2 rounded-full bg-green-400 animate-pulse"/>Conectado</span>
-                             ) : (
-                               <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
-                             )}
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Send className="size-3"/>
-                                <span>{provider.emailsCount}</span>
-                              </div>
+                           <div>
+                               <h2 className="text-xl font-bold text-foreground">{provider.name}</h2>
+                               <div className="flex items-center gap-4 mt-1">
+                                {provider.connected ? (
+                                   <span className="text-xs font-semibold text-green-400 px-2 py-1 bg-green-500/10 rounded-full flex items-center gap-1"><div className="size-2 rounded-full bg-green-400 animate-pulse"/>Conectado</span>
+                                ) : (
+                                   <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
+                                )}
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Send className="size-3"/>
+                                    <span>{provider.emailsCount}</span>
+                                </div>
+                               </div>
                            </div>
                         </div>
-                    </div>
-                     <div className="flex items-center gap-2">
-                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                          <Clock className="size-3" />
-                          <span>{provider.lastDnsCheck}</span>
+                        
+                        <div className="flex items-center gap-2">
+                           <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 rounded-md border-2 border-transparent hover:border-cyan-400/50"
+                                    onClick={() => setIsDomainInfoModalOpen(true)}
+                                  >
+                                    <Info className="size-5 text-cyan-400" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Información de Dominios</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                           <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className={cn("size-7 rounded-md border-2", 
+                                provider.status === 'ok' ? 'border-[#00CB07]/50' : 'border-[#F00000]/50',
+                                'hover:bg-card/50'
+                              )}
+                              onClick={() => handleStatusClick(provider.status)}
+                            >
+                              {provider.status === 'ok' ? (
+                                <CheckCircle className="size-5 text-[#00CB07]" style={{filter: 'drop-shadow(0 0 3px #00CB07)'}}/>
+                              ) : (
+                                <AlertCircle className="size-5 text-[#F00000]" style={{filter: 'drop-shadow(0 0 3px #F00000)'}}/>
+                              )}
+                            </Button>
                         </div>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className={cn("size-7 rounded-md border-2", 
-                            provider.status === 'ok' ? 'border-[#00CB07]/50' : 'border-[#F00000]/50',
-                            'hover:bg-card/50'
-                          )}
-                          onClick={() => handleStatusClick(provider.status)}
-                        >
-                          {provider.status === 'ok' ? (
-                            <CheckCircle className="size-5 text-[#00CB07]" style={{filter: 'drop-shadow(0 0 3px #00CB07)'}}/>
-                          ) : (
-                            <AlertCircle className="size-5 text-[#F00000]" style={{filter: 'drop-shadow(0 0 3px #F00000)'}}/>
-                          )}
-                        </Button>
+                    </div>
+
+                    <p className="text-muted-foreground text-sm mb-4">{provider.description}</p>
+                    
+                    <div className="text-xs text-muted-foreground flex items-center justify-end gap-2 border-t border-border/20 pt-2 -mx-6 px-6">
+                        <Clock className="size-3" />
+                        <span>Último chequeo DNS: {provider.lastDnsCheck}</span>
                     </div>
                 </div>
-                <p className="text-muted-foreground mt-4 text-sm">{provider.description}</p>
-              </div>
 
-              <div className="p-6 pt-0 z-10 mt-auto">
+              <div className="p-6 pt-4 z-10 mt-auto">
                  <Button 
                     onClick={() => handleConnectClick(provider.id)}
                     className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity"
