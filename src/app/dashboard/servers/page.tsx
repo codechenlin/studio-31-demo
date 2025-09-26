@@ -185,8 +185,19 @@ export default function ServersPage() {
               <div className="flex-1 p-6 z-10">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                       <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                           <provider.icon className="size-8 text-primary"/>
+                       <div className="relative">
+                           <Button
+                              variant="outline"
+                              size="sm"
+                              className="absolute -top-4 left-1/2 -translate-x-1/2 h-6 px-2 text-xs bg-background/50 hover:bg-primary/20 border-primary/20 backdrop-blur-sm opacity-50 group-hover:opacity-100 transition-opacity z-10"
+                              onClick={() => setIsDomainInfoModalOpen(true)}
+                            >
+                              <Info className="mr-1 size-3"/>
+                              Información
+                            </Button>
+                           <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                               <provider.icon className="size-8 text-primary"/>
+                           </div>
                        </div>
                         <div>
                            <h2 className="text-xl font-bold text-foreground">{provider.name}</h2>
@@ -199,15 +210,6 @@ export default function ServersPage() {
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Send className="size-3"/>
                                 <span>{provider.emailsCount}</span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 px-2 text-xs bg-black/10 hover:bg-primary/20 border-primary/20"
-                                  onClick={() => setIsDomainInfoModalOpen(true)}
-                                >
-                                  <Info className="mr-1 size-3"/>
-                                  Información
-                                </Button>
                               </div>
                            </div>
                         </div>
