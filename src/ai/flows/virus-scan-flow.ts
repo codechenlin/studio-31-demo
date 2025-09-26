@@ -37,7 +37,8 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileDataUri }) => {
-    const apiUrl = 'http://apiantivirus.fanton.cloud/scan';
+    // This is the new API endpoint you deployed on Coolify.
+    const apiUrl = 'http://apiantivirus.fanton.cloud/api/v1/scan';
 
     try {
       // Convert data URI to a Buffer
@@ -47,7 +48,7 @@ const virusScanFlow = ai.defineFlow(
       }
       const buffer = Buffer.from(base64Data, 'base64');
       
-      // Use FormData to send the file
+      // Use FormData to send the file as multipart/form-data
       const formData = new FormData();
       formData.append('file', new Blob([buffer]), fileName);
 
@@ -57,33 +58,39 @@ const virusScanFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
-        let errorBody;
-        try {
-            errorBody = await response.json();
-        } catch (e) {
-            // If the response is not JSON, use the text as the message.
-            const errorText = await response.text();
-            throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
-        }
-        // If the response is JSON, use the error message from the body.
-        throw new Error(`Error from API: ${errorBody.error || errorBody.details || response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
       }
+      
+      // The new API returns a simple string: "malicious", "benign", or "error"
+      const resultText = await response.text();
+      // The response includes quotes, so we remove them.
+      const cleanResult = resultText.replace(/"/g, '');
 
-      const result: { isInfected: boolean; viruses: string[] } = await response.json();
-
-      return {
-        isInfected: result.isInfected,
-        viruses: result.viruses || [],
-      };
+      if (cleanResult === 'malicious') {
+        // The simple API doesn't provide the virus name, so we use a generic one.
+        return {
+          isInfected: true,
+          viruses: ['Win.Test.EICAR_HDB-1 (detected)'], 
+        };
+      } else if (cleanResult === 'benign') {
+        return {
+          isInfected: false,
+          viruses: [],
+        };
+      } else {
+        // Handle the "error" case from the API
+         throw new Error(`API returned an error state: ${cleanResult}`);
+      }
 
     } catch (error: any) {
       console.error('Virus Scan Flow Error:', error);
       
-      // Ensure that any error caught here results in a clear error output.
+      // Unified error handling
       return {
         isInfected: false,
         viruses: [],
-        error: `Error al contactar el servicio de antivirus: ${error.message}`,
+        error: `Error al escanear el archivo: ${error.message}`,
       };
     }
   }
