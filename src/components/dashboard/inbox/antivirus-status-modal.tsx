@@ -13,10 +13,10 @@ interface AntivirusStatusModalProps {
 }
 
 const techItems = [
-    { name: "Potente Motor de Análisis", info: "Utilizamos un avanzado motor de heurística para detectar troyanos, virus, malware y otras amenazas maliciosas en tiempo real." },
-    { name: "Inteligencia de Amenazas Global", info: "Nuestra base de datos se nutre de una red global, actualizándose diariamente contra las últimas ciberamenazas y sofisticadas técnicas de suplantación." },
-    { name: "Escaneo Profundo de Adjuntos", info: "Cada archivo adjunto puede ser inspeccionado a nivel binario, asegurando su integridad antes de que llegue a tu equipo." },
-    { name: "Arquitectura Aislada y Segura", info: "El servicio opera en un entorno de microservicios aislado, garantizando que cualquier amenaza potencial sea neutralizada sin afectar la integridad de tu sistema." }
+    { name: "Análisis Predictivo de Comportamiento", info: "Nuestro motor de IA no solo busca firmas conocidas; analiza el comportamiento del código para detectar amenazas de día cero antes de que actúen." },
+    { name: "Inteligencia de Amenazas Global Neuronal", info: "Conectado a una red global, nuestro sistema aprende y se adapta en tiempo real a nuevas tácticas de ataque y vectores de malware de todo el mundo." },
+    { name: "Desinfección Atómica de Adjuntos", info: "Cada archivo es descompuesto y reconstruido en un entorno seguro a nivel binario, eliminando cualquier código malicioso sin corromper el archivo." },
+    { name: "Arquitectura de Contención Cuántica", info: "Las amenazas se ejecutan en un micro-entorno virtualizado y aislado, donde son analizadas y neutralizadas sin ninguna posibilidad de afectar tu sistema." }
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
@@ -62,7 +62,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                        <div className="absolute inset-0 rounded-full animate-ping border-2 border-blue-400/50" />
                     </div>
                     <h2 className="text-3xl font-bold text-white">Sistema Activo</h2>
-                    <p className="text-blue-200/70 text-lg">Protección en tiempo real</p>
+                    <p className="text-blue-200/70 text-lg mt-1">Protección en tiempo real</p>
                     <div className="mt-6 flex items-center gap-3 p-3 rounded-md bg-green-500/10 border border-green-400/20">
                         <div className="relative flex items-center justify-center">
                             <div className="absolute w-full h-full bg-green-500/30 rounded-full animate-ping"/>
