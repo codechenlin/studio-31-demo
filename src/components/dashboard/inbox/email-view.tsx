@@ -100,7 +100,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-zinc-950/50 backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
                      <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
@@ -141,26 +141,26 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 </div>
 
                 <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
-                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-primary">
+                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden">
                       <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
                       Traducir Mensaje
-                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
                   </Button>
                   
                   {isPrivacyFeatureEnabled ? (
                       <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-accent"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden"
                         onClick={() => setIsConfirmImagesModalOpen(true)}
                       >
                           <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
                           Mostrar Imágenes
-                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-[#E18700] to-[#FFAB00] scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
                       </Button>
                   ) : (
                        <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-primary"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden"
                         onClick={() => setIsPrivacyModalOpen(true)}
                       >
                           <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>
@@ -315,3 +315,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+    
