@@ -98,17 +98,21 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   
   const senderInitial = email.from.charAt(0).toUpperCase();
 
+  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
+  
+  const aiButtonClass = "relative size-10 rounded-lg flex items-center justify-center cursor-pointer p-0 bg-transparent before:absolute before:-inset-px before:rounded-lg before:-z-10 before:transition-all before:duration-300 before:opacity-0 hover:before:opacity-100";
+
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
         <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
-                     <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={onBack}><ArrowLeft/></Button>
+                     <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 </div>
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                    <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
+                    <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
                     <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
                     <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
@@ -117,6 +121,19 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     >
                       <Trash2/>
                     </Button>
+                </div>
+                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
+                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
+                        <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
+                          <Wand2 className="size-5 text-primary" />
+                        </div>
+                    </button>
+                    <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
+                        <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
+                          <Eye className="size-5 text-amber-500" />
+                        </div>
+                    </button>
                 </div>
              </div>
         </header>
@@ -183,36 +200,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     )}
                 </div>
 
-                <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
-                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent dark:text-white dark:hover:text-white hover:text-black flex-1 group relative overflow-hidden">
-                      <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
-                      Traducir Mensaje
-                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-primary/70 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform origin-center duration-300" />
-                  </Button>
-                  
-                  {isPrivacyFeatureEnabled ? (
-                      <Button
-                        variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent dark:text-white dark:hover:text-white hover:text-black flex-1 group relative overflow-hidden"
-                        onClick={() => setIsConfirmImagesModalOpen(true)}
-                      >
-                          <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
-                          Mostrar Imágenes
-                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform origin-center duration-300" />
-                      </Button>
-                  ) : (
-                       <Button
-                        variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white dark:text-white flex-1 group relative overflow-hidden"
-                        onClick={() => setIsPrivacyModalOpen(true)}
-                      >
-                          <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>
-                          Activar Privacidad
-                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-green-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
-                      </Button>
-                  )}
-                </div>
-                
                 <div
                     className="prose dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{ __html: sanitizedBody }}
