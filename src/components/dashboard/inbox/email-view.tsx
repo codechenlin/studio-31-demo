@@ -101,7 +101,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-zinc-900/80 backdrop-blur-sm">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
                      <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={onBack}><ArrowLeft/></Button>

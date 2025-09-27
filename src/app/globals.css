@@ -398,52 +398,8 @@ body {
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
+        height: 3px;
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
         animation: banner-scan 4s infinite linear;
-    }
-
-    .hover-border-translate {
-      position: relative;
-    }
-    .hover-border-translate::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      border: 2px solid transparent;
-      background: linear-gradient(to right, #AD00EC, #1700E6) border-box;
-      -webkit-mask:
-         linear-gradient(#fff 0 0) padding-box, 
-         linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .hover-border-translate:hover::before {
-      opacity: 1;
-    }
-    
-    .hover-border-images {
-      position: relative;
-    }
-    .hover-border-images::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      border: 2px solid transparent;
-      background: linear-gradient(to right, #E18700, #FFAB00) border-box;
-      -webkit-mask:
-         linear-gradient(#fff 0 0) padding-box, 
-         linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .hover-border-images:hover::before {
-      opacity: 1;
     }
 }
