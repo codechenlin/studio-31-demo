@@ -382,7 +382,6 @@ body {
     @keyframes icon-pulse-banner {
         0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
         50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
-        100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
     }
     .animate-icon-pulse-banner {
         animation: icon-pulse-banner 3s infinite ease-in-out;
@@ -412,4 +411,3 @@ body {
         animation: node-pulse-circuit 2s infinite ease-in-out;
     }
 }
-
