@@ -58,14 +58,14 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
         <div className="grid grid-cols-1 md:grid-cols-2 h-full">
             {/* Left Panel: AI Animation */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                <div className="absolute inset-0 z-10 opacity-40 pointer-events-none">
+                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
                     {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
                 </div>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }}
-                    className="relative z-20 flex flex-col items-center text-center gap-6"
+                    className="relative z-10 flex flex-col items-center text-center gap-6"
                 >
                      <div className="relative p-6 rounded-full border-2 border-blue-400/50 bg-blue-900/30">
                         <svg className="absolute inset-0 w-full h-full animate-[hud-spin_10s_linear_infinite]" viewBox="0 0 100 100">

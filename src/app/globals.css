@@ -380,7 +380,7 @@ body {
     }
     
     @keyframes icon-pulse-banner {
-        0% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
         50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
         100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
     }
@@ -388,18 +388,28 @@ body {
         animation: icon-pulse-banner 3s infinite ease-in-out;
     }
 
-    @keyframes banner-scan {
-      0% { transform: translateY(-100%); opacity: 0.6; }
-      100% { transform: translateY(200%); opacity: 0; }
+    @keyframes move-circuit-1 {
+      0%, 100% { stroke-dashoffset: 200; }
+      50% { stroke-dashoffset: 0; }
     }
-    .banner-scanner-animation::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-        animation: banner-scan 4s infinite linear;
+    @keyframes move-circuit-2 {
+      0%, 100% { stroke-dashoffset: 0; }
+      50% { stroke-dashoffset: 200; }
+    }
+    @keyframes node-pulse-circuit {
+      0%, 100% { r: 2; opacity: 0.8; }
+      50% { r: 3; opacity: 1; }
+    }
+    .energy-path {
+        stroke-dasharray: 10, 20;
+        animation: move-circuit-1 4s linear infinite;
+    }
+    .energy-path:nth-of-type(2) {
+        animation: move-circuit-2 6s linear infinite;
+        animation-delay: -2s;
+    }
+    .node-pulse {
+        animation: node-pulse-circuit 2s infinite ease-in-out;
     }
 }
+

@@ -109,10 +109,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                     <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-transparent text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-transparent text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
+                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
-                      className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-2 border-[#F00000]/80 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
+                      className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
                     >
                       <Trash2/>
@@ -141,19 +141,41 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </div>
                 </div>
 
-                <div className="mb-6 relative overflow-hidden">
+                <div className="mb-6 relative overflow-hidden rounded-lg">
                     {hasThreat ? (
-                         <div className="p-4 rounded-lg bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4 relative banner-scanner-animation">
-                            <ShieldAlert className="size-8 text-red-400 shrink-0 animate-icon-pulse-banner" />
-                            <div>
+                         <div className="p-4 bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4 relative">
+                            <div className="absolute inset-0 z-0">
+                                <svg width="100%" height="100%" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="threat-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F00000" /><stop offset="100%" stopColor="#ff0048" /></linearGradient>
+                                    </defs>
+                                    <path className="energy-path" stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 20 L200 20 L220 40 L400 40" />
+                                    <path className="energy-path" style={{animationDelay: '1s'}} stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 60 L150 60 L180 30 L300 30" />
+                                    <circle className="node-pulse" cx="200" cy="20" r="2" fill="url(#threat-glow)" />
+                                    <circle className="node-pulse" style={{animationDelay: '0.5s'}} cx="180" cy="30" r="2" fill="url(#threat-glow)" />
+                                </svg>
+                            </div>
+                            <ShieldAlert className="relative z-10 size-8 text-red-400 shrink-0 animate-icon-pulse-banner" />
+                            <div className="relative z-10">
                                 <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
                                 <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
                             </div>
                          </div>
                     ) : (
-                        <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4 relative banner-scanner-animation">
-                            <Shield className="size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
-                            <div>
+                        <div className="p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4 relative">
+                            <div className="absolute inset-0 z-0">
+                                <svg width="100%" height="100%" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="safe-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00CB07" /><stop offset="100%" stopColor="#00F508" /></linearGradient>
+                                    </defs>
+                                    <path className="energy-path" stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
+                                    <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 10 L120 10 L140 30 L250 30" />
+                                    <circle className="node-pulse" cx="180" cy="40" r="2" fill="url(#safe-glow)" />
+                                    <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
+                                </svg>
+                            </div>
+                            <Shield className="relative z-10 size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
+                            <div className="relative z-10">
                                 <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
                                 <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
                             </div>
@@ -162,26 +184,26 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 </div>
 
                 <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
-                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden">
+                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground dark:text-white dark:hover:text-white hover:text-black flex-1 group relative overflow-hidden hover:border-none">
                       <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
                       Traducir Mensaje
-                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-primary/70 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform origin-center duration-300" />
                   </Button>
                   
                   {isPrivacyFeatureEnabled ? (
                       <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground dark:text-white dark:hover:text-white hover:text-black flex-1 group relative overflow-hidden hover:border-none"
                         onClick={() => setIsConfirmImagesModalOpen(true)}
                       >
                           <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
                           Mostrar Imágenes
-                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-[#E18700] to-[#FFAB00] scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform origin-center duration-300" />
                       </Button>
                   ) : (
                        <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white dark:text-white flex-1 group relative overflow-hidden"
                         onClick={() => setIsPrivacyModalOpen(true)}
                       >
                           <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>
@@ -251,7 +273,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
               <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
-                  <h3 className="text-base font-semibold">Reportar solo este correo</h3>
+                  <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
                   <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
               </Button>
             </motion.div>
@@ -263,7 +285,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0">
-            <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button variant="outline" className="border-border/30 hover:bg-zinc-800">Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
