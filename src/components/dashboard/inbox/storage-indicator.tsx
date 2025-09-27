@@ -18,7 +18,7 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer">
+        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer hover:bg-transparent">
             <div className="flex items-center justify-between text-xs font-mono">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <div className="relative">
