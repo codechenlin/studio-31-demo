@@ -12,6 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff } from 'lucide-react';
@@ -92,18 +100,13 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4">
-            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-2 w-full max-w-lg mx-auto">
-                <div className="flex items-center gap-2">
-                    <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
-                </div>
-                
+        <header className="sticky top-0 left-0 w-full z-10 p-4 flex items-center justify-center">
+            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-
                 <div className="flex items-center gap-2">
                     <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
                     <Button className={cn(buttonClass, "border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={buttonClass}><Languages/></Button>
                     <Button 
                       className={cn(buttonClass, "border-destructive/50 text-destructive hover:bg-destructive hover:text-white")}
                       onClick={() => setIsDeleting(true)}
@@ -116,26 +119,26 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
         <ScrollArea className="flex-1">
             <div className="p-4 md:p-8 max-w-4xl mx-auto">
-                <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
-                
+                 <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
+
                 <div className="flex items-start justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                     <Avatar className="size-16 border-2 border-primary/20">
-                       {bimiLogoUrl ? (
-                         <Image src={bimiLogoUrl} alt={`Logo de ${email.from}`} fill className="object-contain" />
-                       ) : (
-                         <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
-                           {senderInitial}
-                         </AvatarFallback>
-                       )}
-                     </Avatar>
-                     <div className="text-sm">
-                       <p className="font-semibold text-foreground text-base">{email.from}</p>
-                       <p className="text-muted-foreground text-sm">{`<${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com>`}</p>
-                       <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
-                       <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
-                     </div>
-                  </div>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="size-16 border-2 border-primary/20">
+                        {bimiLogoUrl ? (
+                            <Image src={bimiLogoUrl} alt={`Logo de ${email.from}`} fill className="object-contain" />
+                        ) : (
+                            <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                            {senderInitial}
+                            </AvatarFallback>
+                        )}
+                        </Avatar>
+                        <div className="text-sm">
+                            <p className="font-semibold text-foreground text-base">{email.from}</p>
+                            <p className="text-muted-foreground text-sm">{`<${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com>`}</p>
+                            <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
+                            <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
