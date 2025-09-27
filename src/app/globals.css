@@ -148,13 +148,6 @@ body {
       inherits: false;
     }
 
-    .hover-border-gradient-primary:hover {
-      border-image: linear-gradient(to right, #AD00EC, #1700E6) 1;
-    }
-    .hover-border-gradient-accent:hover {
-      border-image: linear-gradient(to right, #E18700, #FFAB00) 1;
-    }
-
     @keyframes spin-slow {
         to {
             transform: rotate(360deg);
@@ -385,4 +378,37 @@ body {
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
     }
+
+    .animate-progress-scan {
+      background-size: 200% 100%;
+      background-image: linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%);
+      animation: progress-scan 6s linear infinite;
+    }
+    
+    .hover-border-translate:hover {
+      --tw-border-opacity: 1;
+      border-color: transparent;
+      background-image: linear-gradient(white, white), linear-gradient(to right, #AD00EC, #1700E6);
+      background-origin: border-box;
+      background-clip: content-box, border-box;
+    }
+    .hover-border-images:hover {
+      --tw-border-opacity: 1;
+      border-color: transparent;
+      background-image: linear-gradient(white, white), linear-gradient(to right, #E18700, #FFAB00);
+      background-origin: border-box;
+      background-clip: content-box, border-box;
+    }
+    .dark .hover-border-translate:hover {
+       background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))), linear-gradient(to right, #AD00EC, #1700E6);
+    }
+    .dark .hover-border-images:hover {
+       background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))), linear-gradient(to right, #E18700, #FFAB00);
+    }
 }
+
+@keyframes progress-scan {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
