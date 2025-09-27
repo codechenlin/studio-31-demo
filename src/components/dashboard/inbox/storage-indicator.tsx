@@ -44,4 +44,3 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
     </TooltipProvider>
   );
 }
-
