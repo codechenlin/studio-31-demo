@@ -55,25 +55,25 @@ export function AntivirusInfoModal({ isOpen, onOpenChange }: AntivirusInfoModalP
           `}</style>
         <div className="grid grid-cols-1 md:grid-cols-2 h-full">
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+                <div className="absolute inset-0 z-10 opacity-40 pointer-events-none">
                     {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
                 </div>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }}
-                    className="relative z-10 flex flex-col items-center text-center gap-6"
+                    className="relative z-20 flex flex-col items-center text-center gap-6"
                 >
                     <div className="relative p-4 rounded-full bg-blue-900/50 border-2 border-blue-500/50 mb-4">
                        <Shield className="text-blue-300 size-12" />
                        <div className="absolute inset-0 rounded-full animate-ping border-2 border-blue-400/50" />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Sistema Activo</h2>
-                    <p className="text-blue-200/70 text-lg">Protección en Tiempo Real</p>
-                    <div className="p-3 rounded-lg bg-gradient-to-r from-[#00CE07]/20 to-[#A6EE00]/20 border border-[#00CE07]/50 flex items-center gap-3">
+                     <div className="p-3 rounded-lg bg-gradient-to-r from-[#00CE07]/20 to-[#A6EE00]/20 border border-[#00CE07]/50 flex items-center gap-3">
                         <CheckCheck className="size-6 text-[#A6EE00]"/>
                         <span className="font-semibold text-white">Sistema Activo</span>
                     </div>
+                    <p className="text-blue-200/70 text-lg">Protección en Tiempo Real</p>
+                    
                     <Button 
                         onClick={() => onOpenChange(false)} 
                         className="w-full bg-blue-800 hover:bg-blue-700 text-white"
