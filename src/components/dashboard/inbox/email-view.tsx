@@ -285,7 +285,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0">
-            <Button variant="outline" className="border-border/30 hover:bg-zinc-800">Cancelar</Button>
+            <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
