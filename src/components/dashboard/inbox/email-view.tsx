@@ -101,7 +101,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-background backdrop-blur-sm">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-zinc-900/80 backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
                      <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={onBack}><ArrowLeft/></Button>
@@ -141,18 +141,18 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </div>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-6 relative overflow-hidden">
                     {hasThreat ? (
-                         <div className="p-4 rounded-lg bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4">
-                            <ShieldAlert className="size-8 text-red-400 shrink-0" />
+                         <div className="p-4 rounded-lg bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4 relative banner-scanner-animation">
+                            <ShieldAlert className="size-8 text-red-400 shrink-0 animate-icon-pulse-banner" />
                             <div>
                                 <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
                                 <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
                             </div>
                          </div>
                     ) : (
-                        <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4">
-                            <Shield className="size-8 text-green-400 shrink-0" />
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4 relative banner-scanner-animation">
+                            <Shield className="size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
                             <div>
                                 <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
                                 <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>

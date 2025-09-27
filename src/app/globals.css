@@ -378,37 +378,72 @@ body {
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
     }
+    
+    @keyframes icon-pulse-banner {
+        0% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
+        100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+    }
+    .animate-icon-pulse-banner {
+        animation: icon-pulse-banner 3s infinite ease-in-out;
+    }
 
-    .animate-progress-scan {
-      background-size: 200% 100%;
-      background-image: linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%);
-      animation: progress-scan 6s linear infinite;
+    @keyframes banner-scan {
+      0% { transform: translateY(-100%); opacity: 0.6; }
+      100% { transform: translateY(200%); opacity: 0; }
+    }
+    .banner-scanner-animation::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        animation: banner-scan 4s infinite linear;
+    }
+
+    .hover-border-translate {
+      position: relative;
+    }
+    .hover-border-translate::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 2px solid transparent;
+      background: linear-gradient(to right, #AD00EC, #1700E6) border-box;
+      -webkit-mask:
+         linear-gradient(#fff 0 0) padding-box, 
+         linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .hover-border-translate:hover::before {
+      opacity: 1;
     }
     
-    .hover-border-translate:hover {
-      --tw-border-opacity: 1;
-      border-color: transparent;
-      background-image: linear-gradient(white, white), linear-gradient(to right, #AD00EC, #1700E6);
-      background-origin: border-box;
-      background-clip: content-box, border-box;
+    .hover-border-images {
+      position: relative;
     }
-    .hover-border-images:hover {
-      --tw-border-opacity: 1;
-      border-color: transparent;
-      background-image: linear-gradient(white, white), linear-gradient(to right, #E18700, #FFAB00);
-      background-origin: border-box;
-      background-clip: content-box, border-box;
+    .hover-border-images::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 2px solid transparent;
+      background: linear-gradient(to right, #E18700, #FFAB00) border-box;
+      -webkit-mask:
+         linear-gradient(#fff 0 0) padding-box, 
+         linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
-    .dark .hover-border-translate:hover {
-       background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))), linear-gradient(to right, #AD00EC, #1700E6);
-    }
-    .dark .hover-border-images:hover {
-       background-image: linear-gradient(hsl(var(--background)), hsl(var(--background))), linear-gradient(to right, #E18700, #FFAB00);
+    .hover-border-images:hover::before {
+      opacity: 1;
     }
 }
-
-@keyframes progress-scan {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
