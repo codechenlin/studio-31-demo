@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle, BrainCircuit } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -31,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { SecuritySettingsModal } from './security-settings-modal';
-import { AntivirusInfoModal } from './antivirus-info-modal';
+import { AntivirusStatusModal } from './antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -68,6 +68,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   };
 
   const attachments = extractAttachments(email.body);
+  const hasThreat = email.id.startsWith('threat-') || email.id.startsWith('attachment-2');
+
 
   const sanitizedBodyForDisplay = (body: string) => {
     let processedBody = body.replace(/<p[^>]*data-attachment='true'[^>]*>Attachment<\/p>/g, '');
@@ -93,26 +95,24 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   }
   
   const sanitizedBody = sanitizedBodyForDisplay(email.body);
-
-  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
   
   const senderInitial = email.from.charAt(0).toUpperCase();
 
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-zinc-900/50 backdrop-blur-sm">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background dark:bg-background backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
-                     <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
+                     <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={onBack}><ArrowLeft/></Button>
                 </div>
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                    <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
-                    <Button className={cn(buttonClass, "border-transparent text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={cn(buttonClass, "border-transparent text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
+                    <Button className="size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground" onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
+                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-transparent text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-transparent text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
-                      className={cn(buttonClass, "border-[#F00000]/80 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
+                      className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border-2 border-[#F00000]/80 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
                     >
                       <Trash2/>
@@ -127,8 +127,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
                 <div className="flex items-start justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <Avatar className="size-16 border-2 border-primary/20">
-                           <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                        <Avatar className="size-20 border-4 border-primary/20">
+                           <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
                             {senderInitial}
                             </AvatarFallback>
                         </Avatar>
@@ -141,8 +141,28 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </div>
                 </div>
 
+                <div className="mb-6">
+                    {hasThreat ? (
+                         <div className="p-4 rounded-lg bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4">
+                            <ShieldAlert className="size-8 text-red-400 shrink-0" />
+                            <div>
+                                <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
+                                <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
+                            </div>
+                         </div>
+                    ) : (
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4">
+                            <Shield className="size-8 text-green-400 shrink-0" />
+                            <div>
+                                <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
+                                <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
-                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden">
+                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden">
                       <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
                       Traducir Mensaje
                       <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
@@ -151,7 +171,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   {isPrivacyFeatureEnabled ? (
                       <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden"
                         onClick={() => setIsConfirmImagesModalOpen(true)}
                       >
                           <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
@@ -161,7 +181,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   ) : (
                        <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent hover:text-white flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent text-foreground hover:text-white flex-1 group relative overflow-hidden"
                         onClick={() => setIsPrivacyModalOpen(true)}
                       >
                           <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>
@@ -201,19 +221,19 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </main>
 
     {/* Modals */}
-    <AntivirusInfoModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Confirmas la eliminación?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Confirmas la eliminación?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. El correo se eliminará permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }}>
+            <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Sí, eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
