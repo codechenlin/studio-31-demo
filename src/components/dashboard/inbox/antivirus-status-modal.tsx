@@ -20,12 +20,7 @@ const techItems = [
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-blue-500/30 text-white overflow-hidden" showCloseButton={false}>
@@ -49,16 +44,6 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             @keyframes scan-anim {
               0% { top: -150px; }
               100% { top: 100%; }
-            }
-            @keyframes status-glow {
-              0%, 100% {
-                opacity: 0.8;
-                box-shadow: 0 0 15px 2px #1700E6;
-              }
-              50% { 
-                opacity: 1;
-                box-shadow: 0 0 25px 5px #AD00EC;
-              }
             }
           `}</style>
         <div className="grid grid-cols-1 md:grid-cols-2 h-full">
@@ -95,9 +80,8 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                 <div 
                     className="absolute bottom-4 left-4 right-4 z-10 p-2 rounded-lg text-xs text-center border"
                     style={{
-                        animation: 'status-glow 3s infinite ease-in-out',
-                        background: 'linear-gradient(45deg, #AD00EC, #1700E6)',
-                        borderColor: '#AD00EC',
+                        background: 'linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)))',
+                        borderColor: 'hsl(var(--primary))',
                         color: 'white'
                     }}
                 >

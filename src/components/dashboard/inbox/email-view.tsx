@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { SecuritySettingsModal } from './security-settings-modal';
+import { AntivirusInfoModal } from './antivirus-info-modal';
 import { cn } from '@/lib/utils';
 
 
@@ -48,6 +49,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isConfirmImagesModalOpen, setIsConfirmImagesModalOpen] = useState(false);
   const [isPrivacyFeatureEnabled, setIsPrivacyFeatureEnabled] = useState(true);
+  const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
 
   if (!email) {
     return (
@@ -93,28 +95,29 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
   const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
   
-  // Placeholder for BIMI logo logic
-  const bimiLogoUrl = null;
   const senderInitial = email.from.charAt(0).toUpperCase();
 
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
         <header className="sticky top-0 left-0 w-full z-10 p-4 flex items-center justify-center">
-            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
-                <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-                <div className="flex items-center gap-2">
-                    <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
+             <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
+                     <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
+                </div>
+                <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
+                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                    <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
                     <Button className={cn(buttonClass, "border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={cn(buttonClass, "border-blue-500/50 text-blue-500 hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
-                      className={cn(buttonClass, "border-destructive/50 text-destructive hover:bg-destructive hover:text-white")}
+                      className={cn(buttonClass, "border-[#F00000]/50 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
                     >
                       <Trash2/>
                     </Button>
                 </div>
-            </div>
+             </div>
         </header>
 
         <ScrollArea className="flex-1">
@@ -124,13 +127,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="flex items-start justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <Avatar className="size-16 border-2 border-primary/20">
-                        {bimiLogoUrl ? (
-                            <Image src={bimiLogoUrl} alt={`Logo de ${email.from}`} fill className="object-contain" />
-                        ) : (
-                            <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                           <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
                             {senderInitial}
                             </AvatarFallback>
-                        )}
                         </Avatar>
                         <div className="text-sm">
                             <p className="font-semibold text-foreground text-base">{email.from}</p>
@@ -200,7 +199,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
         </ScrollArea>
     </main>
 
-    {/* Delete Confirmation Modal */}
+    {/* Modals */}
+    <AntivirusInfoModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -211,14 +212,13 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { /* Lógica de eliminación aquí */ setIsDeleting(false); onBack(); }}>
+            <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }}>
               Sí, eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
     
-    {/* Report Spam Modal */}
     <AlertDialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -234,7 +234,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
         </AlertDialogContent>
     </AlertDialog>
 
-    {/* Confirm Show Images Modal */}
     <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
         <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
             <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
@@ -272,7 +271,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
         </DialogContent>
     </Dialog>
 
-    {/* Enable Privacy Modal */}
     <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
         <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
              <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
@@ -291,9 +289,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
              <DialogFooter className="z-10 pt-4 flex justify-between w-full">
                 <div className="flex-1">
                     <Button variant="link" className="text-cyan-300" onClick={() => {
-                        /* Logic to open advanced settings */
-                        setIsPrivacyModalOpen(false); // Close this one first
-                        // You might need a way to globally open the SecuritySettingsModal, e.g. via context
+                        setIsPrivacyModalOpen(false);
+                        // Future: open advanced settings modal
                     }}>Configuración Avanzada</Button>
                 </div>
                 <div className="flex gap-2">

@@ -6,6 +6,7 @@ import { Database } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface StorageIndicatorProps {
   used: number;
@@ -18,7 +19,7 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer hover:bg-transparent bg-transparent">
+        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer bg-transparent hover:bg-transparent">
             <div className="flex items-center justify-between text-xs font-mono">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <div className="relative">
@@ -29,7 +30,7 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
               </div>
               <span className="font-bold text-foreground">{percentage.toFixed(0)}%</span>
             </div>
-            <Progress value={percentage} className="h-4" indicatorClassName="animate-progress-scan-futuristic" />
+            <Progress value={percentage} className="h-8" indicatorClassName="animate-progress-scan" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2 text-center text-sm">
