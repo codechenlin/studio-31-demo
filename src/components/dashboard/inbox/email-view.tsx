@@ -126,7 +126,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                      <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                          <Wand2 className="size-5 text-primary" />
+                          <Languages className="size-5 text-primary" />
                         </div>
                     </button>
                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>

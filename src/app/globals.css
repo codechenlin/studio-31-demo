@@ -152,7 +152,6 @@ body {
       from { --angle: 0deg; }
       to { --angle: 360deg; }
     }
-    
     .animate-rotating-border {
       animation: rotating-border 4s linear infinite;
     }
