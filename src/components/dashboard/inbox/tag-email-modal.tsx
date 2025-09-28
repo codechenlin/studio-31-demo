@@ -54,19 +54,20 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen && initialTag) {
-      // If editing, find if it's an existing tag or treat it as a new one to be edited
-      const isExisting = existingTags.find(t => t.name === initialTag.name && t.color === initialTag.color);
-      if (isExisting) {
-        setSelectedExistingTag(isExisting);
-        setNewTagName('');
-        setNewTagColor('#8b5cf6');
-      } else {
-        setSelectedExistingTag(null);
-        setNewTagName(initialTag.name);
-        setNewTagColor(initialTag.color);
+    if (isOpen) {
+      if (initialTag) {
+        const isExisting = existingTags.find(t => t.name === initialTag.name && t.color === initialTag.color);
+        if (isExisting) {
+          setSelectedExistingTag(isExisting);
+          setNewTagName('');
+          setNewTagColor('#8b5cf6');
+        } else {
+          setSelectedExistingTag(null);
+          setNewTagName(initialTag.name);
+          setNewTagColor(initialTag.color);
+        }
       }
-    } else if (!isOpen) {
+    } else {
       // Reset on close
       setNewTagName('');
       setNewTagColor('#8b5cf6');
@@ -111,14 +112,16 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Etiquetar Correo</DialogTitle>
-              <DialogDescription>
-                  Aplica una etiqueta existente o crea una nueva para organizar este correo.
-              </DialogDescription>
-            </DialogHeader>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <div className="sr-only">
+                <DialogHeader>
+                    <DialogTitle>Etiquetar Correo</DialogTitle>
+                    <DialogDescription>
+                        Aplica una etiqueta existente o crea una nueva para organizar este correo.
+                    </DialogDescription>
+                </DialogHeader>
+            </div>
            <style>{`
                 .info-grid {
                     background-image:
@@ -140,8 +143,9 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                     100% { transform: translateY(100vh); }
                 }
             `}</style>
-          <div className="w-2/5 flex flex-col border-r border-cyan-400/20 bg-black/30 p-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+
+          <div className="w-1/3 flex flex-col border-r border-cyan-400/20 bg-black/30 p-6">
+            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
               <Tags className="text-cyan-400" />
               Etiquetas Existentes
             </h3>
@@ -168,13 +172,13 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
               </div>
             </ScrollArea>
           </div>
-          <div className="w-3/5 flex flex-col relative overflow-hidden info-grid p-6">
-             <div className="scan-line-info" />
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 z-10">
+          
+          <div className="w-1/3 flex flex-col p-6 border-r border-cyan-400/20">
+            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
               <PlusCircle className="text-cyan-400" />
               {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
             </h3>
-            <div className="space-y-6 flex-1 flex flex-col z-10">
+            <div className="space-y-6 flex-1 flex flex-col">
               <div>
                 <Label htmlFor="tag-name">Nombre de la Etiqueta</Label>
                 <Input
@@ -199,31 +203,37 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                     className="mt-1"
                 />
               </div>
-              <div>
-                <Label>Vista Previa</Label>
-                <div className="p-3 rounded-lg bg-black/30 border border-cyan-400/20 mt-1 flex justify-center">
-                   {previewTag ? (
-                    <div
-                        className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
-                        style={{
-                          backgroundColor: previewTag.color,
-                          color: '#ffffff',
-                          border: `1px solid rgba(255, 255, 255, 0.5)`
-                        }}
-                      >
-                        <Tag className="size-4" />
-                        {previewTag.name}
-                      </div>
-                   ) : <div className="h-7 text-xs text-cyan-200/50">Selecciona o crea una etiqueta</div> }
-                </div>
-              </div>
             </div>
-             <DialogFooter className="pt-6 z-10">
-                <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>Cancelar</Button>
-                <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleSave} disabled={!previewTag}>Guardar Etiqueta</Button>
-            </DialogFooter>
+          </div>
+          
+          <div className="w-1/3 flex flex-col relative overflow-hidden info-grid p-6">
+             <div className="scan-line-info" />
+            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 z-10 shrink-0">
+              <Tag className="text-cyan-400" />
+              Vista Previa
+            </h3>
+             <div className="flex-1 flex items-center justify-center z-10">
+               {previewTag ? (
+                <div
+                    className="px-4 py-2 rounded-full text-base font-bold flex items-center gap-3 shadow-lg"
+                    style={{
+                      backgroundColor: previewTag.color,
+                      color: '#ffffff',
+                      border: `2px solid rgba(255, 255, 255, 0.7)`,
+                      boxShadow: `0 0 20px ${previewTag.color}`
+                    }}
+                  >
+                    <Tag className="size-5" />
+                    {previewTag.name}
+                  </div>
+               ) : <div className="text-sm text-cyan-200/50">Selecciona o crea una etiqueta</div> }
+            </div>
           </div>
         </DialogContent>
+        <DialogFooter className="absolute bottom-6 right-6 z-20">
+            <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>Cancelar</Button>
+            <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleSave} disabled={!previewTag}>Guardar Etiqueta</Button>
+        </DialogFooter>
       </Dialog>
       <AlertDialog open={isConfirmCancelOpen} onOpenChange={setIsConfirmCancelOpen}>
         <AlertDialogContent>
