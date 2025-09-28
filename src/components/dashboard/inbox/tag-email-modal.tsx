@@ -113,15 +113,13 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
-            <div className="sr-only">
-                <DialogHeader>
-                    <DialogTitle>Etiquetar Correo</DialogTitle>
-                    <DialogDescription>
-                        Aplica una etiqueta existente o crea una nueva para organizar este correo.
-                    </DialogDescription>
-                </DialogHeader>
-            </div>
+        <DialogContent className="max-w-5xl w-full h-[450px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogHeader className="sr-only">
+                <DialogTitle>Etiquetar Correo</DialogTitle>
+                <DialogDescription>
+                    Aplica una etiqueta existente o crea una nueva para organizar este correo.
+                </DialogDescription>
+            </DialogHeader>
            <style>{`
                 .info-grid {
                     background-image:
@@ -143,97 +141,98 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                     100% { transform: translateY(100vh); }
                 }
             `}</style>
-
-          <div className="w-1/3 flex flex-col border-r border-cyan-400/20 bg-black/30 p-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
-              <Tags className="text-cyan-400" />
-              Etiquetas Existentes
-            </h3>
-            <ScrollArea className="flex-1 -mr-4 pr-4 custom-scrollbar">
-              <div className="space-y-2">
-                {existingTags.map((tag) => (
-                  <button
-                    key={tag.name}
-                    onClick={() => handleSelectExisting(tag)}
-                    className={cn(
-                      "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
-                      selectedExistingTag?.name === tag.name
-                        ? "bg-cyan-500/20 border-cyan-400"
-                        : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="size-4 rounded-full" style={{ backgroundColor: tag.color }} />
-                      <span className="font-medium text-sm">{tag.name}</span>
-                    </div>
-                    {selectedExistingTag?.name === tag.name && <Check className="size-5 text-cyan-300" />}
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-          
-          <div className="w-1/3 flex flex-col p-6 border-r border-cyan-400/20">
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
-              <PlusCircle className="text-cyan-400" />
-              {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
-            </h3>
-            <div className="space-y-6 flex-1 flex flex-col">
-              <div>
-                <Label htmlFor="tag-name">Nombre de la Etiqueta</Label>
-                <Input
-                  id="tag-name"
-                  value={newTagName}
-                  onChange={(e) => {
-                    setNewTagName(e.target.value);
-                    setSelectedExistingTag(null);
-                  }}
-                  placeholder="Ej: Prioridad Alta"
-                  className="mt-1 bg-black/30 border-cyan-400/30"
-                />
-              </div>
-              <div className="flex-1">
-                <Label>Color de la Etiqueta</Label>
-                 <ColorPickerAdvanced
-                    color={newTagColor}
-                    setColor={(color) => {
-                        setNewTagColor(color);
-                        setSelectedExistingTag(null);
-                    }}
-                    className="mt-1"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="w-1/3 flex flex-col relative overflow-hidden info-grid p-6">
-             <div className="scan-line-info" />
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 z-10 shrink-0">
-              <Tag className="text-cyan-400" />
-              Vista Previa
-            </h3>
-             <div className="flex-1 flex items-center justify-center z-10">
-               {previewTag ? (
-                <div
-                    className="px-4 py-2 rounded-full text-base font-bold flex items-center gap-3 shadow-lg"
-                    style={{
-                      backgroundColor: previewTag.color,
-                      color: '#ffffff',
-                      border: `2px solid rgba(255, 255, 255, 0.7)`,
-                      boxShadow: `0 0 20px ${previewTag.color}`
-                    }}
-                  >
-                    <Tag className="size-5" />
-                    {previewTag.name}
+            <div className="flex-1 flex overflow-hidden">
+              <div className="w-1/3 flex flex-col border-r border-cyan-400/20 bg-black/30 p-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
+                  <Tags className="text-cyan-400" />
+                  Etiquetas Existentes
+                </h3>
+                <ScrollArea className="flex-1 -mr-4 pr-4 custom-scrollbar">
+                  <div className="space-y-2">
+                    {existingTags.map((tag) => (
+                      <button
+                        key={tag.name}
+                        onClick={() => handleSelectExisting(tag)}
+                        className={cn(
+                          "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
+                          selectedExistingTag?.name === tag.name
+                            ? "bg-cyan-500/20 border-cyan-400"
+                            : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="size-4 rounded-full" style={{ backgroundColor: tag.color }} />
+                          <span className="font-medium text-sm">{tag.name}</span>
+                        </div>
+                        {selectedExistingTag?.name === tag.name && <Check className="size-5 text-cyan-300" />}
+                      </button>
+                    ))}
                   </div>
-               ) : <div className="text-sm text-cyan-200/50">Selecciona o crea una etiqueta</div> }
+                </ScrollArea>
+              </div>
+              
+              <div className="w-1/3 flex flex-col p-6 border-r border-cyan-400/20">
+                <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0">
+                  <PlusCircle className="text-cyan-400" />
+                  {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
+                </h3>
+                <div className="space-y-6 flex-1 flex flex-col">
+                  <div>
+                    <Label htmlFor="tag-name">Nombre de la Etiqueta</Label>
+                    <Input
+                      id="tag-name"
+                      value={newTagName}
+                      onChange={(e) => {
+                        setNewTagName(e.target.value);
+                        setSelectedExistingTag(null);
+                      }}
+                      placeholder="Ej: Prioridad Alta"
+                      className="mt-1 bg-black/30 border-cyan-400/30"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label>Color de la Etiqueta</Label>
+                     <ColorPickerAdvanced
+                        color={newTagColor}
+                        setColor={(color) => {
+                            setNewTagColor(color);
+                            setSelectedExistingTag(null);
+                        }}
+                        className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="w-1/3 flex flex-col relative overflow-hidden info-grid p-6">
+                 <div className="scan-line-info" />
+                <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 z-10 shrink-0">
+                  <Tag className="text-cyan-400" />
+                  Vista Previa
+                </h3>
+                 <div className="flex-1 flex items-center justify-center z-10">
+                   {previewTag ? (
+                    <div
+                        className="px-4 py-2 rounded-full text-base font-bold flex items-center gap-3 shadow-lg"
+                        style={{
+                          backgroundColor: previewTag.color,
+                          color: '#ffffff',
+                          border: `2px solid rgba(255, 255, 255, 0.7)`,
+                          boxShadow: `0 0 20px ${previewTag.color}`
+                        }}
+                      >
+                        <Tag className="size-5" />
+                        {previewTag.name}
+                      </div>
+                   ) : <div className="text-sm text-cyan-200/50">Selecciona o crea una etiqueta</div> }
+                </div>
+              </div>
             </div>
-          </div>
+            <DialogFooter className="p-4 border-t border-cyan-400/20 shrink-0 bg-black/30">
+                <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>Cancelar</Button>
+                <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleSave} disabled={!previewTag}>Guardar Etiqueta</Button>
+            </DialogFooter>
         </DialogContent>
-        <DialogFooter className="absolute bottom-6 right-6 z-20">
-            <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>Cancelar</Button>
-            <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleSave} disabled={!previewTag}>Guardar Etiqueta</Button>
-        </DialogFooter>
       </Dialog>
       <AlertDialog open={isConfirmCancelOpen} onOpenChange={setIsConfirmCancelOpen}>
         <AlertDialogContent>
