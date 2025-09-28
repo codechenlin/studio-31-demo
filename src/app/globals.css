@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -310,18 +311,14 @@ body {
       100% { transform: translateY(40px); }
     }
 
-    @keyframes particle-float {
-      0% { transform: translateY(0) translateX(0); opacity: 1; }
-      100% { transform: translateY(-100vh) translateX(var(--x-end)); opacity: 0; }
-    }
     .particle {
       position: absolute;
       bottom: -10px;
       left: var(--x-start);
       width: var(--size);
       height: var(--size);
-      border-radius: 50%;
       background: var(--color);
+      border-radius: 50%;
       animation: particle-float var(--duration) var(--delay) linear infinite;
     }
 
@@ -383,59 +380,8 @@ body {
     }
 
     @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes icon-check-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
-    @keyframes node-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+    @keyframes icon-check-pulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } }
     
-    .node-pulse { animation: node-pulse 3s infinite ease-in-out; }
-    
-    @keyframes circuit-flow {
-      from { stroke-dashoffset: 200; }
-      to { stroke-dashoffset: 0; }
-    }
-    .circuit-flow {
-      stroke-dasharray: 4 8;
-      animation: circuit-flow 10s linear infinite;
-    }
-
-    @keyframes icon-pulse-banner {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
-        50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
-    }
-    .animate-icon-pulse-banner {
-        animation: icon-pulse-banner 3s infinite ease-in-out;
-    }
-    
-    .bg-grid-blue-500\/30 {
-        background-image:
-            linear-gradient(to right, rgba(59, 130, 246, 0.3) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(59, 130, 246, 0.3) 1px, transparent 1px);
-        background-size: 2rem 2rem;
-    }
-    
-    .bg-grid-red-500\/10 {
-        background-image:
-            linear-gradient(to right, rgba(239, 68, 68, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(239, 68, 68, 0.1) 1px, transparent 1px);
-        background-size: 2rem 2rem;
-    }
-    
-    .bg-grid-amber-500\/20 {
-        background-image:
-            linear-gradient(to right, rgba(245, 158, 11, 0.2) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(245, 158, 11, 0.2) 1px, transparent 1px);
-        background-size: 2rem 2rem;
-    }
-
-    @keyframes animate-progress-scan {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-    .animate-progress-scan {
-        background-image: linear-gradient(90deg, transparent, hsl(var(--primary)/0.8), transparent);
-        background-size: 200% 100%;
-        animation: animate-progress-scan 2s linear infinite;
-    }
-
     @keyframes text-reveal {
       from {
         opacity: 0;
@@ -454,26 +400,32 @@ body {
       opacity: 0;
     }
     
+    .hexagonal-grid {
+      background-image:
+        linear-gradient(rgba(0, 173, 236, 0.1) 1px, transparent 1px),
+        linear-gradient(60deg, rgba(0, 173, 236, 0.1) 1px, transparent 1px),
+        linear-gradient(120deg, rgba(0, 173, 236, 0.1) 1px, transparent 1px);
+      background-size: 20px 34px, 20px 34px, 20px 34px;
+      background-position: 0 0, 10px 17px, 10px 17px;
+    }
+
     @keyframes radar-sweep {
-      0% {
-        transform: translateY(-100%);
-      }
-      100% {
-        transform: translateY(100%);
-      }
+        0% { background-position: 50% 100%; }
+        100% { background-position: 50% -100%; }
+    }
+    .radar-scanner {
+        background: linear-gradient(to top, transparent, rgba(0, 173, 236, 0.2), transparent);
+        animation: radar-sweep 4s linear infinite;
     }
     
-    @keyframes pulse-dot {
-      0% {
-        transform: scale(0.1);
-        opacity: 0.0;
-      }
-      50% {
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1.2);
-        opacity: 0.0;
-      }
+    .bg-grid-blue-500\/30 {
+        background-image:
+            linear-gradient(to right, rgba(59, 130, 246, 0.3) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(59, 130, 246, 0.3) 1px, transparent 1px);
+        background-size: 2rem 2rem;
+    }
+    
+    .icon-check-pulse {
+        animation: icon-check-pulse 2s infinite ease-in-out;
     }
 }

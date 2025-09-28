@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface AntivirusStatusModalProps {
   isOpen: boolean;
@@ -98,7 +98,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             </div>
                         </motion.div>
                          {index < analysisItems.length - 1 && (
-                            <div className="h-px w-full my-3 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                            <Separator className="my-2 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent h-px border-0" />
                         )}
                         </React.Fragment>
                     ))}
@@ -107,12 +107,13 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
 
             {/* Section 3: Right Panel */}
             <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"/>
+                <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-green-900/20 via-transparent to-transparent"/>
                  <div className="relative z-10 text-center flex flex-col items-center">
                     <motion.div 
-                      initial={{ scale: 0.8, opacity: 0}} 
-                      animate={{ scale: 1, opacity: 1}} 
-                      transition={{ delay: 0.5, duration: 0.5}}
+                        initial={{ scale: 0.8, opacity: 0}} 
+                        animate={{ scale: 1, opacity: 1}} 
+                        transition={{ delay: 0.5, duration: 0.5}}
+                        className="relative p-2"
                     >
                       <CheckCircle className="size-16 text-green-300 mb-2 animate-icon-pulse-banner" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
                     </motion.div>
@@ -132,9 +133,17 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             transition={{ delay: index * 0.2 + 0.8 }}
                             className="flex items-start gap-4"
                         >
-                           <div className="relative p-3 bg-purple-950/50 rounded-full border-2 border-purple-500/30 node-pulse" style={{ animationDelay: `${index * 0.5}s` }}>
-                                <item.icon className="size-6 text-purple-300" />
-                                <div className="absolute top-0 left-0 w-full h-full circuit-flow" style={{ animationDelay: `${index * 1}s` }} />
+                            <div className="relative p-3 rounded-full bg-green-950/50">
+                                <svg className="absolute inset-0 w-full h-full animate-[hud-spin_8s_linear_infinite]" viewBox="0 0 100 100" style={{ animationDelay: `${index * 0.3}s`}}>
+                                    <defs>
+                                      <linearGradient id="protection-ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#A6EE00" />
+                                        <stop offset="100%" stopColor="#00CB07" />
+                                      </linearGradient>
+                                    </defs>
+                                    <path d="M 50,5 A 45,45 0 0,1 95,50" stroke="url(#protection-ring-gradient)" strokeWidth="1.5" fill="none" strokeDasharray="5, 10" />
+                                </svg>
+                                <item.icon className="size-6 text-green-300" style={{ fill: 'rgba(0, 203, 7, 0.1)' }} />
                             </div>
                             <div className="pt-1">
                                 <h4 className="font-semibold text-white">{item.title}</h4>
