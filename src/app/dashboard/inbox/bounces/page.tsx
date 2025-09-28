@@ -96,7 +96,7 @@ export default function BouncesPage() {
               Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
             </p>
           </div>
-          <StorageIndicator used={10.2} total={15} />
+          <StorageIndicator used={10.2} total={15} gradientColors={['#F00000', '#F07000']} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">

@@ -88,7 +88,6 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
       read: true,
       starred: false,
-      tag: { name: 'Proyecto Alpha', color: '#3b82f6' },
     },
     {
       id: '2',
@@ -109,7 +108,6 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 24),
       read: true,
       starred: true,
-      tag: { name: 'Seguimiento', color: '#f97316' },
     },
     {
       id: '4',
@@ -187,7 +185,7 @@ export default function MainInboxPage() {
                 Aquí recibirás todos tus correos importantes y comunicaciones generales.
               </p>
             </div>
-            <StorageIndicator used={10.2} total={15} />
+            <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
           </header>
 
            <Card className={cn(

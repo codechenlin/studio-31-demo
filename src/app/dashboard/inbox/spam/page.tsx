@@ -104,7 +104,7 @@ export default function SpamPage() {
                 Revisa los correos clasificados como no deseados por nuestro sistema de IA.
               </p>
             </div>
-            <StorageIndicator used={10.2} total={15} />
+            <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-2 relative overflow-hidden">
