@@ -2,12 +2,13 @@
 "use client";
 
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion, Eye, Server, Layers, Package, ScanSearch } from 'lucide-react';
+import { ShieldCheck, CheckCircle, BrainCircuit, Eye, Server, Layers, Package, ScanSearch, FileScan, UserCheck, Code } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface AntivirusStatusModalProps {
   isOpen: boolean;
@@ -15,20 +16,21 @@ interface AntivirusStatusModalProps {
 }
 
 const analysisItems = [
-    { icon: Link, title: "Análisis de Enlaces y Redirecciones", description: "Cada URL ha sido procesada en un entorno de sandbox virtualizado para neutralizar cualquier intento de phishing antes de que llegue a tu navegador. Nuestra IA ha confirmado que todos los enlaces son seguros." },
-    { icon: ScanSearch, title: "Escaneo de Firmas y Comportamiento", description: "Hemos contrastado la firma digital de cada archivo adjunto con nuestra base de datos de 2 mil millones de amenazas conocidas y hemos ejecutado el contenido en un entorno simulado para predecir comportamientos maliciosos. No se detectaron anomalías." },
-    { icon: UserCheck, title: "Verificación de Suplantación de Identidad (Spoofing)", description: "Se ha validado la autenticidad del remitente a través de los protocolos DMARC, DKIM y SPF. El Núcleo de IA confirma que el correo es legítimo y no una falsificación." },
-    { icon: Code, title: "Detección de Scripts Maliciosos", description: "El código fuente del correo (HTML, CSS, JS) ha sido inspeccionado y saneado, eliminando cualquier script ofuscado o rutina diseñada para comprometer la seguridad de tus datos." },
-    { icon: Fingerprint, title: "Análisis de Huella Digital", description: "Comparamos la 'huella digital' única de este correo con millones de muestras de nuestra base de datos global para descartar similitudes con campañas de phishing conocidas, garantizando su unicidad." },
-    { icon: Package, title: "Detección de Bombas de Descompresión", description: "Se analizaron todos los archivos comprimidos (ZIP, RAR, etc.) para descartar 'bombas de descompresión', un tipo de ataque que busca agotar los recursos de tu sistema. El contenido es seguro." },
-    { icon: FileScan, title: "Análisis de Macros en Documentos", description: "Los documentos de Office y PDFs adjuntos fueron escaneados en busca de macros maliciosas o scripts ocultos. No se encontró código ejecutable sospechoso en ninguno de los archivos." },
+    { icon: ScanSearch, title: "Análisis Heurístico Profundo", description: "Nuestro motor de IA examinó la estructura y el código del correo en busca de anomalías y patrones sospechosos, encontrando cero desviaciones." },
+    { icon: Layers, title: "Escaneo de Firmas de Malware", description: "El correo fue contrastado con nuestra base de datos global de 2 mil millones de amenazas conocidas. No se encontró ninguna coincidencia." },
+    { icon: UserCheck, title: "Verificación de Suplantación de Identidad", description: "Se validó la autenticidad del remitente a través de DMARC, DKIM y SPF. El Núcleo de IA confirma que el correo es legítimo." },
+    { icon: Code, title: "Saneamiento de Scripts", description: "El código HTML y JavaScript fue inspeccionado y saneado, neutralizando cualquier script ofuscado o rutina potencialmente maliciosa." },
+    { icon: FileScan, title: "Análisis Forense de Adjuntos", description: "Cada archivo adjunto fue detonado en un sandbox virtualizado para analizar su comportamiento. Todos los archivos son seguros." },
+    { icon: Package, title: "Detección de Archivos Comprimidos Maliciosos", description: "Se analizaron todos los archivos comprimidos (ZIP, RAR) para descartar 'bombas de descompresión' y malware oculto. Contenido verificado." },
 ];
 
 const protectionItems = [
-    { title: "Escudo Criptográfico", description: "El correo fue validado con una firma criptográfica que asegura que su contenido no ha sido alterado desde que fue enviado." },
-    { title: "Motor de Inferencia Neuronal", description: "Los patrones, estructura y metadatos del correo fueron comparados con modelos de ataque emergentes, sin encontrar correlaciones peligrosas." },
-    { title: "Validación de Reputación Geodistribuida", description: "La reputación del remitente y la infraestructura de origen (IPs, dominios) fueron validadas como seguras en nuestra red global de inteligencia de amenazas." },
-    { title: "Integridad de Contenido Verificada", description: "La IA ha verificado la coherencia entre el texto visible y el código subyacente, garantizando que no hay contenido malicioso oculto." },
+    { title: "Análisis Heurístico Profundo", icon: ScanSearch },
+    { title: "Escaneo de Firmas de Malware", icon: Layers },
+    { title: "Verificación de Suplantación de Identidad", icon: UserCheck },
+    { title: "Saneamiento de Scripts", icon: Code },
+    { title: "Análisis Forense de Adjuntos", icon: FileScan },
+    { title: "Detección de Archivos Comprimidos Maliciosos", icon: Package },
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
@@ -53,8 +55,8 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             <circle cx="50" cy="50" r="48" stroke="rgba(0,173,236,0.2)" strokeWidth="0.5" fill="none" />
                             <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,173,236,0.7)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
                              <circle className="pulse-dot" cx="20" cy="20" r="2" fill="#00ADEC"/>
-                             <circle className="pulse-dot" cx="80" cy="80" r="2" fill="#00ADEC" style={{animationDelay: '1s'}}/>
-                             <circle className="pulse-dot" cx="80" cy="20" r="2" fill="#00ADEC" style={{animationDelay: '0.5s'}}/>
+                             <circle className="pulse-dot" cx="80" cy="80" r="2" fill="#E18700" style={{animationDelay: '1s'}}/>
+                             <circle className="pulse-dot" cx="80" cy="20" r="2" fill="#AD00EC" style={{animationDelay: '0.5s'}}/>
                         </svg>
                         <ShieldCheck className="size-24 text-cyan-300 animate-[icon-pulse_4s_infinite_ease-in-out]" style={{ filter: 'drop-shadow(0 0 20px #00adec)' }}/>
                     </div>
@@ -80,7 +82,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                 <DialogHeader className="text-left mb-4 z-10 shrink-0">
                     <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <BrainCircuit />
-                        Análisis del Correo
+                        Capacidades del Escudo IA
                     </DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="flex-1 -mr-3 pr-3 custom-scrollbar z-10">
@@ -91,16 +93,25 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.15 + 0.4 }}
-                            className="flex items-start gap-4"
+                            className="group/card relative p-4 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden"
                         >
-                             <div className="relative p-2 bg-blue-950/50 rounded-full border border-blue-500/30">
-                                <item.icon className="size-6 text-blue-300" />
+                            <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#1700E6] to-[#009AFF]"/>
+                            <div className="flex items-start gap-4">
+                                <div className="relative p-2 bg-blue-950/50 rounded-full border border-blue-500/30">
+                                    <div className="absolute inset-0 rounded-full icon-check-pulse bg-green-500/30"/>
+                                    <item.icon className="relative z-10 size-6 text-blue-300" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-semibold text-white">{item.title}</h4>
+                                    <p className="text-sm text-white/70">{item.description}</p>
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <h4 className="font-semibold text-white">{item.title}</h4>
-                                <p className="text-sm text-white/70">{item.description}</p>
+                             <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-950/70 border border-green-500/30">
+                                <div className="size-2 rounded-full bg-[#39FF14] led-pulse"/>
+                                <span className="text-xs font-bold text-green-300">ACTIVADO</span>
                             </div>
                         </motion.div>
+                        {index < analysisItems.length - 1 && <Separator className="bg-blue-500/20" />}
                         </React.Fragment>
                     ))}
                   </div>
@@ -108,52 +119,60 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             </div>
 
             {/* Section 3: Right Panel */}
-            <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
+             <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-green-900/20 via-transparent to-transparent"/>
                  <div className="relative z-10 text-center flex flex-col items-center">
-                    <motion.div 
-                        initial={{ scale: 0.8, opacity: 0}} 
-                        animate={{ scale: 1, opacity: 1}} 
-                        transition={{ delay: 0.5, duration: 0.5}}
-                        className="relative p-2"
+                     <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="relative"
                     >
-                      <CheckCircle className="size-16 text-green-300 mb-2 icon-check-pulse" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
+                         <CheckCircle className="size-16 text-green-300 mb-2 icon-check-pulse" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
                     </motion.div>
-                    <motion.h2 
-                      className="text-2xl font-bold tracking-tight text-reveal" 
-                      style={{'--reveal-delay': '0.7s'} as React.CSSProperties}
+                    <motion.h2
+                      className="text-2xl font-bold tracking-tight scanline-text relative"
+                      data-text="Veredicto: Cero Amenazas"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.8 }}
                     >
-                      Veredicto Final: <span className="text-green-300">Cero Amenazas</span>
+                      Veredicto: Cero Amenazas
                     </motion.h2>
                 </div>
-                 <div className="flex-1 grid grid-rows-4 gap-4 mt-6 z-10">
-                      {protectionItems.map((item, index) => (
-                        <motion.div
-                            key={item.title}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.2 + 0.8 }}
-                            className="flex items-start gap-4"
-                        >
-                            <div className="relative p-3 rounded-full bg-green-950/50">
-                                <svg className="absolute inset-0 w-full h-full animate-[hud-spin_8s_linear_infinite]" viewBox="0 0 100 100" style={{ animationDelay: `${index * 0.3}s`}}>
-                                    <defs>
-                                      <linearGradient id="protection-ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#A6EE00" />
-                                        <stop offset="100%" stopColor="#00CB07" />
-                                      </linearGradient>
-                                    </defs>
-                                    <path d="M 50,5 A 45,45 0 0,1 95,50" stroke="url(#protection-ring-gradient)" strokeWidth="1.5" fill="none" strokeDasharray="5, 10" />
-                                </svg>
-                                <CheckCircle className="size-6 text-green-300" style={{ fill: 'rgba(0, 203, 7, 0.1)' }} />
-                            </div>
-                            <div className="pt-1">
-                                <h4 className="font-semibold text-white">{item.title}</h4>
-                                <p className="text-sm text-white/70">{item.description}</p>
-                            </div>
-                        </motion.div>
-                      ))}
-                </div>
+                 <ScrollArea className="flex-1 mt-6 -mr-3 pr-3 custom-scrollbar z-10">
+                    <div className="space-y-3">
+                        {protectionItems.map((item, index) => (
+                            <motion.div
+                                key={item.title}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.15 + 1.0 }}
+                                className="p-3 rounded-lg bg-black/30 flex items-center justify-between"
+                            >
+                                <div className="text-sm font-semibold text-white/90 scanline-text relative" data-text={item.title}>{item.title}</div>
+                                <div className="flex items-center gap-3">
+                                    <div className="hidden sm:flex items-center gap-1.5 text-xs text-green-300">
+                                        <Eye size={14}/>
+                                        <span>VERIFICADO</span>
+                                    </div>
+                                    <div className="relative p-2 rounded-full bg-green-950/50">
+                                      <svg className="absolute inset-0 w-full h-full animate-[hud-spin_8s_linear_infinite]" viewBox="0 0 100 100" style={{ animationDelay: `${index * 0.3}s`}}>
+                                          <defs>
+                                            <linearGradient id="protection-ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                              <stop offset="0%" stopColor="#A6EE00" />
+                                              <stop offset="100%" stopColor="#00CB07" />
+                                            </linearGradient>
+                                          </defs>
+                                          <path d="M 50,5 A 45,45 0 0,1 95,50" stroke="url(#protection-ring-gradient)" strokeWidth="1.5" fill="none" strokeDasharray="5, 10" />
+                                      </svg>
+                                      <CheckCircle className="size-5 text-green-300" style={{ fill: 'rgba(0, 203, 7, 0.1)' }} />
+                                  </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </ScrollArea>
             </div>
           </div>
       </DialogContent>
@@ -161,4 +180,3 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
   );
 }
 
-    
