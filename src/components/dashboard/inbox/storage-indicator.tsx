@@ -49,14 +49,13 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
                         r="45"
                         fill="transparent"
                         strokeDasharray={circumference}
-                        strokeDashoffset={circumference}
+                        strokeDashoffset={strokeDashoffset}
                         strokeLinecap="round"
                         transform="rotate(-90 50 50)"
                         style={{
-                            strokeDashoffset,
-                            stroke: arcColor,
                             animation: 'arc-draw 1.5s ease-out forwards',
-                            filter: `drop-shadow(0 0 5px ${shadowColor})`
+                            filter: `drop-shadow(0 0 5px ${shadowColor})`,
+                            stroke: arcColor
                         }}
                     />
                 </svg>
