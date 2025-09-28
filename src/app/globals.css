@@ -313,35 +313,14 @@ body {
 
     .particle {
       position: absolute;
+      bottom: 0;
+      left: var(--x-start);
       width: var(--size);
       height: var(--size);
-      background: var(--color);
+      background: radial-gradient(circle, hsl(var(--primary)), transparent 70%);
       border-radius: 50%;
       animation: particle-float var(--duration) var(--delay) linear infinite;
     }
-    @keyframes particle-float {
-        0% {
-            transform: translate(var(--x-start), var(--y-start));
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.7;
-        }
-        100% {
-            transform: translate(var(--x-end), var(--y-end));
-            opacity: 0;
-        }
-    }
-    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @keyframes icon-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    @keyframes icon-check-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
-    @keyframes move-circuit-1 { 0%, 100% { stroke-dashoffset: 200; } 50% { stroke-dashoffset: 0; } }
-    @keyframes move-circuit-2 { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: 200; } }
-    @keyframes node-pulse { 0%, 100% { r: 2; opacity: 0.8; } 50% { r: 3; opacity: 1; } }
-    .energy-path { stroke-dasharray: 10, 20; animation: move-circuit-1 4s linear infinite; }
-    .energy-path:nth-of-type(2) { animation: move-circuit-2 6s linear infinite; animation-delay: -2s; }
-    .node-pulse { animation: node-pulse 2s infinite ease-in-out; }
-
 
     .led-button {
         @apply relative transition-all duration-300;
@@ -359,14 +338,36 @@ body {
         @apply bg-[#00CB07] shadow-[0_0_8px_#00CB07];
     }
     
-    @keyframes icon-pulse-banner {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
-        50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
+    @keyframes icon-pulse {
+        0%, 100% { 
+            transform: scale(1); 
+            box-shadow: 0 0 10px 0px hsla(var(--primary), 0.4);
+        }
+        50% { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 25px 8px hsla(var(--primary), 0.6);
+        }
     }
-    .animate-icon-pulse-banner {
-        animation: icon-pulse-banner 3s infinite ease-in-out;
+    .icon-pulse-animation {
+        animation: icon-pulse 2.5s infinite ease-in-out;
     }
     
+    @keyframes sound-wave {
+        0% { transform: scaleY(0.4); }
+        25% { transform: scaleY(1); }
+        50% { transform: scaleY(0.2); }
+        75% { transform: scaleY(0.7); }
+        100% { transform: scaleY(0.4); }
+    }
+
+    @keyframes button-scan {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
+    }
     .ai-button-scan {
       background: linear-gradient(
         90deg,
@@ -378,16 +379,17 @@ body {
       animation: button-scan 2s linear infinite;
     }
 
-    @keyframes sound-wave {
-        0% { transform: scaleY(0.4); }
-        25% { transform: scaleY(1); }
-        50% { transform: scaleY(0.2); }
-        75% { transform: scaleY(0.7); }
-        100% { transform: scaleY(0.4); }
+    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes icon-check-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
+    @keyframes node-pulse { 0%, 100% { r: 2; opacity: 0.8; } 50% { r: 3; opacity: 1; } }
+    
+    .node-pulse { animation: node-pulse 2s infinite ease-in-out; }
+    @keyframes icon-pulse-banner {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
     }
-
-    .icon-pulse-animation {
-        animation: icon-pulse 2.5s infinite ease-in-out;
+    .animate-icon-pulse-banner {
+        animation: icon-pulse-banner 3s infinite ease-in-out;
     }
     
     .bg-grid-blue-500\/30 {
@@ -419,5 +421,67 @@ body {
         background-image: linear-gradient(90deg, transparent, hsl(var(--primary)/0.8), transparent);
         background-size: 200% 100%;
         animation: animate-progress-scan 2s linear infinite;
+    }
+
+    @keyframes radar-sweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 70%,
+        rgba(0, 173, 236, 0.5) 95%,
+        transparent 100%
+      );
+      animation: radar-sweep 4s linear infinite;
+      mask-image: radial-gradient(circle at center, transparent 30%, black 30%);
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      75% { transform: scale(1); opacity: 0; }
+    }
+    .pulse-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #00ADEC;
+      box-shadow: 0 0 10px #00ADEC;
+      animation: pulse-dot 4s infinite ease-out;
+    }
+
+    @keyframes text-reveal {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+        filter: blur(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+    .text-reveal {
+      animation: text-reveal 0.8s ease-out forwards;
+      animation-delay: var(--reveal-delay, 0s);
+      opacity: 0;
+    }
+    
+    @keyframes circuit-flow {
+      0% { stroke-dashoffset: 200; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .circuit-flow {
+      animation: circuit-flow 10s linear infinite;
     }
 }

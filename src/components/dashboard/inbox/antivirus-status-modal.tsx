@@ -6,39 +6,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface AntivirusStatusModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
-const Particle = () => {
-    const colors = ['#00ADEC', '#E18700', '#AD00EC'];
-    const style: React.CSSProperties = {
-      '--size': `${Math.random() * 2.5 + 1}px`,
-      '--x-start': `${Math.random() * 100}%`,
-      '--y-start': `${Math.random() * 100}%`,
-      '--x-end': `${Math.random() * 200 - 50}%`,
-      '--y-end': `${Math.random() * 200 - 50}%`,
-      '--duration': `${Math.random() * 8 + 7}s`,
-      '--delay': `-${Math.random() * 15}s`,
-      '--color': colors[Math.floor(Math.random() * colors.length)]
-    } as any;
-    return <div className="particle" style={style} />;
-};
-
 const analysisItems = [
-    { icon: Link, title: "Análisis de Enlaces y Redirecciones", description: "Cada URL ha sido validada en tiempo real contra bases de datos de amenazas globales." },
-    { icon: FileScan, title: "Escaneo Heurístico de Adjuntos", description: "Los archivos adjuntos fueron analizados en un entorno aislado para detectar comportamientos maliciosos." },
-    { icon: UserCheck, title: "Verificación de Suplantación de Identidad (Spoofing)", description: "Se ha confirmado la autenticidad del remitente a través de los protocolos DMARC, DKIM y SPF." },
-    { icon: Code, title: "Detección de Scripts Maliciosos", description: "El código fuente del correo ha sido inspeccionado para neutralizar cualquier script oculto." },
-    { icon: Fingerprint, title: "Análisis de Huella Digital", description: "Se comparó la 'huella digital' del correo con millones de muestras para descartar similitudes con campañas de phishing conocidas." },
+    { icon: Link, title: "Análisis de Enlaces y Redirecciones", description: "Cada URL ha sido validada en tiempo real contra bases de datos de amenazas globales para neutralizar cualquier intento de phishing." },
+    { icon: FileScan, title: "Escaneo Heurístico de Adjuntos", description: "Los archivos adjuntos fueron analizados en un entorno aislado (sandbox) para detectar comportamientos maliciosos antes de que te afecten." },
+    { icon: UserCheck, title: "Verificación de Suplantación de Identidad (Spoofing)", description: "Se ha confirmado la autenticidad del remitente a través de los protocolos DMARC, DKIM y SPF, garantizando que el correo es legítimo." },
+    { icon: Code, title: "Detección de Scripts Maliciosos", description: "El código fuente del correo ha sido inspeccionado y saneado para neutralizar cualquier script oculto diseñado para comprometer tus datos." },
+    { icon: Fingerprint, title: "Análisis de Huella Digital del Correo", description: "Comparamos la 'huella digital' única de este correo con millones de muestras de nuestra base de datos global para descartar similitudes con campañas de phishing." },
 ];
 
 const protectionItems = [
-    { icon: Lock, title: "Encriptación de Contenido", description: "El contenido sensible se mantiene encriptado en todo momento." },
-    { icon: BrainCircuit, title: "Análisis Predictivo de Comportamiento", description: "La IA aprende y se anticipa a nuevas amenazas antes de que sean catalogadas." },
-    { icon: ShieldQuestion, title: "Cuarentena Atómica", description: "Cualquier elemento sospechoso es aislado a nivel subatómico, impidiendo cualquier posible daño." },
+    { icon: Lock, title: "Encriptación de Contenido", description: "El contenido sensible se mantiene encriptado en todo momento para proteger tu privacidad, incluso si el correo es interceptado." },
+    { icon: BrainCircuit, title: "Análisis Predictivo de Comportamiento", description: "Nuestra IA no solo busca amenazas conocidas, sino que aprende y se anticipa a nuevas tácticas de ataque antes de que sean catalogadas globalmente." },
+    { icon: ShieldQuestion, title: "Cuarentena Atómica", description: "Cualquier elemento mínimamente sospechoso es aislado a nivel subatómico en un entorno virtual, impidiendo cualquier posible daño a tu sistema." },
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
@@ -49,8 +36,20 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
           <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
             {/* Section 1: Left Panel */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden border-r border-cyan-400/20">
-                <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
-                    {Array.from({ length: 150 }).map((_, i) => <Particle key={i} />)}
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                    <svg width="100%" height="100%" className="absolute inset-0 opacity-20">
+                        <defs>
+                            <pattern id="hex-pattern" patternUnits="userSpaceOnUse" width="60" height="69.28" patternTransform="scale(1.5)">
+                                <path d="M-30,34.64 L0,17.32 L30,34.64 L30,69.28 L0,86.6 L-30,69.28Z" stroke="#00ADEC" fill="none" strokeWidth="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#hex-pattern)" />
+                    </svg>
+                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,173,236,0.2)_0%,_transparent_60%)]" />
+                     <div className="absolute inset-0 radar-sweep" />
+                     <div className="absolute top-1/4 left-1/4 pulse-dot" style={{ animationDelay: '0s' }} />
+                     <div className="absolute top-1/2 right-1/4 pulse-dot" style={{ animationDelay: '1s' }} />
+                     <div className="absolute bottom-1/4 left-1/3 pulse-dot" style={{ animationDelay: '2s' }} />
                 </div>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -83,16 +82,16 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         Análisis de Este Correo
                     </DialogTitle>
                 </DialogHeader>
-                <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3 z-10">
+                <ScrollArea className="flex-1 space-y-3 -mr-3 pr-3 custom-scrollbar z-10">
                     {analysisItems.map((item, index) => (
                         <motion.div
                             key={item.title}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.15 + 0.4 }}
-                            className="flex items-start gap-4 p-3 rounded-lg border border-cyan-400/20 bg-cyan-900/20"
+                            className="flex items-start gap-4 p-3 rounded-lg border border-cyan-500/20 bg-cyan-950/20 hover:bg-cyan-900/40 transition-colors"
                         >
-                            <div className="relative p-2 bg-cyan-950/50 rounded-full border border-cyan-500/30">
+                             <div className="relative p-2 bg-cyan-950/50 rounded-full border border-cyan-500/30">
                                 <item.icon className="size-6 text-cyan-400" />
                                 <div className="absolute -top-1 -right-1 flex items-center justify-center size-4 bg-green-500 rounded-full border-2 border-black">
                                     <CheckCircle className="text-black size-4 animate-icon-check-pulse" />
@@ -104,40 +103,38 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             </div>
                         </motion.div>
                     ))}
-                </div>
+                </ScrollArea>
             </div>
 
             {/* Section 3: Right Panel */}
             <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"/>
-                 <DialogHeader className="text-left mb-4 z-10">
-                    <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
-                        <CheckCircle />
-                        Veredicto Final: Cero Amenazas
-                    </DialogTitle>
-                </DialogHeader>
-                 <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3 z-10">
+                 <div className="relative z-10 text-center flex flex-col items-center">
+                    <motion.div initial={{ scale: 0.8, opacity: 0}} animate={{ scale: 1, opacity: 1}} transition={{ delay: 0.5, duration: 0.5}}>
+                        <CheckCircle className="size-16 text-green-300 mb-2 animate-icon-pulse-banner" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
+                    </motion.div>
+                    <motion.h2 className="text-2xl font-bold tracking-tight text-reveal" style={{'--reveal-delay': '0.7s'} as React.CSSProperties}>Veredicto Final: <span className="text-green-300">Cero Amenazas</span></motion.h2>
+                </div>
+                 <ScrollArea className="flex-1 mt-6 space-y-6 -mr-3 pr-3 custom-scrollbar z-10">
                       {protectionItems.map((item, index) => (
                         <motion.div
                             key={item.title}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.15 + 0.6 }}
-                            className="flex items-start gap-4 p-3 rounded-lg border border-purple-500/20 bg-purple-900/20"
+                            transition={{ delay: index * 0.2 + 0.8 }}
+                            className="flex items-start gap-4"
                         >
-                           <div className="relative p-2 bg-purple-950/50 rounded-full border border-purple-500/30">
-                                <item.icon className="size-6 text-purple-400" />
-                                <div className="absolute -top-1 -right-1 flex items-center justify-center size-4 bg-green-500 rounded-full border-2 border-black">
-                                    <CheckCircle className="text-black size-4 animate-icon-check-pulse" />
-                                </div>
+                           <div className="relative p-3 bg-purple-950/50 rounded-full border-2 border-purple-500/30 node-pulse" style={{ animationDelay: `${index * 0.5}s` }}>
+                                <item.icon className="size-6 text-purple-300" />
+                                <div className="absolute top-0 left-0 w-full h-full circuit-flow" style={{ animationDelay: `${index * 1}s` }} />
                             </div>
-                            <div>
+                            <div className="pt-1">
                                 <h4 className="font-semibold text-white">{item.title}</h4>
                                 <p className="text-sm text-white/70">{item.description}</p>
                             </div>
                         </motion.div>
                       ))}
-                </div>
+                </ScrollArea>
                  <DialogFooter className="pt-6 z-10">
                   <Button 
                     onClick={() => onOpenChange(false)} 
