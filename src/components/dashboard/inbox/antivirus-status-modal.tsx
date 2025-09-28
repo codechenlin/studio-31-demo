@@ -16,12 +16,12 @@ interface AntivirusStatusModalProps {
 }
 
 const analysisItems = [
-    { icon: ScanSearch, title: "Análisis Heurístico Profundo", description: "Nuestro motor de IA examinó la estructura y el código del correo en busca de anomalías y patrones sospechosos, encontrando cero desviaciones." },
-    { icon: Layers, title: "Escaneo de Firmas de Malware", description: "El correo fue contrastado con nuestra base de datos global de 2 mil millones de amenazas conocidas. No se encontró ninguna coincidencia." },
-    { icon: UserCheck, title: "Verificación de Suplantación de Identidad", description: "Se validó la autenticidad del remitente a través de DMARC, DKIM y SPF. El Núcleo de IA confirma que el correo es legítimo." },
-    { icon: Code, title: "Saneamiento de Scripts", description: "El código HTML y JavaScript fue inspeccionado y saneado, neutralizando cualquier script ofuscado o rutina potencialmente maliciosa." },
-    { icon: FileScan, title: "Análisis Forense de Adjuntos", description: "Cada archivo adjunto fue detonado en un sandbox virtualizado para analizar su comportamiento. Todos los archivos son seguros." },
-    { icon: Package, title: "Detección de Archivos Comprimidos Maliciosos", description: "Se analizaron todos los archivos comprimidos (ZIP, RAR) para descartar 'bombas de descompresión' y malware oculto." },
+    { icon: ScanSearch, title: "Análisis Heurístico Profundo", description: "Nuestro motor de IA examina la estructura y el código del correo en busca de anomalías y patrones sospechosos para encontrar desviaciones." },
+    { icon: Layers, title: "Escaneo de Firmas de Malware", description: "El correo fue examinado con nuestra base de datos global de 2 mil millones de amenazas conocidas para encontrar coincidencia." },
+    { icon: UserCheck, title: "Verificación de Suplantación de Identidad", description: "Se valida la autenticidad del remitente a través de DMARC, DKIM y SPF. El Núcleo de IA confirmara si el correo es legítimo." },
+    { icon: Code, title: "Saneamiento de Scripts", description: "El código HTML y JavaScript es inspeccionado y saneado, neutralizando cualquier script ofuscado o rutina potencialmente maliciosa." },
+    { icon: FileScan, title: "Análisis Forense de Adjuntos", description: "Cada archivo adjunto es detonado en un sandbox virtualizado para analizar su comportamiento y verificar que todos los archivos son seguros." },
+    { icon: Package, title: "Detección de Archivos Comprimidos Maliciosos", description: "Se analizan todos los archivos comprimidos (ZIP, RAR) para descartar 'bombas de descompresión' y malware oculto." },
 ];
 
 const protectionItems = [
@@ -99,14 +99,14 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.15 + 0.4 }}
-                            className="group/card relative p-4 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden"
+                            className="group/card relative p-4 pt-8 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden"
                         >
-                            <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#1700E6] to-[#009AFF]"/>
+                             <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#1700E6] to-[#009AFF]"/>
                             <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-950/70 border border-green-500/30">
                                 <div className="size-2 rounded-full bg-[#39FF14] led-pulse"/>
                                 <span className="text-xs font-bold text-green-300">ACTIVADO</span>
                             </div>
-                            <div className="flex items-start gap-4 pt-6">
+                            <div className="flex items-start gap-4">
                                 <div className="relative p-2 bg-blue-950/50 rounded-full border border-blue-500/30">
                                     <div className="absolute inset-0 rounded-full icon-check-pulse bg-green-500/30"/>
                                     <item.icon className="relative z-10 size-6 text-blue-300" />
