@@ -168,7 +168,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </div>
                      {appliedTag && (
                         <div className="text-right group relative">
-                             <p className="text-xs font-bold text-muted-foreground mb-1">Etiqueta añadida:</p>
                             <button
                                 onClick={() => setIsTagModalOpen(true)}
                                 className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer"
@@ -418,3 +417,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+    
