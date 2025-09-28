@@ -382,14 +382,14 @@ body {
     @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     @keyframes icon-check-pulse {
-        0%, 100% {
-            transform: scale(1);
-            filter: drop-shadow(0 0 3px #39FF14);
-        }
-        50% {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 8px #39FF14);
-        }
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 3px #39FF14);
+      }
+      50% {
+        transform: scale(1.2);
+        filter: drop-shadow(0 0 8px #39FF14);
+      }
     }
     .icon-check-pulse {
         animation: icon-check-pulse 2s infinite ease-in-out;
@@ -430,4 +430,24 @@ body {
     .node-pulse {
       animation: node-pulse 3s infinite ease-in-out;
     }
+    
+    @keyframes shimmer-line {
+        0% { stroke-dashoffset: 200; }
+        100% { stroke-dashoffset: -200; }
+    }
+    .energy-path {
+        stroke-dasharray: 10 10;
+        animation: shimmer-line 5s linear infinite;
+    }
+
+    @keyframes icon-pulse-banner {
+      50% {
+        transform: scale(1.1);
+      }
+    }
+    .animate-icon-pulse-banner {
+      animation: icon-pulse-banner 2s infinite ease-in-out;
+    }
 }
+
+    
