@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Shield, Server, CheckCircle, Clock, BrainCircuit, CheckCheck } from 'lucide-react';
+import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface AntivirusStatusModalProps {
@@ -12,54 +12,45 @@ interface AntivirusStatusModalProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
-const techItems = [
-    { name: "Análisis Predictivo de Comportamiento", info: "Nuestro motor de IA no solo busca firmas conocidas; analiza el comportamiento del código para detectar amenazas de día cero antes de que actúen." },
-    { name: "Inteligencia de Amenazas Global Neuronal", info: "Conectado a una red global, nuestro sistema aprende y se adapta en tiempo real a nuevas tácticas de ataque y vectores de malware de todo el mundo." },
-    { name: "Desinfección Atómica de Adjuntos", info: "Cada archivo es descompuesto y reconstruido en un entorno seguro a nivel binario, eliminando cualquier código malicioso sin corromper el archivo." },
-    { name: "Arquitectura de Contención Cuántica", info: "Las amenazas se ejecutan en un micro-entorno virtualizado y aislado, donde son analizadas y neutralizadas sin ninguna posibilidad de afectar tu sistema." }
-];
-
 const Particle = () => {
+    const colors = ['#00ADEC', '#E18700', '#AD00EC'];
     const style: React.CSSProperties = {
-      '--size': `${Math.random() * 2 + 1}px`,
+      '--size': `${Math.random() * 2.5 + 1}px`,
       '--x-start': `${Math.random() * 100}%`,
       '--y-start': `${Math.random() * 100}%`,
       '--x-end': `${Math.random() * 200 - 50}%`,
       '--y-end': `${Math.random() * 200 - 50}%`,
-      '--duration': `${Math.random() * 8 + 6}s`,
-      '--delay': `-${Math.random() * 14}s`,
-      '--color-group': Math.random() > 0.5 ? '#1700E6' : '#009AFF'
+      '--duration': `${Math.random() * 8 + 7}s`,
+      '--delay': `-${Math.random() * 15}s`,
+      '--color': colors[Math.floor(Math.random() * colors.length)]
     } as any;
     return <div className="particle" style={style} />;
 };
 
+const analysisItems = [
+    { icon: Link, title: "Análisis de Enlaces y Redirecciones", description: "Cada URL ha sido validada en tiempo real contra bases de datos de amenazas globales." },
+    { icon: FileScan, title: "Escaneo Heurístico de Adjuntos", description: "Los archivos adjuntos fueron analizados en un entorno aislado para detectar comportamientos maliciosos." },
+    { icon: UserCheck, title: "Verificación de Suplantación de Identidad (Spoofing)", description: "Se ha confirmado la autenticidad del remitente a través de los protocolos DMARC, DKIM y SPF." },
+    { icon: Code, title: "Detección de Scripts Maliciosos", description: "El código fuente del correo ha sido inspeccionado para neutralizar cualquier script oculto." },
+    { icon: Fingerprint, title: "Análisis de Huella Digital", description: "Se comparó la 'huella digital' del correo con millones de muestras para descartar similitudes con campañas de phishing conocidas." },
+];
+
+const protectionItems = [
+    { icon: Lock, title: "Encriptación de Contenido", description: "El contenido sensible se mantiene encriptado en todo momento." },
+    { icon: BrainCircuit, title: "Análisis Predictivo de Comportamiento", description: "La IA aprende y se anticipa a nuevas amenazas antes de que sean catalogadas." },
+    { icon: ShieldQuestion, title: "Cuarentena Atómica", description: "Cualquier elemento sospechoso es aislado a nivel subatómico, impidiendo cualquier posible daño." },
+];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-full h-[600px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-blue-500/30 text-white overflow-hidden" showCloseButton={false}>
-          <style>{`
-            @keyframes particle-move {
-              0% { transform: translate(var(--x-start), var(--y-start)); opacity: 1; }
-              100% { transform: translate(var(--x-end), var(--y-end)); opacity: 0; }
-            }
-            .particle {
-              position: absolute;
-              width: var(--size);
-              height: var(--size);
-              background: var(--color-group);
-              border-radius: 50%;
-              animation: particle-move var(--duration) var(--delay) linear infinite;
-              will-change: transform, opacity;
-            }
-             @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          `}</style>
-        <div className="grid grid-cols-1 md:grid-cols-2 h-full">
-            {/* Left Panel: AI Animation */}
-            <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-                    {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+      <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-black/80 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+          <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
+            {/* Section 1: Left Panel */}
+            <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden border-r border-cyan-400/20">
+                <div className="absolute inset-0 z-0 opacity-50 pointer-events-none">
+                    {Array.from({ length: 150 }).map((_, i) => <Particle key={i} />)}
                 </div>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -67,60 +58,107 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                     transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 20 }}
                     className="relative z-10 flex flex-col items-center text-center gap-6"
                 >
-                     <div className="relative p-6 rounded-full border-2 border-blue-400/50 bg-blue-900/30">
-                        <svg className="absolute inset-0 w-full h-full animate-[hud-spin_10s_linear_infinite]" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" stroke="rgba(100,200,255,0.2)" strokeWidth="1" fill="none" />
-                            <path d="M 50,5 A 45,45 0 0,1 95,50" stroke="rgba(100,200,255,0.5)" strokeWidth="1.5" fill="none" strokeDasharray="2, 5" />
+                     <div className="relative p-6">
+                        <svg className="absolute inset-0 w-full h-full animate-[hud-spin_15s_linear_infinite]" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="48" stroke="rgba(0,173,236,0.2)" strokeWidth="0.5" fill="none" />
+                            <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,173,236,0.7)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
+                             <circle cx="50" cy="50" r="35" stroke="rgba(0,173,236,0.1)" strokeWidth="4" fill="none" />
                         </svg>
-                        <Shield className="size-20 text-blue-300" style={{ filter: 'drop-shadow(0 0 15px #00aaff)' }}/>
+                        <ShieldCheck className="size-24 text-cyan-300 animate-[icon-pulse_4s_infinite_ease-in-out]" style={{ filter: 'drop-shadow(0 0 20px #00adec)' }}/>
                     </div>
                      <div className="p-3 rounded-lg bg-gradient-to-r from-[#00CE07]/20 to-[#A6EE00]/20 border border-[#00CE07]/50 flex items-center gap-3">
-                        <CheckCheck className="size-6 text-[#A6EE00]"/>
-                        <span className="font-semibold text-white">Sistema Activo</span>
+                        <CheckCircle className="size-6 text-[#A6EE00]"/>
+                        <span className="font-semibold text-white text-lg">SISTEMA ACTIVO</span>
                     </div>
-                    <p className="text-blue-200/70 text-lg">Protección en Tiempo Real</p>
-                    
-                    <Button 
-                        onClick={() => onOpenChange(false)} 
-                        className="w-full bg-blue-800 hover:bg-blue-700 text-white"
-                      >
-                        Entendido
-                      </Button>
+                    <p className="text-cyan-200/70 text-base">Nuestro núcleo de IA está analizando y protegiendo tu bandeja de entrada en tiempo real.</p>
                 </motion.div>
             </div>
 
-            {/* Right Panel: Content */}
-            <div className="flex flex-col h-full p-8">
-                <DialogHeader className="text-left">
-                    <DialogTitle className="text-2xl font-bold text-blue-300">
-                        Escudo de Seguridad de IA
+            {/* Section 2: Middle Panel */}
+            <div className="flex flex-col h-full p-6 border-r border-cyan-400/20 bg-black/20">
+                <DialogHeader className="text-left mb-4">
+                    <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
+                        <BrainCircuit />
+                        Análisis de Este Correo
                     </DialogTitle>
-                    <DialogDescription className="text-blue-200/70">
-                        Tu sistema está protegido activamente contra virus, troyanos y malware.
-                    </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 mt-6">
-                    <h3 className="font-semibold text-lg text-white/90 mb-4 flex items-center gap-2"><BrainCircuit/>Tecnologías Activas</h3>
-                     <ul className="space-y-4">
-                      {techItems.map((item, index) => (
-                        <motion.li
-                            key={item.name}
+                <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3">
+                    {analysisItems.map((item, index) => (
+                        <motion.div
+                            key={item.title}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.15 + 0.3 }}
-                            className="flex items-start gap-4"
+                            transition={{ delay: index * 0.15 + 0.4 }}
+                            className="flex items-start gap-4 p-3 rounded-lg border border-cyan-400/20 bg-cyan-900/20"
                         >
-                            <CheckCircle className="size-6 text-blue-400 mt-0.5 shrink-0" />
-                            <div>
-                                <h4 className="font-semibold text-white">{item.name}</h4>
-                                <p className="text-sm text-white/70">{item.info}</p>
+                            <div className="relative p-2 bg-cyan-950/50 rounded-full border border-cyan-500/30">
+                                <item.icon className="size-6 text-cyan-400" />
+                                <div className="absolute -top-1 -right-1 flex items-center justify-center size-4 bg-green-500 rounded-full border-2 border-black">
+                                    <CheckCircle className="text-black size-4 animate-icon-check-pulse" />
+                                </div>
                             </div>
-                        </motion.li>
-                      ))}
-                    </ul>
+                            <div>
+                                <h4 className="font-semibold text-white">{item.title}</h4>
+                                <p className="text-sm text-white/70">{item.description}</p>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
-        </div>
+
+            {/* Section 3: Right Panel */}
+            <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
+                <div className="absolute inset-0 z-0 transform -scale-x-100 opacity-30">
+                    <svg width="100%" height="100%" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="circuit-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#AD00EC" /><stop offset="100%" stopColor="#E18700" /></linearGradient>
+                        </defs>
+                        <path className="energy-path" stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
+                        <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M0 100 L120 100 L140 120 L300 120" />
+                         <path className="energy-path" style={{animationDelay: '3s'}} stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M400 150 L220 150 L200 130 L50 130" />
+                        <circle className="node-pulse" cx="180" cy="40" r="2" fill="url(#circuit-glow)" />
+                        <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="120" r="2" fill="url(#circuit-glow)" />
+                         <circle className="node-pulse" style={{animationDelay: '2.5s'}} cx="200" cy="130" r="2" fill="url(#circuit-glow)" />
+                    </svg>
+                </div>
+                 <DialogHeader className="text-left mb-4 z-10">
+                    <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
+                        <CheckCircle />
+                        Veredicto Final: Cero Amenazas
+                    </DialogTitle>
+                </DialogHeader>
+                 <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3 z-10">
+                      {protectionItems.map((item, index) => (
+                        <motion.div
+                            key={item.title}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.15 + 0.6 }}
+                            className="flex items-start gap-4 p-3 rounded-lg border border-purple-500/20 bg-purple-900/20"
+                        >
+                           <div className="relative p-2 bg-purple-950/50 rounded-full border border-purple-500/30">
+                                <item.icon className="size-6 text-purple-400" />
+                                <div className="absolute -top-1 -right-1 flex items-center justify-center size-4 bg-green-500 rounded-full border-2 border-black">
+                                    <CheckCircle className="text-black size-4 animate-icon-check-pulse" />
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-white">{item.title}</h4>
+                                <p className="text-sm text-white/70">{item.description}</p>
+                            </div>
+                        </motion.div>
+                      ))}
+                </div>
+                 <DialogFooter className="pt-6 z-10">
+                  <Button 
+                    onClick={() => onOpenChange(false)} 
+                    className="w-full h-12 text-base font-bold text-cyan-200 bg-cyan-900/50 border-2 border-cyan-500/50 rounded-lg hover:bg-cyan-800/70 hover:border-cyan-400 hover:text-white transition-all duration-300 ai-button-scan"
+                  >
+                    Entendido
+                  </Button>
+                </DialogFooter>
+            </div>
+          </div>
       </DialogContent>
     </Dialog>
   );

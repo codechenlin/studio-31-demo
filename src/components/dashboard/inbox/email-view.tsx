@@ -114,7 +114,12 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                     <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
                     <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
+                    <Button 
+                        className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
+                        onClick={() => setIsAntivirusModalOpen(true)}
+                    >
+                        <Shield />
+                    </Button>
                     <Button 
                       className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
