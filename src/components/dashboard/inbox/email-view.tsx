@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle, Tags } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle, Tags, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
