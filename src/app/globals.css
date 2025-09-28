@@ -311,13 +311,16 @@ body {
       100% { transform: translateY(40px); }
     }
 
+    @keyframes particle-float {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(var(--x-end)); opacity: 0; }
+    }
     .particle {
       position: absolute;
-      bottom: 0;
+      bottom: -10px;
       left: var(--x-start);
       width: var(--size);
       height: var(--size);
-      background: radial-gradient(circle, hsl(var(--primary)), transparent 70%);
       border-radius: 50%;
       animation: particle-float var(--duration) var(--delay) linear infinite;
     }
@@ -341,11 +344,11 @@ body {
     @keyframes icon-pulse {
         0%, 100% { 
             transform: scale(1); 
-            box-shadow: 0 0 10px 0px hsla(var(--primary), 0.4);
+            filter: drop-shadow(0 0 10px hsla(var(--primary), 0.4));
         }
         50% { 
             transform: scale(1.1); 
-            box-shadow: 0 0 25px 8px hsla(var(--primary), 0.6);
+            filter: drop-shadow(0 0 25px hsla(var(--primary), 0.6));
         }
     }
     .icon-pulse-animation {
@@ -369,7 +372,7 @@ body {
       }
     }
     .ai-button-scan {
-      background: linear-gradient(
+      background-image: linear-gradient(
         90deg,
         rgba(255, 255, 255, 0) 0%,
         rgba(255, 255, 255, 0.3) 50%,

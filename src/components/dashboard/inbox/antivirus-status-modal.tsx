@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 
 interface AntivirusStatusModalProps {
   isOpen: boolean;
@@ -32,25 +31,13 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-black/80 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+      <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-zinc-900/80 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
           <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
             {/* Section 1: Left Panel */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden border-r border-cyan-400/20">
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                    <svg width="100%" height="100%" className="absolute inset-0 opacity-20">
-                        <defs>
-                            <pattern id="hex-pattern" patternUnits="userSpaceOnUse" width="60" height="69.28" patternTransform="scale(1.5)">
-                                <path d="M-30,34.64 L0,17.32 L30,34.64 L30,69.28 L0,86.6 L-30,69.28Z" stroke="#00ADEC" fill="none" strokeWidth="0.5"/>
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#hex-pattern)" />
-                    </svg>
-                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,173,236,0.2)_0%,_transparent_60%)]" />
-                     <div className="absolute inset-0 radar-sweep" />
-                     <div className="absolute top-1/4 left-1/4 pulse-dot" style={{ animationDelay: '0s' }} />
-                     <div className="absolute top-1/2 right-1/4 pulse-dot" style={{ animationDelay: '1s' }} />
-                     <div className="absolute bottom-1/4 left-1/3 pulse-dot" style={{ animationDelay: '2s' }} />
-                </div>
+                <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"/>
+                <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-blue-900/40 opacity-50"/>
+
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -75,7 +62,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
 
             {/* Section 2: Middle Panel */}
             <div className="flex flex-col h-full p-6 border-r border-cyan-400/20 bg-black/20 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-10 bg-grid-blue-500/30 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(hsl(var(--accent))_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"/>
                 <DialogHeader className="text-left mb-4 z-10">
                     <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <BrainCircuit />
