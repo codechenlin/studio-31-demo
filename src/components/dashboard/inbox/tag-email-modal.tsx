@@ -37,6 +37,7 @@ interface TagEmailModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onSave: (tag: AppliedTag) => void;
+  initialTag: AppliedTag | null;
 }
 
 const existingTags: AppliedTag[] = [
@@ -46,18 +47,39 @@ const existingTags: AppliedTag[] = [
   { name: 'Facturas', color: '#16a34a' },
 ];
 
-export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalProps) {
+export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagEmailModalProps) {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#8b5cf6');
   const [selectedExistingTag, setSelectedExistingTag] = useState<AppliedTag | null>(null);
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && initialTag) {
+      // If editing, find if it's an existing tag or treat it as a new one to be edited
+      const isExisting = existingTags.find(t => t.name === initialTag.name && t.color === initialTag.color);
+      if (isExisting) {
+        setSelectedExistingTag(isExisting);
+        setNewTagName('');
+        setNewTagColor('#8b5cf6');
+      } else {
+        setSelectedExistingTag(null);
+        setNewTagName(initialTag.name);
+        setNewTagColor(initialTag.color);
+      }
+    } else if (!isOpen) {
+      // Reset on close
+      setNewTagName('');
+      setNewTagColor('#8b5cf6');
+      setSelectedExistingTag(null);
+    }
+  }, [isOpen, initialTag]);
 
   const isCreatingNew = newTagName !== '' || newTagColor !== '#8b5cf6';
   
   const previewTag = selectedExistingTag || (isCreatingNew ? { name: newTagName || 'NombreEtiqueta', color: newTagColor } : null);
 
   const handleCancel = () => {
-    if (isCreatingNew) {
+    if (isCreatingNew && (!initialTag || newTagName !== initialTag.name || newTagColor !== initialTag.color)) {
       setIsConfirmCancelOpen(true);
     } else {
       handleClose();
@@ -67,7 +89,6 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalPro
   const handleClose = () => {
     onOpenChange(false);
     setIsConfirmCancelOpen(false);
-    // Reset state after closing animation
     setTimeout(() => {
       setNewTagName('');
       setNewTagColor('#8b5cf6');
@@ -92,10 +113,10 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalPro
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
-             <DialogHeader className="sr-only">
+            <DialogHeader className="sr-only">
               <DialogTitle>Etiquetar Correo</DialogTitle>
               <DialogDescription>
-                Aplica una etiqueta existente o crea una nueva para organizar este correo.
+                  Aplica una etiqueta existente o crea una nueva para organizar este correo.
               </DialogDescription>
             </DialogHeader>
            <style>{`
@@ -151,7 +172,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalPro
              <div className="scan-line-info" />
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 z-10">
               <PlusCircle className="text-cyan-400" />
-              Crear Nueva Etiqueta
+              {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
             </h3>
             <div className="space-y-6 flex-1 flex flex-col z-10">
               <div>
@@ -209,7 +230,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalPro
             <AlertDialogHeader>
                 <AlertDialogTitle>¿Descartar cambios?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Has empezado a crear una nueva etiqueta. Si cancelas, se perderá la información no guardada.
+                    Has empezado a crear o editar una etiqueta. Si cancelas, se perderá la información no guardada.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -54,6 +54,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [appliedTag, setAppliedTag] = useState<AppliedTag | null>(null);
+  const [isDeleteTagConfirmOpen, setIsDeleteTagConfirmOpen] = useState(false);
 
   if (!email) {
     return (
@@ -166,10 +167,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         </div>
                     </div>
                      {appliedTag && (
-                        <div className="text-right">
-                            <p className="text-sm font-bold mb-2">Etiqueta añadida:</p>
-                             <div
-                                className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
+                        <div className="text-right group relative">
+                            <button
+                                onClick={() => setIsTagModalOpen(true)}
+                                className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer"
                                 style={{
                                 backgroundColor: appliedTag.color,
                                 color: '#ffffff',
@@ -178,7 +179,18 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                             >
                                 <Tag className="size-4" />
                                 {appliedTag.name}
-                            </div>
+                            </button>
+                            <Button
+                                size="icon"
+                                variant="destructive"
+                                className="absolute -top-2 -right-2 size-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsDeleteTagConfirmOpen(true);
+                                }}
+                            >
+                                <X className="size-4"/>
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -256,7 +268,12 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
     {/* Modals */}
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <TagEmailModal isOpen={isTagModalOpen} onOpenChange={setIsTagModalOpen} onSave={setAppliedTag} />
+    <TagEmailModal 
+      isOpen={isTagModalOpen} 
+      onOpenChange={setIsTagModalOpen} 
+      onSave={setAppliedTag}
+      initialTag={appliedTag}
+    />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
@@ -270,6 +287,23 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={isDeleteTagConfirmOpen} onOpenChange={setIsDeleteTagConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Eliminar Etiqueta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres quitar la etiqueta &quot;{appliedTag?.name}&quot; de este correo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setAppliedTag(null); setIsDeleteTagConfirmOpen(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sí, quitar etiqueta
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
