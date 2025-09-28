@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle, Tags } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -34,6 +34,7 @@ import { SecuritySettingsModal } from './security-settings-modal';
 import { AntivirusStatusModal } from './antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { TagEmailModal } from './tag-email-modal';
 
 
 interface EmailViewProps {
@@ -51,6 +52,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isConfirmImagesModalOpen, setIsConfirmImagesModalOpen] = useState(false);
   const [isPrivacyFeatureEnabled, setIsPrivacyFeatureEnabled] = useState(true);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
   if (!email) {
     return (
@@ -113,6 +115,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                     <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm hover:bg-yellow-500/20")} onClick={() => onToggleStar(email.id)}><Star className={cn("transition-all", email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
+                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-cyan-500 hover:text-white")} onClick={() => setIsTagModalOpen(true)}><Tags/></Button>
                     <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
                     <Button 
                         className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
@@ -236,6 +239,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
     {/* Modals */}
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <TagEmailModal isOpen={isTagModalOpen} onOpenChange={setIsTagModalOpen} />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
@@ -362,3 +366,4 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
