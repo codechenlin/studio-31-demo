@@ -15,7 +15,6 @@ import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-li
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialEmails: Email[] = [
     {
@@ -171,23 +170,20 @@ export default function MainInboxPage() {
         />
 
         <div className="relative z-10">
-          <header className="mb-8 flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
-                  <MailCheck className="size-8"/>
-                  Buzón Principal
-                </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <Database className="text-primary/70 size-7" />
-                    <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
-                </div>
+          <header className="mb-8">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
+                <MailCheck className="size-8"/>
+                Buzón Principal
+              </h1>
+              <div className="relative flex items-center justify-center size-8 ml-2">
+                  <Database className="text-primary/70 size-7" />
+                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
               </div>
-              <p className="text-muted-foreground mt-1">
-                Aquí recibirás todos tus correos importantes y comunicaciones generales.
-              </p>
             </div>
-            <StorageIndicator used={10.2} total={15} />
+            <p className="text-muted-foreground mt-1">
+              Aquí recibirás todos tus correos importantes y comunicaciones generales.
+            </p>
           </header>
 
            <Card className={cn(

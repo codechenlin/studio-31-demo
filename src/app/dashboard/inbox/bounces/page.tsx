@@ -15,7 +15,6 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialBouncedEmails: Email[] = [
     {
@@ -80,23 +79,20 @@ export default function BouncesPage() {
         className="absolute inset-0 z-0 opacity-[0.05] bg-grid-red-500/[0.2] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]"
       />
       <div className="relative z-10">
-        <header className="mb-8 flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-400 flex items-center gap-3">
-                  <ShieldAlert className="size-8"/>
-                  Buzón de Rebotes
-                </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <ShieldAlert className="text-red-500/80 size-7" />
-                    <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
-                </div>
-            </div>
-            <p className="text-muted-foreground mt-1">
-              Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
-            </p>
+        <header className="mb-8">
+          <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-400 flex items-center gap-3">
+                <ShieldAlert className="size-8"/>
+                Buzón de Rebotes
+              </h1>
+              <div className="relative flex items-center justify-center size-8 ml-2">
+                  <ShieldAlert className="text-red-500/80 size-7" />
+                  <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
+              </div>
           </div>
-          <StorageIndicator used={10.2} total={15} />
+          <p className="text-muted-foreground mt-1">
+            Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
+          </p>
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">
