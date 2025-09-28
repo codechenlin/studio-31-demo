@@ -34,7 +34,7 @@ import { SecuritySettingsModal } from './security-settings-modal';
 import { AntivirusStatusModal } from './antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { TagEmailModal } from './tag-email-modal';
+import { TagEmailModal, type AppliedTag } from './tag-email-modal';
 
 
 interface EmailViewProps {
@@ -53,6 +53,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isPrivacyFeatureEnabled, setIsPrivacyFeatureEnabled] = useState(true);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [appliedTag, setAppliedTag] = useState<AppliedTag | null>(null);
 
   if (!email) {
     return (
@@ -164,6 +165,22 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                             <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
                         </div>
                     </div>
+                     {appliedTag && (
+                        <div className="text-right">
+                            <p className="text-sm font-bold mb-2">Etiqueta añadida:</p>
+                             <div
+                                className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
+                                style={{
+                                backgroundColor: appliedTag.color,
+                                color: '#ffffff',
+                                border: `1px solid rgba(255, 255, 255, 0.5)`
+                                }}
+                            >
+                                <Tag className="size-4" />
+                                {appliedTag.name}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-6 relative overflow-hidden rounded-lg">
@@ -239,7 +256,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
     {/* Modals */}
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <TagEmailModal isOpen={isTagModalOpen} onOpenChange={setIsTagModalOpen} />
+    <TagEmailModal isOpen={isTagModalOpen} onOpenChange={setIsTagModalOpen} onSave={setAppliedTag} />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
@@ -366,4 +383,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-

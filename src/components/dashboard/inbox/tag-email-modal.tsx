@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,30 +24,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Check, PlusCircle, Tag, Tags, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '../color-picker-advanced';
 
+export interface AppliedTag {
+  name: string;
+  color: string;
+}
+
 interface TagEmailModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onSave: (tag: AppliedTag) => void;
 }
 
-const existingTags = [
-  { id: '1', name: 'Importante', color: '#ef4444' },
-  { id: '2', name: 'Seguimiento', color: '#f97316' },
-  { id: '3', name: 'Proyecto Alpha', color: '#3b82f6' },
-  { id: '4', name: 'Facturas', color: '#16a34a' },
+const existingTags: AppliedTag[] = [
+  { name: 'Importante', color: '#ef4444' },
+  { name: 'Seguimiento', color: '#f97316' },
+  { name: 'Proyecto Alpha', color: '#3b82f6' },
+  { name: 'Facturas', color: '#16a34a' },
 ];
 
-export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
+export function TagEmailModal({ isOpen, onOpenChange, onSave }: TagEmailModalProps) {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#8b5cf6');
-  const [selectedExistingTag, setSelectedExistingTag] = useState<string | null>(null);
+  const [selectedExistingTag, setSelectedExistingTag] = useState<AppliedTag | null>(null);
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
 
   const isCreatingNew = newTagName !== '' || newTagColor !== '#8b5cf6';
+  
+  const previewTag = selectedExistingTag || (isCreatingNew ? { name: newTagName || 'NombreEtiqueta', color: newTagColor } : null);
 
   const handleCancel = () => {
     if (isCreatingNew) {
@@ -68,17 +75,24 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
     }, 300);
   };
   
-  const handleSelectExisting = (tagId: string) => {
-    setSelectedExistingTag(tagId);
+  const handleSelectExisting = (tag: AppliedTag) => {
+    setSelectedExistingTag(tag);
     setNewTagName('');
     setNewTagColor('#8b5cf6');
+  }
+  
+  const handleSave = () => {
+    if (previewTag) {
+        onSave(previewTag);
+        handleClose();
+    }
   }
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
-            <DialogHeader className="sr-only">
+             <DialogHeader className="sr-only">
               <DialogTitle>Etiquetar Correo</DialogTitle>
               <DialogDescription>
                 Aplica una etiqueta existente o crea una nueva para organizar este correo.
@@ -114,11 +128,11 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
               <div className="space-y-2">
                 {existingTags.map((tag) => (
                   <button
-                    key={tag.id}
-                    onClick={() => handleSelectExisting(tag.id)}
+                    key={tag.name}
+                    onClick={() => handleSelectExisting(tag)}
                     className={cn(
                       "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
-                      selectedExistingTag === tag.id
+                      selectedExistingTag?.name === tag.name
                         ? "bg-cyan-500/20 border-cyan-400"
                         : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
                     )}
@@ -127,7 +141,7 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
                       <div className="size-4 rounded-full" style={{ backgroundColor: tag.color }} />
                       <span className="font-medium text-sm">{tag.name}</span>
                     </div>
-                    {selectedExistingTag === tag.id && <Check className="size-5 text-cyan-300" />}
+                    {selectedExistingTag?.name === tag.name && <Check className="size-5 text-cyan-300" />}
                   </button>
                 ))}
               </div>
@@ -167,23 +181,25 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
               <div>
                 <Label>Vista Previa</Label>
                 <div className="p-3 rounded-lg bg-black/30 border border-cyan-400/20 mt-1 flex justify-center">
-                   <div
-                    className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
-                    style={{
-                      backgroundColor: newTagColor,
-                      color: '#ffffff', // Simple text color for preview
-                      border: `1px solid rgba(255, 255, 255, 0.5)`
-                    }}
-                  >
-                    <Tag className="size-4" />
-                    {newTagName || 'NombreEtiqueta'}
-                  </div>
+                   {previewTag ? (
+                    <div
+                        className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2"
+                        style={{
+                          backgroundColor: previewTag.color,
+                          color: '#ffffff',
+                          border: `1px solid rgba(255, 255, 255, 0.5)`
+                        }}
+                      >
+                        <Tag className="size-4" />
+                        {previewTag.name}
+                      </div>
+                   ) : <div className="h-7 text-xs text-cyan-200/50">Selecciona o crea una etiqueta</div> }
                 </div>
               </div>
             </div>
              <DialogFooter className="pt-6 z-10">
                 <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>Cancelar</Button>
-                <Button className="bg-cyan-600 hover:bg-cyan-500 text-white">Guardar Etiqueta</Button>
+                <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleSave} disabled={!previewTag}>Guardar Etiqueta</Button>
             </DialogFooter>
           </div>
         </DialogContent>

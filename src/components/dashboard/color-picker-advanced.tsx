@@ -28,7 +28,7 @@ export function ColorPickerAdvanced({ color, setColor, className }: ColorPickerA
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 border-none">
+      <PopoverContent className="w-auto p-0 border-none" side="top">
         <div className="p-4 bg-card rounded-md shadow-lg">
           <HexColorPicker color={color} onChange={setColor} />
           <div className="mt-4">
