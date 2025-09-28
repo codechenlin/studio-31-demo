@@ -38,6 +38,12 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+           <DialogHeader className="sr-only">
+            <DialogTitle>Estado del Antivirus</DialogTitle>
+            <DialogDescription>
+              Un resumen detallado del análisis de seguridad realizado en el correo electrónico.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
             {/* Section 1: Left Panel */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-between p-8 overflow-hidden border-r border-cyan-400/20">
@@ -82,7 +88,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                 <div className="text-left mb-4 z-10 shrink-0">
                     <h2 className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <BrainCircuit />
-                        Capacidades del Escudo IA
+                        Análisis del Correo
                     </h2>
                 </div>
                 <ScrollArea className="flex-1 -mr-3 pr-3 custom-scrollbar z-10">
@@ -179,3 +185,5 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
     </Dialog>
   );
 }
+
+    
