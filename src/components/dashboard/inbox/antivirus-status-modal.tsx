@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface AntivirusStatusModalProps {
   isOpen: boolean;
@@ -30,11 +32,13 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-zinc-900/80 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+      <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
           <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
             {/* Section 1: Left Panel */}
-            <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden border-r border-cyan-400/20">
-                <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"/>
+            <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-between p-8 overflow-hidden border-r border-cyan-400/20">
+                <div className="absolute inset-0 w-full h-full hexagonal-grid opacity-20" />
+                <div className="absolute inset-0 w-full h-full radar-scanner" />
+                
                 <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-blue-900/40 opacity-50"/>
 
                 <motion.div 
@@ -57,11 +61,19 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                     </div>
                     <p className="text-cyan-200/70 text-base">Nuestro núcleo de IA está analizando y protegiendo tu bandeja de entrada en tiempo real.</p>
                 </motion.div>
+                <DialogFooter className="pt-6 z-10 w-full">
+                  <Button 
+                    onClick={() => onOpenChange(false)} 
+                    className="w-full h-12 text-base font-bold text-cyan-200 bg-cyan-900/50 border-2 border-cyan-500/50 rounded-lg hover:bg-cyan-800/70 hover:border-cyan-400 hover:text-white transition-all duration-300 ai-button-scan"
+                  >
+                    Entendido
+                  </Button>
+                </DialogFooter>
             </div>
 
             {/* Section 2: Middle Panel */}
             <div className="flex flex-col h-full p-6 border-r border-cyan-400/20 bg-black/20 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(hsl(var(--accent))_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"/>
+                <div className="absolute inset-0 z-0 opacity-10 bg-grid-blue-500/30"/>
                 <DialogHeader className="text-left mb-4 z-10">
                     <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <BrainCircuit />
@@ -70,24 +82,25 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                 </DialogHeader>
                 <ScrollArea className="flex-1 space-y-3 -mr-3 pr-3 custom-scrollbar z-10">
                     {analysisItems.map((item, index) => (
+                        <React.Fragment key={item.title}>
                         <motion.div
-                            key={item.title}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.15 + 0.4 }}
-                            className="flex items-start gap-4 p-3 rounded-lg border border-cyan-500/20 bg-cyan-950/20 hover:bg-cyan-900/40 transition-colors"
+                            className="flex items-start gap-4 p-4 rounded-xl border border-blue-500/20 bg-blue-950/30 hover:bg-blue-900/50 transition-colors"
                         >
-                             <div className="relative p-2 bg-cyan-950/50 rounded-full border border-cyan-500/30">
-                                <item.icon className="size-6 text-cyan-400" />
-                                <div className="absolute -top-1 -right-1 flex items-center justify-center size-4 bg-green-500 rounded-full border-2 border-black">
-                                    <CheckCircle className="text-black size-4 animate-icon-check-pulse" />
-                                </div>
+                             <div className="relative p-2 bg-blue-950/50 rounded-full border border-blue-500/30 icon-check-pulse">
+                                <item.icon className="size-6 text-blue-300" />
                             </div>
                             <div>
                                 <h4 className="font-semibold text-white">{item.title}</h4>
                                 <p className="text-sm text-white/70">{item.description}</p>
                             </div>
                         </motion.div>
+                         {index < analysisItems.length - 1 && (
+                            <div className="h-px w-full my-3 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                        )}
+                        </React.Fragment>
                     ))}
                 </ScrollArea>
             </div>
@@ -96,10 +109,19 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
                 <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"/>
                  <div className="relative z-10 text-center flex flex-col items-center">
-                    <motion.div initial={{ scale: 0.8, opacity: 0}} animate={{ scale: 1, opacity: 1}} transition={{ delay: 0.5, duration: 0.5}}>
-                        <CheckCircle className="size-16 text-green-300 mb-2 animate-icon-pulse-banner" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
+                    <motion.div 
+                      initial={{ scale: 0.8, opacity: 0}} 
+                      animate={{ scale: 1, opacity: 1}} 
+                      transition={{ delay: 0.5, duration: 0.5}}
+                    >
+                      <CheckCircle className="size-16 text-green-300 mb-2 animate-icon-pulse-banner" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
                     </motion.div>
-                    <motion.h2 className="text-2xl font-bold tracking-tight text-reveal" style={{'--reveal-delay': '0.7s'} as React.CSSProperties}>Veredicto Final: <span className="text-green-300">Cero Amenazas</span></motion.h2>
+                    <motion.h2 
+                      className="text-2xl font-bold tracking-tight text-reveal" 
+                      style={{'--reveal-delay': '0.7s'} as React.CSSProperties}
+                    >
+                      Veredicto Final: <span className="text-green-300">Cero Amenazas</span>
+                    </motion.h2>
                 </div>
                  <ScrollArea className="flex-1 mt-6 space-y-6 -mr-3 pr-3 custom-scrollbar z-10">
                       {protectionItems.map((item, index) => (
@@ -121,14 +143,6 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         </motion.div>
                       ))}
                 </ScrollArea>
-                 <DialogFooter className="pt-6 z-10">
-                  <Button 
-                    onClick={() => onOpenChange(false)} 
-                    className="w-full h-12 text-base font-bold text-cyan-200 bg-cyan-900/50 border-2 border-cyan-500/50 rounded-lg hover:bg-cyan-800/70 hover:border-cyan-400 hover:text-white transition-all duration-300 ai-button-scan"
-                  >
-                    Entendido
-                  </Button>
-                </DialogFooter>
             </div>
           </div>
       </DialogContent>
