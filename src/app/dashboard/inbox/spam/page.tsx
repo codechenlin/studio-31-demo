@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, ShieldHalf, Star, Filter, Eye } from 'lucide-react';
+import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,7 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialSpamEmails: Email[] = [
     {
@@ -87,20 +88,23 @@ export default function SpamPage() {
 
 
       <div className="relative z-10">
-        <header className="mb-8">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-3">
-                <MailWarning className="size-8"/>
-                Bandeja de Spam
-              </h1>
-              <div className="relative flex items-center justify-center size-8 ml-2">
-                  <MailWarning className="text-amber-500/80 size-7" />
-                  <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse" />
+        <header className="mb-8 flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-3">
+                  <MailWarning className="size-8"/>
+                  Bandeja de Spam
+                </h1>
+                <div className="relative flex items-center justify-center size-8 ml-2">
+                    <MailWarning className="text-amber-500/80 size-7" />
+                    <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse" />
+                </div>
               </div>
+              <p className="text-muted-foreground mt-1">
+                Revisa los correos clasificados como no deseados por nuestro sistema de IA.
+              </p>
             </div>
-            <p className="text-muted-foreground mt-1">
-              Revisa los correos clasificados como no deseados por nuestro sistema de IA.
-            </p>
+            <StorageIndicator used={10.2} total={15} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-2 relative overflow-hidden">
