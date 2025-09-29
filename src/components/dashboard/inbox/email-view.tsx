@@ -211,7 +211,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug style={{color: '#F00000'}} className="size-8" />
+                                <Bug style={{color: '#F00000'}} className="size-8 animate-ping" />
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -271,7 +271,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </div>
         </ScrollArea>
       </main>
-
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
       <TagEmailModal 
         isOpen={isTagModalOpen} 
