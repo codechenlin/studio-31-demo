@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { HardDrive } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface StorageIndicatorProps {
     used: number;
@@ -42,7 +41,7 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
                     />
                     {/* Progress arc */}
                     <circle
-                        className="stroke-current transition-all duration-1000 ease-out"
+                        className="stroke-current transition-all duration-500 ease-out"
                         strokeWidth="8"
                         cx="50"
                         cy="50"
@@ -74,3 +73,5 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
         </div>
     );
 }
+
+    
