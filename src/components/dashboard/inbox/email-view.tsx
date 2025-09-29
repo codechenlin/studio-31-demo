@@ -233,10 +233,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                             </div>
                              <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
                                 <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
-                                <CheckCircle className="relative size-8 text-green-400" />
+                                <CheckCircle className="relative size-8" style={{color: '#00CB07'}} />
                             </div>
                             <div className="relative z-10">
-                                <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
+                                <h3 className="font-bold" style={{color: '#00CB07'}}>Correo Verificado y Seguro</h3>
                                 <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
                             </div>
                         </div>
@@ -280,36 +280,36 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
         senderEmail={senderEmail}
       />
       <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Confirmas la eliminación?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta acción no se puede deshacer. El correo se eliminará permanentemente.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Sí, eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Confirmas la eliminación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El correo se eliminará permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setIsDeleting(false); onBack(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={isDeleteTagConfirmOpen} onOpenChange={setIsDeleteTagConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Eliminar Etiqueta?</AlertDialogTitle>
-              <AlertDialogDescription>
-                ¿Estás seguro de que quieres quitar la etiqueta &quot;{appliedTag?.name}&quot; de este correo?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setAppliedTag(null); setIsDeleteTagConfirmOpen(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Sí, quitar etiqueta
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Eliminar Etiqueta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres quitar la etiqueta &quot;{appliedTag?.name}&quot; de este correo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setAppliedTag(null); setIsDeleteTagConfirmOpen(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sí, quitar etiqueta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
       <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
         <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
@@ -369,7 +369,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="border border-white hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                  <Button variant="outline" className="border-white text-white hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                   <Button
                       className="bg-amber-600 text-white hover:bg-[#FFAB00] hover:text-white"
                       onClick={() => {

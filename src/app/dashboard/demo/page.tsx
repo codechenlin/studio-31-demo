@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -100,7 +100,7 @@ export default function DemoPage() {
                     Página de Pruebas
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Esta página es para probar integraciones con APIs externas.
+                    Esta página es para probar integraciones con APIs externas y nuevas animaciones.
                 </p>
             </div>
 
@@ -253,42 +253,62 @@ export default function DemoPage() {
             <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-border/30 shadow-xl">
                 <CardContent className="p-6">
                     <div className="flex justify-around items-center">
-                        <div className="flex flex-col items-center gap-2">
-                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                       <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-1">
+                                <Shield className="text-cyan-400 size-10 icon-1"/>
+                            </div>
                             <span className="font-bold text-lg">1</span>
+                            <span className="text-xs text-muted-foreground font-mono">Análisis Neuronal</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <KeyRound stroke="currentColor" strokeWidth="1.5" x="7" y="9" width="10" height="6" />
-                            </svg>
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-2">
+                                <KeyRound className="text-purple-400 size-10 icon-2"/>
+                            </div>
                             <span className="font-bold text-lg">2</span>
+                            <span className="text-xs text-muted-foreground font-mono">Clave Cuántica</span>
                         </div>
-                        
+
                         <div className="flex flex-col items-center gap-2">
-                           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           </svg>
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-3">
+                                <MailWarning className="text-orange-400 size-10 icon-3"/>
+                            </div>
                             <span className="font-bold text-lg">3</span>
+                             <span className="text-xs text-muted-foreground font-mono">Firma de Partículas</span>
                         </div>
+
                         <div className="flex flex-col items-center gap-2">
-                           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
-                           </svg>
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-4">
+                               <Eye className="text-green-400 size-10 icon-4"/>
+                            </div>
                             <span className="font-bold text-lg">4</span>
+                            <span className="text-xs text-muted-foreground font-mono">Ojo Biométrico</span>
                         </div>
-                         <div className="flex flex-col items-center gap-2">
-                           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14.5 10.5a2.5 2.5 0 0 1-5 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M12 12a4.5 4.5 0 0 0-4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M12 12a4.5 4.5 0 0 1 4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                           </svg>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-5">
+                                <ShieldCheck className="text-blue-400 size-10 icon-5"/>
+                            </div>
                             <span className="font-bold text-lg">5</span>
+                             <span className="text-xs text-muted-foreground font-mono">Escudo de Energía</span>
+                        </div>
+
+                         <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-6">
+                                <div className="icon-6-wrapper">
+                                    <ShieldAlert className="text-yellow-400 size-10 icon-6"/>
+                                </div>
+                            </div>
+                            <span className="font-bold text-lg">6</span>
+                             <span className="text-xs text-muted-foreground font-mono">Latido Digital</span>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-7">
+                                <Dna className="text-red-400 size-10 icon-7"/>
+                            </div>
+                            <span className="font-bold text-lg">7</span>
+                            <span className="text-xs text-muted-foreground font-mono">ADN Digital</span>
                         </div>
                     </div>
                 </CardContent>
