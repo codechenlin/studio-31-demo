@@ -24,9 +24,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, PlusCircle, Tag, Tags, X } from 'lucide-react';
+import { Check, PlusCircle, Tag, Tags, X, Repeat, History, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '../color-picker-advanced';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export interface AppliedTag {
   name: string;
@@ -113,7 +114,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-full h-[450px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+        <DialogContent className="max-w-5xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
             <DialogHeader className="sr-only">
                 <DialogTitle>Etiquetar Correo</DialogTitle>
                 <DialogDescription>
@@ -176,7 +177,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                   <PlusCircle className="text-cyan-400" />
                   {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
                 </h3>
-                <div className="space-y-6 flex-1 flex flex-col">
+                <div className="space-y-6 flex-1 flex flex-col overflow-y-auto custom-scrollbar -mr-4 pr-4">
                   <div>
                     <Label htmlFor="tag-name">Nombre de la Etiqueta</Label>
                     <Input
@@ -200,6 +201,33 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                         }}
                         className="mt-1"
                     />
+                  </div>
+                  <div className="space-y-4">
+                     <h4 className="text-sm font-semibold flex items-center gap-2"><Bot className="text-cyan-300"/> Automatización de Etiquetado</h4>
+                     <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
+                        <Checkbox id="tag-future" />
+                        <div className="grid gap-1.5 leading-none">
+                            <label htmlFor="tag-future" className="text-sm font-medium leading-none flex items-center gap-2">
+                                <Repeat className="size-4"/>
+                                Etiquetar correos futuros
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                                Aplicar esta etiqueta automáticamente a todos los correos nuevos del mismo remitente.
+                            </p>
+                        </div>
+                     </div>
+                     <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
+                        <Checkbox id="tag-past" />
+                        <div className="grid gap-1.5 leading-none">
+                            <label htmlFor="tag-past" className="text-sm font-medium leading-none flex items-center gap-2">
+                                <History className="size-4"/>
+                                Etiquetar correos anteriores
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                                Buscar y aplicar esta etiqueta a todos los correos existentes de este remitente.
+                            </p>
+                        </div>
+                     </div>
                   </div>
                 </div>
               </div>
@@ -253,3 +281,5 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
     </>
   );
 }
+
+    
