@@ -255,39 +255,39 @@ export default function DemoPage() {
                     <div className="flex justify-around items-center">
                        <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-1">
-                                <Shield className="text-cyan-400 size-10 icon-1"/>
+                                <Shield className="text-cyan-400 size-10 icon1"/>
                             </div>
                             <span className="font-bold text-lg">1</span>
-                            <span className="text-xs text-muted-foreground font-mono">Análisis Neuronal</span>
+                            <span className="text-xs text-muted-foreground font-mono">Pulso Neuronal</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-2">
-                                <KeyRound className="text-purple-400 size-10 icon-2"/>
+                                <KeyRound className="text-purple-400 size-10 icon2"/>
                             </div>
                             <span className="font-bold text-lg">2</span>
-                            <span className="text-xs text-muted-foreground font-mono">Clave Cuántica</span>
+                            <span className="text-xs text-muted-foreground font-mono">Órbita Cuántica</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-3">
-                                <MailWarning className="text-orange-400 size-10 icon-3"/>
+                                <MailWarning className="text-orange-400 size-10 icon3"/>
                             </div>
                             <span className="font-bold text-lg">3</span>
-                             <span className="text-xs text-muted-foreground font-mono">Firma de Partículas</span>
+                             <span className="text-xs text-muted-foreground font-mono">Implosión de Partículas</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-4">
-                               <Eye className="text-green-400 size-10 icon-4"/>
+                               <Eye className="text-green-400 size-10 icon4"/>
                             </div>
                             <span className="font-bold text-lg">4</span>
-                            <span className="text-xs text-muted-foreground font-mono">Ojo Biométrico</span>
+                            <span className="text-xs text-muted-foreground font-mono">Escaneo Biométrico</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-5">
-                                <ShieldCheck className="text-blue-400 size-10 icon-5"/>
+                                <ShieldCheck className="text-blue-400 size-10 icon5"/>
                             </div>
                             <span className="font-bold text-lg">5</span>
                              <span className="text-xs text-muted-foreground font-mono">Escudo de Energía</span>
@@ -296,7 +296,7 @@ export default function DemoPage() {
                          <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-6">
                                 <div className="icon-6-wrapper">
-                                    <ShieldAlert className="text-yellow-400 size-10 icon-6"/>
+                                    <ShieldAlert className="text-yellow-400 size-10 icon6"/>
                                 </div>
                             </div>
                             <span className="font-bold text-lg">6</span>
@@ -305,10 +305,10 @@ export default function DemoPage() {
 
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-7">
-                                <Dna className="text-red-400 size-10 icon-7"/>
+                                <Dna className="text-red-400 size-10 icon7"/>
                             </div>
                             <span className="font-bold text-lg">7</span>
-                            <span className="text-xs text-muted-foreground font-mono">ADN Digital</span>
+                            <span className="text-xs text-muted-foreground font-mono">Glitch de ADN</span>
                         </div>
                     </div>
                 </CardContent>
@@ -316,4 +316,5 @@ export default function DemoPage() {
 
         </main>
     );
-}
+
+    
