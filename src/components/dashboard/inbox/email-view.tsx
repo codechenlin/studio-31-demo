@@ -211,7 +211,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug style={{color: '#F00000'}} className="size-8" />
+                                <Bug style={{color: '#F00000'}} className="size-8 animate-ping" />
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -271,7 +271,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </div>
         </ScrollArea>
       </main>
-
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
       <TagEmailModal 
         isOpen={isTagModalOpen} 
@@ -280,7 +279,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
         initialTag={appliedTag}
         senderEmail={senderEmail}
       />
-
       <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -297,7 +295,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-
       <AlertDialog open={isDeleteTagConfirmOpen} onOpenChange={setIsDeleteTagConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -314,14 +311,21 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-      
       <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
         <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
             <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
             <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
             <DialogHeader className="p-6 pb-0 z-10">
               <DialogTitle className="flex items-center gap-3 text-xl">
-                <ShieldAlert className="text-amber-400 size-8 animate-[icon-pulse_2s_infinite] drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1, 1.1, 1],
+                    rotate: [0, 5, -5, 5, 0],
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <ShieldAlert className="text-amber-400 size-8 drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
+                </motion.div>
                 Reportar Correo como Spam
               </DialogTitle>
              <DialogDescription className="text-amber-100/70 pt-2">
@@ -329,30 +333,28 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
-                  <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#E18700] to-[#FFAB00] rounded-l-lg" />
-                  <h3 className="text-base font-semibold text-[#E18700]">Reportar solo este correo</h3>
-                  <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-              </button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
-               <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-               <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
-                  <div className="absolute right-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#F00000] to-[#F07000] rounded-r-lg" />
-                  <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
-                  <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-              </button>
-            </motion.div>
+             <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
+                    <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#E18700] to-[#FFAB00] rounded-l-lg" />
+                    <h3 className="text-base font-semibold text-[#E18700]">Reportar solo este correo</h3>
+                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+                </button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
+                 <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                 <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
+                    <div className="absolute right-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#F00000] to-[#F07000] rounded-r-lg" />
+                    <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
+                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
+                </button>
+              </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button className="bg-transparent text-white border-none hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button variant="outline" className="border-white dark:border-black text-white bg-transparent hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-
       <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
           <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
               <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
@@ -375,9 +377,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                  <Button variant="ghost" className="border border-white dark:border-black hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                   <Button
-                      className="bg-amber-600 text-white hover:bg-amber-500"
+                      className="bg-amber-600 text-white hover:bg-[#E18700] hover:text-white"
                       onClick={() => {
                           setShowImages(true);
                           setIsConfirmImagesModalOpen(false);
@@ -389,7 +391,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
               </DialogFooter>
           </DialogContent>
       </Dialog>
-
       <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
           <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
                <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
