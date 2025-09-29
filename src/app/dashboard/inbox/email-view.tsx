@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, CheckCircle, Bug } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -65,6 +65,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     );
   }
   
+  const senderEmail = `${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+
   const extractAttachments = (body: string): { name: string; type: string, size: string }[] => {
     const matches = [...body.matchAll(/<p[^>]*data-attachment='true'[^>]*data-filename="([^"]*)"[^>]*data-filetype="([^"]*)"[^>]*data-filesize="([^"]*)"[^>]*>/g)];
     return matches.map(match => ({ name: match[1], type: match[2], size: match[3] }));
@@ -122,10 +124,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
                         onClick={() => setIsAntivirusModalOpen(true)}
                     >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </Button>
                     <Button 
                       className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
@@ -143,10 +142,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </button>
                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                        <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
-                           </svg>
+                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
                         </div>
                     </button>
                 </div>
@@ -166,7 +162,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         </Avatar>
                         <div className="text-sm">
                             <p className="font-semibold text-foreground text-base">{email.from}</p>
-                            <p className="text-muted-foreground text-sm">{`<${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com>`}</p>
+                            <p className="text-muted-foreground text-sm">{`<${senderEmail}>`}</p>
                             <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
                             <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
                         </div>
@@ -215,10 +211,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug className="text-red-400 size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                <Bug className="text-[#F00000] size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
                             </div>
                             <div className="relative z-10">
-                                <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
+                                <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
                                 <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
                             </div>
                          </div>
@@ -283,6 +279,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
       onOpenChange={setIsTagModalOpen} 
       onSave={setAppliedTag}
       initialTag={appliedTag}
+      senderEmail={senderEmail}
     />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
@@ -320,14 +317,19 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </AlertDialog>
     
     <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
-        <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="flex items-center gap-3 text-xl"><ShieldAlert className="text-amber-400"/>Reportar Correo como Spam</DialogTitle>
+      <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
+          <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+          <DialogHeader className="p-6 pb-0 z-10">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <ShieldAlert className="text-amber-400 size-8 animate-[icon-pulse_2s_infinite] drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
+              Reportar Correo como Spam
+            </DialogTitle>
              <DialogDescription className="text-amber-100/70 pt-2">
                 ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
             </DialogDescription>
           </DialogHeader>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
               <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
                   <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
@@ -341,7 +343,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
               </Button>
             </motion.div>
           </div>
-          <DialogFooter className="p-6 pt-0">
+          <DialogFooter className="p-6 pt-0 z-10">
             <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
@@ -353,7 +355,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
             <DialogHeader className="z-10">
                 <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
-                    <ShieldQuestion className="size-8"/>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
                     Confirmar Visualización de Imágenes
                 </DialogTitle>
                 <DialogDescription className="text-amber-100/70 pt-2">
@@ -370,7 +372,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
             </div>
             <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                <Button variant="ghost" className="hover:text-white" onClick={()={() => setIsConfirmImagesModalOpen(false)}}><X className="mr-2"/>Cancelar</Button>
                 <Button
                     className="bg-amber-600 text-white hover:bg-amber-500"
                     onClick={() => {
