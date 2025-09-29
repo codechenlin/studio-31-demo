@@ -183,7 +183,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag, sender
                     <PlusCircle className="text-cyan-400" />
                     {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
                   </h3>
-                  <div className="space-y-6 flex-1 flex flex-col justify-center overflow-y-auto custom-scrollbar -mr-4 pr-4">
+                  <div className="space-y-6 flex-1 flex flex-col justify-center">
                       <div className="w-10/12 mx-auto">
                           <Label htmlFor="tag-name" className="text-center block mb-1">Nombre de la Etiqueta</Label>
                           <Input
@@ -209,7 +209,7 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag, sender
                           />
                       </div>
                   </div>
-                  <div className="space-y-4 pt-6 border-t border-cyan-400/10">
+                  <div className="space-y-4 pt-6 border-t border-cyan-400/10 shrink-0">
                       <h4 className="text-sm font-semibold flex items-center gap-2"><Bot className="text-cyan-300"/> Automatización de Etiquetado</h4>
                       <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
                           <Checkbox id="tag-future" />
@@ -289,5 +289,3 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag, sender
     </>
   );
 }
-
-    
