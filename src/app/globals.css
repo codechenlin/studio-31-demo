@@ -498,7 +498,6 @@ body {
     .animation-wrapper-8 .icon8 { animation: gas-icon-fade 6s infinite ease-in-out; }
     @keyframes gas-icon-fade { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
 
-    .animation-wrapper-9 .icon9 { animation: circuit-spin 10s infinite linear; }
     .animation-wrapper-9::before { content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%; border: 2px dashed currentColor; border-radius: 50%; animation: circuit-spin 10s infinite linear; }
     @keyframes circuit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     
@@ -539,3 +538,4 @@ body {
 }
 
     
+

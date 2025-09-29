@@ -211,7 +211,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0 animation-wrapper-9" style={{color: '#F00000'}}>
-                                <Bug className="icon9 size-8"/>
+                                <Bug className="size-8"/>
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -232,7 +232,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                              <div className="relative z-10 flex items-center justify-center size-8 shrink-0 animation-wrapper-9" style={{color: '#00CB07'}}>
-                                <CheckCircle className="icon9 relative size-8" />
+                                <CheckCircle className="relative size-8" />
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#00CB07'}}>Correo Verificado y Seguro</h3>
@@ -321,8 +321,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
           <DialogHeader className="p-6 pb-0 z-10">
             <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="animation-wrapper-1" style={{color: 'hsl(var(--primary))'}}>
-                <ShieldAlert className="icon1 text-amber-400 size-8"/>
+              <div className="animation-wrapper-10" style={{color: 'hsl(var(--primary))'}}>
+                <ShieldAlert className="icon10 text-amber-400 size-8"/>
               </div>
               Reportar Correo como Spam
             </DialogTitle>
@@ -367,7 +367,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </motion.button>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button className="border border-white bg-transparent text-white hover:bg-[#F00000] hover:border-transparent hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button className="border border-white bg-transparent text-white hover:bg-[#F00000] hover:border-transparent" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -395,9 +395,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
             </div>
             <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-transparent hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-transparent" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                 <Button
-                    className="bg-amber-600 text-white hover:bg-[#FFAB00] hover:text-white"
+                    className="bg-amber-600 text-white hover:bg-[#FFAB00]"
                     onClick={() => {
                         setShowImages(true);
                         setIsConfirmImagesModalOpen(false);
