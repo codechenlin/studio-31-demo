@@ -39,6 +39,7 @@ interface TagEmailModalProps {
   onOpenChange: (isOpen: boolean) => void;
   onSave: (tag: AppliedTag) => void;
   initialTag: AppliedTag | null;
+  senderEmail: string;
 }
 
 const existingTags: AppliedTag[] = [
@@ -48,7 +49,7 @@ const existingTags: AppliedTag[] = [
   { name: 'Facturas', color: '#16a34a' },
 ];
 
-export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagEmailModalProps) {
+export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag, senderEmail }: TagEmailModalProps) {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#8b5cf6');
   const [selectedExistingTag, setSelectedExistingTag] = useState<AppliedTag | null>(null);
@@ -109,6 +110,11 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
         onSave(previewTag);
         handleClose();
     }
+  }
+
+  const truncateEmail = (email: string, maxLength = 30) => {
+    if (email.length <= maxLength) return email;
+    return `${email.substring(0, maxLength)}...`;
   }
 
   return (
@@ -212,8 +218,9 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                                 Etiquetar correos futuros
                             </label>
                             <p className="text-xs text-muted-foreground">
-                                Aplicar esta etiqueta automáticamente a todos los correos nuevos del mismo remitente.
+                                Aplicar esta etiqueta automáticamente a todos los correos nuevos del remitente:
                             </p>
+                            <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
                         </div>
                      </div>
                      <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
@@ -224,8 +231,9 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
                                 Etiquetar correos anteriores
                             </label>
                             <p className="text-xs text-muted-foreground">
-                                Buscar y aplicar esta etiqueta a todos los correos existentes de este remitente.
+                                Buscar y aplicar esta etiqueta a todos los correos existentes del remitente:
                             </p>
+                             <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
                         </div>
                      </div>
                   </div>
@@ -281,5 +289,3 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag }: TagE
     </>
   );
 }
-
-    

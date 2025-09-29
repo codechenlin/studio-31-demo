@@ -65,6 +65,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     );
   }
   
+  const senderEmail = `${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+
   const extractAttachments = (body: string): { name: string; type: string, size: string }[] => {
     const matches = [...body.matchAll(/<p[^>]*data-attachment='true'[^>]*data-filename="([^"]*)"[^>]*data-filetype="([^"]*)"[^>]*data-filesize="([^"]*)"[^>]*>/g)];
     return matches.map(match => ({ name: match[1], type: match[2], size: match[3] }));
@@ -140,8 +142,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </button>
                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                        <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
+                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
                         </div>
                     </button>
                 </div>
@@ -161,7 +162,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         </Avatar>
                         <div className="text-sm">
                             <p className="font-semibold text-foreground text-base">{email.from}</p>
-                            <p className="text-muted-foreground text-sm">{`<${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com>`}</p>
+                            <p className="text-muted-foreground text-sm">{`<${senderEmail}>`}</p>
                             <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
                             <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
                         </div>
@@ -210,7 +211,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug className="text-red-400 size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                <Bug className="text-red-400 size-8" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
@@ -278,6 +279,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
       onOpenChange={setIsTagModalOpen} 
       onSave={setAppliedTag}
       initialTag={appliedTag}
+      senderEmail={senderEmail}
     />
 
     <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
@@ -422,5 +424,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-    
