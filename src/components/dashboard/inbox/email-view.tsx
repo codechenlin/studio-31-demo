@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, ShieldOff, AlertTriangle, Tag } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, ShieldOff, AlertTriangle, Tag, Virus, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -124,8 +124,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         onClick={() => setIsAntivirusModalOpen(true)}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     </Button>
                     <Button 
@@ -144,7 +144,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </button>
                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/>
                             </svg>
@@ -215,7 +215,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     <circle className="node-pulse" style={{animationDelay: '0.5s'}} cx="180" cy="30" r="2" fill="url(#threat-glow)" />
                                 </svg>
                             </div>
-                            <ShieldAlert className="relative z-10 size-8 text-red-400 shrink-0 animate-icon-pulse-banner" />
+                            <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
+                                <Virus className="text-red-400 size-8 animate-pulse" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                            </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
                                 <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
@@ -234,7 +236,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
                                 </svg>
                             </div>
-                            <ShieldOff className="relative z-10 size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
+                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
+                                <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
+                                <CheckCircle className="relative size-8 text-green-400" />
+                            </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
                                 <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
@@ -386,7 +391,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
              <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
             <DialogHeader className="z-10">
                 <DialogTitle className="flex items-center gap-3 text-2xl text-green-300">
-                    <ShieldOff className="size-8"/>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="m13.5 10.5-.5-1.5-1-1.5-1 1.5-.5 1.5 1.5.5L12 12l.5.5-1.5.5z" fill="currentColor"/></svg>
                     Activar Protección de Privacidad
                 </DialogTitle>
                 <DialogDescription className="text-green-100/70 pt-2">
@@ -423,3 +428,4 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+

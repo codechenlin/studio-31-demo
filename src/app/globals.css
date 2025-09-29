@@ -351,6 +351,18 @@ body {
     .icon-pulse-animation {
         animation: icon-pulse 2.5s infinite ease-in-out;
     }
+
+     @keyframes icon-pulse-banner {
+        0%, 100% { 
+            transform: scale(1); 
+        }
+        50% { 
+            transform: scale(1.05); 
+        }
+    }
+    .animate-icon-pulse-banner {
+      animation: icon-pulse-banner 2s infinite ease-in-out;
+    }
     
     @keyframes sound-wave {
         0% { transform: scaleY(0.4); }
@@ -450,7 +462,7 @@ body {
     .node-pulse {
       animation: node-pulse 3s infinite ease-in-out;
     }
-    
+
     @keyframes hud-glitch {
       0% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00ff; }
       15% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00ff; }
