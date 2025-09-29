@@ -381,13 +381,6 @@ export default function DemoPage() {
                             <span className="font-bold text-lg">14</span>
                             <span className="text-xs text-muted-foreground font-mono">Sello Hexagonal</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-15">
-                                <Check className="text-yellow-400 size-10 icon15"/>
-                            </div>
-                            <span className="font-bold text-lg">15</span>
-                            <span className="text-xs text-muted-foreground font-mono">Sello de Aprobación</span>
-                        </div>
                          <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-16">
                                 <Tags className="text-blue-400 size-10 icon16"/>
@@ -404,4 +397,5 @@ export default function DemoPage() {
 
     
 }
+    
     
