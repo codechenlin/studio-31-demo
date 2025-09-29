@@ -28,6 +28,7 @@ import { Check, PlusCircle, Tag, Tags, X, Repeat, History, Bot } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '../color-picker-advanced';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 export interface AppliedTag {
   name: string;
@@ -183,61 +184,64 @@ export function TagEmailModal({ isOpen, onOpenChange, onSave, initialTag, sender
                     <PlusCircle className="text-cyan-400" />
                     {initialTag ? 'Editar Etiqueta' : 'Crear Nueva Etiqueta'}
                   </h3>
-                  <div className="space-y-6 flex-1 flex flex-col justify-center">
-                      <div className="w-10/12 mx-auto">
-                          <Label htmlFor="tag-name" className="text-center block mb-1">Nombre de la Etiqueta</Label>
-                          <Input
-                            id="tag-name"
-                            value={newTagName}
-                            onChange={(e) => {
-                              setNewTagName(e.target.value);
-                              setSelectedExistingTag(null);
-                            }}
-                            placeholder="Ej: Prioridad Alta"
-                            className="mt-1 bg-black/30 border-cyan-400/30 text-center"
-                          />
-                      </div>
-                      <div className="w-10/12 mx-auto">
-                          <Label className="text-center block mb-1">Color de la Etiqueta</Label>
-                          <ColorPickerAdvanced
-                              color={newTagColor}
-                              setColor={(color) => {
-                                  setNewTagColor(color);
+                   <ScrollArea className="flex-1 -mr-6 pr-6 custom-scrollbar">
+                      <div className="flex flex-col justify-center flex-grow space-y-6">
+                          <div className="w-10/12 mx-auto">
+                              <Label htmlFor="tag-name" className="text-center block mb-1">Nombre de la Etiqueta</Label>
+                              <Input
+                                id="tag-name"
+                                value={newTagName}
+                                onChange={(e) => {
+                                  setNewTagName(e.target.value);
                                   setSelectedExistingTag(null);
-                              }}
-                              className="mt-1"
-                          />
-                      </div>
-                  </div>
-                  <div className="space-y-4 pt-6 border-t border-cyan-400/10 shrink-0">
-                      <h4 className="text-sm font-semibold flex items-center gap-2"><Bot className="text-cyan-300"/> Automatización de Etiquetado</h4>
-                      <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
-                          <Checkbox id="tag-future" />
-                          <div className="grid gap-1.5 leading-none">
-                              <label htmlFor="tag-future" className="text-sm font-medium leading-none flex items-center gap-2">
-                                  <Repeat className="size-4"/>
-                                  Etiquetar correos futuros
-                              </label>
-                              <p className="text-xs text-muted-foreground">
-                                  Aplicar esta etiqueta automáticamente a todos los correos nuevos del remitente:
-                              </p>
-                              <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
+                                }}
+                                placeholder="Ej: Prioridad Alta"
+                                className="mt-1 bg-black/30 border-cyan-400/30 text-center"
+                              />
+                          </div>
+                          <div className="w-10/12 mx-auto">
+                              <Label className="text-center block mb-1">Color de la Etiqueta</Label>
+                              <ColorPickerAdvanced
+                                  color={newTagColor}
+                                  setColor={(color) => {
+                                      setNewTagColor(color);
+                                      setSelectedExistingTag(null);
+                                  }}
+                                  className="mt-1"
+                              />
                           </div>
                       </div>
-                      <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
-                          <Checkbox id="tag-past" />
-                          <div className="grid gap-1.5 leading-none">
-                              <label htmlFor="tag-past" className="text-sm font-medium leading-none flex items-center gap-2">
-                                  <History className="size-4"/>
-                                  Etiquetar correos anteriores
-                              </label>
-                              <p className="text-xs text-muted-foreground">
-                                  Buscar y aplicar esta etiqueta a todos los correos existentes del remitente:
-                              </p>
-                              <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
+                      <Separator className="my-6 bg-cyan-400/10"/>
+                      <div className="space-y-4">
+                          <h4 className="text-sm font-semibold flex items-center gap-2"><Bot className="text-cyan-300"/> Automatización de Etiquetado</h4>
+                          <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
+                              <Checkbox id="tag-future" />
+                              <div className="grid gap-1.5 leading-none">
+                                  <label htmlFor="tag-future" className="text-sm font-medium leading-none flex items-center gap-2">
+                                      <Repeat className="size-4"/>
+                                      Etiquetar correos futuros
+                                  </label>
+                                  <p className="text-xs text-muted-foreground">
+                                      Aplicar esta etiqueta automáticamente a todos los correos nuevos del remitente:
+                                  </p>
+                                  <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
+                              </div>
+                          </div>
+                          <div className="flex items-start space-x-3 p-3 rounded-md bg-black/20 border border-cyan-400/10">
+                              <Checkbox id="tag-past" />
+                              <div className="grid gap-1.5 leading-none">
+                                  <label htmlFor="tag-past" className="text-sm font-medium leading-none flex items-center gap-2">
+                                      <History className="size-4"/>
+                                      Etiquetar correos anteriores
+                                  </label>
+                                  <p className="text-xs text-muted-foreground">
+                                      Buscar y aplicar esta etiqueta a todos los correos existentes del remitente:
+                                  </p>
+                                  <p className="text-xs text-cyan-300/80 font-mono truncate">{truncateEmail(senderEmail)}</p>
+                              </div>
                           </div>
                       </div>
-                  </div>
+                    </ScrollArea>
               </div>
               
               <div className="w-1/3 flex flex-col relative overflow-hidden info-grid p-6">

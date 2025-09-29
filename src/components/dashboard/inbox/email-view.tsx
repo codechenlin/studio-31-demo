@@ -320,8 +320,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
           <DialogHeader className="p-6 pb-0 z-10">
-            <DialogTitle className="flex items-center gap-3 text-xl animation-wrapper-10">
-              <ShieldAlert className="icon10 text-amber-400 size-8"/>
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="animation-wrapper-1" style={{color: 'hsl(var(--primary))'}}>
+                <ShieldAlert className="icon1 text-amber-400 size-8"/>
+              </div>
               Reportar Correo como Spam
             </DialogTitle>
              <DialogDescription className="text-amber-100/70 pt-2">
@@ -329,37 +331,43 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-            <motion.div 
+            <motion.button 
                 whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                className="relative rounded-lg p-0.5 overflow-hidden"
+                className="relative rounded-lg p-0.5 overflow-hidden transition-all duration-300"
                 style={{
-                  background: 'linear-gradient(to right, #E18700, #FFAB00)',
-                  boxShadow: '0 0 20px rgba(255, 171, 0, 0.5)'
+                  '--shadow-color-1': '#E18700',
+                  '--shadow-color-2': '#FFAB00',
+                  boxShadow: '0 0 20px 0px hsla(39, 100%, 50%, 0)',
                 }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px 0px hsla(39, 100%, 50%, 0.5)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 20px 0px hsla(39, 100%, 50%, 0)'}
             >
               <div className="relative rounded-md p-6 flex flex-col items-start text-left gap-2 bg-zinc-900 h-full">
                 <h3 className="text-base font-semibold text-[#FFAB00]">Reportar solo este correo</h3>
                 <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
                 <div className="absolute left-0 top-0 h-full w-1.5" style={{ background: 'linear-gradient(#E18700, #FFAB00)' }} />
               </div>
-            </motion.div>
-            <motion.div 
+            </motion.button>
+             <motion.button 
                 whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                className="relative rounded-lg p-0.5 overflow-hidden"
-                style={{
-                  background: 'linear-gradient(to right, #F00000, #F07000)',
-                  boxShadow: '0 0 20px rgba(240, 0, 0, 0.5)'
+                className="relative rounded-lg p-0.5 overflow-hidden transition-all duration-300"
+                 style={{
+                  '--shadow-color-1': '#F00000',
+                  '--shadow-color-2': '#F07000',
+                   boxShadow: '0 0 20px 0px hsla(0, 100%, 47%, 0)',
                 }}
+                 onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px 0px hsla(0, 100%, 47%, 0.5)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 20px 0px hsla(0, 100%, 47%, 0)'}
             >
               <div className="relative rounded-md p-6 flex flex-col items-start text-left gap-2 bg-zinc-900 h-full">
                 <h3 className="text-base font-semibold text-[#F00000]">Bloquear y reportar todo</h3>
                 <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
                 <div className="absolute right-0 top-0 h-full w-1.5" style={{ background: 'linear-gradient(#F00000, #F07000)' }} />
               </div>
-            </motion.div>
+            </motion.button>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button className="border border-white bg-transparent text-white hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button className="border border-white bg-transparent text-white hover:bg-[#F00000] hover:border-transparent hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

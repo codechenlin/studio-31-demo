@@ -461,7 +461,7 @@ body {
     }
     
     .animation-wrapper-1 .icon1 { animation: neural-pulse 3s infinite ease-in-out; }
-    @keyframes neural-pulse { 0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--primary)/0.5)) drop-shadow(0 0 10px hsl(var(--primary)/0.3)); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px hsl(var(--primary)/0.8)) drop-shadow(0 0 25px hsl(var(--primary)/0.5)); transform: scale(1.1); } }
+    @keyframes neural-pulse { 0%, 100% { filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 25px currentColor); transform: scale(1.1); } }
     
     .animation-wrapper-2 { position: relative; }
     .animation-wrapper-2::before, .animation-wrapper-2::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid hsl(var(--primary)/0.5); animation: quantum-orbit 4s infinite linear; }
@@ -481,7 +481,7 @@ body {
     .animation-wrapper-5::before { content: ''; position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; border-radius: 50%; background: radial-gradient(circle, transparent 60%, currentColor 100%); animation: shield-deploy 4s infinite ease-out; }
     @keyframes shield-deploy { 0%, 100% { transform: scale(0); opacity: 0; } 50% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(0.95); opacity: 0.3; } }
 
-    .animation-wrapper-6 .icon6-wrapper { animation: digital-heartbeat 2s infinite ease-in-out; }
+    .animation-wrapper-6 .icon-6-wrapper { animation: digital-heartbeat 2s infinite ease-in-out; }
     @keyframes digital-heartbeat { 0%, 100% { transform: scale(1); } 10% { transform: scale(1.2); } 20% { transform: scale(1); } 30% { transform: scale(1.3); } 40% { transform: scale(1); } }
     .animation-wrapper-6 .icon6 { animation: glitch-color 2s infinite steps(1); }
     @keyframes glitch-color { 0%, 100% { color: #ff0; } 20% { color: #f0f; } 40% { color: #0ff; } 60% { color: #f00; } 80% { color: #0f0; } }
@@ -498,12 +498,10 @@ body {
     .animation-wrapper-8 .icon8 { animation: gas-icon-fade 6s infinite ease-in-out; }
     @keyframes gas-icon-fade { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
 
-    .animation-wrapper-9 { position: relative; }
+    .animation-wrapper-9 .icon9 { animation: circuit-spin 10s infinite linear; }
     .animation-wrapper-9::before { content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%; border: 2px dashed currentColor; border-radius: 50%; animation: circuit-spin 10s infinite linear; }
     @keyframes circuit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .animation-wrapper-9 .icon9 { animation: circuit-pulse 2s infinite alternate; }
-    @keyframes circuit-pulse { from { filter: drop-shadow(0 0 2px currentColor); } to { filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor); } }
-
+    
     .animation-wrapper-10 { position: relative; }
     .animation-wrapper-10 .icon10 { animation: wave-expand 3s infinite ease-out; }
     @keyframes wave-expand { 0%, 60%, 100% { transform: scale(1); } 30% { transform: scale(1.2); } }
