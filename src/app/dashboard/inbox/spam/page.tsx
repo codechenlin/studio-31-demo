@@ -95,9 +95,6 @@ export default function SpamPage() {
                   <MailWarning className="size-8"/>
                   Bandeja de Spam
                 </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailWarning className="text-amber-500/80 size-7" />
-                </div>
               </div>
               <p className="text-muted-foreground mt-1">
                 Revisa los correos clasificados como no deseados por nuestro sistema de IA.
@@ -181,7 +178,11 @@ export default function SpamPage() {
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-amber-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500" onClick={() => setIsSecurityModalOpen(true)}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" stroke-width="2"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 11.13a3.5 3.5 0 0 1-5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
                     </Button>
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                     <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}>
