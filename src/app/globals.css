@@ -407,7 +407,7 @@ body {
     }
 
     @keyframes pulse-dot {
-      0%, 100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(0,173,236, 0.4); }
+      0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(0,173,236, 0.4); }
       70% { transform: scale(1); box-shadow: 0 0 10px 10px rgba(0,173,236, 0); }
       100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(0,173,236, 0); }
     }
@@ -460,23 +460,17 @@ body {
       animation: node-pulse 3s infinite ease-in-out;
     }
     
-    @keyframes neural-pulse {
-      0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--primary)/0.5)) drop-shadow(0 0 10px hsl(var(--primary)/0.3)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 15px hsl(var(--primary)/0.8)) drop-shadow(0 0 25px hsl(var(--primary)/0.5)); transform: scale(1.1); }
-    }
     .animation-wrapper-1 .icon1 { animation: neural-pulse 3s infinite ease-in-out; }
+    @keyframes neural-pulse { 0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--primary)/0.5)) drop-shadow(0 0 10px hsl(var(--primary)/0.3)); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px hsl(var(--primary)/0.8)) drop-shadow(0 0 25px hsl(var(--primary)/0.5)); transform: scale(1.1); } }
     
     .animation-wrapper-2 { position: relative; }
-    .animation-wrapper-2::before, .animation-wrapper-2::after {
-      content: ''; position: absolute; border-radius: 50%; border: 1px solid hsl(var(--primary)/0.5); animation: quantum-orbit 4s infinite linear;
-    }
+    .animation-wrapper-2::before, .animation-wrapper-2::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid hsl(var(--primary)/0.5); animation: quantum-orbit 4s infinite linear; }
     .animation-wrapper-2::before { width: 100%; height: 100%; }
     .animation-wrapper-2::after { width: 80%; height: 80%; top: 10%; left: 10%; animation-delay: -2s; animation-direction: reverse; }
     @keyframes quantum-orbit { 0% { transform: rotate3d(1, 1, 1, 0deg) scale(0.8); opacity: 0.5; } 100% { transform: rotate3d(1, 1, 1, 360deg) scale(1.2); opacity: 0; } }
     .animation-wrapper-2 .icon2 { animation: quantum-icon-pulse 2s infinite ease-in-out; }
     @keyframes quantum-icon-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
     
-    .animation-wrapper-3 { position: relative; }
     .animation-wrapper-3 .icon3 { animation: particle-implode 5s infinite ease-in-out; }
     @keyframes particle-implode { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 40% { transform: scale(0.1) rotate(180deg); opacity: 0; } 60% { transform: scale(0.1) rotate(-180deg); opacity: 0; } }
 
@@ -484,11 +478,7 @@ body {
     @keyframes eye-scan { 0%, 20%, 80%, 100% { transform: scaleY(1); } 10%, 90% { transform: scaleY(0.1); } 40%, 60% { filter: drop-shadow(0 0 10px #0f0); } 50% { filter: drop-shadow(0 0 20px #0f0); } }
 
     .animation-wrapper-5 { position: relative; }
-    .animation-wrapper-5::before {
-        content: ''; position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; border-radius: 50%;
-        background: radial-gradient(circle, transparent 60%, hsl(var(--primary)) 100%);
-        animation: shield-deploy 4s infinite ease-out;
-    }
+    .animation-wrapper-5::before { content: ''; position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; border-radius: 50%; background: radial-gradient(circle, transparent 60%, hsl(var(--primary)) 100%); animation: shield-deploy 4s infinite ease-out; }
     @keyframes shield-deploy { 0%, 100% { transform: scale(0); opacity: 0; } 50% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(0.95); opacity: 0.3; } }
 
     .animation-wrapper-6 .icon6-wrapper { animation: digital-heartbeat 2s infinite ease-in-out; }
@@ -503,48 +493,27 @@ body {
     @keyframes dna-scanline { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
 
     .animation-wrapper-8 { position: relative; overflow: hidden; }
-    .animation-wrapper-8 .icon-8-wrapper::before {
-        content: ''; position: absolute; inset: 0;
-        background: radial-gradient(circle at center, hsla(84, 76%, 60%, 0.4) 0%, transparent 60%);
-        animation: gas-particles 6s infinite ease-in-out;
-    }
-    @keyframes gas-particles {
-        0%, 100% { transform: scale(0.5) rotate(0deg); opacity: 0; }
-        50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-    }
+    .animation-wrapper-8 .icon-8-wrapper::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, hsla(84, 76%, 60%, 0.4) 0%, transparent 60%); animation: gas-particles 6s infinite ease-in-out; }
+    @keyframes gas-particles { 0%, 100% { transform: scale(0.5) rotate(0deg); opacity: 0; } 50% { transform: scale(1.5) rotate(180deg); opacity: 1; } }
     .animation-wrapper-8 .icon8 { animation: gas-icon-fade 6s infinite ease-in-out; }
-    @keyframes gas-icon-fade {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.9); }
-    }
+    @keyframes gas-icon-fade { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.9); } }
 
     .animation-wrapper-9 { position: relative; }
-    .animation-wrapper-9::before {
-      content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%;
-      border: 2px dashed hsl(175, 75%, 50%); border-radius: 50%;
-      animation: circuit-spin 10s infinite linear;
-    }
+    .animation-wrapper-9::before { content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%; border: 2px dashed currentColor; border-radius: 50%; animation: circuit-spin 10s infinite linear; }
     @keyframes circuit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .animation-wrapper-9 .icon9 { animation: circuit-pulse 2s infinite alternate; }
-    @keyframes circuit-pulse { from { filter: drop-shadow(0 0 2px hsl(175, 75%, 50%)); } to { filter: drop-shadow(0 0 10px hsl(175, 75%, 50%)) drop-shadow(0 0 20px hsl(175, 75%, 50%)); } }
+    @keyframes circuit-pulse { from { filter: drop-shadow(0 0 2px currentColor); } to { filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor); } }
 
     .animation-wrapper-10 { position: relative; }
     .animation-wrapper-10 .icon10 { animation: wave-expand 3s infinite ease-out; }
     @keyframes wave-expand { 0%, 60%, 100% { transform: scale(1); } 30% { transform: scale(1.2); } }
-    .animation-wrapper-10::after {
-      content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid hsl(262, 52%, 60%);
-      animation: wave-ring 3s infinite ease-out;
-    }
+    .animation-wrapper-10::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid hsl(262, 52%, 60%); animation: wave-ring 3s infinite ease-out; }
     @keyframes wave-ring { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
     
     .animation-wrapper-11 { position: relative; }
     .animation-wrapper-11 .icon11 { animation: data-scan-focus 4s infinite cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes data-scan-focus { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; transform: scale(1.05); } }
-    .animation-wrapper-11::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%;
-      background: linear-gradient(to bottom, transparent 0%, hsl(197, 71%, 50%) 50%, transparent 100%);
-      animation: data-scan-line 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    .animation-wrapper-11::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%; background: linear-gradient(to bottom, transparent 0%, hsl(197, 71%, 50%) 50%, transparent 100%); animation: data-scan-line 4s infinite cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes data-scan-line { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
 
     .animation-wrapper-12 { position: relative; animation: vortex-spin 8s infinite linear; }
@@ -552,4 +521,3 @@ body {
     .animation-wrapper-12 .icon12 { animation: vortex-pulse 2s infinite ease-in-out alternate; }
     @keyframes vortex-pulse { from { transform: scale(1); filter: drop-shadow(0 0 5px hsl(278, 81%, 64%)); } to { transform: scale(0.8); filter: drop-shadow(0 0 20px hsl(278, 81%, 64%)); } }
 }
-

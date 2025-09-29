@@ -109,7 +109,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
   return (
     <>
-      <main className="flex-1 flex flex-col h-screen bg-background relative">
+    <main className="flex-1 flex flex-col h-screen bg-background relative">
         <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
              <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
@@ -210,8 +210,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     <circle className="node-pulse" style={{animationDelay: '0.5s'}} cx="180" cy="30" r="2" fill="url(#threat-glow)" />
                                 </svg>
                             </div>
-                            <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug style={{color: '#F00000'}} className="size-8 animate-ping" />
+                            <div className="relative z-10 flex items-center justify-center size-8 shrink-0 animation-wrapper-9" style={{color: '#F00000'}}>
+                                <Bug className="icon9 size-8"/>
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -231,9 +231,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
                                 </svg>
                             </div>
-                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
-                                <CheckCircle className="relative size-8" style={{color: '#00CB07'}} />
+                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0 animation-wrapper-9" style={{color: '#00CB07'}}>
+                                <CheckCircle className="icon9 relative size-8" />
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold" style={{color: '#00CB07'}}>Correo Verificado y Seguro</h3>
@@ -270,16 +269,19 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 )}
             </div>
         </ScrollArea>
-      </main>
-      <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-      <TagEmailModal 
-        isOpen={isTagModalOpen} 
-        onOpenChange={setIsTagModalOpen} 
-        onSave={setAppliedTag}
-        initialTag={appliedTag}
-        senderEmail={senderEmail}
-      />
-      <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+    </main>
+
+    {/* Modals */}
+    <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <TagEmailModal 
+      isOpen={isTagModalOpen} 
+      onOpenChange={setIsTagModalOpen} 
+      onSave={setAppliedTag}
+      initialTag={appliedTag}
+      senderEmail={senderEmail}
+    />
+
+    <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Confirmas la eliminación?</AlertDialogTitle>
@@ -294,8 +296,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={isDeleteTagConfirmOpen} onOpenChange={setIsDeleteTagConfirmOpen}>
+    </AlertDialog>
+
+    <AlertDialog open={isDeleteTagConfirmOpen} onOpenChange={setIsDeleteTagConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Eliminar Etiqueta?</AlertDialogTitle>
@@ -310,117 +313,118 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-      <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
-        <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
-            <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-            <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
-            <DialogHeader className="p-6 pb-0 z-10">
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <ShieldAlert className="text-amber-400 size-8 animate-ping"/>
-                Reportar Correo como Spam
-              </DialogTitle>
+    </AlertDialog>
+    
+    <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
+      <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
+          <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+          <DialogHeader className="p-6 pb-0 z-10">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <ShieldAlert className="text-amber-400 size-8 animate-ping"/>
+              Reportar Correo como Spam
+            </DialogTitle>
              <DialogDescription className="text-amber-100/70 pt-2">
                 ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-             <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
-                    <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#E18700] to-[#FFAB00] rounded-l-lg" />
-                    <h3 className="text-base font-semibold text-[#E18700]">Reportar solo este correo</h3>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-                </button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative rounded-lg group">
-                 <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                 <button className="relative p-6 w-full h-full flex flex-col items-start text-left gap-2 bg-zinc-900 rounded-lg">
-                    <div className="absolute right-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#F00000] to-[#F07000] rounded-r-lg" />
-                    <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-                </button>
-              </motion.div>
+            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
+              <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
+                  <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
+                  <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
+              <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60">
+                <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
+              </Button>
+            </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
             <Button variant="outline" className="border-white dark:border-white text-white bg-transparent hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
-          <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
-              <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-              <DialogHeader className="z-10">
-                  <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
+
+
+    <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
+        <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
+            <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+            <DialogHeader className="z-10">
+                <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
                       Confirmar Visualización de Imágenes
-                  </DialogTitle>
-                  <DialogDescription className="text-amber-100/70 pt-2">
-                      Mostrar imágenes de este remitente podría revelar información a servidores externos.
-                  </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 z-10 text-amber-100/90 text-sm space-y-3">
-                  <p>Al cargar contenido externo (como imágenes), el remitente puede saber que abriste el correo y podría recopilar datos como:</p>
-                  <ul className="list-disc list-inside space-y-1 pl-2">
-                      <li>Tu dirección IP (ubicación aproximada)</li>
-                      <li>Tipo de dispositivo y cliente de correo que usas</li>
-                      <li>Si y cuándo abriste el correo</li>
-                  </ul>
-                  <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
-              </div>
-              <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="outline" className="border-white text-white hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
-                  <Button
-                      className="bg-amber-600 text-white hover:bg-[#FFAB00] hover:text-white"
-                      onClick={() => {
-                          setShowImages(true);
-                          setIsConfirmImagesModalOpen(false);
-                          toast({ title: 'Imágenes habilitadas', description: 'Se ha cargado el contenido externo para este correo.' });
-                      }}
-                  >
-                      <Check className="mr-2"/>Sí, mostrar imágenes
-                  </Button>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
-      <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
-          <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
-               <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-              <DialogHeader className="z-10">
-                  <DialogTitle className="flex items-center gap-3 text-2xl text-green-300">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="m13.5 10.5-.5-1.5-1-1.5-1 1.5-.5 1.5 1.5.5L12 12l.5.5-1.5.5z" fill="currentColor"/></svg>
-                      Activar Protección de Privacidad
-                  </DialogTitle>
-                  <DialogDescription className="text-green-100/70 pt-2">
-                      Habilita el bloqueo de imágenes y rastreadores para los correos de este remitente.
-                  </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 z-10 text-green-100/90 text-sm">
-                  <p>¿Deseas activar la función de privacidad para todos los correos futuros de <strong className="text-white">{email.from}</strong>? Esto bloqueará automáticamente la carga de imágenes y otros contenidos externos para proteger tu información.</p>
-              </div>
-               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <div className="flex-1">
-                      <Button variant="link" className="text-cyan-300" onClick={() => {
-                          setIsPrivacyModalOpen(false);
-                          // Future: open advanced settings modal
-                      }}>Configuración Avanzada</Button>
-                  </div>
-                  <div className="flex gap-2">
-                      <Button variant="ghost" className="hover:text-white" onClick={() => setIsPrivacyModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
-                      <Button
-                          className="bg-green-600 text-white hover:bg-green-500"
-                          onClick={() => {
-                              setIsPrivacyFeatureEnabled(true);
-                              setIsPrivacyModalOpen(false);
-                              toast({ title: 'Privacidad Activada', description: `Se bloquearán las imágenes para ${email.from}.` });
-                          }}
-                      >
-                          <Check className="mr-2"/>Sí, activar
-                      </Button>
-                  </div>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
+                </DialogTitle>
+                <DialogDescription className="text-amber-100/70 pt-2">
+                    Mostrar imágenes de este remitente podría revelar información a servidores externos.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 z-10 text-amber-100/90 text-sm space-y-3">
+                <p>Al cargar contenido externo (como imágenes), el remitente puede saber que abriste el correo y podría recopilar datos como:</p>
+                <ul className="list-disc list-inside space-y-1 pl-2">
+                    <li>Tu dirección IP (ubicación aproximada)</li>
+                    <li>Tipo de dispositivo y cliente de correo que usas</li>
+                    <li>Si y cuándo abriste el correo</li>
+                </ul>
+                <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
+            </div>
+            <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+                <Button variant="ghost" className="hover:text-white border border-white hover:bg-[#F00000] hover:border-transparent" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                <Button
+                    className="bg-amber-600 text-white hover:bg-[#E18700]"
+                    onClick={() => {
+                        setShowImages(true);
+                        setIsConfirmImagesModalOpen(false);
+                        toast({ title: 'Imágenes habilitadas', description: 'Se ha cargado el contenido externo para este correo.' });
+                    }}
+                >
+                    <Check className="mr-2"/>Sí, mostrar imágenes
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
+        <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
+             <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+            <DialogHeader className="z-10">
+                <DialogTitle className="flex items-center gap-3 text-2xl text-green-300">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="m13.5 10.5-.5-1.5-1-1.5-1 1.5-.5 1.5 1.5.5L12 12l.5.5-1.5.5z" fill="currentColor"/></svg>
+                    Activar Protección de Privacidad
+                </DialogTitle>
+                <DialogDescription className="text-green-100/70 pt-2">
+                    Habilita el bloqueo de imágenes y rastreadores para los correos de este remitente.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 z-10 text-green-100/90 text-sm">
+                <p>¿Deseas activar la función de privacidad para todos los correos futuros de <strong className="text-white">{email.from}</strong>? Esto bloqueará automáticamente la carga de imágenes y otros contenidos externos para proteger tu información.</p>
+            </div>
+             <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+                <div className="flex-1">
+                    <Button variant="link" className="text-cyan-300" onClick={() => {
+                        setIsPrivacyModalOpen(false);
+                        // Future: open advanced settings modal
+                    }}>Configuración Avanzada</Button>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="ghost" className="hover:text-white" onClick={() => setIsPrivacyModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                    <Button
+                        className="bg-green-600 text-white hover:bg-green-500"
+                        onClick={() => {
+                            setIsPrivacyFeatureEnabled(true);
+                            setIsPrivacyModalOpen(false);
+                            toast({ title: 'Privacidad Activada', description: `Se bloquearán las imágenes para ${email.from}.` });
+                        }}
+                    >
+                        <Check className="mr-2"/>Sí, activar
+                    </Button>
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     </>
   );
 }
