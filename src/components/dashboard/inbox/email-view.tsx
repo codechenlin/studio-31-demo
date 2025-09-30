@@ -110,166 +110,166 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
       <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
-             <div className="flex items-center justify-center gap-2">
-                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
-                     <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
-                </div>
-                <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
-                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm hover:bg-yellow-500/20")} onClick={() => onToggleStar(email.id)}><Star className={cn("transition-all", email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-cyan-500 hover:text-white")} onClick={() => setIsTagModalOpen(true)}><Tag/></Button>
-                    <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button 
-                        className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
-                        onClick={() => setIsAntivirusModalOpen(true)}
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </Button>
-                    <Button 
-                      className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
-                      onClick={() => setIsDeleting(true)}
-                    >
-                      <Trash2/>
-                    </Button>
-                </div>
-                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
-                <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
+          <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
+              <div className="flex items-center justify-center gap-2">
+                  <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
+                      <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
+                  </div>
+                  <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
+                  <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                      <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm hover:bg-yellow-500/20")} onClick={() => onToggleStar(email.id)}><Star className={cn("transition-all", email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
+                      <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-cyan-500 hover:text-white")} onClick={() => setIsTagModalOpen(true)}><Tag/></Button>
+                      <Button className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                      <Button 
+                          className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
+                          onClick={() => setIsAntivirusModalOpen(true)}
+                      >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </Button>
+                      <Button 
+                        className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
+                        onClick={() => setIsDeleting(true)}
+                      >
+                        <Trash2/>
+                      </Button>
+                  </div>
+                  <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
+                  <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                      <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
+                          <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
+                            <Languages className="size-5 text-primary" />
+                          </div>
+                      </button>
+                      <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                          <Languages className="size-5 text-primary" />
-                        </div>
-                    </button>
-                    <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
-                       <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
-                        </div>
-                    </button>
-                </div>
-             </div>
-        </header>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
+                          </div>
+                      </button>
+                  </div>
+              </div>
+          </header>
 
-        <ScrollArea className="flex-1">
-            <div className="p-4 md:p-8 max-w-4xl mx-auto">
-                 <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
+          <ScrollArea className="flex-1">
+              <div className="p-4 md:p-8 max-w-4xl mx-auto">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
 
-                <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <Avatar className="size-20 border-4 border-primary/20">
-                           <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
-                            {senderInitial}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="text-sm">
-                            <p className="font-semibold text-foreground text-base">{email.from}</p>
-                            <p className="text-muted-foreground text-sm">{`<${senderEmail}>`}</p>
-                            <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
-                            <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
-                        </div>
-                    </div>
-                     {appliedTag && (
-                        <div className="text-right group relative">
-                            <button
-                                onClick={() => setIsTagModalOpen(true)}
-                                className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer"
-                                style={{
-                                backgroundColor: appliedTag.color,
-                                color: '#ffffff',
-                                border: `1px solid rgba(255, 255, 255, 0.5)`
-                                }}
-                            >
-                                <Tag className="size-4" />
-                                {appliedTag.name}
-                            </button>
-                            <Button
-                                size="icon"
-                                variant="destructive"
-                                className="absolute -top-2 -right-2 size-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsDeleteTagConfirmOpen(true);
-                                }}
-                            >
-                                <X className="size-4"/>
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                  <div className="flex items-start justify-between mb-8">
+                      <div className="flex items-center gap-4">
+                          <Avatar className="size-20 border-4 border-primary/20">
+                            <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                              {senderInitial}
+                              </AvatarFallback>
+                          </Avatar>
+                          <div className="text-sm">
+                              <p className="font-semibold text-foreground text-base">{email.from}</p>
+                              <p className="text-muted-foreground text-sm">{`<${senderEmail}>`}</p>
+                              <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
+                              <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
+                          </div>
+                      </div>
+                      {appliedTag && (
+                          <div className="text-right group relative">
+                              <button
+                                  onClick={() => setIsTagModalOpen(true)}
+                                  className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer"
+                                  style={{
+                                  backgroundColor: appliedTag.color,
+                                  color: '#ffffff',
+                                  border: `1px solid rgba(255, 255, 255, 0.5)`
+                                  }}
+                              >
+                                  <Tag className="size-4" />
+                                  {appliedTag.name}
+                              </button>
+                              <Button
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute -top-2 -right-2 size-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      setIsDeleteTagConfirmOpen(true);
+                                  }}
+                              >
+                                  <X className="size-4"/>
+                              </Button>
+                          </div>
+                      )}
+                  </div>
 
-                <div className="mb-6 relative overflow-hidden rounded-lg">
-                    {hasThreat ? (
-                         <div className="p-4 bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4 relative">
-                            <div className="absolute inset-0 z-0 transform -scale-x-100">
-                                <svg width="100%" height="100%" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="threat-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F00000" /><stop offset="100%" stopColor="#ff0048" /></linearGradient>
-                                    </defs>
-                                    <path className="energy-path" stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 20 L200 20 L220 40 L400 40" />
-                                    <path className="energy-path" style={{animationDelay: '1s'}} stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 60 L150 60 L180 30 L300 30" />
-                                    <circle className="node-pulse" cx="200" cy="20" r="2" fill="url(#threat-glow)" />
-                                    <circle className="node-pulse" style={{animationDelay: '0.5s'}} cx="180" cy="30" r="2" fill="url(#threat-glow)" />
-                                </svg>
-                            </div>
-                            <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug className="text-[#F00000] size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
-                            </div>
-                            <div className="relative z-10">
-                                <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
-                                <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
-                            </div>
-                         </div>
-                    ) : (
-                        <div className="p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4 relative">
-                            <div className="absolute inset-0 z-0 transform -scale-x-100">
-                                <svg width="100%" height="100%" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="safe-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00CB07" /><stop offset="100%" stopColor="#00F508" /></linearGradient>
-                                    </defs>
-                                    <path className="energy-path" stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
-                                    <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 10 L120 10 L140 30 L250 30" />
-                                    <circle className="node-pulse" cx="180" cy="40" r="2" fill="url(#safe-glow)" />
-                                    <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
-                                </svg>
-                            </div>
-                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
-                                <CheckCircle className="relative size-8 text-green-400" />
-                            </div>
-                            <div className="relative z-10">
-                                <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
-                                <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                  <div className="mb-6 relative overflow-hidden rounded-lg">
+                      {hasThreat ? (
+                          <div className="p-4 bg-gradient-to-r from-red-500/20 to-rose-500/20 border border-red-500/30 flex items-center gap-4 relative">
+                              <div className="absolute inset-0 z-0 transform -scale-x-100">
+                                  <svg width="100%" height="100%" preserveAspectRatio="none">
+                                      <defs>
+                                          <linearGradient id="threat-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#F00000" /><stop offset="100%" stopColor="#ff0048" /></linearGradient>
+                                      </defs>
+                                      <path className="energy-path" stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 20 L200 20 L220 40 L400 40" />
+                                      <path className="energy-path" style={{animationDelay: '1s'}} stroke="url(#threat-glow)" strokeWidth="0.5" fill="none" d="M0 60 L150 60 L180 30 L300 30" />
+                                      <circle className="node-pulse" cx="200" cy="20" r="2" fill="url(#threat-glow)" />
+                                      <circle className="node-pulse" style={{animationDelay: '0.5s'}} cx="180" cy="30" r="2" fill="url(#threat-glow)" />
+                                  </svg>
+                              </div>
+                              <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
+                                  <Bug className="text-[#F00000] size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                              </div>
+                              <div className="relative z-10">
+                                  <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
+                                  <p className="text-sm text-red-200/90">El Escudo de IA neutralizó contenido malicioso en este correo para protegerte.</p>
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center gap-4 relative">
+                              <div className="absolute inset-0 z-0 transform -scale-x-100">
+                                  <svg width="100%" height="100%" preserveAspectRatio="none">
+                                      <defs>
+                                          <linearGradient id="safe-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00CB07" /><stop offset="100%" stopColor="#00F508" /></linearGradient>
+                                      </defs>
+                                      <path className="energy-path" stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
+                                      <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 10 L120 10 L140 30 L250 30" />
+                                      <circle className="node-pulse" cx="180" cy="40" r="2" fill="url(#safe-glow)" />
+                                      <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
+                                  </svg>
+                              </div>
+                              <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
+                                  <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
+                                  <CheckCircle className="relative size-8 text-green-400" />
+                              </div>
+                              <div className="relative z-10">
+                                  <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
+                                  <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
+                              </div>
+                          </div>
+                      )}
+                  </div>
 
-                <div
-                    className="prose dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-                />
-                 {attachments.length > 0 && (
-                    <>
-                        <Separator className="my-6" />
-                        <div className="space-y-4">
-                             <h3 className="font-semibold text-lg flex items-center gap-2">
-                                <File className="text-primary"/>
-                                Archivos Adjuntos ({attachments.length})
-                            </h3>
-                            <div className="p-4 border rounded-lg bg-muted/30 space-y-2">
-                                {attachments.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-black/10">
-                                        <div>
-                                            <p className="font-medium text-sm">{file.name}</p>
-                                            <p className="text-xs text-muted-foreground">{file.type} - {file.size}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </ScrollArea>
+                  <div
+                      className="prose dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{ __html: sanitizedBody }}
+                  />
+                  {attachments.length > 0 && (
+                      <>
+                          <Separator className="my-6" />
+                          <div className="space-y-4">
+                              <h3 className="font-semibold text-lg flex items-center gap-2">
+                                  <File className="text-primary"/>
+                                  Archivos Adjuntos ({attachments.length})
+                              </h3>
+                              <div className="p-4 border rounded-lg bg-muted/30 space-y-2">
+                                  {attachments.map((file, index) => (
+                                      <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-black/10">
+                                          <div>
+                                              <p className="font-medium text-sm">{file.name}</p>
+                                              <p className="text-xs text-muted-foreground">{file.type} - {file.size}</p>
+                                          </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      </>
+                  )}
+              </div>
+          </ScrollArea>
       </main>
 
       {/* Modals */}
@@ -322,10 +322,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
             <DialogHeader className="p-6 pb-0 z-10">
               <DialogTitle className="flex items-center gap-3 text-xl">
-                <ShieldAlert className="text-amber-400 size-8 drop-shadow-[0_0_8px_hsl(var(--chart-3))]"/>
+                <ShieldAlert className="text-amber-400 size-8 animate-[icon-pulse_2s_infinite] drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
                 Reportar Correo como Spam
               </DialogTitle>
-               <DialogDescription className="text-amber-100/70 pt-2">
+              <DialogDescription className="text-amber-100/70 pt-2">
                   ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
               </DialogDescription>
             </DialogHeader>
@@ -372,7 +372,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="hover:text-white" onClick={()={() => setIsConfirmImagesModalOpen(false)}}><X className="mr-2"/>Cancelar</Button>
+                  <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                   <Button
                       className="bg-amber-600 text-white hover:bg-amber-500"
                       onClick={() => {
@@ -389,7 +389,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
       <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
           <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
-               <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+              <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
               <DialogHeader className="z-10">
                   <DialogTitle className="flex items-center gap-3 text-2xl text-green-300">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="m13.5 10.5-.5-1.5-1-1.5-1 1.5-.5 1.5 1.5.5L12 12l.5.5-1.5.5z" fill="currentColor"/></svg>
@@ -402,7 +402,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
               <div className="py-4 z-10 text-green-100/90 text-sm">
                   <p>¿Deseas activar la función de privacidad para todos los correos futuros de <strong className="text-white">{email.from}</strong>? Esto bloqueará automáticamente la carga de imágenes y otros contenidos externos para proteger tu información.</p>
               </div>
-               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+              <DialogFooter className="z-10 pt-4 flex justify-between w-full">
                   <div className="flex-1">
                       <Button variant="link" className="text-cyan-300" onClick={() => {
                           setIsPrivacyModalOpen(false);
@@ -428,3 +428,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+    
