@@ -323,9 +323,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
           <DialogHeader className="p-6 pb-0 z-10">
             <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="relative size-8 flex items-center justify-center">
-                  <div className="absolute w-full h-full border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '4s' }}/>
-                  <ShieldAlert className="relative text-amber-400 size-6" />
+              <div className="relative w-8 h-8">
+                 <div className="absolute inset-0 border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '5s' }}/>
+                 <div className="absolute inset-1 border border-dashed border-amber-400/50 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
+                 <ShieldAlert className="absolute inset-0 m-auto text-amber-400 size-5" />
               </div>
               Reportar Correo como Spam
             </DialogTitle>
@@ -336,18 +337,18 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             <motion.div 
                 className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_10px_#E1870050,0_0_10px_#FFAB0050]"
-                whileHover={{ scale: 1.03 }}
+                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#E18700] to-[#FFAB00]" style={{boxShadow: '0 0 15px #FFAB00'}}/>
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
                     <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
                 </div>
-                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje de <strong>{email.from}</strong> a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
             </motion.div>
             <motion.div 
                 className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_10px_#F0000050,0_0_10px_#F0700050]"
-                whileHover={{ scale: 1.03 }}
+                whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#F00000] to-[#F07000]" style={{boxShadow: '0 0 15px #F07000'}}/>
                 <div className="flex items-center gap-3 mb-2">
@@ -358,7 +359,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button variant="outline" className="border-white text-white hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -442,5 +443,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-    
