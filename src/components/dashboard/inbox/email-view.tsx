@@ -211,7 +211,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                   </svg>
                               </div>
                               <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                  <Bug className="text-[#F00000] size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                  <div className="absolute w-full h-full border-2 border-dashed border-red-500 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+                                  <Bug className="text-[#F00000] size-6" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
                               </div>
                               <div className="relative z-10">
                                   <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -232,8 +233,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                   </svg>
                               </div>
                               <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                  <div className="absolute inset-1 animate-ping rounded-full bg-green-400 opacity-75"/>
-                                  <CheckCircle className="relative size-8 text-green-400" />
+                                  <div className="absolute w-full h-full border-2 border-dashed border-green-400 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+                                  <CheckCircle className="relative size-6 text-green-400" />
                               </div>
                               <div className="relative z-10">
                                   <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
@@ -431,3 +432,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+    
