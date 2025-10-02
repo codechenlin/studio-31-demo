@@ -212,7 +212,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                               </div>
                               <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
                                   <div className="absolute w-full h-full border-2 border-dashed border-red-500 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
-                                  <Bug className="text-[#F00000] size-6" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                  <Bug className="relative text-[#F00000] size-6" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
                               </div>
                               <div className="relative z-10">
                                   <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -325,7 +325,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <DialogTitle className="flex items-center gap-3 text-xl">
               <div className="relative size-8 flex items-center justify-center">
                   <div className="absolute w-full h-full border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '4s' }}/>
-                  <ShieldAlert className="text-amber-400 size-6" />
+                  <ShieldAlert className="relative text-amber-400 size-6" />
               </div>
               Reportar Correo como Spam
             </DialogTitle>
@@ -335,26 +335,22 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             {/* Card 1: Report this email */}
-            <div className="group relative p-0.5 rounded-xl bg-transparent overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#E18700]/50 to-transparent transition-all duration-500 ease-in-out transform -translate-x-full group-hover:translate-x-full w-1/2 h-full opacity-50 blur-xl" />
-                <button className="relative w-full h-full p-6 bg-zinc-900/80 rounded-lg border border-amber-400/30 text-left transition-all duration-300">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
-                        <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-                </button>
+            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#E18700] to-[#FFAB00]" style={{boxShadow: '0 0 15px #FFAB00'}}/>
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
+                    <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
             </div>
             {/* Card 2: Block all */}
-            <div className="group relative p-0.5 rounded-xl bg-transparent overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F00000]/50 to-transparent transition-all duration-500 ease-in-out transform translate-x-full group-hover:-translate-x-full w-1/2 h-full opacity-50 blur-xl" />
-                <button className="relative w-full h-full p-6 bg-zinc-900/80 rounded-lg border border-red-500/30 text-left transition-all duration-300">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20"><Server className="size-5 text-red-500"/></div>
-                        <h3 className="text-base font-semibold text-red-400">Bloquear y reportar todo</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-                </button>
+            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30">
+                <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#F00000] to-[#F07000]" style={{boxShadow: '0 0 15px #F07000'}}/>
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20"><Server className="size-5 text-red-500"/></div>
+                    <h3 className="text-base font-semibold text-red-400">Bloquear y reportar todo</h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
             </div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
