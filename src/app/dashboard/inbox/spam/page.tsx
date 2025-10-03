@@ -96,7 +96,7 @@ export default function SpamPage() {
                   Bandeja de Spam
                 </h1>
                 <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailWarning className="text-amber-500/80 size-7" />
+                    <MailWarning className="text-amber-500/80 size-7 animate-ping" />
                 </div>
               </div>
               <p className="text-muted-foreground mt-1">
@@ -218,5 +218,3 @@ export default function SpamPage() {
     </>
   );
 }
-
-    

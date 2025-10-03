@@ -19,9 +19,9 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
     const shadowColor = gradientColors ? gradientColors[1] : 'hsl(var(--primary))';
 
     return (
-        <div className="w-64 h-24 rounded-lg bg-card/80 border border-border/50 backdrop-blur-sm p-3 flex items-center gap-3">
+        <div className="w-64 h-24 rounded-lg bg-card/80 border border-border/50 backdrop-blur-sm p-4 flex items-center gap-4">
             <div className="relative size-20">
-                <svg className="w-full h-full" viewBox="0 0 100 100">
+                <svg className="w-full h-full" viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
                      {gradientColors && (
                         <defs>
                             <linearGradient id="storageGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -73,5 +73,3 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
         </div>
     );
 }
-
-    

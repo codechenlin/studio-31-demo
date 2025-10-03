@@ -36,9 +36,10 @@ interface EmailListItemProps {
   onToggleStar: (emailId: string) => void;
   unreadIndicatorStyle?: React.CSSProperties;
   unreadBgStyle?: React.CSSProperties;
+  unreadDateColor?: string;
 }
 
-export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, unreadIndicatorStyle, unreadBgStyle }: EmailListItemProps) {
+export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, unreadIndicatorStyle, unreadBgStyle, unreadDateColor }: EmailListItemProps) {
   const [formattedDate, setFormattedDate] = React.useState('');
 
   React.useEffect(() => {
@@ -125,7 +126,10 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, 
           )}
         </div>
 
-          <p className={cn("text-xs w-16 text-right shrink-0", !email.read ? "text-primary font-bold" : "text-muted-foreground")}>
+          <p 
+            className={cn("text-xs w-16 text-right shrink-0", !email.read ? "font-bold" : "text-muted-foreground")}
+            style={!email.read ? { color: unreadDateColor || 'hsl(var(--primary))' } : {}}
+          >
             {formattedDate}
           </p>
       </div>

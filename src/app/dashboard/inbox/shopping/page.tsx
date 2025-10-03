@@ -88,12 +88,10 @@ export default function ShoppingPage() {
         <header className="mb-8 flex justify-between items-start">
           <div>
             <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#21F700] flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#21F700]">
                   Buzón de Compras
                 </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <ShoppingCart className="text-green-500/80 size-7" />
-                </div>
+                <ShoppingCart className="text-green-500/80 size-8" />
             </div>
             <p className="text-muted-foreground mt-1">
               Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
@@ -213,6 +211,7 @@ export default function ShoppingPage() {
                   isLast={index === displayedEmails.length - 1} 
                   unreadIndicatorStyle={{background: 'linear-gradient(to bottom, #00EF10, #21F700)'}}
                   unreadBgStyle={{background: 'linear-gradient(to right, rgba(0, 239, 16, 0.1), transparent)'}}
+                  unreadDateColor="#00CB07"
                 />
               </motion.div>
             ))}
