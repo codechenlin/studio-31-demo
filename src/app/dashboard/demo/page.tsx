@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -251,8 +251,8 @@ export default function DemoPage() {
             </div>
              <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                 <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32 }} className="text-red-500">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute' }}>
+                    <div className="text-red-500">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                            <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -262,17 +262,28 @@ export default function DemoPage() {
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
-                   <div style={{ position: 'relative', width: 32, height: 32, color: '#3b82f6' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <Gift style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
+                   <div className="text-blue-500">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M21 15a2 2 0 0 1-2 2H9.5a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2H17l4 4v3.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                            <circle cx="12.5" cy="13.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                        </svg>
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
-                   <div style={{ position: 'relative', width: 32, height: 32, color: '#f97316' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <Star style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
+                   <div className="text-green-500">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="16" cy="18" r="1" stroke="currentColor" strokeWidth="2"/>
+                            <circle cx="20" cy="18" r="1" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M16 18h-3a3 3 0 0 0-3 3v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="m19 23-2-2 2-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 18H8.5a1.5 1.5 0 0 1-1.5-1.5v-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
@@ -286,4 +297,5 @@ export default function DemoPage() {
     
 
     
+
 
