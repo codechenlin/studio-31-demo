@@ -261,25 +261,18 @@ export default function DemoPage() {
                     <span className="font-mono text-xs">1</span>
                 </div>
 
-                 <div className="flex flex-col items-center gap-2">
-                   <div style={{ position: 'relative', width: 32, height: 32 }} className="text-green-500">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute' }}>
-                           <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="M16 22.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="M17 19.5v-2l-1 1-1-1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                <div className="flex flex-col items-center gap-2">
+                   <div style={{ position: 'relative', width: 32, height: 32, color: '#3b82f6' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <Gift style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
-                   <div style={{ position: 'relative', width: 32, height: 32 }} className="text-blue-500">
-                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute' }}>
-                           <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M20.59 13.41l-7.17 7.17a1 1 0 0 1-1.41 0l-7.17-7.17a1 1 0 0 1 0-1.41l7.17-7.17a1 1 0 0 1 1.41 0l7.17 7.17a1 1 0 0 1 0 1.41z" transform="scale(0.5) translate(20, 20)" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                   <div style={{ position: 'relative', width: 32, height: 32, color: '#f97316' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <Star style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
@@ -293,3 +286,4 @@ export default function DemoPage() {
     
 
     
+
