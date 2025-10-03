@@ -86,7 +86,7 @@ export default function ShoppingPage() {
 
       <div className="relative z-10">
         <header className="mb-8 flex justify-between items-start">
-          <div>
+          <div className="flex-1">
             <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#21F700]">
                   Buzón de Compras

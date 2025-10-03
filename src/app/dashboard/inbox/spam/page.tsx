@@ -89,15 +89,12 @@ export default function SpamPage() {
 
       <div className="relative z-10">
         <header className="mb-8 flex justify-between items-start">
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-3">
                   <MailWarning className="size-8"/>
                   Bandeja de Spam
                 </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailWarning className="text-amber-500/80 size-7 animate-ping" />
-                </div>
               </div>
               <p className="text-muted-foreground mt-1">
                 Revisa los correos clasificados como no deseados por nuestro sistema de IA.
