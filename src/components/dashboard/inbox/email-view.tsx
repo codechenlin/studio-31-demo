@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,12 +28,13 @@ import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { AntivirusStatusModal } from './antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { TagEmailModal, type AppliedTag } from './tag-email-modal';
+import { BimiVmcStatusModal } from './bimi-vmc-status-modal';
 
 
 interface EmailViewProps {
@@ -52,8 +53,18 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isPrivacyFeatureEnabled, setIsPrivacyFeatureEnabled] = useState(true);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [isBimiModalOpen, setIsBimiModalOpen] = useState(false);
   const [appliedTag, setAppliedTag] = useState<AppliedTag | null>(null);
   const [isDeleteTagConfirmOpen, setIsDeleteTagConfirmOpen] = useState(false);
+  
+  useEffect(() => {
+    if (email?.tag) {
+        setAppliedTag(email.tag);
+    } else {
+        setAppliedTag(null);
+    }
+  }, [email]);
+
 
   if (!email) {
     return (
@@ -155,10 +166,11 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
                   <div className="flex items-start justify-between mb-8">
                       <div className="flex items-center gap-4">
-                          <Avatar className="size-20 border-4 border-primary/20">
+                          <Avatar className="size-20 border-4 border-primary/20 cursor-pointer transition-all hover:scale-110 hover:border-primary" onClick={() => setIsBimiModalOpen(true)}>
+                            <AvatarImage src={email.avatarUrl} alt={email.from}/>
                             <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
                               {senderInitial}
-                              </AvatarFallback>
+                            </AvatarFallback>
                           </Avatar>
                           <div className="text-sm">
                               <p className="font-semibold text-foreground text-base">{email.from}</p>
@@ -275,6 +287,12 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
       {/* Modals */}
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+      <BimiVmcStatusModal 
+        isOpen={isBimiModalOpen}
+        onOpenChange={setIsBimiModalOpen}
+        email={email}
+        senderEmail={senderEmail}
+      />
       <TagEmailModal 
         isOpen={isTagModalOpen} 
         onOpenChange={setIsTagModalOpen} 

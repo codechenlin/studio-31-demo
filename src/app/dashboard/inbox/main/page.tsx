@@ -28,6 +28,9 @@ const initialEmails: Email[] = [
       read: false,
       starred: true,
       tag: { name: 'Importante', color: '#ef4444' },
+      bimi: true,
+      vmc: true,
+      avatarUrl: "https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
     },
     {
       id: 'threat-1',
@@ -51,6 +54,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 20),
       read: false,
       starred: false,
+      bimi: false,
+      vmc: false
     },
     {
       id: 'attachment-2',
@@ -98,6 +103,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 2),
       read: false,
       starred: false,
+      bimi: true,
+      vmc: false
     },
     {
       id: '3',
@@ -108,6 +115,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 24),
       read: true,
       starred: true,
+      bimi: true,
+      vmc: true
     },
     {
       id: '4',
@@ -168,10 +177,11 @@ export default function MainInboxPage() {
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
         />
 
-        <div className="relative z-10 flex justify-between items-start mb-8">
+        <div className="relative z-10">
+          <header className="mb-8 flex justify-between items-start">
             <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center animation-wrapper-1 text-primary">
-                   <MailCheck className="size-12 icon1"/>
+                <div className="relative flex items-center justify-center animation-wrapper-1 text-primary w-12 h-12">
+                   <MailCheck className="size-8 icon1"/>
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
@@ -182,8 +192,10 @@ export default function MainInboxPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
-        </div>
+            <div className="p-4">
+              <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
+            </div>
+          </header>
 
            <Card className={cn(
             "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
@@ -295,6 +307,7 @@ export default function MainInboxPage() {
               ))}
             </AnimatePresence>
           </motion.div>
+        </div>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />

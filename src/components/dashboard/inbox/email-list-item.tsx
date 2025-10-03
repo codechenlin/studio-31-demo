@@ -12,6 +12,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 export interface Email {
   id: string;
@@ -22,6 +24,9 @@ export interface Email {
   date: Date;
   read: boolean;
   starred: boolean;
+  avatarUrl?: string;
+  bimi?: boolean;
+  vmc?: boolean;
   tag?: {
     name: string;
     color: string;
@@ -41,6 +46,8 @@ interface EmailListItemProps {
 
 export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, unreadIndicatorStyle, unreadBgStyle, unreadDateColor }: EmailListItemProps) {
   const [formattedDate, setFormattedDate] = React.useState('');
+  
+  const senderInitial = email.from.charAt(0).toUpperCase();
 
   React.useEffect(() => {
     const formatDate = (date: Date) => {
@@ -81,8 +88,10 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, 
             className={cn("w-2 h-2 rounded-full", !email.read ? "" : "bg-transparent")} 
             style={!email.read ? unreadIndicatorStyle || { backgroundColor: 'hsl(var(--primary))' } : {}}
         />
-        {/* Placeholder for checkbox */}
-        <div className="w-4 h-4 rounded border-2 border-muted-foreground/50" />
+        <Avatar className="h-8 w-8">
+            <AvatarImage src={email.avatarUrl} alt={email.from}/>
+            <AvatarFallback className="text-sm">{senderInitial}</AvatarFallback>
+        </Avatar>
       </div>
       
       <div className="grid grid-cols-[150px,1fr] gap-4 truncate relative z-10">
