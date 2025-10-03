@@ -250,7 +250,7 @@ export default function DemoPage() {
                 </Card>
             </div>
              <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                 <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-2">
                     <div className="text-blue-500">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6.5 20.5L4 8.5H20L17.5 20.5H6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -263,7 +263,7 @@ export default function DemoPage() {
                 </div>
                 <div className="flex flex-col items-center gap-2">
                     <div className="text-green-500">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                            <path d="M20 7.5L18 21.5H6L4 7.5H20Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                            <path d="M15 7.5C15 5.5 13.5 3.5 12 3.5C10.5 3.5 9 5.5 9 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                            <circle cx="14" cy="14.5" r="1.5" fill="currentColor" />
@@ -272,14 +272,8 @@ export default function DemoPage() {
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
-                 <div className="flex flex-col items-center gap-2">
-                   <div className="text-purple-500">
-                        <Users />
-                    </div>
-                    <span className="font-mono text-xs">3</span>
-                </div>
                 <div className="flex flex-col items-center gap-2">
-                   <div className="text-red-500">
+                   <div className="text-purple-500">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M17 20C17 17.7909 15.2091 16 13 16C10.7909 16 9 17.7909 9 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             <path d="M13 16V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -287,9 +281,19 @@ export default function DemoPage() {
                             <path d="M5 20C5 18.3431 6.34315 17 8 17C9.65685 17 11 18.3431 11 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             <path d="M8 17V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             <circle cx="8" cy="11.5" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                        </svg>
+                    </div>
+                    <span className="font-mono text-xs">3</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                   <div className="text-red-500">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M20 17.5C20 16.1193 18.8807 15 17.5 15C16.1193 15 15 16.1193 15 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             <path d="M17.5 15V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             <circle cx="17.5" cy="11.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M13 20C13 17.7909 11.2091 16 9 16C6.79086 16 5 17.7909 5 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M9 16V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="9" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
                         </svg>
                     </div>
                     <span className="font-mono text-xs">4</span>
