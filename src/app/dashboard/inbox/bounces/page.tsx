@@ -98,7 +98,7 @@ export default function BouncesPage() {
                   Buzón de Rebotes
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
+                  Analiza los correos que no pudieron ser entregados y soluciona.
                 </p>
             </div>
         </div>
@@ -219,4 +219,3 @@ export default function BouncesPage() {
     </>
   );
 }
-
