@@ -49,6 +49,8 @@ import {
   MailWarning,
   MailCheck,
   FileWarning,
+  DollarSign,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +74,12 @@ const menuItems = [
     icon: Inbox,
     submenu: [
       { href: "/dashboard/inbox/main", label: "Principal", icon: MailCheck },
+      { href: "/dashboard/inbox/shopping", label: "Compras", icon: (props: any) => (
+        <div style={{ position: 'relative', width: props.width || 24, height: props.height || 24 }}>
+          <Mail {...props} style={{ position: 'absolute' }} />
+          <DollarSign {...props} style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
+        </div>
+      )},
       { href: "/dashboard/inbox/spam", label: "Spam", icon: MailWarning },
       { href: "/dashboard/inbox/bounces", label: "Rebotes", icon: (props: any) => (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

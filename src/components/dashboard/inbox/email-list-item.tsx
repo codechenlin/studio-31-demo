@@ -34,9 +34,11 @@ interface EmailListItemProps {
   isFirst: boolean;
   isLast: boolean;
   onToggleStar: (emailId: string) => void;
+  unreadIndicatorStyle?: React.CSSProperties;
+  unreadBgStyle?: React.CSSProperties;
 }
 
-export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }: EmailListItemProps) {
+export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar, unreadIndicatorStyle, unreadBgStyle }: EmailListItemProps) {
   const [formattedDate, setFormattedDate] = React.useState('');
 
   React.useEffect(() => {
@@ -58,23 +60,31 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
   return (
     <div
       className={cn(
-        "w-full text-left p-4 grid grid-cols-[auto,1fr,auto] items-center gap-4 transition-colors",
+        "w-full text-left p-4 grid grid-cols-[auto,1fr,auto] items-center gap-4 transition-colors relative",
         "hover:bg-primary/10 dark:hover:bg-primary/20",
         !isLast && "border-b border-border/10 dark:border-border/30",
         isFirst && "rounded-t-lg",
         isLast && "rounded-b-lg",
-        !email.read && "bg-primary/5 dark:bg-primary/10",
         "cursor-pointer"
       )}
       onClick={() => onSelect(email)}
     >
-      <div className="flex items-center gap-3">
-        <div className={cn("w-2 h-2 rounded-full", !email.read ? "bg-primary" : "bg-transparent")} />
+      {!email.read && (
+        <div 
+            className="absolute inset-0 pointer-events-none"
+            style={unreadBgStyle || { background: 'linear-gradient(to right, hsl(var(--primary) / 0.05), transparent)' }}
+        />
+      )}
+      <div className="flex items-center gap-3 relative z-10">
+        <div 
+            className={cn("w-2 h-2 rounded-full", !email.read ? "" : "bg-transparent")} 
+            style={!email.read ? unreadIndicatorStyle || { backgroundColor: 'hsl(var(--primary))' } : {}}
+        />
         {/* Placeholder for checkbox */}
         <div className="w-4 h-4 rounded border-2 border-muted-foreground/50" />
       </div>
       
-      <div className="grid grid-cols-[150px,1fr] gap-4 truncate">
+      <div className="grid grid-cols-[150px,1fr] gap-4 truncate relative z-10">
          <p className={cn("font-semibold truncate", !email.read && "text-foreground")}>{email.from}</p>
          <div className="flex items-baseline gap-2 truncate">
             <p className={cn("text-sm font-semibold truncate", !email.read && "text-foreground")}>{email.subject}</p>
@@ -82,11 +92,11 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
          </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative z-10">
          <Button
             variant="ghost"
             size="icon"
-            className="size-7 hover:bg-yellow-500/20 z-10"
+            className="size-7 hover:bg-yellow-500/20"
             onClick={(e) => {
               e.stopPropagation();
               onToggleStar(email.id);
@@ -102,7 +112,7 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7 z-10"
+                  className="size-7"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Tag className="size-4" style={{ color: email.tag.color }} />
