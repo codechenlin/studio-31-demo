@@ -52,6 +52,7 @@ import {
   Mail,
   Tag,
   User,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,12 +76,7 @@ const menuItems = [
     icon: Inbox,
     submenu: [
       { href: "/dashboard/inbox/main", label: "Principal", icon: MailCheck },
-      { href: "/dashboard/inbox/shopping", label: "Compras", icon: (props: any) => (
-        <div style={{ position: 'relative', width: props.width || 24, height: props.height || 24 }}>
-          <Mail {...props} style={{ position: 'absolute' }} />
-          <Tag {...props} style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
-        </div>
-      )},
+      { href: "/dashboard/inbox/shopping", label: "Compras", icon: ShoppingCart },
       { href: "/dashboard/inbox/spam", label: "Spam", icon: MailWarning },
       { href: "/dashboard/inbox/bounces", label: "Rebotes", icon: (props: any) => (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -334,7 +330,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings"><User className="mr-2 size-4" /><span>Mi Perfil</span></Link>
+                <Link href="/dashboard/settings"><UserIcon className="mr-2 size-4" /><span>Mi Perfil</span></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/login"><LogOut className="mr-2 size-4" /><span>Cerrar Sesión</span></Link>

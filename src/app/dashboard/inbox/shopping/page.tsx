@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail } from 'lucide-react';
+import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -89,12 +89,11 @@ export default function ShoppingPage() {
           <div>
             <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#21F700] flex items-center gap-3">
-                   <div style={{ position: 'relative', width: 32, height: 32, color: '#00CB07' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <DollarSign style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
-                    </div>
                   Buzón de Compras
                 </h1>
+                <div className="relative flex items-center justify-center size-8 ml-2">
+                    <ShoppingCart className="text-green-500/80 size-7" />
+                </div>
             </div>
             <p className="text-muted-foreground mt-1">
               Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
