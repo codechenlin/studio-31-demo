@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Handbag, Briefcase, Store } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -252,28 +252,37 @@ export default function DemoPage() {
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-500">
-                        <ShoppingBag size={32} />
+                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--destructive))' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <XCircle style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-green-500">
-                        <ShoppingBasket size={32} />
+                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--primary))' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <DollarSign style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '2px', borderRadius: '9999px' }}/>
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-purple-500">
-                        <Users size={32} />
+                    <div className="text-green-500">
+                        <Gift size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-red-500">
-                        <Users2 size={32} />
+                    <div className="text-purple-500">
+                        <Tags size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--accent))' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <Users style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '2px', borderRadius: '9999px' }}/>
+                    </div>
+                    <span className="font-mono text-xs">5</span>
                 </div>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
@@ -304,7 +313,7 @@ export default function DemoPage() {
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-500">
+                    <div className="text-orange-500">
                         <ShoppingBag size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
@@ -316,10 +325,28 @@ export default function DemoPage() {
                     <span className="font-mono text-xs">2</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-orange-500">
+                    <div className="text-sky-500">
                         <ShoppingCart size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-lime-500">
+                        <Package size={32}/>
+                    </div>
+                    <span className="font-mono text-xs">4</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-indigo-500">
+                        <UserPlus size={32} />
+                    </div>
+                    <span className="font-mono text-xs">5</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-fuchsia-500">
+                        <UserCog size={32} />
+                    </div>
+                    <span className="font-mono text-xs">6</span>
                 </div>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
@@ -343,7 +370,7 @@ export default function DemoPage() {
                 </div>
                 <div className="flex flex-col items-center gap-2">
                     <div className="text-indigo-500">
-                        <Handbag size={32} />
+                        <ShoppingBag size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
                 </div>
@@ -364,3 +391,4 @@ export default function DemoPage() {
         </>
     );
 }
+    
