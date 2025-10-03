@@ -168,24 +168,22 @@ export default function MainInboxPage() {
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
         />
 
-        <div className="relative z-10">
-          <header className="mb-8 flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
-                  <MailCheck className="size-8"/>
-                  Buzón Principal
-                </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailCheck className="text-primary/70 size-7" />
+        <div className="relative z-10 flex justify-between items-start mb-8">
+            <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center animation-wrapper-1 text-primary">
+                   <MailCheck className="size-16 icon1"/>
                 </div>
-              </div>
-              <p className="text-muted-foreground mt-1">
-                Aquí recibirás todos tus correos importantes y comunicaciones generales.
-              </p>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                      Buzón Principal
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                      Aquí recibirás todos tus correos importantes y comunicaciones generales.
+                    </p>
+                </div>
             </div>
             <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
-          </header>
+        </div>
 
            <Card className={cn(
             "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
@@ -297,7 +295,6 @@ export default function MainInboxPage() {
               ))}
             </AnimatePresence>
           </motion.div>
-        </div>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />

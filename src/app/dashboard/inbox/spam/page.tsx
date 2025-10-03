@@ -87,21 +87,22 @@ export default function SpamPage() {
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-orange-900/40 opacity-50"/>
 
 
-      <div className="relative z-10">
-        <header className="mb-8 flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-3">
-                  <MailWarning className="size-8"/>
+      <div className="relative z-10 flex justify-between items-start mb-8">
+        <div className="flex items-center gap-6">
+            <div className="relative flex items-center justify-center animation-wrapper-12 text-amber-500">
+                <MailWarning className="size-16 icon12"/>
+            </div>
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500">
                   Bandeja de Spam
                 </h1>
-              </div>
-              <p className="text-muted-foreground mt-1">
-                Revisa los correos clasificados como no deseados por nuestro sistema de IA.
-              </p>
+                <p className="text-muted-foreground mt-1">
+                  Revisa los correos clasificados como no deseados por nuestro sistema de IA.
+                </p>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} />
-        </header>
+        </div>
+        <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} />
+      </div>
 
         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10" />
@@ -207,7 +208,6 @@ export default function SpamPage() {
                 ))}
             </AnimatePresence>
         </motion.div>
-      </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
@@ -215,3 +215,5 @@ export default function SpamPage() {
     </>
   );
 }
+
+    

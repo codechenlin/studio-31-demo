@@ -86,18 +86,20 @@ export default function ShoppingPage() {
 
       <div className="relative z-10">
         <header className="mb-8 flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#21F700]">
-                  Buzón de Compras
-                </h1>
-                <ShoppingCart className="text-green-500/80 size-8" />
-            </div>
-            <p className="text-muted-foreground mt-1">
-              Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
-            </p>
+          <div className="flex items-center gap-6">
+              <div className="relative flex items-center justify-center animation-wrapper-8 text-[#A6EE00]">
+                  <ShoppingCart className="size-16 icon8"/>
+              </div>
+              <div>
+                  <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#A6EE00]">
+                    Buzón de Compras
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
+                  </p>
+              </div>
           </div>
-          <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#21F700']} />
+          <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#A6EE00']} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-2 relative overflow-hidden">

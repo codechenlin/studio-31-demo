@@ -41,6 +41,15 @@ const initialBouncedEmails: Email[] = [
     },
 ];
 
+const BounceIcon = (props: any) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+
 export default function BouncesPage() {
   const [emails, setEmails] = useState(initialBouncedEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
@@ -79,32 +88,22 @@ export default function BouncesPage() {
       <div 
         className="absolute inset-0 z-0 opacity-[0.05] bg-grid-red-500/[0.2] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]"
       />
-      <div className="relative z-10">
-        <header className="mb-8 flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#F00000] to-[#F07000] flex items-center gap-3">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8">
-                       <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                       <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+      <div className="relative z-10 flex justify-between items-start mb-8">
+        <div className="flex items-center gap-6">
+            <div className="relative flex items-center justify-center animation-wrapper-13 text-red-500">
+                <BounceIcon className="size-16 icon13"/>
+            </div>
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#F00000] to-[#F07000]">
                   Buzón de Rebotes
                 </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-7 text-red-500/80">
-                       <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                       <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                </div>
+                <p className="text-muted-foreground mt-1">
+                  Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
+                </p>
             </div>
-            <p className="text-muted-foreground mt-1">
-              Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
-            </p>
-          </div>
-          <StorageIndicator used={10.2} total={15} gradientColors={['#F00000', '#F07000']} />
-        </header>
+        </div>
+        <StorageIndicator used={10.2} total={15} gradientColors={['#F00000', '#F07000']} />
+      </div>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-rose-500/10" />
@@ -213,7 +212,6 @@ export default function BouncesPage() {
             ))}
            </AnimatePresence>
         </motion.div>
-      </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
@@ -221,3 +219,5 @@ export default function BouncesPage() {
     </>
   );
 }
+
+    
