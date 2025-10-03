@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -252,52 +252,106 @@ export default function DemoPage() {
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--destructive))' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <XCircle style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
-                    </div>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="hsl(var(--destructive))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="hsl(var(--destructive))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="18" cy="18" r="4" fill="hsl(var(--card))" stroke="hsl(var(--destructive))" strokeWidth="2" />
+                        <path d="m16 18 4 0" stroke="hsl(var(--destructive))" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
                     <span className="font-mono text-xs">1</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32, color: '#00B0F0' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <DollarSign style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
-                    </div>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="#00B0F0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="#00B0F0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M18 15v6m-3-3h6" stroke="#00B0F0" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                     <span className="font-mono text-xs">2</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                     <div style={{ position: 'relative', width: 32, height: 32, color: '#8b5cf6' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <Tag style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
-                    </div>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M19 22v-6l-4 4-4-4v6" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                     <span className="font-mono text-xs">3</span>
                 </div>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-blue-500">
-                        <ShoppingBag size={32} />
+                        <ShoppingCart size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-indigo-500">
+                    <div className="text-green-500">
+                        <Gift size={32} />
+                    </div>
+                    <span className="font-mono text-xs">2</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-purple-500">
+                        <Users size={32} />
+                    </div>
+                    <span className="font-mono text-xs">3</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-red-500">
+                        <Users2 size={32} />
+                    </div>
+                    <span className="font-mono text-xs">4</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-yellow-500">
+                        <Tags size={32} />
+                    </div>
+                    <span className="font-mono text-xs">5</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-cyan-500">
+                        <DollarSign size={32} />
+                    </div>
+                    <span className="font-mono text-xs">6</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div style={{ position: 'relative', width: 32, height: 32, color: '#f59e0b' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <ShoppingCart style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
+                    </div>
+                    <span className="font-mono text-xs">7</span>
+                </div>
+            </div>
+            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-blue-500">
+                        <Package size={32} />
+                    </div>
+                    <span className="font-mono text-xs">1</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-teal-500">
                         <ShoppingBasket size={32} />
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-teal-500">
-                        <ShoppingCart size={32} />
+                    <div className="text-orange-500">
+                        <Tags size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                     <div style={{ position: 'relative', width: 32, height: 32, color: '#8b5cf6' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <Users style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
+                    <div className="text-indigo-500">
+                        <UserPlus size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-fuchsia-500">
+                        <UserCog size={32} />
+                    </div>
+                    <span className="font-mono text-xs">5</span>
                 </div>
             </div>
         </main>
