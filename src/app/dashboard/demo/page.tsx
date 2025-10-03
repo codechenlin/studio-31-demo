@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -250,52 +250,53 @@ export default function DemoPage() {
                 </Card>
             </div>
              <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-red-500">
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-blue-500">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                           <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M6.5 20.5L4 8.5H20L17.5 20.5H6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                            <path d="M9.5 11.5C9.5 11.5 8 14 8 16C8 18 9.5 20.5 9.5 20.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14.5 11.5C14.5 11.5 16 14 16 16C16 18 14.5 20.5 14.5 20.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M9 8.5L10.5 3.5H13.5L15 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
-
                 <div className="flex flex-col items-center gap-2">
-                   <div className="text-blue-500">
+                    <div className="text-green-500">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M21 15a2 2 0 0 1-2 2H9.5a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2H17l4 4v3.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-                            <circle cx="12.5" cy="13.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                           <path d="M20 7.5L18 21.5H6L4 7.5H20Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                           <path d="M15 7.5C15 5.5 13.5 3.5 12 3.5C10.5 3.5 9 5.5 9 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                           <circle cx="14" cy="14.5" r="1.5" fill="currentColor" />
+                           <path d="M13.5 14.5H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
-
-                <div className="flex flex-col items-center gap-2">
-                   <div className="text-green-500">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx="16" cy="18" r="1" stroke="currentColor" strokeWidth="2"/>
-                            <circle cx="20" cy="18" r="1" stroke="currentColor" strokeWidth="2"/>
-                            <path d="M16 18h-3a3 3 0 0 0-3 3v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            <path d="m19 23-2-2 2-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M12 18H8.5a1.5 1.5 0 0 1-1.5-1.5v-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="text-purple-500">
+                        <Users />
                     </div>
                     <span className="font-mono text-xs">3</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                   <div className="text-red-500">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 20C17 17.7909 15.2091 16 13 16C10.7909 16 9 17.7909 9 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M13 16V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="13" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M5 20C5 18.3431 6.34315 17 8 17C9.65685 17 11 18.3431 11 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M8 17V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11.5" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M20 17.5C20 16.1193 18.8807 15 17.5 15C16.1193 15 15 16.1193 15 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M17.5 15V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="17.5" cy="11.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                        </svg>
+                    </div>
+                    <span className="font-mono text-xs">4</span>
                 </div>
             </div>
         </main>
     );
-
-    
 }
 
-    
-
-    
-
-
+      
