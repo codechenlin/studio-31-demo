@@ -93,6 +93,7 @@ export default function DemoPage() {
     };
 
     return (
+        <>
         <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 bg-background items-center">
             <div className="text-center max-w-3xl">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-destructive flex items-center justify-center gap-2">
@@ -250,25 +251,25 @@ export default function DemoPage() {
                 </Card>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                <div className="flex flex-col items-center gap-2">
-                     <div className="text-blue-500">
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-blue-500">
                         <ShoppingCart size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                 <div className="flex flex-col items-center gap-2">
                     <div className="text-green-500">
                         <Gift size={32} />
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                 <div className="flex flex-col items-center gap-2">
                     <div className="text-purple-500">
                         <Users size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                 <div className="flex flex-col items-center gap-2">
                     <div className="text-red-500">
                         <Users2 size={32} />
                     </div>
@@ -280,20 +281,42 @@ export default function DemoPage() {
                     </div>
                     <span className="font-mono text-xs">5</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-teal-500">
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-green-500">
                         <DollarSign size={32} />
                     </div>
                     <span className="font-mono text-xs">6</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                     <div className="relative text-orange-500">
-                        <Mail size={32} />
-                        <ShoppingCart className="absolute -bottom-1 -right-1 size-5 bg-card rounded-full p-0.5" />
+                 <div className="flex flex-col items-center gap-2">
+                    <div style={{ position: 'relative', width: 32, height: 32, color: '#00B0F0' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <ShoppingCart style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
                     </div>
                     <span className="font-mono text-xs">7</span>
                 </div>
             </div>
+            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-yellow-500">
+                        <Tags size={32} />
+                    </div>
+                    <span className="font-mono text-xs">1</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-green-500">
+                        <Gift size={32} />
+                    </div>
+                    <span className="font-mono text-xs">2</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                     <div style={{ position: 'relative', width: 32, height: 32, color: '#8b5cf6' }}>
+                        <Mail style={{ position: 'absolute' }} size={32} />
+                        <Users style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
+                    </div>
+                    <span className="font-mono text-xs">3</span>
+                </div>
+            </div>
         </main>
+        </>
     );
 }
