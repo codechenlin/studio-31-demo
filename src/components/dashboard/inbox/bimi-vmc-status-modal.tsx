@@ -5,7 +5,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, X } from 'lucide-react';
+import { Check, X, ShieldCheck } from 'lucide-react';
 import { type Email } from './email-list-item';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -22,7 +22,7 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
 
     const senderInitial = email.from.charAt(0).toUpperCase();
 
-    const StatusIndicator = ({ status, title, description, resultText }: { status: boolean, title: string, description: string, resultText: string }) => (
+    const StatusIndicator = ({ status, title, description, resultText, resultDescription }: { status: boolean, title: string, description: string, resultText: string, resultDescription: string }) => (
         <motion.div 
             className="p-4 rounded-lg bg-black/30 border border-cyan-400/20"
             initial={{ opacity: 0, y: 20 }}
@@ -30,22 +30,20 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
             transition={{ duration: 0.5 }}
         >
             <div className="flex items-start gap-4">
-                <div className={cn(
-                    "flex-shrink-0 size-12 rounded-full flex items-center justify-center border-2",
-                    status ? "border-green-500/50 bg-green-900/40" : "border-red-500/50 bg-red-900/40"
-                )}>
-                    {status ? <Check className="size-7 text-green-400" /> : <X className="size-7 text-red-400" />}
-                </div>
                 <div className="flex-1">
                     <h4 className="font-bold text-lg text-white">{title}</h4>
                     <p className="text-sm text-cyan-200/70 mt-1">{description}</p>
                 </div>
             </div>
-            <div className={cn(
-                "mt-3 text-sm font-semibold pl-16",
-                status ? "text-green-300" : "text-red-300"
+             <div className={cn(
+                "mt-4 text-sm font-semibold p-3 rounded-md flex items-center gap-3 border",
+                status ? "bg-green-900/40 border-green-500/50 text-green-300" : "bg-red-900/40 border-red-500/50 text-red-300"
             )}>
-               <span className="font-bold">Resultado:</span> {resultText}
+                {status ? <ShieldCheck className="size-8 shrink-0" /> : <X className="size-8 shrink-0" />}
+                <div>
+                   <p className="font-bold uppercase">{resultText}</p>
+                   <p className="font-normal text-xs">{resultDescription}</p>
+                </div>
             </div>
         </motion.div>
     );
@@ -59,21 +57,32 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
                 
                 {/* Left Panel */}
-                <div className="w-1/3 flex flex-col items-center justify-center p-8 border-r border-cyan-400/20 bg-black/20">
+                <div className="w-1/3 flex flex-col items-center justify-center p-8 border-r border-cyan-400/20 bg-black/20 relative overflow-hidden">
+                   <div className="absolute inset-0 hexagonal-grid opacity-20" />
+                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
                     <motion.div
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.1, type: "spring", stiffness: 150 }}
-                        className="text-center"
+                        className="text-center z-10 w-full"
                     >
-                        <Avatar className="size-40 border-4 border-cyan-400/30 shadow-[0_0_30px_#00ADEC]">
-                            <AvatarImage src={email.avatarUrl} alt={email.from}/>
-                            <AvatarFallback className="text-6xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
-                            {senderInitial}
-                            </AvatarFallback>
-                        </Avatar>
-                        <DialogTitle className="text-3xl font-bold mt-6 text-white">{email.from}</DialogTitle>
-                        <DialogDescription className="font-mono text-base text-cyan-300/80 mt-1">{senderEmail}</DialogDescription>
+                        <div className="relative w-48 h-48 mx-auto group">
+                          <svg className="absolute inset-0 w-full h-full animate-[hud-spin_20s_linear_infinite]" viewBox="0 0 100 100">
+                             <defs><linearGradient id="hexagon-glow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00ADEC" /><stop offset="100%" stopColor="#AD00EC" /></linearGradient></defs>
+                             <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="url(#hexagon-glow)" strokeWidth="0.5" fill="none" className="opacity-50" />
+                             <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="#00ADEC" strokeWidth="0.2" fill="none" strokeDasharray="5,10" className="animate-[hud-spin_10s_linear_infinite] opacity-30" style={{animationDirection: 'reverse'}}/>
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Avatar className="size-40 border-4 border-cyan-400/30 shadow-[0_0_30px_#00ADEC]">
+                                <AvatarImage src={email.avatarUrl} alt={email.from}/>
+                                <AvatarFallback className="text-6xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                                {senderInitial}
+                                </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <DialogTitle className="text-2xl font-bold mt-6 text-white truncate w-full">{email.from}</DialogTitle>
+                        <DialogDescription className="font-mono text-sm text-cyan-300/80 mt-1 truncate w-full">{senderEmail}</DialogDescription>
                     </motion.div>
                 </div>
                 
@@ -86,14 +95,16 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
                         <StatusIndicator 
                             status={!!email.bimi}
                             title="Verificación BIMI"
-                            description="BIMI (Brand Indicators for Message Identification) permite mostrar tu logo verificado, aumentando la confianza y el reconocimiento de marca."
-                            resultText={email.bimi ? "Este remitente ha verificado su identidad de marca, por lo que puedes confiar en su logotipo." : "El remitente no ha configurado BIMI. Su logotipo no está verificado."}
+                            description="El correo del remitente tiene un registro DNS BIMI, lo que hace que el destinatario muestre su logo marca oficial junto a su dirección de correo."
+                            resultText="VERIFICADO"
+                            resultDescription={email.bimi ? "El remitente esta mostrando su logo marca oficial." : "El remitente no ha configurado BIMI. Su logotipo no está verificado."}
                         />
                         <StatusIndicator 
                             status={!!email.vmc}
                             title="Certificado VMC"
-                            description="VMC (Verified Mark Certificate) es un certificado digital que prueba legalmente que el logo pertenece a la marca. Es un requisito para que el logo se muestre en proveedores como Gmail."
-                            resultText={email.vmc ? "Este logo ha sido validado con un certificado VMC, ofreciendo la máxima garantía de autenticidad." : "El remitente no tiene un VMC, por lo que su logo podría no mostrarse en todas las bandejas de entrada."}
+                            description="El correo del remitente tiene un registro DNS BIMI y un certificado VMC emitido por una autoridad oficial, el cual certifica que el logotipo mostrado está registrado y es propiedad legítima del remitente."
+                            resultText="VERIFICADO"
+                            resultDescription={email.vmc ? "El remitente cuenta con un logo marca registrada por una autoridad oficial." : "El remitente no tiene un VMC, por lo que su logo podría no mostrarse en todas las bandejas de entrada."}
                         />
                     </div>
                      <DialogFooter className="z-10 pt-6">
