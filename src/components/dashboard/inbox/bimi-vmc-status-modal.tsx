@@ -32,12 +32,12 @@ const StatusIndicator = ({ status, title, description, resultText, resultDescrip
         </div>
          <div className={cn(
             "mt-4 text-sm font-semibold p-3 rounded-md flex items-center gap-3 border",
-            status ? "bg-green-900/40 border-green-500/50 text-green-300" : "bg-red-900/40 border-red-500/50 text-red-300"
+            status ? "bg-green-900/40 border-green-500/50" : "bg-red-900/40 border-red-500/50"
         )}>
-            {status ? <ShieldCheck className="size-8 shrink-0" /> : <X className="size-8 shrink-0" />}
+            {status ? <ShieldCheck className="size-8 shrink-0" style={{color: '#00CB07'}} /> : <X className="size-8 shrink-0" style={{color: '#F00000'}} />}
             <div>
-               <p className="font-bold uppercase">{resultText}</p>
-               <p className="font-normal text-xs">{resultDescription}</p>
+               <p className="font-bold uppercase" style={{color: status ? '#00CB07' : '#F00000'}}>{resultText}</p>
+               <p className={cn("font-normal text-xs", status ? "text-green-300" : "text-red-300")}>{resultDescription}</p>
             </div>
         </div>
     </motion.div>
@@ -123,7 +123,7 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
                      <DialogFooter className="z-10 pt-6">
                         <Button 
                             onClick={() => onOpenChange(false)}
-                            className="w-full bg-cyan-800/80 text-cyan-100 hover:bg-cyan-700 border border-cyan-600/50"
+                            className="w-full bg-[#007BA8] hover:bg-[#00ADEC] text-white"
                         >
                             Entendido
                         </Button>
