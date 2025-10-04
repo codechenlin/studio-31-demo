@@ -92,6 +92,8 @@ export default function SpamPage() {
         <header className="mb-8 flex justify-between items-start">
            <div className="flex items-center gap-6">
                 <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-amber-500">
+                    <div className="absolute inset-0 rounded-full bg-amber-500/10 animate-pulse"></div>
+                    <div className="absolute inset-2 rounded-full border-2 border-amber-500/30 border-dashed animate-spin-slow"></div>
                     <MailWarning className="size-8 icon1"/>
                 </div>
                 <div>

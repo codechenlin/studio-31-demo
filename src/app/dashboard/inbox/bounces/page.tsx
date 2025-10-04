@@ -84,6 +84,8 @@ export default function BouncesPage() {
         <header className="mb-8 flex justify-between items-start">
            <div className="flex items-center gap-6">
                 <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-red-500">
+                    <div className="absolute inset-0 rounded-full bg-red-500/10 animate-pulse"></div>
+                    <div className="absolute inset-2 rounded-full border-2 border-red-500/30 border-dashed animate-spin-slow"></div>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8 icon1">
                        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
