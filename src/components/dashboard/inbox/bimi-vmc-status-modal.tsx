@@ -17,36 +17,37 @@ interface BimiVmcStatusModalProps {
   senderEmail: string;
 }
 
+const StatusIndicator = ({ status, title, description, resultText, resultDescription }: { status: boolean, title: string, description: string, resultText: string, resultDescription: string }) => (
+    <motion.div 
+        className="p-4 rounded-lg bg-black/30 border border-cyan-400/20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+    >
+        <div className="flex items-start gap-4">
+            <div className="flex-1">
+                <h4 className="font-bold text-lg text-white">{title}</h4>
+                <p className="text-sm text-cyan-200/70 mt-1">{description}</p>
+            </div>
+        </div>
+         <div className={cn(
+            "mt-4 text-sm font-semibold p-3 rounded-md flex items-center gap-3 border",
+            status ? "bg-green-900/40 border-green-500/50 text-green-300" : "bg-red-900/40 border-red-500/50 text-red-300"
+        )}>
+            {status ? <ShieldCheck className="size-8 shrink-0" /> : <X className="size-8 shrink-0" />}
+            <div>
+               <p className="font-bold uppercase">{resultText}</p>
+               <p className="font-normal text-xs">{resultDescription}</p>
+            </div>
+        </div>
+    </motion.div>
+);
+
+
 export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }: BimiVmcStatusModalProps) {
     if (!email) return null;
 
     const senderInitial = email.from.charAt(0).toUpperCase();
-
-    const StatusIndicator = ({ status, title, description, resultText, resultDescription }: { status: boolean, title: string, description: string, resultText: string, resultDescription: string }) => (
-        <motion.div 
-            className="p-4 rounded-lg bg-black/30 border border-cyan-400/20"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-        >
-            <div className="flex items-start gap-4">
-                <div className="flex-1">
-                    <h4 className="font-bold text-lg text-white">{title}</h4>
-                    <p className="text-sm text-cyan-200/70 mt-1">{description}</p>
-                </div>
-            </div>
-             <div className={cn(
-                "mt-4 text-sm font-semibold p-3 rounded-md flex items-center gap-3 border",
-                status ? "bg-green-900/40 border-green-500/50 text-green-300" : "bg-red-900/40 border-red-500/50 text-red-300"
-            )}>
-                {status ? <ShieldCheck className="size-8 shrink-0" /> : <X className="size-8 shrink-0" />}
-                <div>
-                   <p className="font-bold uppercase">{resultText}</p>
-                   <p className="font-normal text-xs">{resultDescription}</p>
-                </div>
-            </div>
-        </motion.div>
-    );
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -95,16 +96,28 @@ export function BimiVmcStatusModal({ isOpen, onOpenChange, email, senderEmail }:
                         <StatusIndicator 
                             status={!!email.bimi}
                             title="Verificación BIMI"
-                            description="El correo del remitente tiene un registro DNS BIMI, lo que hace que el destinatario muestre su logo marca oficial junto a su dirección de correo."
-                            resultText="VERIFICADO"
-                            resultDescription={email.bimi ? "El remitente esta mostrando su logo marca oficial." : "El remitente no ha configurado BIMI. Su logotipo no está verificado."}
+                            description={email.bimi 
+                                ? "El correo del remitente tiene un registro DNS BIMI, lo que hace que el destinatario muestre su logo marca oficial junto a su dirección de correo."
+                                : "El correo del remitente no tiene un registro DNS BIMI, lo que hace que el destinatario no pueda mostrar un logo marca oficial junto a su dirección de correo."
+                            }
+                            resultText={email.bimi ? "VERIFICADO" : "INVALIDO"}
+                            resultDescription={email.bimi 
+                                ? "El remitente esta mostrando su logo marca oficial."
+                                : "El remitente no ha configurado un registro BIMI, no muestra ningún logotipo o marca oficial."
+                            }
                         />
                         <StatusIndicator 
                             status={!!email.vmc}
                             title="Certificado VMC"
-                            description="El correo del remitente tiene un registro DNS BIMI y un certificado VMC emitido por una autoridad oficial, el cual certifica que el logotipo mostrado está registrado y es propiedad legítima del remitente."
-                            resultText="VERIFICADO"
-                            resultDescription={email.vmc ? "El remitente cuenta con un logo marca registrada por una autoridad oficial." : "El remitente no tiene un VMC, por lo que su logo podría no mostrarse en todas las bandejas de entrada."}
+                             description={email.vmc 
+                                ? "El correo del remitente tiene un registro DNS BIMI y un certificado VMC emitido por una autoridad oficial, el cual certifica que el logotipo mostrado está registrado y es propiedad legítima del remitente."
+                                : "El correo del remitente no tiene un registro DNS BIMI y un certificado VMC emitido, el cual su logotipo marca no está registrado y tampoco es una propiedad legítima del remitente."
+                            }
+                            resultText={email.vmc ? "VERIFICADO" : "INVALIDO"}
+                            resultDescription={email.vmc 
+                                ? "El remitente cuenta con un logo marca registrada por una autoridad oficial."
+                                : "El remitente no tiene un certificado VMC, por lo que su logotipo marca no esta registrado y podría no mostrarse en todas las bandejas de entrada de correos."
+                            }
                         />
                     </div>
                      <DialogFooter className="z-10 pt-6">
