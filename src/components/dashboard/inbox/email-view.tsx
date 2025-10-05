@@ -359,7 +359,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             <motion.div 
-                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_10px_#E1870050,0_0_10px_#FFAB0050]"
+                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_20px_#E18700,0_0_20px_#FFAB00]"
                 whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#E18700] to-[#FFAB00]" style={{boxShadow: '0 0 15px #FFAB00'}}/>
@@ -370,7 +370,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje de <strong>{email.from}</strong> a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
             </motion.div>
             <motion.div 
-                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_10px_#F0000050,0_0_10px_#F0700050]"
+                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_20px_#F00000,0_0_20px_#F07000]"
                 whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#F00000] to-[#F07000]" style={{boxShadow: '0 0 15px #F07000'}}/>
@@ -472,3 +472,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+  
