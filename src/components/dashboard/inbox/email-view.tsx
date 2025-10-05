@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle, Mail, Server } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle, Mail, Server, Lock, LockOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -400,33 +400,61 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                       Mostrar imágenes de este remitente podría revelar información a servidores externos.
                   </DialogDescription>
               </DialogHeader>
-              <div className="py-4 z-10 text-amber-100/90 text-sm space-y-3">
-                  <p>Al cargar contenido externo (como imágenes), el remitente puede saber que abriste el correo y podría recopilar datos como:</p>
-                  <ul className="list-disc list-inside space-y-1 pl-2">
-                      <li>Tu dirección IP (ubicación aproximada)</li>
-                      <li>Tipo de dispositivo y cliente de correo que usas</li>
-                      <li>Si y cuándo abriste el correo</li>
-                  </ul>
-                  <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
+              <div className="z-10 space-y-4">
+                  <div 
+                      className={cn(
+                          "p-3 rounded-lg border flex items-center justify-center gap-3 text-sm font-semibold transition-all duration-500",
+                          showImages 
+                              ? "bg-green-500/10 border-green-500/30 text-green-300" 
+                              : "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                      )}
+                  >
+                      {showImages ? (
+                          <>
+                              <div className="relative p-1.5 bg-green-500/20 rounded-full">
+                                  <div className="absolute inset-0 rounded-full bg-green-500/50 animate-ping"/>
+                                  <LockOpen className="relative size-5"/>
+                              </div>
+                              <span>Imágenes Desbloqueadas y Visibles</span>
+                          </>
+                      ) : (
+                          <>
+                              <div className="relative p-1.5 bg-blue-500/20 rounded-full">
+                                  <div className="absolute inset-0 rounded-full bg-blue-500/50 animate-ping"/>
+                                  <Lock className="relative size-5"/>
+                              </div>
+                              <span>Imágenes Bloqueadas para Proteger tu Privacidad</span>
+                          </>
+                      )}
+                  </div>
+                  <div className="py-4 text-amber-100/90 text-sm space-y-3">
+                      <p>Al cargar contenido externo (como imágenes), el remitente puede saber que abriste el correo y podría recopilar datos como:</p>
+                      <ul className="list-disc list-inside space-y-1 pl-2">
+                          <li>Tu dirección IP (ubicación aproximada)</li>
+                          <li>Tipo de dispositivo y cliente de correo que usas</li>
+                          <li>Si y cuándo abriste el correo</li>
+                      </ul>
+                      <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
+                  </div>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button
+                <Button
                     variant="outline"
                     className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white"
                     onClick={() => setIsConfirmImagesModalOpen(false)}
-                  >
+                >
                     <X className="mr-2"/>Cancelar
-                  </Button>
-                  <Button
-                      className="bg-amber-600 text-white hover:bg-amber-500"
-                      onClick={() => {
-                          setShowImages(true);
-                          setIsConfirmImagesModalOpen(false);
-                          toast({ title: 'Imágenes habilitadas', description: 'Se ha cargado el contenido externo para este correo.' });
-                      }}
-                  >
-                      <Check className="mr-2"/>Sí, mostrar imágenes
-                  </Button>
+                </Button>
+                <Button
+                    className="bg-amber-600 text-white hover:bg-amber-500"
+                    onClick={() => {
+                        setShowImages(true);
+                        setIsConfirmImagesModalOpen(false);
+                        toast({ title: 'Imágenes habilitadas', description: 'Se ha cargado el contenido externo para este correo.' });
+                    }}
+                >
+                    <Check className="mr-2"/>Sí, mostrar imágenes
+                </Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
@@ -472,5 +500,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-  
