@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -80,70 +80,91 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     );
 };
 
-const CircularChart = ({ percentage, total, used, label, isMain = false }: { percentage: number; total: number; used: number; label: string; isMain?: boolean; }) => {
-    const circumference = 2 * Math.PI * (isMain ? 55 : 45);
+const CircularChart = ({ percentage, total, used, label, isMain = false, usedLast30Days }: { percentage: number; total: number; used: number; label: string; isMain?: boolean; usedLast30Days?: number }) => {
+    const radius = isMain ? 45 : 40;
+    const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
+    const last30DaysPercentage = used > 0 ? ((usedLast30Days || 0) / used) * 100 : 0;
+    const innerCircumference = 2 * Math.PI * (radius - 10);
+    const innerOffset = innerCircumference - (last30DaysPercentage / 100) * innerCircumference;
+
     return (
-        <div className="flex flex-col items-center gap-2">
-            <div className={cn("relative", isMain ? "w-48 h-48" : "w-36 h-36")}>
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                    {isMain && (
+        <div className="flex flex-col items-center gap-1">
+            <div className={cn("relative", isMain ? "w-32 h-32" : "w-28 h-28")}>
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="8" fill="transparent" r={radius} cx="50" cy="50" />
+                     <motion.circle
+                        className="text-white"
+                        stroke="url(#progressGradient)"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        fill="transparent"
+                        r={radius}
+                        cx="50"
+                        cy="50"
+                        initial={{ strokeDashoffset: circumference }}
+                        animate={{ strokeDashoffset: offset }}
+                        transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
+                        strokeDasharray={circumference}
+                     />
+                    
+                    {/* Inner circle for last 30 days */}
+                    {usedLast30Days !== undefined && (
                         <>
-                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="10" fill="transparent" r="55" cx="60" cy="60" />
+                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={radius - 10} cx="50" cy="50" />
                          <motion.circle
                             className="text-white"
                             stroke="url(#progressGradient)"
-                            strokeWidth="10"
+                            strokeWidth="3"
                             strokeLinecap="round"
                             fill="transparent"
-                            r="55"
-                            cx="60"
-                            cy="60"
-                            initial={{ strokeDashoffset: circumference }}
-                            animate={{ strokeDashoffset: offset }}
-                            transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
-                            strokeDasharray={circumference}
-                         />
-                         <motion.circle
-                            cx="60" cy="60" r="55" fill="none" stroke="url(#shineGradient)" strokeWidth="2" strokeLinecap="round"
-                            strokeDasharray="5 50"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                            r={radius-10}
+                            cx="50"
+                            cy="50"
+                            initial={{ strokeDashoffset: innerCircumference }}
+                            animate={{ strokeDashoffset: innerOffset }}
+                            transition={{ duration: 1.5, ease: "circOut", delay: 0.4 }}
+                            strokeDasharray={innerCircumference}
                          />
                         </>
                     )}
-                    {!isMain && (
-                         <>
-                             <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="8" fill="transparent" r="45" cx="60" cy="60" />
-                             <motion.circle
-                                className="text-white"
-                                stroke="url(#progressGradient)"
-                                strokeWidth="8"
-                                strokeLinecap="round"
-                                fill="transparent"
-                                r="45"
-                                cx="60"
-                                cy="60"
-                                initial={{ strokeDashoffset: circumference }}
-                                animate={{ strokeDashoffset: offset }}
-                                transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
-                                strokeDasharray={circumference}
-                             />
-                        </>
-                    )}
+
+                    {/* Particle Animation */}
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <motion.circle
+                            key={i}
+                            cx="50"
+                            cy="50"
+                            r="1.5"
+                            fill="rgba(255, 255, 255, 0.8)"
+                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
+                        >
+                            <animateMotion
+                                dur={`${2 + i * 0.5}s`}
+                                repeatCount="indefinite"
+                                path={`M 50, 5 A ${radius},${radius} 0 1,1 49.99,5 Z`}
+                            />
+                        </motion.circle>
+                    ))}
                 </svg>
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className={cn("font-bold font-mono text-white leading-none", isMain ? "text-3xl" : "text-2xl")}>
+                    <span className={cn("font-bold font-mono text-white leading-none", isMain ? "text-2xl" : "text-xl")}>
                         {(used / 1024).toFixed(2)}
-                        <span className={cn("font-sans text-white/70 ml-1", isMain ? "text-lg" : "text-base")}>GB</span>
+                        <span className={cn("font-sans text-white/70 ml-1", isMain ? "text-base" : "text-sm")}>GB</span>
                     </span>
                     {isMain && (
-                        <span className="text-sm text-white/50">de {(total / 1024).toFixed(0)} GB</span>
+                        <span className="text-xs text-white/50">de {(total / 1024).toFixed(0)} GB</span>
+                    )}
+                    {usedLast30Days !== undefined && (
+                         <span className="text-xs text-cyan-300/70 mt-1">
+                            ({(usedLast30Days / 1024).toFixed(2)} GB)
+                        </span>
                     )}
                 </div>
             </div>
-            <p className="text-sm font-semibold text-white/90">{label}</p>
+            <p className="text-xs font-semibold text-white/90 text-center w-24">{label}</p>
         </div>
     );
 };
@@ -188,7 +209,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 </div>
 
                 <div className="flex flex-col">
-                    {/* Top Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
                         {storageData.sections.map(section => (
                             <div key={section.id} className="bg-black/30 p-6">
@@ -207,8 +227,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         ))}
                     </div>
 
-                    {/* Bottom Section */}
-                    <div className="p-6 border-t border-[#AD00EC]/20 bg-black/50 grid grid-cols-1 md:grid-cols-3 items-center gap-6">
+                    <div className="p-4 border-t border-[#AD00EC]/20 bg-black/50 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
                         <div className="md:col-span-2 flex justify-around items-center">
                             <CircularChart 
                                 percentage={(totalUsed / storageData.total) * 100} 
@@ -222,15 +241,16 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                                 total={totalUsed} 
                                 used={4500}
                                 label="Uso Reciente (30 días)"
+                                usedLast30Days={4500}
                             />
                         </div>
-                        <div className="flex flex-col gap-4">
-                             <div className="p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
-                                <p className="text-sm text-amber-200/90">
-                                   Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
+                        <div className="flex flex-col gap-3">
+                             <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
+                                <p className="text-xs text-amber-200/90">
+                                   Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                                 </p>
                             </div>
-                            <Button className="group relative w-full h-12 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC]">
+                            <Button className="group relative w-full h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC]">
                                 <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
                                 <DatabaseZap className="mr-2"/>
                                 Aumentar Almacenamiento
@@ -242,3 +262,5 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
         </Dialog>
     );
 }
+
+    
