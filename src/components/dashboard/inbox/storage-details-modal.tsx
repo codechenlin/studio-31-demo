@@ -4,8 +4,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -81,42 +81,18 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     );
 };
 
-
 const QuantumProgressBar = ({ used, total }: { used: number, total: number }) => {
   const percentage = total > 0 ? (used / total) * 100 : 0;
-
-  const particles = React.useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    duration: `${Math.random() * 5 + 3}s`,
-    delay: `${Math.random() * 5}s`,
-    size: `${Math.random() * 2 + 1}px`,
-  })), []);
 
   return (
     <div className="w-full text-center">
       <div className="relative h-8 w-full bg-black/30 rounded-lg border border-[#AD00EC]/30 overflow-hidden">
         <motion.div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
+          className="progress-bar-shine absolute top-0 left-0 h-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 1.5, ease: "circOut" }}
-        >
-          {/* Particle Animation */}
-          {particles.map(p => (
-            <div
-              key={p.id}
-              className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/70"
-              style={{
-                width: p.size,
-                height: p.size,
-                left: p.left,
-                animation: `quantum-flow ${p.duration} ${p.delay} infinite linear`,
-                filter: 'blur(0.5px)',
-              }}
-            />
-          ))}
-        </motion.div>
+        />
         <div className="absolute inset-0 flex items-center justify-center">
           <p className="font-bold text-lg text-white drop-shadow-lg">{percentage.toFixed(1)}% Usado</p>
         </div>
@@ -139,11 +115,24 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
                     @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
-                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                     @keyframes quantum-flow {
                         0% { transform: translateX(0) scale(1); opacity: 0; }
                         50% { opacity: 1; }
                         100% { transform: translateX(50px) scale(0.5); opacity: 0; }
+                    }
+                    @keyframes light-scan {
+                      0% { left: -100%; }
+                      100% { left: 100%; }
+                    }
+                    .progress-bar-shine::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: -100%;
+                        width: 50%;
+                        height: 100%;
+                        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                        animation: light-scan 2.5s infinite linear;
                     }
                 `}</style>
                 
@@ -154,7 +143,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                             <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
                         </DialogTitle>
                     </DialogHeader>
-                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white hover:bg-white/10 border border-white/50">
+                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white hover:bg-white/10 border border-white/50 rounded-full">
                         <X className="size-5 text-white"/>
                     </Button>
                 </div>
