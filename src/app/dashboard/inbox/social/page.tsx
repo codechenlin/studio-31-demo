@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
 
 const initialSocialEmails: Email[] = [
     {
@@ -47,6 +48,7 @@ export default function SocialPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
+  const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
 
@@ -97,7 +99,7 @@ export default function SocialPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#007BA8', '#00ADEC']} />
+            <StorageIndicator used={10.2} total={15} gradientColors={['#007BA8', '#00ADEC']} onClick={() => setIsStorageModalOpen(true)} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00ADEC]/30 shadow-lg mb-2 relative overflow-hidden">
@@ -223,6 +225,7 @@ export default function SocialPage() {
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
     </>
   );
 }

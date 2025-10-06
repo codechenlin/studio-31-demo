@@ -3,14 +3,16 @@
 
 import React from 'react';
 import { HardDrive } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface StorageIndicatorProps {
     used: number;
     total: number;
     gradientColors?: [string, string];
+    onClick?: () => void;
 }
 
-export function StorageIndicator({ used, total, gradientColors }: StorageIndicatorProps) {
+export function StorageIndicator({ used, total, gradientColors, onClick }: StorageIndicatorProps) {
     const percentage = total > 0 ? (used / total) * 100 : 0;
     const circumference = 2 * Math.PI * 45; // 45 is the radius
     const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -19,7 +21,11 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
     const shadowColor = gradientColors ? gradientColors[1] : 'hsl(var(--primary))';
 
     return (
-        <div className="w-64 h-24 rounded-lg bg-card/80 border border-border/50 backdrop-blur-sm p-4 flex items-center gap-4">
+        <button 
+            onClick={onClick}
+            className="w-64 h-24 rounded-lg bg-card/80 border border-border/50 backdrop-blur-sm p-4 flex items-center gap-4 transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-1"
+            aria-label="Ver detalles de almacenamiento"
+        >
             <div className="relative size-20">
                 <svg className="w-full h-full" viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
                      {gradientColors && (
@@ -70,6 +76,6 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
                     <span className="font-bold text-foreground">{used.toFixed(1)} GB</span> usado de {total} GB
                 </p>
             </div>
-        </div>
+        </button>
     );
 }
