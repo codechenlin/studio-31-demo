@@ -9,6 +9,14 @@ import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+const BouncesIcon = (props: any) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
 const storageData = {
   total: 15 * 1024, // 15 GB in MB
   breakdown: [
@@ -16,7 +24,7 @@ const storageData = {
     { id: 'shopping', label: 'Compras', value: 1.1 * 1024, color: 'from-[#00CB07] to-[#21F700]', icon: ShoppingCart },
     { id: 'social', label: 'Redes Sociales', value: 0.8 * 1024, color: 'from-[#00ADEC] to-[#007BA8]', icon: SocialIcon },
     { id: 'spam', label: 'Spam', value: 0.4 * 1024, color: 'from-[#E18700] to-[#FFAB00]', icon: MailWarning },
-    { id: 'bounces', label: 'Rebotes', value: 0.1 * 1024, color: 'from-[#F00000] to-[#F07000]', icon: (props: any) => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+    { id: 'bounces', label: 'Rebotes', value: 0.1 * 1024, color: 'from-[#F00000] to-[#F07000]', icon: BouncesIcon },
     { id: 'images', label: 'Imágenes', value: 1.8 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Image },
     { id: 'gifs', label: 'GIFs', value: 0.9 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
     { id: 'templates', label: 'Plantillas', value: 1.2 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: FileText },
@@ -60,7 +68,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   const available = storageData.total - totalUsed;
   const fullBreakdown = [...storageData.breakdown, { id: 'available', label: 'Disponible', value: available, color: 'from-gray-700 to-gray-600', icon: HardDrive }];
   
-  const activeSection = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
+  const activeSectionData = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -149,7 +157,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={activeSection?.id || 'total'}
+                      key={activeSectionData?.id || 'total'}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
@@ -157,14 +165,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                       className="flex flex-col items-center justify-center"
                     >
                       {(() => {
-                        if (!activeSection) return null;
-                        const ActiveIcon = activeSection.icon;
-                        const percentage = (activeSection.value / storageData.total) * 100;
-                        const valueInGB = activeSection.value / 1024;
+                        if (!activeSectionData) return null;
+                        const ActiveIcon = activeSectionData.icon;
+                        const percentage = (activeSectionData.value / storageData.total) * 100;
+                        const valueInGB = activeSectionData.value / 1024;
                         return (
                           <>
                             <ActiveIcon className="size-8 mb-2 text-cyan-300" />
-                            <p className="text-lg font-bold">{activeSection.label}</p>
+                            <p className="text-lg font-bold">{activeSectionData.label}</p>
                             <p className="text-3xl font-bold font-mono text-cyan-300">
                               {valueInGB.toFixed(2)} <span className="text-xl">GB</span>
                             </p>
