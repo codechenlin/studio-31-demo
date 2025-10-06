@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
         <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
+
 
 const storageData = {
   total: 15 * 1024, // 15 GB in MB
@@ -82,20 +83,23 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   const fullBreakdown = [...storageData.breakdown, { id: 'available', label: 'Disponible', value: available, color: 'from-gray-700 to-gray-600', icon: HardDrive }];
   
   const activeSection = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
-  const defaultDisplayData = { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
+  
+  const defaultDisplayData = { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-[#AD00EC] to-[#1700E6]', icon: HardDrive };
+  
   const displayData = activeSection || defaultDisplayData;
-
   const ActiveIcon = displayData.icon;
+  const valueInGB = displayData.value / 1024;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
           <DialogTitle className="sr-only">Detalles de Almacenamiento</DialogTitle>
           <DialogDescription className="sr-only">Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
-        <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-cyan-400/20">
+        <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-[#AD00EC]/20">
           {/* Section 1 */}
           <div className="flex flex-col p-6 bg-black/20">
-             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
+            <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
                <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)] opacity-50"/>
                <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
                   <Inbox />Desglose del Buzón
@@ -133,13 +137,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     <stop offset="0%" stopColor="#AD00EC" />
                     <stop offset="100%" stopColor="#1700E6" />
                   </linearGradient>
-                   <radialGradient id="storage-orb-gradient">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
-                        <stop offset="25%" stopColor="rgba(200,200,200,0)" />
-                    </radialGradient>
+                   <linearGradient id="shine-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="transparent" />
+                        <stop offset="40%" stopColor="rgba(255, 255, 255, 0.4)" />
+                        <stop offset="60%" stopColor="transparent" />
+                    </linearGradient>
                 </defs>
                 {/* Outer animated rings */}
-                <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
+                <motion.circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
                 <motion.circle
                   cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1"
                   strokeDasharray="1, 15"
@@ -154,14 +159,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 />
 
                 {/* Main progress track */}
-                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="16" />
+                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="18" />
                 
                 {/* Main progress bar */}
                 <motion.circle
                   cx="50" cy="50" r="42"
                   fill="transparent"
                   stroke="url(#storage-chart-gradient)"
-                  strokeWidth="16"
+                  strokeWidth="18"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 42}
                   initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
@@ -169,17 +174,29 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                   transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
                   transform="rotate(-90 50 50)"
                 />
+                 {/* Shine Animation */}
+                  <motion.circle
+                    cx="50" cy="50" r="42"
+                    fill="transparent"
+                    stroke="url(#shine-gradient)"
+                    strokeWidth="18"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 42 * 0.1} ${2 * Math.PI * 42 * 0.9}`}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                    transform="rotate(-90 50 50)"
+                />
                 
                 {/* Orbiter animation */}
                  <motion.circle
-                    cx="50" cy="50" r="42"
+                    cx="50" cy="50" r="32"
                     fill="transparent"
                     strokeWidth="1.5"
                     strokeLinecap="round"
-                    strokeDasharray={`1, ${2 * Math.PI * 42}`}
+                    strokeDasharray={`1, ${2 * Math.PI * 32}`}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                    style={{ stroke: 'url(#storage-orb-gradient)' }}
+                    style={{ stroke: 'url(#shine-gradient)' }}
                 />
               </motion.svg>
               
@@ -195,8 +212,8 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     >
                         {ActiveIcon && <ActiveIcon className="size-6 mb-1 text-cyan-300" />}
                         <p className="text-md font-bold">{displayData.label}</p>
-                        <p className="text-2xl font-bold font-mono text-cyan-300">
-                          {(displayData.value / 1024).toFixed(2)} <span className="text-lg">GB</span>
+                         <p className="text-2xl font-bold font-mono text-cyan-300">
+                          {valueInGB.toFixed(2)}<span className="text-lg ml-1">GB</span>
                         </p>
                         <p className="text-xs text-muted-foreground">{((displayData.value / storageData.total) * 100).toFixed(1)}%</p>
                     </motion.div>
@@ -220,7 +237,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
             </div>
           </div>
         </div>
-        <DialogFooter className="p-2 border-t border-cyan-400/20 bg-black/50">
+        <DialogFooter className="p-2 border-t border-[#AD00EC]/20 bg-black/50">
             <Button
               variant="ghost"
               size="icon"
