@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon } from 'lucide-react';
+import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -47,7 +47,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay }: {
       transition={{ delay }}
     >
       <div className="flex justify-between items-center text-xs">
-        <p className="font-semibold flex items-center gap-2"><Icon className="size-4" />{label}</p>
+        <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
         <p className="font-mono text-cyan-300/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
       </div>
       <div className="relative h-2 w-full bg-cyan-900/50 rounded-full overflow-hidden">
@@ -63,6 +63,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay }: {
               style={{
                 background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
                 animation: 'scan-glare 2s infinite ease-in-out',
+                animationDelay: `${delay}s`,
               }}
             />
           </div>
@@ -80,9 +81,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   const available = storageData.total - totalUsed;
   const fullBreakdown = [...storageData.breakdown, { id: 'available', label: 'Disponible', value: available, color: 'from-gray-700 to-gray-600', icon: HardDrive }];
   
-  const activeSectionData = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
+  const activeSection = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
   const defaultDisplayData = { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
-  const displayData = activeSectionData || defaultDisplayData;
+  const displayData = activeSection || defaultDisplayData;
 
   const ActiveIcon = displayData.icon;
 
@@ -90,17 +91,15 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden">
         <div className="sr-only">
-          <DialogHeader>
-            <DialogTitle>Detalles de Almacenamiento</DialogTitle>
-            <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
-          </DialogHeader>
+          <DialogTitle>Detalles de Almacenamiento</DialogTitle>
+          <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-cyan-400/20">
           {/* Section 1 */}
           <div className="flex flex-col p-6 bg-black/20">
-             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-tr from-primary/10 to-accent/10 border-b-2 border-primary/50">
+             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
                <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)] opacity-50"/>
-               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-cyan-300">
+               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
                   <Inbox />Desglose del Buzón
                </h3>
              </div>
@@ -113,9 +112,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
           
           {/* Section 2 */}
           <div className="flex flex-col p-6 bg-black/20">
-             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-tr from-primary/10 to-accent/10 border-b-2 border-primary/50">
+             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
                <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)] opacity-50"/>
-               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-cyan-300">
+               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
                   <FileText />Desglose de Contenido
                </h3>
              </div>
@@ -133,8 +132,8 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
               <motion.svg className="w-full h-full" viewBox="0 0 100 100">
                  <defs>
                   <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" />
+                    <stop offset="0%" stopColor="#AD00EC" />
+                    <stop offset="100%" stopColor="#1700E6" />
                   </linearGradient>
                 </defs>
                 <circle
@@ -158,7 +157,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                  <motion.circle
                     cx="50" cy="50" r="45"
                     fill="transparent"
-                    strokeWidth="6"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeDasharray={`1, ${2 * Math.PI * 45}`}
                     animate={{ rotate: 360 }}
@@ -166,10 +165,10 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     style={{ stroke: 'url(#storage-orb-gradient)' }}
                 >
                    <defs>
-                      <linearGradient id="storage-orb-gradient">
+                      <radialGradient id="storage-orb-gradient">
                         <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
                         <stop offset="25%" stopColor="rgba(200,200,200,0)" />
-                      </linearGradient>
+                      </radialGradient>
                     </defs>
                  </motion.circle>
               </motion.svg>
@@ -196,14 +195,17 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
             </div>
             
              <div className="space-y-4 text-center z-10 w-full">
-                 <div className="relative p-3 text-xs text-amber-200/90 bg-amber-900/20 rounded-lg border border-amber-500/30 overflow-hidden">
+                 <div className="relative p-3 text-xs text-amber-200/90 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden">
                     <div className="absolute inset-0 bg-grid-amber-500/10 [mask-image:radial-gradient(ellipse_at_center,white_10%,transparent_100%)] opacity-50"/>
-                     <p className="relative">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="size-8 text-amber-400 shrink-0"/>
+                      <p className="relative text-left">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
+                    </div>
                  </div>
-                <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-primary to-accent px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
-                     <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    <DatabaseZap className="mr-2"/>
-                    Aumentar Almacenamiento
+                <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
+                     <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-[#AD00EC] via-[#009AFF] to-[#AD00EC] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <DatabaseZap className="mr-2 text-white"/>
+                    <span className="text-white">Aumentar Almacenamiento</span>
                 </button>
             </div>
           </div>
@@ -220,4 +222,3 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     </Dialog>
   );
 }
-
