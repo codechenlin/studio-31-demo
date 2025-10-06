@@ -53,13 +53,13 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     const percentage = total > 0 ? (value / total) * 100 : 0;
     return (
         <motion.div
-            className="space-y-2"
+            className="space-y-2 group"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
         >
             <div className="flex justify-between items-center text-xs">
-                <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4" />{label}</p>
+                <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4 transition-colors duration-300 text-white/70 group-hover:text-[#AD00EC]" />{label}</p>
                 <p className="font-mono text-white/80">{value.toFixed(2)} MB <span className="text-white/50">({percentage.toFixed(1)}%)</span></p>
             </div>
             <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
@@ -69,7 +69,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
                 >
-                    <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
+                     <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
                         style={{
                             background: `radial-gradient(circle at 50% 50%, white, transparent 30%)`,
                             backgroundSize: '400% 100%',
@@ -81,109 +81,52 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     );
 };
 
-const CircularChart = ({ percentage, total, used, label, isMain = false, usedLast30Days }: { percentage: number; total: number; used: number; label: string; isMain?: boolean; usedLast30Days?: number }) => {
-    const radius = isMain ? 50 : 40;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (percentage / 100) * circumference;
 
-    const last30DaysPercentage = used > 0 ? ((usedLast30Days || 0) / used) * 100 : 0;
-    const innerRadius = radius - (isMain ? 10 : 8);
-    const innerCircumference = 2 * Math.PI * innerRadius;
-    const innerOffset = innerCircumference - (last30DaysPercentage / 100) * innerCircumference;
+const QuantumProgressBar = ({ used, total }: { used: number, total: number }) => {
+  const percentage = total > 0 ? (used / total) * 100 : 0;
 
-    return (
-        <div className="flex flex-col items-center gap-1">
-            <div className="relative w-28 h-28">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                    <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="60" cy="60" />
-                    <motion.circle
-                        className="text-white"
-                        stroke="url(#progressGradient)"
-                        strokeWidth={isMain ? "8" : "6"}
-                        strokeLinecap="round"
-                        fill="transparent"
-                        r={radius}
-                        cx="60"
-                        cy="60"
-                        initial={{ strokeDashoffset: circumference }}
-                        animate={{ strokeDashoffset: offset }}
-                        transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
-                        strokeDasharray={circumference}
-                    />
-                    
-                    {usedLast30Days !== undefined && (
-                        <>
-                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={innerRadius} cx="60" cy="60" />
-                         <motion.circle
-                            className="text-white"
-                            stroke="url(#progressGradient)"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            fill="transparent"
-                            r={innerRadius}
-                            cx="60"
-                            cy="60"
-                            initial={{ strokeDashoffset: innerCircumference }}
-                            animate={{ strokeDashoffset: innerOffset }}
-                            transition={{ duration: 1.5, ease: "circOut", delay: 0.4 }}
-                            strokeDasharray={innerCircumference}
-                         />
-                        </>
-                    )}
+  const particles = React.useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    duration: `${Math.random() * 5 + 3}s`,
+    delay: `${Math.random() * 5}s`,
+    size: `${Math.random() * 2 + 1}px`,
+  })), []);
 
-                    {Array.from({ length: isMain ? 4 : 2 }).map((_, i) => (
-                        <motion.circle
-                            key={i}
-                            cx="60"
-                            cy="60"
-                            r="1"
-                            fill="rgba(255, 255, 255, 0.8)"
-                            style={{ filter: 'drop-shadow(0 0 2px white)' }}
-                        >
-                            <animateMotion
-                                dur={`${2 + i * 0.5}s`}
-                                repeatCount="indefinite"
-                                path={`M 60, ${60 - radius} a ${radius},${radius} 0 1,0 0.001,0`}
-                            />
-                        </motion.circle>
-                    ))}
-                    {usedLast30Days !== undefined && Array.from({ length: 1 }).map((_, i) => (
-                        <motion.circle
-                            key={i}
-                            cx="60"
-                            cy="60"
-                            r="0.5"
-                            fill="rgba(255, 255, 255, 0.6)"
-                        >
-                            <animateMotion
-                                dur={`${3 + i * 0.5}s`}
-                                repeatCount="indefinite"
-                                path={`M 60, ${60-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0`}
-                            />
-                        </motion.circle>
-                    ))}
-                    <circle cx="60" cy="60" r={radius + (isMain ? 8 : 6)} stroke="url(#shineGradient)" strokeWidth="0.5" fill="none" strokeDasharray="100 400" className="animate-[hud-spin_10s_linear_infinite]" />
-                    <circle cx="60" cy="60" r={radius + (isMain ? 12 : 10)} stroke="url(#shineGradient)" strokeWidth="0.2" fill="none" strokeDasharray="10 50" className="animate-[hud-spin_15s_linear_infinite] [animation-direction:reverse]" />
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                     <span className="font-bold font-mono text-white leading-none text-xs">
-                        {(used / 1024).toFixed(2)}
-                        <span className="font-sans text-white/70 ml-0.5 text-[0.4rem]">GB</span>
-                    </span>
-                    {isMain && (
-                        <span className="text-[0.4rem] text-white/50">de {(total / 1024).toFixed(0)} GB</span>
-                    )}
-                    {usedLast30Days !== undefined && (
-                         <span className="text-[0.4rem] text-cyan-300/70 mt-0.5">
-                            ({(usedLast30Days / 1024).toFixed(2)} GB)
-                        </span>
-                    )}
-                </div>
-            </div>
-            <p className="text-[0.6rem] font-semibold text-white/90 text-center w-20">{label}</p>
+  return (
+    <div className="w-full text-center">
+      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-[#AD00EC]/30 overflow-hidden">
+        <motion.div
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1.5, ease: "circOut" }}
+        >
+          {/* Particle Animation */}
+          {particles.map(p => (
+            <div
+              key={p.id}
+              className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white/70"
+              style={{
+                width: p.size,
+                height: p.size,
+                left: p.left,
+                animation: `quantum-flow ${p.duration} ${p.delay} infinite linear`,
+                filter: 'blur(0.5px)',
+              }}
+            />
+          ))}
+        </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="font-bold text-lg text-white drop-shadow-lg">{percentage.toFixed(1)}% Usado</p>
         </div>
-    );
+      </div>
+      <div className="flex justify-between items-center mt-2 text-xs font-mono text-white/80">
+        <p>Total Usado: <span className="font-bold text-white">{(used / 1024).toFixed(2)} GB</span></p>
+        <p>Disponible: <span className="font-bold text-white">{((total - used) / 1024).toFixed(2)} GB</span></p>
+      </div>
+    </div>
+  );
 };
 
 
@@ -192,21 +135,18 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+                <style>{`
+                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+                    .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
+                    @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
+                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    @keyframes quantum-flow {
+                        0% { transform: translateX(0) scale(1); opacity: 0; }
+                        50% { opacity: 1; }
+                        100% { transform: translateX(50px) scale(0.5); opacity: 0; }
+                    }
+                `}</style>
                 
-                <svg width="0" height="0" className="absolute">
-                    <defs>
-                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#AD00EC" />
-                            <stop offset="100%" stopColor="#1700E6" />
-                        </linearGradient>
-                        <linearGradient id="shineGradient">
-                            <stop offset="0%" stopColor="white" stopOpacity="0.5" />
-                            <stop offset="50%" stopColor="white" stopOpacity="1" />
-                            <stop offset="100%" stopColor="white" stopOpacity="0.5" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-
                 <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
@@ -214,25 +154,18 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                             <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
                         </DialogTitle>
                     </DialogHeader>
-                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white hover:bg-white/10">
-                        <X className="size-5"/>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white hover:bg-white/10 border border-white/50">
+                        <X className="size-5 text-white"/>
                     </Button>
                 </div>
-
-                <style>{`
-                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-                    .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
-                    @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
-                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
                 
-
                 <div className="flex flex-col">
+                    {/* Top Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
                         {storageData.sections.map(section => (
                             <div key={section.id} className="bg-black/30 p-6">
-                                <div className="relative text-center mb-4 p-3 rounded-lg bg-gradient-to-r from-[#AD00EC]/20 to-[#1700E6]/20 border border-[#AD00EC]/30">
-                                    <h3 className="font-bold text-lg flex items-center justify-center gap-2 text-white">
+                                <div className="relative text-left mb-4 p-3 rounded-lg bg-gradient-to-r from-[#AD00EC]/20 to-[#1700E6]/20 border border-[#AD00EC]/30">
+                                    <h3 className="font-bold text-lg flex items-center gap-2 text-white">
                                         <section.icon className="size-5" />
                                         {section.label}
                                     </h3>
@@ -246,22 +179,10 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         ))}
                     </div>
 
-                    <div className="p-4 border-t border-[#AD00EC]/20 bg-black/50 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
-                        <div className="md:col-span-2 flex justify-around items-center">
-                            <CircularChart 
-                                percentage={(totalUsed / storageData.total) * 100} 
-                                total={storageData.total} 
-                                used={totalUsed}
-                                label="Total Usado"
-                                isMain
-                            />
-                            <CircularChart 
-                                percentage={(4500 / totalUsed) * 100} 
-                                total={totalUsed} 
-                                used={4500}
-                                label="Uso Reciente (30 días)"
-                                usedLast30Days={4500}
-                            />
+                    {/* Bottom Section */}
+                    <div className="p-6 border-t border-[#AD00EC]/20 bg-black/50 grid grid-cols-1 md:grid-cols-3 items-center gap-6">
+                        <div className="md:col-span-2">
+                           <QuantumProgressBar used={totalUsed} total={storageData.total} />
                         </div>
                         <div className="flex flex-col gap-3">
                             <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
