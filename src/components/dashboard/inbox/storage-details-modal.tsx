@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -86,12 +86,13 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
     const offset = circumference - (percentage / 100) * circumference;
 
     const last30DaysPercentage = used > 0 ? ((usedLast30Days || 0) / used) * 100 : 0;
-    const innerCircumference = 2 * Math.PI * (radius - 10);
+    const innerRadius = isMain ? radius - 10 : radius - 8;
+    const innerCircumference = 2 * Math.PI * innerRadius;
     const innerOffset = innerCircumference - (last30DaysPercentage / 100) * innerCircumference;
 
     return (
         <div className="flex flex-col items-center gap-1">
-            <div className={cn("relative", isMain ? "w-32 h-32" : "w-28 h-28")}>
+            <div className={cn("relative", isMain ? "w-28 h-28" : "w-24 h-24")}>
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="8" fill="transparent" r={radius} cx="50" cy="50" />
                      <motion.circle
@@ -112,14 +113,14 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                     {/* Inner circle for last 30 days */}
                     {usedLast30Days !== undefined && (
                         <>
-                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={radius - 10} cx="50" cy="50" />
+                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={innerRadius} cx="50" cy="50" />
                          <motion.circle
                             className="text-white"
                             stroke="url(#progressGradient)"
                             strokeWidth="3"
                             strokeLinecap="round"
                             fill="transparent"
-                            r={radius-10}
+                            r={innerRadius}
                             cx="50"
                             cy="50"
                             initial={{ strokeDashoffset: innerCircumference }}
@@ -143,22 +144,37 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${2 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M 50, 5 A ${radius},${radius} 0 1,1 49.99,5 Z`}
+                                path={`M 50,${50-radius} A ${radius},${radius} 0 1,1 49.99,${50-radius} Z`}
+                            />
+                        </motion.circle>
+                    ))}
+                    {usedLast30Days !== undefined && Array.from({ length: 2 }).map((_, i) => (
+                        <motion.circle
+                            key={i}
+                            cx="50"
+                            cy="50"
+                            r="1"
+                            fill="rgba(255, 255, 255, 0.6)"
+                        >
+                            <animateMotion
+                                dur={`${3 + i * 0.5}s`}
+                                repeatCount="indefinite"
+                                path={`M 50,${50-innerRadius} A ${innerRadius},${innerRadius} 0 1,1 49.99,${50-innerRadius} Z`}
                             />
                         </motion.circle>
                     ))}
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className={cn("font-bold font-mono text-white leading-none", isMain ? "text-2xl" : "text-xl")}>
+                    <span className={cn("font-bold font-mono text-white leading-none", isMain ? "text-xl" : "text-lg")}>
                         {(used / 1024).toFixed(2)}
-                        <span className={cn("font-sans text-white/70 ml-1", isMain ? "text-base" : "text-sm")}>GB</span>
+                        <span className={cn("font-sans text-white/70 ml-1", isMain ? "text-sm" : "text-xs")}>GB</span>
                     </span>
                     {isMain && (
                         <span className="text-xs text-white/50">de {(total / 1024).toFixed(0)} GB</span>
                     )}
                     {usedLast30Days !== undefined && (
-                         <span className="text-xs text-cyan-300/70 mt-1">
+                         <span className="text-[10px] text-cyan-300/70 mt-0.5">
                             ({(usedLast30Days / 1024).toFixed(2)} GB)
                         </span>
                     )}
@@ -175,7 +191,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
-                <DialogHeader className="p-4 border-b border-[#AD00EC]/20 bg-black/50 sr-only">
+                <DialogHeader className="sr-only">
                     <DialogTitle>Diagnóstico de Almacenamiento</DialogTitle>
                 </DialogHeader>
 
@@ -203,7 +219,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         <HardDrive className="size-6 text-[#AD00EC]"/>
                         <h2 className="font-semibold text-xl">Diagnóstico de Almacenamiento</h2>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 border border-white text-white hover:bg-white/10" onClick={() => onOpenChange(false)}>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 border border-white text-white hover:bg-white/10" onClick={() => onOpenChange(false)}>
                         <X className="size-4" />
                     </Button>
                 </div>
@@ -262,5 +278,3 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
         </Dialog>
     );
 }
-
-    
