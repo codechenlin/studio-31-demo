@@ -252,35 +252,32 @@ export default function DemoPage() {
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--destructive))' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <XCircle style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '1px', borderRadius: '9999px' }}/>
+                    <div className="text-blue-400">
+                        <Users2 size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--primary))' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <DollarSign style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '2px', borderRadius: '9999px' }}/>
+                    <div className="text-green-400">
+                       <UserPlus size={32} />
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-green-500">
-                        <Gift size={32} />
+                    <div className="text-orange-400">
+                        <ShoppingBag size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-purple-500">
-                        <Tags size={32} />
+                    <div className="text-red-400">
+                        <Gift size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
-                    <div style={{ position: 'relative', width: 32, height: 32, color: 'hsl(var(--accent))' }}>
-                        <Mail style={{ position: 'absolute' }} size={32} />
-                        <Users style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0', backgroundColor: 'hsl(var(--card))', padding: '2px', borderRadius: '9999px' }}/>
+                    <div className="text-purple-400">
+                        <Megaphone size={32} />
                     </div>
                     <span className="font-mono text-xs">5</span>
                 </div>
@@ -309,6 +306,18 @@ export default function DemoPage() {
                         <Gift size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-teal-500">
+                        <Receipt size={32} />
+                    </div>
+                    <span className="font-mono text-xs">5</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="text-orange-500">
+                        <ScrollText size={32} />
+                    </div>
+                    <span className="font-mono text-xs">6</span>
                 </div>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
@@ -391,6 +400,8 @@ export default function DemoPage() {
         </>
     );
 }
+    
+
     
 
     
