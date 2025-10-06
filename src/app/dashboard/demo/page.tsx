@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -253,33 +253,9 @@ export default function DemoPage() {
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-blue-400">
-                        <Users size={32} />
+                        <LayoutTemplate size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-green-400">
-                       <UserPlus size={32} />
-                    </div>
-                    <span className="font-mono text-xs">2</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-orange-400">
-                        <UserCog size={32} />
-                    </div>
-                    <span className="font-mono text-xs">3</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-red-400">
-                        <Mail size={32} />
-                    </div>
-                    <span className="font-mono text-xs">4</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-purple-400">
-                        <Share2 size={32} />
-                    </div>
-                    <span className="font-mono text-xs">5</span>
                 </div>
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
