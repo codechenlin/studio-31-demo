@@ -38,9 +38,9 @@ const storageData = {
       items: [
         { id: 'images', label: 'Imágenes', value: 1843.20, color: 'from-[#1700E6] to-[#009AFF]', icon: ImageIcon },
         { id: 'gifs', label: 'GIFs', value: 921.60, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
-        { id: 'templates', label: 'Plantillas', value: 1228.80, color: 'from-[#1700E6] to-[#009AFF]', icon: LayoutTemplate },
+        { id: 'templates', label: 'Plantillas', value: 1536.00, color: 'from-[#1700E6] to-[#009AFF]', icon: LayoutTemplate },
         { id: 'lists', label: 'Listas', value: 307.20, color: 'from-[#1700E6] to-[#009AFF]', icon: Share2 },
-        { id: 'campaigns', label: 'Campañas', value: 1536.00, color: 'from-[#1700E6] to-[#009AFF]', icon: Gift },
+        { id: 'campaigns', label: 'Campañas', value: 1228.80, color: 'from-[#1700E6] to-[#009AFF]', icon: Gift },
       ]
     }
   ]
@@ -175,7 +175,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     </div>
 
                     {/* Bottom Section */}
-                    <div className="p-6 bg-black/30">
+                    <div className="p-6 bg-background">
                         <QuantumProgressBar used={totalUsed} total={storageData.total} />
                          <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
                             <Eye className="size-10 shrink-0 text-amber-300"/>
