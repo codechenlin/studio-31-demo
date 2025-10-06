@@ -51,7 +51,7 @@ import {
   DollarSign,
   Mail,
   Tag,
-  User,
+  User as UserIcon,
   ShoppingCart,
   Gift,
 } from "lucide-react";
