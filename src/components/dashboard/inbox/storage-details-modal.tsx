@@ -4,9 +4,10 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, Image as ImageIcon, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, SocialIcon, AlertCircle, X, Film, Box } from 'lucide-react';
+import { HardDrive, Inbox, FileText, Image as ImageIcon, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Box, X, Film, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Separator } from '../ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -46,7 +47,7 @@ const storageData = {
   ]
 };
 
-const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay, onHover }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number, onHover: () => void }) => {
+const SectionItem = ({ label, value, total, color, icon: Icon, delay }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number }) => {
   const percentage = (value / total) * 100;
 
   return (
@@ -55,11 +56,10 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay, onH
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay }}
-      onMouseEnter={onHover}
     >
       <div className="flex justify-between items-center text-xs">
         <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
-        <p className="font-mono text-white">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
+        <p className="font-mono text-cyan-300/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
       </div>
       <div className="relative h-2 w-full bg-cyan-900/50 rounded-full overflow-hidden">
         <motion.div
@@ -86,20 +86,23 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay, onH
 
 
 export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>('inbox');
+  const [hoveredItem, setHoveredItem] = useState<any | null>(null);
 
   const totalUsed = storageData.sections.flatMap(s => s.items).reduce((acc, item) => acc + item.value, 0);
-
-  const allItems = storageData.sections.flatMap(s => s.items);
-  const hoveredItem = hoveredId ? allItems.find(item => item.id === hoveredId) : null;
+  const totalPercentage = (totalUsed / storageData.total) * 100;
   
-  const displayData = hoveredItem || { id: 'total', label: 'Total Usado', value: totalUsed, icon: HardDrive };
-  const valueInGB = displayData.value / 1024;
+  const displayData = hoveredItem || { 
+    label: 'Total Usado', 
+    value: totalUsed,
+    icon: HardDrive 
+  };
+  const displayPercentage = (displayData.value / storageData.total) * 100;
   const DisplayIcon = displayData.icon;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-950/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+      <DialogContent className="max-w-5xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-950/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
         <DialogHeader className="sr-only">
             <DialogTitle>Detalles de Almacenamiento</DialogTitle>
             <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
@@ -112,138 +115,142 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
               100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
             }
              @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+             .particle { position: absolute; width: var(--size); height: var(--size); background: radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 70%); border-radius: 50%; animation: particle-float var(--duration) linear infinite; }
+             @keyframes particle-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100vh); opacity: 0; } }
+             .info-grid { background-image: linear-gradient(to right, hsl(283 100% 55% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(283 100% 55% / 0.1) 1px, transparent 1px); background-size: 2rem 2rem; }
         `}</style>
-        <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-[#AD00EC]/20">
-          {storageData.sections.map((section, sectionIndex) => (
-            <div key={section.id} className="flex flex-col p-6 bg-black/20" onMouseLeave={() => setHoveredId(null)}>
-              <motion.div 
-                className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * sectionIndex }}
-              >
-               <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
-               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
-                  <section.icon />{section.label}
-               </h3>
-             </motion.div>
-              <div className="space-y-4">
-                {section.items.map((item, index) => (
-                  <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1} onHover={() => setHoveredId(item.id)} />
-                ))}
-              </div>
+
+        <div className="relative flex flex-col flex-1 p-6 md:p-8">
+            <div className="absolute inset-0 info-grid opacity-50"/>
+            <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-950 to-black"/>
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between mb-6">
+                <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+                    <HardDrive className="text-primary"/>
+                    Gestión de Almacenamiento Neuronal
+                </DialogTitle>
+                 <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-0 right-0 h-8 w-8 border border-white text-white hover:border-white hover:bg-white/10"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <X className="size-4" />
+                </Button>
             </div>
-          ))}
 
-          {/* Section 3 */}
-          <div className="flex flex-col p-6 bg-black/30 relative items-center justify-center gap-6">
-             <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
-            <div className="relative w-48 h-48">
-              <motion.svg className="w-full h-full" viewBox="0 0 100 100">
-                 {/* Outer animated rings */}
-                <motion.circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
-                <motion.circle
-                  cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1"
-                  strokeDasharray="1, 15"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                />
-                 <motion.circle
-                  cx="50" cy="50" r="38" fill="none" stroke="hsl(var(--accent) / 0.2)" strokeWidth="1"
-                  strokeDasharray="1, 10"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-                />
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+                {/* Main Storage Core */}
+                <div className="lg:col-span-1 flex flex-col items-center justify-center p-6 bg-black/30 rounded-2xl border border-primary/20">
+                     <div className="relative w-48 h-48" onMouseLeave={() => setHoveredItem(null)}>
+                          <motion.svg className="w-full h-full" viewBox="0 0 100 100">
+                             <defs>
+                                <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop offset="0%" stopColor="#AD00EC" />
+                                  <stop offset="100%" stopColor="#1700E6" />
+                                </linearGradient>
+                                <linearGradient id="shine-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
+                                    <stop offset="50%" stopColor="rgba(255,255,255,0)" />
+                                    <stop offset="100%" stopColor="rgba(255,255,255,0.8)" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
+                            <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.15)" strokeWidth="12" />
+                            <motion.circle
+                              cx="50" cy="50" r="42" fill="transparent" stroke="url(#storage-chart-gradient)" strokeWidth="12"
+                              strokeLinecap="round" strokeDasharray={2 * Math.PI * 42}
+                              initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                              animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (displayPercentage / 100)) }}
+                              transition={{ duration: 1, ease: "easeInOut" }}
+                              transform="rotate(-90 50 50)"
+                            />
+                            <motion.circle
+                                cx="50" cy="50" r="42" fill="transparent" stroke="url(#shine-gradient)" strokeWidth="1"
+                                strokeLinecap="round" strokeDasharray={`1 ${2 * Math.PI * 42}`}
+                                animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                                transform="rotate(-90 50 50)"
+                            />
+                             <motion.circle cx="50" cy="50" r="32" fill="none" stroke="hsl(var(--accent) / 0.2)" strokeWidth="1" strokeDasharray="1, 10" animate={{ rotate: -360 }} transition={{ duration: 15, repeat: Infinity, ease: 'linear' }} />
+                          </motion.svg>
+                          
+                           <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                              <AnimatePresence mode="wait">
+                                <motion.div
+                                  key={displayData.id}
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="flex flex-col items-center justify-center"
+                                >
+                                    <DisplayIcon className="size-6 mb-1 text-cyan-300" />
+                                    <p className="text-md font-bold">{displayData.label}</p>
+                                    <p className="text-2xl font-bold font-mono text-cyan-300">
+                                      {displayData.value < 1024 ? displayData.value.toFixed(0) : (displayData.value/1024).toFixed(2)}
+                                      <span className="text-lg ml-1">{displayData.value < 1024 ? 'MB' : 'GB'}</span>
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">{displayPercentage.toFixed(1)}%</p>
+                                </motion.div>
+                              </AnimatePresence>
+                            </div>
+                        </div>
+                        <div className="mt-6 text-center">
+                          <p className="text-sm text-muted-foreground">Capacidad Total: {(storageData.total/1024).toFixed(2)} GB</p>
+                        </div>
+                </div>
 
-                {/* Main progress track */}
-                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="18" />
-                
-                {/* Main progress bar */}
-                <motion.circle
-                  cx="50" cy="50" r="42"
-                  fill="transparent"
-                  stroke="url(#storage-chart-gradient)"
-                  strokeWidth="18"
-                  strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 42}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (totalUsed / storageData.total)) }}
-                  transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
-                  transform="rotate(-90 50 50)"
-                />
-                 {/* Shine Animation */}
-                  <motion.circle
-                    cx="50" cy="50" r="42"
-                    fill="transparent"
-                    stroke="url(#shine-gradient)"
-                    strokeWidth="18"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 42 * 0.1} ${2 * Math.PI * 42 * 0.9}`}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                    transform="rotate(-90 50 50)"
-                />
-                
-                 {/* Orbiter animation */}
-                 <motion.circle
-                    cx="50" cy="50" r="32"
-                    fill="transparent"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeDasharray={`1, ${2 * Math.PI * 32}`}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                    style={{ stroke: 'url(#shine-gradient)' }}
-                />
-              </motion.svg>
-              
-               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={displayData.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex flex-col items-center justify-center"
-                    >
-                        {DisplayIcon && <DisplayIcon className="size-6 mb-1 text-cyan-300" />}
-                        <p className="text-md font-bold">{displayData.label}</p>
-                         <p className="text-2xl font-bold font-mono text-cyan-300">
-                          {valueInGB.toFixed(2)}<span className="text-lg ml-1">GB</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">{((displayData.value / storageData.total) * 100).toFixed(1)}%</p>
-                    </motion.div>
-                  </AnimatePresence>
+                {/* Categories Breakdown */}
+                <div className="lg:col-span-2 space-y-6">
+                    {storageData.sections.map((section) => (
+                         <motion.div
+                           key={section.id}
+                           className="p-4 bg-black/30 rounded-lg border border-primary/20"
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                         >
+                            <button className="w-full text-left" onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-semibold flex items-center gap-2">
+                                        <section.icon className="text-primary"/>{section.label}
+                                    </h3>
+                                    {expandedSection === section.id ? <ChevronUp/> : <ChevronDown/>}
+                                </div>
+                            </button>
+                            <AnimatePresence>
+                            {expandedSection === section.id && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                    animate={{ height: 'auto', opacity: 1, marginTop: '16px' }}
+                                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="overflow-hidden"
+                                >
+                                    <Separator className="bg-primary/20 mb-4"/>
+                                    <div className="space-y-4">
+                                        {section.items.map((item, index) => (
+                                            <SectionItem key={item.id} {...item} total={storageData.total} delay={index * 0.1} onHover={() => setHoveredItem(item)}/>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                            </AnimatePresence>
+                         </motion.div>
+                    ))}
+                    <div className="relative text-xs text-amber-200/90 p-4 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden">
+                        <div className="absolute inset-0 bg-grid-amber-500/10 [mask-image:radial-gradient(ellipse_at_center,white_10%,transparent_100%)] opacity-50"/>
+                        <p className="relative">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
+                    </div>
+                     <div className="flex justify-center pt-2">
+                        <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
+                            <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-[#AD00EC] via-[#009AFF] to-[#AD00EC] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                            <DatabaseZap className="mr-2 text-white"/>
+                            <span className="text-white">Aumentar Almacenamiento</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-             <div className="space-y-4 text-center z-10 w-full">
-                 <div className="relative p-3 text-xs text-amber-200/90 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden">
-                    <div className="absolute inset-0 bg-grid-amber-500/10 [mask-image:radial-gradient(ellipse_at_center,white_10%,transparent_100%)] opacity-50"/>
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="size-8 text-amber-400 shrink-0"/>
-                      <p className="relative text-left">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
-                    </div>
-                 </div>
-                <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
-                     <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-[#AD00EC] via-[#009AFF] to-[#AD00EC] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    <DatabaseZap className="mr-2 text-white"/>
-                    <span className="text-white">Aumentar Almacenamiento</span>
-                </button>
-            </div>
-          </div>
         </div>
-        <DialogFooter className="p-2 border-t border-[#AD00EC]/20 bg-black/50">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-3 right-3 h-8 w-8 border border-white text-white hover:border-white hover:bg-white/10"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="size-4" />
-            </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
