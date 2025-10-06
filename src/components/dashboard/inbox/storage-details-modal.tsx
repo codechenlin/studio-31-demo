@@ -1,13 +1,13 @@
 
+
 "use client";
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -69,7 +69,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
                 >
-                     <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
+                    <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
                         style={{
                             background: `radial-gradient(circle at 50% 50%, white, transparent 30%)`,
                             backgroundSize: '400% 100%',
@@ -88,11 +88,15 @@ const QuantumProgressBar = ({ used, total }: { used: number, total: number }) =>
     <div className="w-full text-center">
       <div className="relative h-8 w-full bg-black/30 rounded-lg border border-[#AD00EC]/30 overflow-hidden">
         <motion.div
-          className="progress-bar-shine absolute top-0 left-0 h-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
+          className="absolute top-0 left-0 h-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 1.5, ease: "circOut" }}
-        />
+        >
+          <div className="h-full w-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6] relative overflow-hidden">
+             <div className="progress-bar-shine absolute top-0 left-0 w-full h-full" />
+          </div>
+        </motion.div>
         <div className="absolute inset-0 flex items-center justify-center">
           <p className="font-bold text-lg text-white drop-shadow-lg">{percentage.toFixed(1)}% Usado</p>
         </div>
@@ -110,36 +114,39 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
-                    @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
-                    @keyframes quantum-flow {
-                        0% { transform: translateX(0) scale(1); opacity: 0; }
-                        50% { opacity: 1; }
-                        100% { transform: translateX(50px) scale(0.5); opacity: 0; }
-                    }
-                    @keyframes light-scan {
-                      0% { left: -100%; }
-                      100% { left: 100%; }
-                    }
                     .progress-bar-shine::after {
                         content: '';
                         position: absolute;
                         top: 0;
-                        left: -100%;
+                        left: 0;
                         width: 50%;
                         height: 100%;
                         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
                         animation: light-scan 2.5s infinite linear;
+                    }
+                    @keyframes light-scan {
+                      0% { transform: translateX(-100%); }
+                      100% { transform: translateX(200%); }
+                    }
+                     @keyframes led-glow {
+                        0%, 100% { box-shadow: 0 0 5px 2px hsl(var(--primary)/0.4); }
+                        50% { box-shadow: 0 0 15px 5px hsl(var(--primary)/0.7); }
+                    }
+                    .led-animation {
+                        animation: led-glow 2s infinite ease-in-out;
                     }
                 `}</style>
                 
                 <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
-                            <HardDrive className="size-6 text-[#AD00EC]"/>
+                             <div className="relative p-2 rounded-full bg-primary/20 led-animation">
+                                <HardDrive className="size-6 text-primary"/>
+                            </div>
                             <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
                         </DialogTitle>
                     </DialogHeader>
@@ -148,7 +155,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     </Button>
                 </div>
                 
-                <div className="flex flex-col">
+                <div className="flex-1 flex flex-col gap-px bg-[#AD00EC]/20">
                     {/* Top Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
                         {storageData.sections.map(section => (
@@ -169,17 +176,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     </div>
 
                     {/* Bottom Section */}
-                    <div className="p-6 border-t border-[#AD00EC]/20 bg-black/50 grid grid-cols-1 md:grid-cols-3 items-center gap-6">
-                        <div className="md:col-span-2">
-                           <QuantumProgressBar used={totalUsed} total={storageData.total} />
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
-                                <p className="text-xs text-amber-200/90">
-                                   Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
-                                </p>
-                            </div>
-                            <Button className="group relative w-full h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC]">
+                    <div className="p-6 bg-black/30">
+                        <QuantumProgressBar used={totalUsed} total={storageData.total} />
+                         <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
+                            <Eye className="size-10 shrink-0 text-amber-300"/>
+                            <p className="text-xs text-amber-200/90 flex-1">
+                                Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
+                            </p>
+                            <Button className="group relative h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC] shrink-0">
                                 <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
                                 <DatabaseZap className="mr-2"/>
                                 Aumentar Almacenamiento
