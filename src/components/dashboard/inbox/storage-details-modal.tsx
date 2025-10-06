@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon, AlertCircle } from 'lucide-react';
+import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -48,7 +48,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay }: {
     >
       <div className="flex justify-between items-center text-xs">
         <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
-        <p className="font-mono text-cyan-300/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
+        <p className="font-mono text-white">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
       </div>
       <div className="relative h-2 w-full bg-cyan-900/50 rounded-full overflow-hidden">
         <motion.div
@@ -90,10 +90,10 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden">
-        <div className="sr-only">
+        <DialogHeader className="sr-only">
           <DialogTitle>Detalles de Almacenamiento</DialogTitle>
           <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
-        </div>
+        </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-cyan-400/20">
           {/* Section 1 */}
           <div className="flex flex-col p-6 bg-black/20">
@@ -128,49 +128,62 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
           {/* Section 3 */}
           <div className="flex flex-col p-6 bg-black/30 relative items-center justify-center gap-6">
              <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
-            <div className="relative w-40 h-40">
+            <div className="relative w-48 h-48">
               <motion.svg className="w-full h-full" viewBox="0 0 100 100">
                  <defs>
                   <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#AD00EC" />
                     <stop offset="100%" stopColor="#1700E6" />
                   </linearGradient>
+                   <radialGradient id="storage-orb-gradient">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
+                        <stop offset="25%" stopColor="rgba(200,200,200,0)" />
+                    </radialGradient>
                 </defs>
-                <circle
-                  cx="50" cy="50" r="45"
-                  fill="transparent"
-                  stroke="hsl(var(--primary) / 0.1)"
-                  strokeWidth="6"
-                />
+                {/* Outer animated rings */}
+                <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
+                <circle cx="50" cy="50" r="38" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
                 <motion.circle
-                  cx="50" cy="50" r="45"
+                  cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1"
+                  strokeDasharray="1, 15"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                />
+                 <motion.circle
+                  cx="50" cy="50" r="38" fill="none" stroke="hsl(var(--accent) / 0.2)" strokeWidth="1"
+                  strokeDasharray="1, 10"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+                />
+
+                {/* Main progress track */}
+                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="12" />
+                
+                {/* Main progress bar */}
+                <motion.circle
+                  cx="50" cy="50" r="42"
                   fill="transparent"
                   stroke="url(#storage-chart-gradient)"
-                  strokeWidth="6"
+                  strokeWidth="12"
                   strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 45}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - (totalUsed / storageData.total)) }}
+                  strokeDasharray={2 * Math.PI * 42}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (totalUsed / storageData.total)) }}
                   transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
                   transform="rotate(-90 50 50)"
                 />
+                
+                {/* Orbiter animation */}
                  <motion.circle
-                    cx="50" cy="50" r="45"
+                    cx="50" cy="50" r="42"
                     fill="transparent"
                     strokeWidth="1.5"
                     strokeLinecap="round"
-                    strokeDasharray={`1, ${2 * Math.PI * 45}`}
+                    strokeDasharray={`1, ${2 * Math.PI * 42}`}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                     style={{ stroke: 'url(#storage-orb-gradient)' }}
-                >
-                   <defs>
-                      <radialGradient id="storage-orb-gradient">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
-                        <stop offset="25%" stopColor="rgba(200,200,200,0)" />
-                      </radialGradient>
-                    </defs>
-                 </motion.circle>
+                />
               </motion.svg>
               
                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
@@ -185,8 +198,8 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     >
                         {ActiveIcon && <ActiveIcon className="size-6 mb-1 text-cyan-300" />}
                         <p className="text-md font-bold">{displayData.label}</p>
-                        <p className="text-2xl font-bold font-mono text-cyan-300">
-                          {(displayData.value / 1024).toFixed(2)} <span className="text-lg">GB</span>
+                        <p className="text-3xl font-bold font-mono text-cyan-300">
+                          {(displayData.value / 1024).toFixed(2)} <span className="text-xl">GB</span>
                         </p>
                         <p className="text-xs text-muted-foreground">{((displayData.value / storageData.total) * 100).toFixed(1)}%</p>
                     </motion.div>
@@ -210,6 +223,16 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
             </div>
           </div>
         </div>
+        <DialogFooter className="p-2 border-t border-cyan-400/20 bg-black/50">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-3 right-3 h-8 w-8 border border-white text-white hover:bg-[#F00000] hover:text-white hover:border-[#F00000]"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="size-4" />
+            </Button>
+        </DialogFooter>
         <style jsx>{`
             @keyframes scan-glare {
               0% { transform: translateX(-100%) skewX(-30deg); opacity: 0; }
