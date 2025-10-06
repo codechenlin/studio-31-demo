@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -59,7 +59,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
         >
             <div className="flex justify-between items-center text-xs">
                 <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4" />{label}</p>
-                <p className="font-mono text-white/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
+                <p className="font-mono text-white/80">{value.toFixed(2)} MB</p>
             </div>
             <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
                 <motion.div
@@ -67,13 +67,14 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
-                />
-                 <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
-                    style={{
-                        background: `radial-gradient(circle at 50% 50%, white, transparent 30%)`,
-                        backgroundSize: '400% 100%',
-                    }}
-                />
+                >
+                    <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
+                        style={{
+                            background: `radial-gradient(circle at 50% 50%, white, transparent 30%)`,
+                            backgroundSize: '400% 100%',
+                        }}
+                    />
+                </motion.div>
             </div>
         </motion.div>
     );
@@ -109,7 +110,6 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                         strokeDasharray={circumference}
                      />
                     
-                    {/* Inner circle for last 30 days */}
                     {usedLast30Days !== undefined && (
                         <>
                          <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={innerRadius} cx="50" cy="50" />
@@ -130,7 +130,6 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                         </>
                     )}
 
-                    {/* Particle Animation */}
                     {Array.from({ length: isMain ? 4 : 2 }).map((_, i) => (
                         <motion.circle
                             key={i}
@@ -143,7 +142,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${2 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M 50,${50-radius} A ${radius},${radius} 0 1,1 49.99,${50-radius} Z`}
+                                path={`M50,${50 - radius} a ${radius},${radius} 0 1,0 0.001,0 z`}
                             />
                         </motion.circle>
                     ))}
@@ -158,7 +157,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${3 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M 50,${50-innerRadius} A ${innerRadius},${innerRadius} 0 1,1 49.99,${50-innerRadius} Z`}
+                                path={`M50,${50-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0 z`}
                             />
                         </motion.circle>
                     ))}
@@ -167,15 +166,15 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                     <span className="font-bold font-mono text-white leading-none text-base">
+                     <span className="font-bold font-mono text-white leading-none text-xs">
                         {(used / 1024).toFixed(2)}
-                        <span className="font-sans text-white/70 ml-0.5 text-[0.5rem]">GB</span>
+                        <span className="font-sans text-white/70 ml-0.5 text-[0.4rem]">GB</span>
                     </span>
                     {isMain && (
-                        <span className="text-[0.5rem] text-white/50">de {(total / 1024).toFixed(0)} GB</span>
+                        <span className="text-[0.4rem] text-white/50">de {(total / 1024).toFixed(0)} GB</span>
                     )}
                     {usedLast30Days !== undefined && (
-                         <span className="text-[0.5rem] text-cyan-300/70 mt-0.5">
+                         <span className="text-[0.4rem] text-cyan-300/70 mt-0.5">
                             ({(usedLast30Days / 1024).toFixed(2)} GB)
                         </span>
                     )}
@@ -192,10 +191,17 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>Diagnóstico de Almacenamiento</DialogTitle>
-                </DialogHeader>
-
+                <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                            <HardDrive className="size-6 text-[#AD00EC]"/>
+                            <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="size-8 rounded-full border border-white hover:bg-white/20">
+                      <X className="size-4" />
+                    </Button>
+                </div>
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
@@ -203,7 +209,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 `}</style>
                 <svg width="0" height="0" className="absolute">
-                     <defs>
+                    <defs>
                          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" stopColor="#AD00EC" />
                             <stop offset="100%" stopColor="#1700E6" />
@@ -215,13 +221,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         </linearGradient>
                     </defs>
                 </svg>
-
-                 <div className="flex items-center justify-between p-4 border-b border-[#AD00EC]/20 bg-black/50">
-                    <div className="flex items-center gap-3">
-                        <HardDrive className="size-6 text-[#AD00EC]"/>
-                        <h2 className="font-semibold text-xl">Diagnóstico de Almacenamiento</h2>
-                    </div>
-                </div>
 
                 <div className="flex flex-col">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
