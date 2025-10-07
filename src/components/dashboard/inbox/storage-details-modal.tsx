@@ -61,7 +61,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                 <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4 text-white/70" />{label}</p>
                 <p className="font-mono text-white/80">{value.toFixed(2)} MB <span className="text-white/50">({percentage.toFixed(1)}%)</span></p>
             </div>
-            <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
+            <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-primary/20">
                 <motion.div
                     className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
                     initial={{ width: 0 }}
@@ -80,19 +80,19 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     );
 };
 
-const QuantumProgressBar = ({ used, total }: { used: number, total: number }) => {
+const QuantumProgressBar = ({ used, total, themeColors }: { used: number, total: number, themeColors: [string, string] }) => {
   const percentage = total > 0 ? (used / total) * 100 : 0;
 
   return (
     <div className="w-full text-center">
-      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-[#AD00EC]/30 overflow-hidden">
+      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-primary/30 overflow-hidden">
         <motion.div
           className="absolute top-0 left-0 h-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 1.5, ease: "circOut" }}
         >
-          <div className="h-full w-full bg-gradient-to-r from-[#AD00EC] to-[#1700E6] relative overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r" style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1]} as React.CSSProperties}>
              <div className="progress-bar-shine absolute top-0 left-0 w-full h-full" />
           </div>
         </motion.div>
@@ -109,11 +109,13 @@ const QuantumProgressBar = ({ used, total }: { used: number, total: number }) =>
 };
 
 
-export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
+export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD00EC', '#1700E6'] }: { isOpen: boolean; onOpenChange: (open: boolean) => void; themeColors?: [string, string] }) {
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-primary/30 text-white overflow-hidden"
+             style={{'--tw-border-opacity': '0.3', borderColor: themeColors[0]} as React.CSSProperties}
+            >
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
@@ -132,19 +134,19 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                       100% { transform: translateX(200%); }
                     }
                      @keyframes led-glow {
-                        0%, 100% { box-shadow: 0 0 5px 2px hsl(var(--primary)/0.4); }
-                        50% { box-shadow: 0 0 15px 5px hsl(var(--primary)/0.7); }
+                        0%, 100% { box-shadow: 0 0 5px 2px ${themeColors[0]}66; }
+                        50% { box-shadow: 0 0 15px 5px ${themeColors[0]}B3; }
                     }
                     .led-animation {
                         animation: led-glow 2s infinite ease-in-out;
                     }
                 `}</style>
                 
-                <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
+                <div className="p-4 flex items-center justify-between border-b bg-black/50" style={{borderColor: `${themeColors[0]}33`}}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
-                             <div className="relative p-2 rounded-full bg-primary/20 led-animation">
-                                <HardDrive className="size-6 text-primary"/>
+                             <div className="relative p-2 rounded-full bg-primary/20 led-animation" style={{backgroundColor: `${themeColors[0]}33`}}>
+                                <HardDrive className="size-6 text-primary" style={{color: themeColors[0]}}/>
                             </div>
                             <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
                         </DialogTitle>
@@ -154,10 +156,10 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     </Button>
                 </div>
                 
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px" style={{backgroundColor: `${themeColors[0]}33`}}>
                   {storageData.sections.map(section => (
-                      <div key={section.id} className="bg-black/30 p-6">
-                          <div className="relative text-left mb-4 p-3 rounded-lg bg-background border border-border">
+                      <div key={section.id} className="bg-background p-6">
+                          <div className="relative text-left mb-4 p-3 rounded-lg bg-black/50 border" style={{borderColor: `${themeColors[0]}33`}}>
                               <h3 className="font-bold text-lg flex items-center gap-2 text-white">
                                   <section.icon className="size-5" />
                                   {section.label}
@@ -173,13 +175,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 </div>
 
                  <div className="p-6 bg-background">
-                    <QuantumProgressBar used={totalUsed} total={storageData.total} />
+                    <QuantumProgressBar used={totalUsed} total={storageData.total} themeColors={themeColors} />
                     <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
                         <Eye className="size-10 shrink-0 text-amber-300"/>
                         <p className="text-xs text-amber-200/90 flex-1">
                             Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                         </p>
-                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC] shrink-0">
+                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0"
+                         style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1], boxShadow: `0 0 20px ${themeColors[0]}80`} as React.CSSProperties}>
                             <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
                             <DatabaseZap className="mr-2"/>
                             Aumentar Almacenamiento
