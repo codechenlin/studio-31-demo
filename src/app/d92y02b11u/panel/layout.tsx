@@ -1,9 +1,9 @@
-
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/common/logo";
 import {
   Users,
@@ -23,16 +23,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Preloader } from "@/components/common/preloader";
 
 const menuItems = [
   { href: "/d92y02b11u/panel", label: "Escritorio", icon: LayoutDashboard },
   { href: "/d92y02b11u/panel/logos", label: "Logos y Portadas", icon: ImageIcon },
 ];
 
-export default function AdminPanelLayout({
+function AdminPanelContent({
   children,
+  user,
 }: {
   children: React.ReactNode;
+  user: any;
 }) {
   const pathname = usePathname();
 
@@ -69,7 +72,7 @@ export default function AdminPanelLayout({
                     </div>
                     <div className="text-left">
                         <p className="font-semibold">Super Admin</p>
-                        <p className="text-xs text-muted-foreground">admin@mailflow.ai</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
                </Button>
             </DropdownMenuTrigger>
@@ -89,4 +92,53 @@ export default function AdminPanelLayout({
       </main>
     </div>
   );
+}
+
+export default function AdminPanelLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const [user, setUser] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.replace('/d92y02b11u/login');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error || profile?.role !== 'super-admin') {
+        await supabase.auth.signOut();
+        router.replace('/d92y02b11u/login');
+        return;
+      }
+
+      setUser(session.user);
+      setIsLoading(false);
+    };
+
+    checkUser();
+  }, [router]);
+
+  if (isLoading) {
+    return <Preloader />;
+  }
+  
+  if (!user) {
+    return null;
+  }
+
+  return <AdminPanelContent user={user}>{children}</AdminPanelContent>;
 }

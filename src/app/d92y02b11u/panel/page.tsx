@@ -3,11 +3,21 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Users, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function AdminDashboardPage() {
-  // Mock data, in a real app this would be fetched.
+  // Mock data
   const totalUsers = 1234;
   const totalConnectedEmails = 56;
+  
+  const [formattedUsers, setFormattedUsers] = useState<string | null>(null);
+
+  useEffect(() => {
+    // This ensures toLocaleString() is only called on the client side
+    // after the component has mounted, preventing hydration errors.
+    setFormattedUsers(totalUsers.toLocaleString());
+  }, []);
+
 
   return (
     <div>
@@ -19,7 +29,7 @@ export default function AdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formattedUsers || '...'}</div>
             <p className="text-xs text-muted-foreground">Total de usuarios en la plataforma</p>
           </CardContent>
         </Card>

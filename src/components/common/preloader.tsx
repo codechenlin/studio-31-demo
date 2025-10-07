@@ -33,7 +33,7 @@ export function Preloader() {
           </div>
         </div>
         <p className="mt-4 text-lg font-semibold text-foreground tracking-widest uppercase">CARGANDO</p>
-        <p className="text-sm text-muted-foreground">Inicializando interfaz...</p>
+        <p className="text-sm text-muted-foreground">Verificando acceso...</p>
       </div>
     </div>
   );
