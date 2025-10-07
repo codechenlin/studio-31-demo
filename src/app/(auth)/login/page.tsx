@@ -34,6 +34,7 @@ import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import Image from "next/image";
 import { motion } from 'framer-motion';
+import appConfig from '@/app/lib/app-config.json';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -220,7 +221,7 @@ export default function LoginPage() {
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
             <Image
-                src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
+                src={appConfig.authBackgroundImageUrl}
                 alt="AI generated marketing posts collage"
                 fill
                 className="object-cover"

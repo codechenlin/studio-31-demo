@@ -32,6 +32,8 @@ import { useLanguage } from "@/context/language-context";
 import { Logo } from "@/components/common/logo";
 import { SphereAnimation } from "@/components/login/sphere-animation";
 import { motion } from 'framer-motion';
+import appConfig from '@/app/lib/app-config.json';
+import Image from "next/image";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -83,8 +85,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center bg-background p-10 overflow-hidden relative">
-        <div className="absolute top-8 left-8">
+    <div className="w-screen h-screen flex">
+      <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden bg-background">
+        <div className="absolute top-8 left-8 z-20">
             <Logo />
         </div>
         <SphereAnimation />
@@ -205,6 +208,18 @@ export default function SignupPage() {
             </div>
             </Card>
         </div>
+      </div>
+      <div className="w-1/2 h-full relative overflow-hidden">
+        <Image
+          src={appConfig.authBackgroundImageUrl}
+          alt="AI generated marketing posts collage"
+          fill
+          className="object-cover"
+          sizes="50vw"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+      </div>
     </div>
   );
 }
