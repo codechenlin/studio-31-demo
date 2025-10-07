@@ -16,6 +16,7 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
+import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
 
 const initialEmails: Email[] = [
     {
@@ -28,6 +29,9 @@ const initialEmails: Email[] = [
       read: false,
       starred: true,
       tag: { name: 'Importante', color: '#ef4444' },
+      bimi: true,
+      vmc: true,
+      avatarUrl: "https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
     },
     {
       id: 'threat-1',
@@ -51,6 +55,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 20),
       read: false,
       starred: false,
+      bimi: false,
+      vmc: false
     },
     {
       id: 'attachment-2',
@@ -98,6 +104,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 2),
       read: false,
       starred: false,
+      bimi: true,
+      vmc: false
     },
     {
       id: '3',
@@ -108,6 +116,8 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 24),
       read: true,
       starred: true,
+      bimi: true,
+      vmc: true
     },
     {
       id: '4',
@@ -126,6 +136,7 @@ export default function MainInboxPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
   const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
+  const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
 
@@ -162,29 +173,36 @@ export default function MainInboxPage() {
 
   return (
     <>
-      <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+      <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden flex flex-col h-full">
         {/* Background Animation */}
         <div 
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
         />
 
-        <div className="relative z-10">
+        <div className="relative z-10 shrink-0">
           <header className="mb-8 flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
-                  <MailCheck className="size-8"/>
-                  Buzón Principal
-                </h1>
-                <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailCheck className="text-primary/70 size-7" />
+            <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-primary">
+                    <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
+                    <div className="absolute inset-2 rounded-full border-2 border-primary/30 border-dashed animate-spin-slow"></div>
+                    <MailCheck className="size-8 icon1"/>
                 </div>
-              </div>
-              <p className="text-muted-foreground mt-1">
-                Aquí recibirás todos tus correos importantes y comunicaciones generales.
-              </p>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                    Buzón Principal
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                    Aquí recibirás todos tus correos importantes y comunicaciones generales.
+                    </p>
+                </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
+            <StorageIndicator 
+                used={10.2} 
+                total={15} 
+                gradientColors={['#AD00EC', '#1700E6']} 
+                hoverGradientColors={['#AD00EC', '#1700E6']}
+                onClick={() => setIsStorageModalOpen(true)} 
+            />
           </header>
 
            <Card className={cn(
@@ -280,8 +298,9 @@ export default function MainInboxPage() {
                   </div>
               </CardContent>
           </Card>
+        </div>
           
-          <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
+        <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
             <AnimatePresence>
               {displayedEmails.map((email, index) => (
                   <motion.div
@@ -296,12 +315,12 @@ export default function MainInboxPage() {
                   </motion.div>
               ))}
             </AnimatePresence>
-          </motion.div>
-        </div>
+        </motion.div>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+      <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
     </>
   );
 }

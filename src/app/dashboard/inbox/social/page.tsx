@@ -98,7 +98,13 @@ export default function SocialPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#007BA8', '#00ADEC']} onClick={() => setIsStorageModalOpen(true)} />
+            <StorageIndicator 
+                used={10.2} 
+                total={15} 
+                gradientColors={['#007BA8', '#00ADEC']} 
+                hoverGradientColors={['#00ACEB', '#00ADEC']}
+                onClick={() => setIsStorageModalOpen(true)} 
+            />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00ADEC]/30 shadow-lg mb-2 relative overflow-hidden">

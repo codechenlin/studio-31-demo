@@ -106,7 +106,13 @@ export default function SpamPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} onClick={() => setIsStorageModalOpen(true)} />
+            <StorageIndicator 
+                used={10.2} 
+                total={15} 
+                gradientColors={['#E18700', '#FFAB00']} 
+                hoverGradientColors={['#E18700', '#FFAB00']}
+                onClick={() => setIsStorageModalOpen(true)} 
+            />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-2 relative overflow-hidden">

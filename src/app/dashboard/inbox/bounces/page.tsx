@@ -102,7 +102,13 @@ export default function BouncesPage() {
                     </p>
                 </div>
             </div>
-          <StorageIndicator used={10.2} total={15} gradientColors={['#F00000', '#F07000']} onClick={() => setIsStorageModalOpen(true)} />
+          <StorageIndicator 
+            used={10.2} 
+            total={15} 
+            gradientColors={['#F00000', '#F07000']} 
+            hoverGradientColors={['#F00000', '#F07000']}
+            onClick={() => setIsStorageModalOpen(true)} 
+        />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">

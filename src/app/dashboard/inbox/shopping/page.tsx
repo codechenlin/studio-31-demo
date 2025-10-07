@@ -103,7 +103,13 @@ export default function ShoppingPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#A6EE00']} onClick={() => setIsStorageModalOpen(true)} />
+            <StorageIndicator 
+                used={10.2} 
+                total={15} 
+                gradientColors={['#00EF10', '#A6EE00']} 
+                hoverGradientColors={['#00CB07', '#21F700']}
+                onClick={() => setIsStorageModalOpen(true)} 
+            />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-2 relative overflow-hidden">
