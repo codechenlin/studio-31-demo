@@ -80,25 +80,27 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
     );
 };
 
-const QuantumProgressBar = ({ used, total, themeColors }: { used: number, total: number, themeColors: [string, string] }) => {
+const QuantumProgressBar = ({ used, total, themeColors }: { used: number; total: number; themeColors: [string, string] }) => {
   const percentage = total > 0 ? (used / total) * 100 : 0;
+  const gradientStyle = {
+    background: `linear-gradient(to right, ${themeColors[0]}, ${themeColors[1]})`,
+  };
 
   return (
     <div className="w-full text-center">
-      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-primary/30 overflow-hidden" style={{borderColor: `${themeColors[0]}4D`}}>
+      <div className="relative h-8 w-full bg-black/30 rounded-lg border overflow-hidden" style={{ borderColor: `${themeColors[0]}4D` }}>
         <motion.div
           className="absolute top-0 left-0 h-full"
+          style={gradientStyle}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 1.5, ease: "circOut" }}
         >
-          <div className="h-full w-full bg-gradient-to-r" style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1]} as React.CSSProperties}>
-             <div className="absolute inset-0 w-full h-full" style={{
-                background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
-                backgroundSize: '200% 100%',
-                animation: 'light-scan 2.5s infinite linear'
-             }} />
-          </div>
+          <div className="absolute inset-0 w-full h-full" style={{
+            background: `linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)`,
+            backgroundSize: '200% 100%',
+            animation: 'light-scan 2.5s infinite linear'
+          }} />
         </motion.div>
         <div className="absolute inset-0 flex items-center justify-center">
           <p className="font-bold text-lg text-white drop-shadow-lg">{(used / 1024).toFixed(2)} GB</p>
@@ -118,7 +120,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl text-white overflow-hidden border"
-             style={{borderColor: `${themeColors[0]}B3`} as React.CSSProperties}
+             style={{borderColor: `${themeColors[0]}4D`} as React.CSSProperties}
             >
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
@@ -176,7 +178,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                         <p className="text-xs text-amber-200/90 flex-1">
                             Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                         </p>
-                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0 border-2"
+                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0"
                          style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1], boxShadow: `0 0 20px ${themeColors[0]}80`, borderColor: themeColors[0]} as React.CSSProperties}>
                             <div className="absolute inset-0 w-full h-full" style={{
                                 background: `linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)`,
