@@ -1,3 +1,4 @@
+
 'use server';
 
 import fs from 'fs/promises';
@@ -23,6 +24,15 @@ async function readConfig() {
 
 async function writeConfig(config: any) {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+}
+
+export async function getAppConfig() {
+    try {
+        const config = await readConfig();
+        return { success: true, data: config };
+    } catch (error: any) {
+        return { success: false, error: 'No se pudo leer la configuración.' };
+    }
 }
 
 export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {

@@ -1,43 +1,50 @@
 
 "use client";
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadCloud, Image as ImageIcon, KeyRound as KeyIcon, GalleryVertical, Loader2 } from "lucide-react";
-import appConfig from '@/app/lib/app-config.json';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
 import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
-import { updateAppConfig, uploadLogoAndGetUrl } from './actions';
+import { updateAppConfig, uploadLogoAndGetUrl, getAppConfig } from './actions';
 import { cn } from '@/lib/utils';
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 function CoverSection({ 
     title, 
     description, 
     icon: Icon, 
     configKey,
-    initialImageUrl 
+    initialImageUrl,
+    onConfigChange,
+    isLoading
 }: {
     title: string;
     description: string;
     icon: React.ElementType;
     configKey: 'loginBackgroundImageUrl' | 'signupBackgroundImageUrl' | 'forgotPasswordBackgroundImageUrl';
     initialImageUrl: string;
+    onConfigChange: (key: string, value: string) => void;
+    isLoading: boolean;
 }) {
     const { toast } = useToast();
     const [imageUrl, setImageUrl] = useState(initialImageUrl);
     const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
     const [isUploading, startUploading] = useTransition();
 
-    const handleFileSelect = (url: string) => {
+    useEffect(() => {
+        setImageUrl(initialImageUrl);
+    }, [initialImageUrl]);
+
+    const handleFileSelect = async (url: string) => {
         setImageUrl(url);
-        updateConfig(url);
         setIsFileManagerOpen(false);
+        await updateConfig(url);
     };
     
     const updateConfig = async (url: string) => {
@@ -47,12 +54,15 @@ function CoverSection({
                 title: "Portada Actualizada",
                 description: `El fondo de ${title.toLowerCase()} ha sido guardado.`,
             });
+            onConfigChange(configKey, url);
         } else {
             toast({
                 title: "Error al Guardar",
                 description: result.error,
                 variant: "destructive",
             });
+             // Revert optimistic UI update on failure
+            setImageUrl(initialImageUrl);
         }
     };
     
@@ -67,7 +77,7 @@ function CoverSection({
             const result = await uploadLogoAndGetUrl(formData);
 
             if (result.success && result.url) {
-                setImageUrl(result.url);
+                setImageUrl(result.url); // Optimistic UI update
                 await updateConfig(result.url);
             } else {
                 toast({
@@ -97,7 +107,11 @@ function CoverSection({
                 <div>
                     <h3 className="font-semibold mb-4">Vista Previa Actual</h3>
                     <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
-                        <MediaPreview src={imageUrl} />
+                       {isLoading ? (
+                           <Skeleton className="w-full h-full" />
+                       ) : (
+                           <MediaPreview src={imageUrl} />
+                       )}
                     </div>
                 </div>
                 <div className="space-y-6">
@@ -153,6 +167,35 @@ function CoverSection({
 }
 
 export default function LogosPage() {
+    const { toast } = useToast();
+    const [config, setConfig] = useState({ 
+        loginBackgroundImageUrl: '', 
+        forgotPasswordBackgroundImageUrl: '' 
+    });
+    const [isLoading, setIsLoading] = useState(true);
+    
+    useEffect(() => {
+        const fetchConfig = async () => {
+             setIsLoading(true);
+             const result = await getAppConfig();
+             if (result.success && result.data) {
+                 setConfig(result.data);
+             } else {
+                 toast({
+                     title: "Error al Cargar",
+                     description: result.error || "No se pudo cargar la configuración de las portadas.",
+                     variant: "destructive",
+                 });
+             }
+             setIsLoading(false);
+        };
+        fetchConfig();
+    }, [toast]);
+    
+    const handleConfigChange = (key: string, value: string) => {
+        setConfig(prevConfig => ({ ...prevConfig, [key]: value }));
+    };
+
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold mb-8">Configuración de Portadas de Autenticación</h1>
@@ -162,7 +205,9 @@ export default function LogosPage() {
                 description="Este fondo se mostrará en la página de login del usuario."
                 icon={ImageIcon}
                 configKey="loginBackgroundImageUrl"
-                initialImageUrl={appConfig.loginBackgroundImageUrl}
+                initialImageUrl={config.loginBackgroundImageUrl}
+                onConfigChange={handleConfigChange}
+                isLoading={isLoading}
             />
 
             <Separator />
@@ -172,7 +217,9 @@ export default function LogosPage() {
                 description="Este fondo se mostrará en la página para restablecer la contraseña."
                 icon={KeyIcon}
                 configKey="forgotPasswordBackgroundImageUrl"
-                initialImageUrl={appConfig.forgotPasswordBackgroundImageUrl}
+                initialImageUrl={config.forgotPasswordBackgroundImageUrl}
+                onConfigChange={handleConfigChange}
+                isLoading={isLoading}
             />
 
              <CardFooter>
