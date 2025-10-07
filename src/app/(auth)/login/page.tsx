@@ -34,13 +34,15 @@ import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import { motion } from 'framer-motion';
 import { MediaPreview } from "@/components/admin/media-preview";
+import appConfig from '@/app/lib/app-config.json';
+
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-export default function LoginPage({ backgroundImageUrl }: { backgroundImageUrl: string }) {
+export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -219,7 +221,7 @@ export default function LoginPage({ backgroundImageUrl }: { backgroundImageUrl: 
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-             <MediaPreview src={backgroundImageUrl} />
+             <MediaPreview src={appConfig.loginBackgroundImageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>
