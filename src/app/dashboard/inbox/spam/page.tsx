@@ -110,9 +110,9 @@ export default function SpamPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#E18700', '#FFAB00']} 
-                hoverBorderColor='#E18700'
+                borderColor="hsla(31, 100%, 56%, 0.3)"
+                hoverBorderColor="hsla(31, 100%, 56%, 0.45)"
                 onClick={() => setIsStorageModalOpen(true)}
-                style={{'--hover-border-color': '#E18700'} as React.CSSProperties}
             />
         </header>
 

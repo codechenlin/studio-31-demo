@@ -102,9 +102,9 @@ export default function SocialPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#007BA8', '#00ADEC']} 
-                hoverBorderColor='#00ACEB'
+                borderColor="hsla(196, 100%, 35%, 0.3)"
+                hoverBorderColor="hsla(196, 100%, 35%, 0.45)"
                 onClick={() => setIsStorageModalOpen(true)}
-                style={{'--hover-border-color': '#00ACEB'} as React.CSSProperties}
             />
         </header>
 

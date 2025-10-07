@@ -9,12 +9,13 @@ interface StorageIndicatorProps {
     used: number;
     total: number;
     gradientColors?: [string, string];
+    borderColor?: string;
     hoverBorderColor?: string;
     onClick?: () => void;
     style?: React.CSSProperties;
 }
 
-export function StorageIndicator({ used, total, gradientColors, hoverBorderColor, onClick, style }: StorageIndicatorProps) {
+export function StorageIndicator({ used, total, gradientColors, borderColor, hoverBorderColor, onClick, style }: StorageIndicatorProps) {
     const percentage = total > 0 ? (used / total) * 100 : 0;
     const circumference = 2 * Math.PI * 45; // 45 is the radius
     const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -22,13 +23,19 @@ export function StorageIndicator({ used, total, gradientColors, hoverBorderColor
     const arcColor = gradientColors ? `url(#storageGradient)` : 'hsl(var(--primary))';
     const shadowColor = gradientColors ? gradientColors[1] : 'hsl(var(--primary))';
 
+    const dynamicStyles = {
+        ...style,
+        '--border-color': borderColor,
+        '--hover-border-color': hoverBorderColor,
+    } as React.CSSProperties;
+
     return (
         <button
             onClick={onClick}
-            style={style}
+            style={dynamicStyles}
             className={cn(
-                "group w-64 h-24 rounded-lg bg-card/80 border border-border/50 backdrop-blur-sm p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
-                hoverBorderColor && `hover:border-[var(--hover-border-color)]`
+                "group w-64 h-24 rounded-lg bg-card/80 border backdrop-blur-sm p-4 flex items-center gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
+                "border-[var(--border-color)] hover:border-[var(--hover-border-color)]"
             )}
             aria-label="Ver detalles de almacenamiento"
         >

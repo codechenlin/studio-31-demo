@@ -106,9 +106,9 @@ export default function BouncesPage() {
             used={10.2} 
             total={15} 
             gradientColors={['#F00000', '#F07000']} 
-            hoverBorderColor='#F00000'
+            borderColor="hsla(0, 100%, 47%, 0.3)"
+            hoverBorderColor="hsla(0, 100%, 47%, 0.45)"
             onClick={() => setIsStorageModalOpen(true)}
-            style={{'--hover-border-color': '#F00000'} as React.CSSProperties}
         />
         </header>
 

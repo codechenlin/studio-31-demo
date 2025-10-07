@@ -200,9 +200,9 @@ export default function MainInboxPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#AD00EC', '#1700E6']} 
-                hoverBorderColor='#AD00EC'
+                borderColor="hsla(283, 100%, 55%, 0.3)"
+                hoverBorderColor="hsla(283, 100%, 55%, 0.45)"
                 onClick={() => setIsStorageModalOpen(true)}
-                style={{'--hover-border-color': '#AD00EC'} as React.CSSProperties}
             />
           </header>
 
@@ -321,7 +321,7 @@ export default function MainInboxPage() {
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-      <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
+      <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#AD00EC', '#1700E6']} />
     </>
   );
 }

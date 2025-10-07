@@ -107,9 +107,9 @@ export default function ShoppingPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#00EF10', '#A6EE00']} 
-                hoverBorderColor='#00CB07'
+                borderColor="hsla(120, 100%, 47%, 0.3)"
+                hoverBorderColor="hsla(120, 100%, 47%, 0.45)"
                 onClick={() => setIsStorageModalOpen(true)}
-                style={{'--hover-border-color': '#00CB07'} as React.CSSProperties}
             />
         </header>
 
