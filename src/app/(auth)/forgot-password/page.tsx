@@ -31,16 +31,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
-import Image from "next/image";
 import { motion } from 'framer-motion';
-import appConfig from '@/app/lib/app-config.json';
 import { MediaPreview } from "@/components/admin/media-preview";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
 });
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({ backgroundImageUrl }: { backgroundImageUrl: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -154,7 +152,7 @@ export default function ForgotPasswordPage() {
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-            <MediaPreview src={appConfig.forgotPasswordBackgroundImageUrl} />
+            <MediaPreview src={backgroundImageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>
