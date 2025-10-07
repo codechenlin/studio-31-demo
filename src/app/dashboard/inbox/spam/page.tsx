@@ -111,7 +111,8 @@ export default function SpamPage() {
                 total={15} 
                 gradientColors={['#E18700', '#FFAB00']} 
                 hoverBorderColor='#E18700'
-                onClick={() => setIsStorageModalOpen(true)} 
+                onClick={() => setIsStorageModalOpen(true)}
+                style={{'--hover-border-color': '#E18700'} as React.CSSProperties}
             />
         </header>
 
@@ -226,7 +227,7 @@ export default function SpamPage() {
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
+    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#E18700', '#FFAB00']} />
     </>
   );
 }

@@ -107,7 +107,8 @@ export default function BouncesPage() {
             total={15} 
             gradientColors={['#F00000', '#F07000']} 
             hoverBorderColor='#F00000'
-            onClick={() => setIsStorageModalOpen(true)} 
+            onClick={() => setIsStorageModalOpen(true)}
+            style={{'--hover-border-color': '#F00000'} as React.CSSProperties}
         />
         </header>
 
@@ -224,7 +225,7 @@ export default function BouncesPage() {
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
+    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#F00000', '#F07000']} />
     </>
   );
 }

@@ -201,7 +201,8 @@ export default function MainInboxPage() {
                 total={15} 
                 gradientColors={['#AD00EC', '#1700E6']} 
                 hoverBorderColor='#AD00EC'
-                onClick={() => setIsStorageModalOpen(true)} 
+                onClick={() => setIsStorageModalOpen(true)}
+                style={{'--hover-border-color': '#AD00EC'} as React.CSSProperties}
             />
           </header>
 

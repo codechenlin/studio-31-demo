@@ -103,7 +103,8 @@ export default function SocialPage() {
                 total={15} 
                 gradientColors={['#007BA8', '#00ADEC']} 
                 hoverBorderColor='#00ACEB'
-                onClick={() => setIsStorageModalOpen(true)} 
+                onClick={() => setIsStorageModalOpen(true)}
+                style={{'--hover-border-color': '#00ACEB'} as React.CSSProperties}
             />
         </header>
 
@@ -230,7 +231,7 @@ export default function SocialPage() {
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
+    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#007BA8', '#00ADEC']} />
     </>
   );
 }

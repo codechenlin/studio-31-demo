@@ -85,7 +85,7 @@ const QuantumProgressBar = ({ used, total, themeColors }: { used: number, total:
 
   return (
     <div className="w-full text-center">
-      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-primary/30 overflow-hidden">
+      <div className="relative h-8 w-full bg-black/30 rounded-lg border border-primary/30 overflow-hidden" style={{borderColor: `${themeColors[0]}4D`}}>
         <motion.div
           className="absolute top-0 left-0 h-full"
           initial={{ width: 0 }}
@@ -113,12 +113,12 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-primary/30 text-white overflow-hidden"
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-border/30 text-white overflow-hidden"
              style={{'--tw-border-opacity': '0.3', borderColor: themeColors[0]} as React.CSSProperties}
             >
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-                    .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
+                    .animated-grid { background-image: linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
                     .progress-bar-shine::after {
                         content: '';
                         position: absolute;

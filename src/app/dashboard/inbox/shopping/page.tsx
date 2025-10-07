@@ -108,7 +108,8 @@ export default function ShoppingPage() {
                 total={15} 
                 gradientColors={['#00EF10', '#A6EE00']} 
                 hoverBorderColor='#00CB07'
-                onClick={() => setIsStorageModalOpen(true)} 
+                onClick={() => setIsStorageModalOpen(true)}
+                style={{'--hover-border-color': '#00CB07'} as React.CSSProperties}
             />
         </header>
 
@@ -235,7 +236,7 @@ export default function ShoppingPage() {
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
-    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
+    <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#00EF10', '#A6EE00']} />
     </>
   );
 }
