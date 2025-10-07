@@ -35,6 +35,7 @@ import { Logo } from "@/components/common/logo";
 import Image from "next/image";
 import { motion } from 'framer-motion';
 import appConfig from '@/app/lib/app-config.json';
+import { MediaPreview } from "@/components/admin/media-preview";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -220,14 +221,7 @@ export default function LoginPage() {
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-            <Image
-                src={appConfig.authBackgroundImageUrl}
-                alt="AI generated marketing posts collage"
-                fill
-                className="object-cover"
-                sizes="50vw"
-                priority
-            />
+             <MediaPreview src={appConfig.loginBackgroundImageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>

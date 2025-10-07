@@ -34,6 +34,7 @@ import { SphereAnimation } from "@/components/login/sphere-animation";
 import { motion } from 'framer-motion';
 import appConfig from '@/app/lib/app-config.json';
 import Image from "next/image";
+import { MediaPreview } from "@/components/admin/media-preview";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -210,14 +211,7 @@ export default function SignupPage() {
         </div>
       </div>
       <div className="w-1/2 h-full relative overflow-hidden">
-        <Image
-          src={appConfig.authBackgroundImageUrl}
-          alt="AI generated marketing posts collage"
-          fill
-          className="object-cover"
-          sizes="50vw"
-          priority
-        />
+        <MediaPreview src={appConfig.signupBackgroundImageUrl} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
       </div>
     </div>
