@@ -1,0 +1,69 @@
+'use server';
+
+import fs from 'fs/promises';
+import path from 'path';
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'app-config.json');
+
+async function readConfig() {
+  const fileContent = await fs.readFile(configPath, 'utf-8');
+  return JSON.parse(fileContent);
+}
+
+async function writeConfig(config: any) {
+  await fs.writeFile(configPath, JSON.stringify(config, null, 4));
+}
+
+export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+
+  const file = formData.get('file') as File;
+  if (!file) {
+    return { success: false, error: 'No se proporcionó ningún archivo.' };
+  }
+
+  const filePath = `${user.id}/${Date.now()}_${file.name}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('admin_assets')
+      .upload(filePath, file);
+
+    if (error) throw error;
+    
+    const { data: { publicUrl } } = supabase.storage
+        .from('admin_assets')
+        .getPublicUrl(data.path);
+
+    return { success: true, url: publicUrl };
+  } catch (error: any) {
+    console.error("Error al subir archivo a Supabase:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateAppConfig(key: string, value: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const config = await readConfig();
+        config[key] = value;
+        await writeConfig(config);
+        
+        // Revalidate the pages that use this config
+        if(key === 'loginBackgroundImageUrl') revalidatePath('/login');
+        if(key === 'signupBackgroundImageUrl') revalidatePath('/signup');
+        if(key === 'forgotPasswordBackgroundImageUrl') revalidatePath('/forgot-password');
+        revalidatePath('/d92y02b11u/dashboard/logos');
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error al actualizar app-config.json:", error);
+        return { success: false, error: 'No se pudo guardar la configuración de la portada.' };
+    }
+}

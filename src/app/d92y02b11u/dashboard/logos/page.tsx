@@ -1,38 +1,91 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, Link as LinkIcon, Image as ImageIcon, Video, User, KeyRound as KeyIcon } from "lucide-react";
+import { UploadCloud, Image as ImageIcon, KeyRound as KeyIcon, GalleryVertical, Loader2 } from "lucide-react";
 import appConfig from '@/app/lib/app-config.json';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
+import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
+import { updateAppConfig, uploadLogoAndGetUrl } from './actions';
+import { cn } from '@/lib/utils';
 
-function CoverSection({ title, description, icon: Icon, imageUrl, setImageUrl, toast }: {
+
+function CoverSection({ 
+    title, 
+    description, 
+    icon: Icon, 
+    configKey,
+    initialImageUrl 
+}: {
     title: string;
     description: string;
     icon: React.ElementType;
-    imageUrl: string;
-    setImageUrl: (url: string) => void;
-    toast: (options: any) => void;
+    configKey: 'loginBackgroundImageUrl' | 'signupBackgroundImageUrl' | 'forgotPasswordBackgroundImageUrl';
+    initialImageUrl: string;
 }) {
-    const [newUrl, setNewUrl] = useState('');
+    const { toast } = useToast();
+    const [imageUrl, setImageUrl] = useState(initialImageUrl);
+    const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
+    const [isUploading, startUploading] = useTransition();
 
-    const handleUpdateByUrl = () => {
-        if (newUrl.trim()) {
-            setImageUrl(newUrl);
+    const handleFileSelect = (url: string) => {
+        setImageUrl(url);
+        updateConfig(url);
+        setIsFileManagerOpen(false);
+    };
+    
+    const updateConfig = async (url: string) => {
+        const result = await updateAppConfig(configKey, url);
+        if (result.success) {
             toast({
-                title: "Fondo actualizado",
-                description: `La portada de ${title.toLowerCase()} se ha actualizado.`,
+                title: "Portada Actualizada",
+                description: `El fondo de ${title.toLowerCase()} ha sido guardado.`,
+            });
+        } else {
+            toast({
+                title: "Error al Guardar",
+                description: result.error,
+                variant: "destructive",
             });
         }
     };
     
+     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        startUploading(async () => {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const result = await uploadLogoAndGetUrl(formData);
+
+            if (result.success && result.url) {
+                setImageUrl(result.url);
+                await updateConfig(result.url);
+            } else {
+                toast({
+                    title: "Error al Subir",
+                    description: result.error || "No se pudo subir el archivo.",
+                    variant: "destructive",
+                });
+            }
+        });
+    };
+
     return (
+      <>
+        <FileManagerModal
+          open={isFileManagerOpen}
+          onOpenChange={setIsFileManagerOpen}
+          onFileSelect={handleFileSelect}
+        />
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Icon /> {title}</CardTitle>
@@ -50,39 +103,66 @@ function CoverSection({ title, description, icon: Icon, imageUrl, setImageUrl, t
                 <div className="space-y-6">
                     <div>
                         <h3 className="font-semibold mb-2">Subir Nuevo Archivo</h3>
-                        <div className="flex flex-col items-center justify-center w-full">
-                            <Label htmlFor={`picture-${title}`} className="flex flex-col items-center justify-center w-full h-48 border-2 border-border border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                    <p className="mb-2 text-sm text-muted-foreground">Haz clic para subir un archivo</p>
-                                    <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF, WEBM, AVI</p>
-                                </div>
-                                <Input id={`picture-${title}`} type="file" className="hidden" />
-                            </Label>
+                         <Label htmlFor={`picture-${title}`} className={cn(
+                             "flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-muted/50",
+                             isUploading ? "cursor-wait" : "hover:bg-muted"
+                         )}>
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                {isUploading ? (
+                                    <>
+                                        <Loader2 className="w-8 h-8 mb-2 text-primary animate-spin" />
+                                        <p className="text-sm text-primary">Subiendo...</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                        <p className="mb-2 text-sm text-muted-foreground">Haz clic para subir un archivo</p>
+                                        <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF, WEBM, AVI</p>
+                                    </>
+                                )}
+                            </div>
+                            <Input id={`picture-${title}`} type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
+                        </Label>
+                    </div>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
                         </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-card px-2 text-muted-foreground">O</span>
+                        </div>
+                    </div>
+
+                     <div>
+                        <h3 className="font-semibold mb-2">Seleccionar de la Galería</h3>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setIsFileManagerOpen(true)}
+                        >
+                            <GalleryVertical className="mr-2 h-4 w-4" />
+                            Abrir Gestor de Archivos
+                        </Button>
                     </div>
                 </div>
             </CardContent>
         </Card>
+      </>
     );
 }
 
 export default function LogosPage() {
-    const { toast } = useToast();
-    const [loginBg, setLoginBg] = useState(appConfig.loginBackgroundImageUrl);
-    const [forgotPasswordBg, setForgotPasswordBg] = useState(appConfig.forgotPasswordBackgroundImageUrl);
-
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold mb-8">Configuración de Logos y Portadas</h1>
+            <h1 className="text-3xl font-bold mb-8">Configuración de Portadas de Autenticación</h1>
             
             <CoverSection
-                title="Portada de Autenticación"
-                description="Este fondo se mostrará en la página de inicio de sesión del usuario."
+                title="Portada de Inicio de Sesión"
+                description="Este fondo se mostrará en la página de login del usuario."
                 icon={ImageIcon}
-                imageUrl={loginBg}
-                setImageUrl={setLoginBg}
-                toast={toast}
+                configKey="loginBackgroundImageUrl"
+                initialImageUrl={appConfig.loginBackgroundImageUrl}
             />
 
             <Separator />
@@ -91,9 +171,8 @@ export default function LogosPage() {
                 title="Portada de Olvidé Contraseña"
                 description="Este fondo se mostrará en la página para restablecer la contraseña."
                 icon={KeyIcon}
-                imageUrl={forgotPasswordBg}
-                setImageUrl={setForgotPasswordBg}
-                toast={toast}
+                configKey="forgotPasswordBackgroundImageUrl"
+                initialImageUrl={appConfig.forgotPasswordBackgroundImageUrl}
             />
 
              <CardFooter>

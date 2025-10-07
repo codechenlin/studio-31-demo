@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, FileIcon, Image as ImageIcon, Film, FileText, Music, Archive, Edit, Trash2, Download, Eye, UploadCloud, Loader2, Search, XCircle, AlertTriangle, FolderOpen } from 'lucide-react';
+import { MoreHorizontal, FileIcon, Image as ImageIcon, Film, FileText, Music, Archive, Edit, Trash2, Download, Eye, UploadCloud, Loader2, Search, XCircle, AlertTriangle, FolderOpen, Check } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +34,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function FileManagerModal({ open, onOpenChange, onFileSelect }: { open: boolean; onOpenChange: (open: boolean) => void, onFileSelect?: (url: string) => void }) {
     const { toast } = useToast();
     const [files, setFiles] = useState<StorageFile[]>([]);
     const [isLoading, startLoading] = useTransition();
@@ -133,12 +133,12 @@ export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpen
                                 <Input placeholder="Buscar archivos..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             </div>
                             <Button asChild>
-                                <label htmlFor="file-upload" className="cursor-pointer">
+                                <label htmlFor="file-upload-manager" className="cursor-pointer">
                                     <UploadCloud className="mr-2" />
                                     {isUploading ? <Loader2 className="animate-spin" /> : 'Subir Archivo'}
                                 </label>
                             </Button>
-                            <Input id="file-upload" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
+                            <Input id="file-upload-manager" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
                         </div>
                         <ScrollArea className="flex-1">
                             {isLoading ? (
@@ -161,7 +161,7 @@ export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpen
                                             const Icon = getFileIcon(file.metadata.mimetype);
                                             const fileName = file.name.split('/').pop() || '';
                                             return (
-                                                <TableRow key={file.id}>
+                                                <TableRow key={file.id} className={onFileSelect ? "cursor-pointer" : ""} onClick={() => onFileSelect && onFileSelect(getPublicUrl(file.name))}>
                                                     <TableCell>
                                                         <div className="size-8 rounded-md bg-muted flex items-center justify-center">
                                                             <Icon className="size-5 text-muted-foreground"/>
@@ -171,16 +171,23 @@ export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpen
                                                     <TableCell>{formatBytes(file.metadata.size)}</TableCell>
                                                     <TableCell>{formatDistanceToNow(new Date(file.updated_at), { addSuffix: true, locale: es })}</TableCell>
                                                     <TableCell className="text-right">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent>
-                                                                 <DropdownMenuItem onSelect={() => window.open(getPublicUrl(file.name), '_blank')}><Eye className="mr-2"/>Ver</DropdownMenuItem>
-                                                                <DropdownMenuItem onSelect={() => {setEditingFile(file); setNewFileName(fileName.substring(0, fileName.lastIndexOf('.')))}}><Edit className="mr-2"/>Renombrar</DropdownMenuItem>
-                                                                <DropdownMenuItem className="text-destructive" onSelect={() => setDeletingFile(file)}><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                         {onFileSelect ? (
+                                                            <Button size="sm" onClick={() => onFileSelect(getPublicUrl(file.name))}>
+                                                                <Check className="mr-2"/>
+                                                                Seleccionar
+                                                            </Button>
+                                                         ) : (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent>
+                                                                    <DropdownMenuItem onSelect={() => window.open(getPublicUrl(file.name), '_blank')}><Eye className="mr-2"/>Ver</DropdownMenuItem>
+                                                                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setEditingFile(file); setNewFileName(fileName.substring(0, fileName.lastIndexOf('.')))}}><Edit className="mr-2"/>Renombrar</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); setDeletingFile(file)}}><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                         )}
                                                     </TableCell>
                                                 </TableRow>
                                             );
