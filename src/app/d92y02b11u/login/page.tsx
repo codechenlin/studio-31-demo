@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -24,9 +25,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Eye, EyeOff, Shield } from "lucide-react";
-import React from "react";
+import { Mail, Eye, EyeOff, Shield, Loader2 } from "lucide-react";
+import React, { useState, useTransition } from "react";
 import { Logo } from "@/components/common/logo";
+import { createClient } from "@/lib/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -37,6 +39,7 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,13 +50,42 @@ export default function AdminLoginPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would handle admin authentication
-    toast({
-      title: "Admin Login Successful",
-      description: "Redirecting to the admin dashboard...",
+    startTransition(async () => {
+      const supabase = createClient();
+      
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword(values);
+
+      if (loginError) {
+        toast({
+          title: "Error de Autenticación",
+          description: "Las credenciales proporcionadas no son correctas.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (loginData.user) {
+        // Check for super-admin role in user metadata
+        const userRole = loginData.user.user_metadata?.role;
+        
+        if (userRole === 'super-admin') {
+          toast({
+            title: "Acceso Concedido",
+            description: "Bienvenido, Super Administrador. Redirigiendo al panel...",
+            className: 'bg-success-login border-none text-white'
+          });
+          router.push("/d92y02b11u");
+        } else {
+          // If not super-admin, sign them out and show an error
+          await supabase.auth.signOut();
+          toast({
+            title: "Acceso Denegado",
+            description: "No tienes los permisos necesarios para acceder a esta área.",
+            variant: "destructive",
+          });
+        }
+      }
     });
-    router.push("/dashboard"); // Should redirect to an admin dashboard later
   }
 
   return (
@@ -134,8 +166,15 @@ export default function AdminLoginPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
-                  Sign In as Admin
+                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={isPending}>
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    "Sign In as Admin"
+                  )}
                 </Button>
               </form>
             </Form>
