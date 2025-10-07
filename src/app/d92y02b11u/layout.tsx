@@ -13,7 +13,8 @@ import {
   LayoutDashboard,
   Image as ImageIcon,
   HardDrive,
-  File as FileIcon
+  File as FileIcon,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
 const menuItems = [
   { href: "/d92y02b11u/dashboard", label: "Escritorio", icon: LayoutDashboard },
   { href: "/d92y02b11u/dashboard/logos", label: "Logos y Portadas", icon: ImageIcon },
+  { href: "/d92y02b11u/dashboard/subscription-plans", label: "Planes de Suscripción", icon: Shield },
 ];
 
 function AdminPanelContent({
@@ -172,3 +174,5 @@ export default function AdminPanelLayout({
 
     return <AdminPanelContent user={user}>{children}</AdminPanelContent>;
 }
+
+    
