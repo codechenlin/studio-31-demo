@@ -176,17 +176,19 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                     <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
                         <Eye className="size-10 shrink-0 text-amber-300"/>
                         <p className="text-xs text-amber-200/90 flex-1">
-                            Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
+                            Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumentar tu capacidad de almacenamiento.
                         </p>
-                        <Button className="group/btn relative h-11 overflow-hidden bg-transparent border-2 text-white font-bold text-base transition-all duration-300 shrink-0 hover:bg-transparent"
-                         style={{'--theme-color-start': themeColors[0], '--theme-color-end': themeColors[1], borderColor: 'var(--theme-color-start)'} as React.CSSProperties}>
-                            <div 
-                                className="absolute inset-0 w-0 bg-gradient-to-r from-[var(--theme-color-start)] to-[var(--theme-color-end)] transition-all duration-300 ease-in-out group-hover/btn:w-full"
-                            />
-                            <div className="relative flex items-center gap-2">
-                               <DatabaseZap className="mr-2"/>
+                         <Button
+                            className="relative h-11 px-6 bg-[#E1E1E1] border-2 border-white text-black font-bold text-base transition-colors duration-300
+                                       hover:bg-white hover:border-white"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                <div className="relative size-6">
+                                    <DatabaseZap className="size-6 text-black" />
+                                    <div className="absolute inset-0 rounded-full border-2 border-dashed border-black/50 animate-spin-slow"/>
+                                </div>
                                 Aumentar Almacenamiento
-                            </div>
+                            </span>
                         </Button>
                     </div>
                 </div>
