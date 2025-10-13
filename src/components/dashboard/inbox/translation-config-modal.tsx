@@ -41,7 +41,8 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     );
 
     const activeIndex = useMemo(() => {
-        return filteredLanguages.findIndex(l => l.code === targetLanguage);
+        const index = filteredLanguages.findIndex(l => l.code === targetLanguage);
+        return index === -1 ? 0 : index;
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
@@ -50,6 +51,12 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
             setTargetLanguage(filteredLanguages[newIndex].code);
         }
     };
+    
+     useEffect(() => {
+      if (!filteredLanguages.some(l => l.code === targetLanguage)) {
+        setTargetLanguage(filteredLanguages[0]?.code || 'es');
+      }
+    }, [searchTerm, filteredLanguages, targetLanguage]);
 
     const handleSave = () => {
         setIsSaving(true);
@@ -124,13 +131,13 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     <Search className="size-4" />
                                 </Button>
                              </div>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('up')}><ChevronUp/></Button>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                              
-                             <div className="w-full h-full relative overflow-hidden flex items-center">
+                              <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
                                 <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                                 <div
                                     className="w-full transition-transform duration-300 ease-in-out"
-                                    style={{ transform: `translateY(calc(-${activeIndex * itemHeight}px + ${itemHeight * 1.5}px))` }}
+                                    style={{ transform: `translateY(calc(-${activeIndex * itemHeight}px + ${itemHeight / 2}px))` }}
                                 >
                                     {filteredLanguages.map((lang, index) => (
                                         <div
@@ -151,7 +158,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     ))}
                                 </div>
                              </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('down')}><ChevronDown/></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
                     </div>
                 </div>
@@ -170,4 +177,3 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
         </Dialog>
     );
 }
-
