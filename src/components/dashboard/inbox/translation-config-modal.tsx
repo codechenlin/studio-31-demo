@@ -30,7 +30,6 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
     
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
@@ -62,6 +61,29 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/20 text-white overflow-hidden" showCloseButton={false}>
+                 <style>{`
+                    @keyframes rotate-back-and-forth {
+                        0% { transform: rotate(0deg); }
+                        50% { transform: rotate(360deg); }
+                        100% { transform: rotate(0deg); }
+                    }
+                    .animate-rotate-back-and-forth {
+                        animation: rotate-back-and-forth 2.5s ease-in-out infinite;
+                    }
+                    @keyframes check-pulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            filter: drop-shadow(0 0 4px #39ff14);
+                        }
+                        50% {
+                            transform: scale(1.1);
+                            filter: drop-shadow(0 0 12px #39ff14);
+                        }
+                    }
+                    .icon-check-pulse {
+                        animation: check-pulse 2s infinite ease-in-out;
+                    }
+                `}</style>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-purple-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
                 
@@ -76,61 +98,59 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                 </DialogHeader>
 
                 <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Left Panel: From Language */}
                     <div className="flex flex-col text-center">
                         <Label className="font-semibold text-sm text-purple-200 mb-4">Idioma Original</Label>
                         <div className="min-h-[52px]">
                             <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
-                                <CheckCircle className="size-5 text-green-400"/>
+                                <CheckCircle className="size-5 text-green-400 icon-check-pulse"/>
                                 <span className="text-green-300">Detección Automática</span>
                             </div>
                         </div>
-                        <div className="mt-4 relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-48">
+                        <div className="mt-4 relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-[250px]">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
                                 animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
                                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                             />
+                            <svg width="0" height="0" className="absolute">
+                                <defs>
+                                    <linearGradient id="loaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#AD00EC" />
+                                        <stop offset="100%" stopColor="#1700E6" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <Loader2 className="size-8 mb-2 animate-rotate-back-and-forth" style={{ stroke: 'url(#loaderGradient)' }} />
                             <p className="font-bold text-lg text-white">Detectar Idioma</p>
                             <p className="text-xs text-muted-foreground mt-1">Detectado por IA</p>
                         </div>
                     </div>
-                    {/* To Language */}
+
                      <div className="flex flex-col text-center">
                         <Label className="font-semibold text-sm text-purple-200 mb-4">Traducir a</Label>
                         <div className="flex gap-2 justify-center min-h-[52px]">
                             <div className="relative flex-1 flex items-center">
-                                <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
+                                <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setSearchTerm('')}>
                                   <Search/>
                                 </Button>
-                                <AnimatePresence>
-                                {isSearchVisible && (
-                                    <motion.div
-                                        className="absolute left-0 w-full z-10"
-                                        initial={{ width: 40, opacity: 0 }}
-                                        animate={{ width: '100%', opacity: 1 }}
-                                        exit={{ width: 40, opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                    >
-                                        <div className="relative w-full">
-                                        <Input
-                                            type="text"
-                                            placeholder="Buscar idioma..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
-                                        />
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
-                                        </div>
-                                    </motion.div>
-                                )}
-                                </AnimatePresence>
+                                 <div className="absolute left-0 w-full z-10">
+                                    <div className="relative w-full">
+                                    <Input
+                                        type="text"
+                                        placeholder="Buscar idioma..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
+                                    />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
+                                    </div>
+                                </div>
                             </div>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
-                         <div className="mt-4 relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                         <div className="mt-4 relative h-[250px] rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                             <motion.div 
                                 className="w-full" 
