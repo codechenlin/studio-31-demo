@@ -178,24 +178,22 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     </div>
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent
-                                side="bottom"
-                                align="center"
-                                className="w-auto p-1.5 rounded-xl bg-black/50 backdrop-blur-lg border border-primary/20"
-                            >
-                                <div className="flex items-center gap-1">
-                                    <Button 
-                                        className="px-3 h-8 text-xs bg-transparent hover:bg-primary/20"
-                                        onClick={handleTranslate}
-                                        disabled={isTranslating}
-                                    >
-                                        {isTranslating ? <Loader2 className="mr-2 animate-spin"/> : <Languages className="mr-2"/>}
-                                        Traducir
-                                    </Button>
-                                    <div className="w-px h-6 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20" onClick={() => {setIsTranslationConfigOpen(true); setIsTranslateMenuOpen(false);}}>
-                                        <Settings className="animate-[spin_8s_linear_infinite]" />
-                                    </Button>
+                             <PopoverContent side="bottom" align="center" className="w-auto p-0 rounded-xl bg-transparent border-none">
+                                <div className="rounded-xl p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
+                                    <div className="flex items-center gap-1 p-1.5 rounded-[11px] bg-black/80 backdrop-blur-lg">
+                                        <Button 
+                                            className="px-3 h-8 text-xs bg-transparent hover:bg-white/10 text-white"
+                                            onClick={handleTranslate}
+                                            disabled={isTranslating}
+                                        >
+                                            {isTranslating ? <Loader2 className="mr-2 animate-spin"/> : <Languages className="mr-2"/>}
+                                            Traducir
+                                        </Button>
+                                        <div className="w-px h-6 bg-gradient-to-b from-transparent via-white/30 to-transparent" />
+                                        <Button variant="ghost" size="icon" className="group h-8 w-8 hover:bg-white/10 text-white/70 hover:text-white" onClick={() => {setIsTranslationConfigOpen(true); setIsTranslateMenuOpen(false);}}>
+                                            <Settings className="group-hover:text-white animate-[spin_8s_linear_infinite]" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </PopoverContent>
                         </Popover>
@@ -559,6 +557,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-
-    
