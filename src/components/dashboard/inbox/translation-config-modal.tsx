@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Languages, BrainCircuit, Check, X, Disc, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Label } from '@/components/ui/label';
 
 const languages = [
     { code: 'es', name: 'Español' },
