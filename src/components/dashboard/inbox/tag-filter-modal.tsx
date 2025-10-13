@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tag, Check, X, CheckCircle, Search, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface TaggableTag {
   name: string;
@@ -20,6 +21,17 @@ const allTags: TaggableTag[] = [
   { name: 'Facturas', color: '#16a34a' },
   { name: 'Networking', color: '#0A66C2' },
   { name: 'Pedidos', color: '#3b82f6' },
+  { name: 'Nuevos Clientes', color: '#8b5cf6' },
+  { name: 'Soporte Técnico', color: '#6366f1' },
+  { name: 'Marketing Q4', color: '#ec4899' },
+  { name: 'Social Media', color: '#0ea5e9' },
+  { name: 'Feedback', color: '#f59e0b' },
+  { name: 'Interno', color: '#6b7280' },
+  { name: 'Urgente', color: '#dc2626' },
+  { name: 'Ideas', color: '#22c55e' },
+  { name: 'Proveedores', color: '#d946ef' },
+  { name: 'Logística', color: '#0891b2' },
+  { name: 'Legal', color: '#a16207' },
 ];
 
 interface TagFilterModalProps {
@@ -78,40 +90,42 @@ export function TagFilterModal({ isOpen, onOpenChange, onFilter, initialSelected
                 </DialogHeader>
 
                 <div className="py-6 z-10">
-                    <AnimatePresence>
-                        <motion.div 
-                            layout
-                            className="flex flex-wrap gap-3"
-                        >
-                            {allTags.map(tag => {
-                                const isSelected = selectedTags.some(t => t.name === tag.name);
-                                return (
-                                    <motion.button
-                                        key={tag.name}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
-                                        onClick={() => handleTagClick(tag)}
-                                        className={cn(
-                                            "relative group px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 cursor-pointer border-2 transition-all duration-300",
-                                            isSelected ? 'border-cyan-400 text-cyan-200 bg-cyan-900/50 shadow-lg shadow-cyan-500/20' : 'border-gray-600/50 text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 hover:border-gray-500'
-                                        )}
-                                    >
-                                        <div className="relative flex items-center justify-center size-5">
-                                            <div className="absolute inset-0 rounded-full" style={{ backgroundColor: tag.color, opacity: isSelected ? 1 : 0.5, filter: isSelected ? `drop-shadow(0 0 5px ${tag.color})` : 'none' }}/>
-                                            {isSelected && (
-                                                <motion.div initial={{scale: 0}} animate={{scale: 1}} className="absolute">
-                                                   <CheckCircle className="size-5 text-white/80" style={{filter: 'drop-shadow(0 0 3px black)'}}/>
-                                                </motion.div>
+                    <ScrollArea className="max-h-[60vh] -mr-4 pr-4 custom-scrollbar">
+                        <AnimatePresence>
+                            <motion.div 
+                                layout
+                                className="flex flex-wrap gap-3"
+                            >
+                                {allTags.map(tag => {
+                                    const isSelected = selectedTags.some(t => t.name === tag.name);
+                                    return (
+                                        <motion.button
+                                            key={tag.name}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8 }}
+                                            onClick={() => handleTagClick(tag)}
+                                            className={cn(
+                                                "relative group px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 cursor-pointer border-2 transition-all duration-300",
+                                                isSelected ? 'border-cyan-400 text-cyan-200 bg-cyan-900/50 shadow-lg shadow-cyan-500/20' : 'border-gray-600/50 text-gray-300 bg-gray-800/50 hover:bg-gray-700/50 hover:border-gray-500'
                                             )}
-                                        </div>
-                                        <span>{tag.name}</span>
-                                    </motion.button>
-                                );
-                            })}
-                        </motion.div>
-                    </AnimatePresence>
+                                        >
+                                            <div className="relative flex items-center justify-center size-5">
+                                                <div className="absolute inset-0 rounded-full" style={{ backgroundColor: tag.color, opacity: isSelected ? 1 : 0.5, filter: isSelected ? `drop-shadow(0 0 5px ${tag.color})` : 'none' }}/>
+                                                {isSelected && (
+                                                    <motion.div initial={{scale: 0}} animate={{scale: 1}} className="absolute">
+                                                       <CheckCircle className="size-5 text-white/80" style={{filter: 'drop-shadow(0 0 3px black)'}}/>
+                                                    </motion.div>
+                                                )}
+                                            </div>
+                                            <span>{tag.name}</span>
+                                        </motion.button>
+                                    );
+                                })}
+                            </motion.div>
+                        </AnimatePresence>
+                    </ScrollArea>
                 </div>
 
                 <DialogFooter className="z-10 pt-4 flex justify-end gap-2">
