@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
+import { TagFilterModal, type TaggableTag } from '@/components/dashboard/inbox/tag-filter-modal';
 
 const initialSocialEmails: Email[] = [
     {
@@ -50,6 +51,8 @@ export default function SocialPage() {
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
+  const [isTagFilterModalOpen, setIsTagFilterModalOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TaggableTag[]>([]);
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
@@ -66,8 +69,15 @@ export default function SocialPage() {
         )
     );
   };
+  
+  const handleFilterByTags = (tags: TaggableTag[]) => {
+    setSelectedTags(tags);
+  }
 
-  const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
+  const displayedEmails = emails
+    .filter(email => !showStarred || email.starred)
+    .filter(email => selectedTags.length === 0 || (email.tag && selectedTags.some(t => t.name === email.tag?.name)));
+
 
   if (selectedEmail) {
       return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
@@ -139,7 +149,7 @@ export default function SocialPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar en redes sociales..." className="pl-10 bg-background/70 border-[#00ADEC]/30" />
             </div>
-             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00ADEC]/30 hover:bg-cyan-500 hover:text-white">
+             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00ADEC]/30 hover:bg-cyan-500 hover:text-white" onClick={() => setIsTagFilterModalOpen(true)}>
                 <Tag className="mr-2 size-4" />
                 Etiquetas
             </Button>
@@ -232,6 +242,7 @@ export default function SocialPage() {
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
     <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#007BA8', '#00ADEC']} />
+    <TagFilterModal isOpen={isTagFilterModalOpen} onOpenChange={setIsTagFilterModalOpen} onFilter={handleFilterByTags} initialSelectedTags={selectedTags} />
     </>
   );
 }
