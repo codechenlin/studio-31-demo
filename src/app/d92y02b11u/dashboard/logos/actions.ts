@@ -25,7 +25,13 @@ async function readConfig() {
 }
 
 async function writeConfig(config: any) {
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+  try {
+    const fileContent = JSON.stringify(config, null, 2);
+    await fs.writeFile(configPath, fileContent, 'utf-8');
+  } catch (error) {
+    console.error("Failed to write to app-config.json:", error);
+    throw new Error('No se pudo guardar el archivo de configuración.');
+  }
 }
 
 export async function getAppConfig() {
