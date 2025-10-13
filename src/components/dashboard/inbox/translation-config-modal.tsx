@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -50,7 +50,6 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
         }
     }, [filteredLanguages, targetLanguage]);
 
-
     const handleLanguageClick = (direction: 'up' | 'down') => {
         const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
         if (newIndex >= 0 && newIndex < filteredLanguages.length) {
@@ -90,7 +89,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                             <CheckCircle className="size-5 text-green-400"/>
                             <span className="text-green-300">Detección Automática</span>
                         </div>
-                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-[280px]">
+                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-48">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
@@ -101,10 +100,10 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                         </div>
                     </div>
                     {/* To Language */}
-                    <div className="space-y-4 text-center flex flex-col">
+                     <div className="space-y-4 text-center flex flex-col">
                         <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="flex gap-2">
-                             <motion.div layout className="relative flex-1 flex items-center">
+                        <div className="flex gap-2 justify-center">
+                            <motion.div layout className="relative flex-1 flex items-center">
                                 <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
                                   <Search/>
                                 </Button>
@@ -134,7 +133,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
-                        <div className="relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                         <div className="relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                             <div 
                                 className="w-full transition-transform duration-300 ease-in-out" 
