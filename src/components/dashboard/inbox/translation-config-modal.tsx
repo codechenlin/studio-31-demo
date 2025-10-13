@@ -44,7 +44,10 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
-        if (activeIndex === -1) return;
+        if (activeIndex === -1 && filteredLanguages.length > 0) {
+            setTargetLanguage(filteredLanguages[0].code);
+            return;
+        }
         const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
         if (newIndex >= 0 && newIndex < filteredLanguages.length) {
             setTargetLanguage(filteredLanguages[newIndex].code);
@@ -58,7 +61,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-    }, [activeIndex, filteredLanguages]); // Re-run effect when list is filtered
+    }, [activeIndex, filteredLanguages]);
 
     const handleSave = () => {
         setIsSaving(true);
@@ -84,11 +87,11 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10 grid grid-cols-2 gap-6 items-start">
+                <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     {/* From Language */}
                     <div className="space-y-4 text-center">
                         <Label className="font-semibold text-sm text-purple-200">Idioma Original</Label>
-                         <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center gap-3 text-sm font-semibold">
+                        <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
                             <CheckCircle className="size-5 text-green-400"/>
                             <span className="text-green-300">Detección Automática</span>
                         </div>
@@ -104,7 +107,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     </div>
                     {/* To Language */}
                     <div className="space-y-4 text-center flex flex-col">
-                        <Label htmlFor="target-lang" className="font-semibold text-sm text-purple-200">Traducir a</Label>
+                        <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
                             <Input
@@ -119,23 +122,25 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                              <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
                                 <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                                 <ScrollArea className="h-full w-full" viewportRef={scrollContainerRef}>
-                                    <div className="py-[calc(50%-1.5rem)]">
-                                        {filteredLanguages.map((lang, index) => (
-                                            <div
-                                                key={lang.code}
-                                                className={cn(
-                                                    "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
-                                                )}
-                                                onClick={() => setTargetLanguage(lang.code)}
-                                            >
-                                               <div className={cn(
-                                                    "flex items-center justify-center gap-3 transition-all duration-300",
-                                                    activeIndex === index ? "font-bold scale-100" : "text-purple-200/50 scale-90"
-                                                )}>
-                                                  <span style={{ color: activeIndex === index ? '#FFFFFF' : ''}}>{lang.name}</span>
-                                               </div>
-                                            </div>
-                                        ))}
+                                    <div className="flex flex-col items-center justify-center h-full">
+                                        <div className="h-[calc(50%-1.5rem)]"></div> {/* Spacer top */}
+                                            {filteredLanguages.map((lang, index) => (
+                                                <div
+                                                    key={lang.code}
+                                                    className={cn(
+                                                        "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
+                                                    )}
+                                                    onClick={() => setTargetLanguage(lang.code)}
+                                                >
+                                                <div className={cn(
+                                                        "flex items-center justify-center gap-3 transition-all duration-300",
+                                                        activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
+                                                    )}>
+                                                    <span>{lang.name}</span>
+                                                </div>
+                                                </div>
+                                            ))}
+                                        <div className="h-[calc(50%-1.5rem)]"></div> {/* Spacer bottom */}
                                     </div>
                                 </ScrollArea>
                              </div>
