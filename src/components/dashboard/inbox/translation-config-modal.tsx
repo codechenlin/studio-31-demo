@@ -51,7 +51,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                 }
             }
         }
-    }, [isOpen, filteredLanguages, targetLanguage]);
+    }, [isOpen, filteredLanguages, targetLanguage, isSearchOpen]);
 
     const handleLanguageClick = (langCode: string) => {
         setTargetLanguage(langCode);
@@ -104,7 +104,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* To Language */}
                     <div className="space-y-2 text-center h-full flex flex-col">
                         <Label htmlFor="target-lang" className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="relative flex-1 p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                        <div className="relative flex-1 h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                              <div className="absolute top-4 right-4 z-20 flex items-center justify-end">
                                 <AnimatePresence>
                                 {isSearchOpen && (
@@ -137,7 +137,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-12 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                              <ScrollArea className="h-full w-full">
                                 <div className="flex flex-col h-full">
-                                    <div className="flex-1"></div>
+                                    <div className="flex-1"></div> {/* Top spacer */}
                                     <div ref={scrollContainerRef} className="space-y-2">
                                         {filteredLanguages.map(lang => (
                                             <button
@@ -157,7 +157,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                             </button>
                                         ))}
                                     </div>
-                                    <div className="flex-1"></div>
+                                    <div className="flex-1"></div> {/* Bottom spacer */}
                                 </div>
                             </ScrollArea>
                         </div>
