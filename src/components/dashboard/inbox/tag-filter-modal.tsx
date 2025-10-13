@@ -117,13 +117,13 @@ export function TagFilterModal({ isOpen, onOpenChange, onFilter, initialSelected
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10">
-                    <ScrollArea className="max-h-[60vh] -mr-4 pr-4 custom-scrollbar">
-                        <AnimatePresence>
-                            <motion.div 
-                                layout
-                                className="flex flex-wrap gap-3"
-                            >
+                <div className="py-6 z-10 h-[40vh]">
+                    <ScrollArea className="h-full custom-scrollbar pr-4 -mr-4">
+                        <motion.div 
+                            layout
+                            className="flex flex-wrap gap-3"
+                        >
+                            <AnimatePresence>
                                 {allTags.map(tag => {
                                     const isSelected = selectedTags.some(t => t.name === tag.name);
                                     return (
@@ -151,8 +151,8 @@ export function TagFilterModal({ isOpen, onOpenChange, onFilter, initialSelected
                                         </motion.button>
                                     );
                                 })}
-                            </motion.div>
-                        </AnimatePresence>
+                            </AnimatePresence>
+                        </motion.div>
                     </ScrollArea>
                 </div>
 
