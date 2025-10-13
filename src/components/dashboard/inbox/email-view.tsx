@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +20,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle, Mail, Server, Lock, LockOpen } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle, Mail, Server, Lock, LockOpen, Settings, Loader2, BrainCircuit } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -32,9 +37,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { AntivirusStatusModal } from './antivirus-status-modal';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TagEmailModal, type AppliedTag } from './tag-email-modal';
 import { BimiVmcStatusModal } from './bimi-vmc-status-modal';
+import { TranslationConfigModal } from './translation-config-modal';
 
 
 interface EmailViewProps {
@@ -56,6 +62,12 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isBimiModalOpen, setIsBimiModalOpen] = useState(false);
   const [appliedTag, setAppliedTag] = useState<AppliedTag | null>(null);
   const [isDeleteTagConfirmOpen, setIsDeleteTagConfirmOpen] = useState(false);
+
+  const [isTranslateMenuOpen, setIsTranslateMenuOpen] = useState(false);
+  const [isTranslationConfigOpen, setIsTranslationConfigOpen] = useState(false);
+  const [isTranslating, startTranslation] = useTransition();
+  const [translatedBody, setTranslatedBody] = useState<string | null>(null);
+
   
   useEffect(() => {
     if (email?.tag) {
@@ -63,6 +75,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     } else {
         setAppliedTag(null);
     }
+    // Reset translation state when email changes
+    setTranslatedBody(null);
+    setIsTranslateMenuOpen(false);
   }, [email]);
 
 
@@ -74,6 +89,15 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <p>Tu correo seleccionado aparecerá aquí.</p>
         </div>
     );
+  }
+
+  const handleTranslate = () => {
+    startTranslation(async () => {
+      // Placeholder for future AI translation call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setTranslatedBody(`Este es el cuerpo del correo traducido. La integración con la IA se realizará en el futuro. El contenido original era: "${email.body.replace(/<[^>]*>?/gm, ' ').substring(0, 100)}..."`);
+      setIsTranslateMenuOpen(false);
+    });
   }
   
   const senderEmail = `${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com`;
@@ -121,7 +145,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
       <main className="flex-1 flex flex-col h-screen bg-background relative">
-          <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background backdrop-blur-sm">
+          <header className="sticky top-0 left-0 w-full z-20 p-4 bg-background backdrop-blur-sm">
               <div className="flex items-center justify-center gap-2">
                   <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
                       <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
@@ -146,11 +170,35 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   </div>
                   <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                   <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                      <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
-                          <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                            <Languages className="size-5 text-primary" />
-                          </div>
-                      </button>
+                        <Popover open={isTranslateMenuOpen} onOpenChange={setIsTranslateMenuOpen}>
+                            <PopoverTrigger asChild>
+                                <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}>
+                                    <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
+                                        <Languages className="size-5 text-primary" />
+                                    </div>
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                side="bottom"
+                                align="center"
+                                className="w-auto p-1.5 rounded-xl bg-black/50 backdrop-blur-lg border border-primary/20"
+                            >
+                                <div className="flex items-center gap-1">
+                                    <Button 
+                                        className="px-3 h-8 text-xs bg-transparent hover:bg-primary/20"
+                                        onClick={handleTranslate}
+                                        disabled={isTranslating}
+                                    >
+                                        {isTranslating ? <Loader2 className="mr-2 animate-spin"/> : <Languages className="mr-2"/>}
+                                        Traducir
+                                    </Button>
+                                    <div className="w-px h-6 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20" onClick={() => {setIsTranslationConfigOpen(true); setIsTranslateMenuOpen(false);}}>
+                                        <Settings className="animate-[spin_8s_linear_infinite]" />
+                                    </Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                       <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
@@ -260,9 +308,19 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                           </div>
                       )}
                   </div>
+                  
+                  {translatedBody && (
+                    <div className="mb-6 p-4 rounded-lg bg-blue-950/40 border border-blue-500/30">
+                        <h3 className="font-bold text-lg flex items-center gap-2 text-blue-300 mb-2"><Languages /> Traducción de IA</h3>
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-blue-100/90"
+                          dangerouslySetInnerHTML={{ __html: translatedBody }}
+                        />
+                         <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs" onClick={() => setTranslatedBody(null)}>Mostrar original</Button>
+                    </div>
+                  )}
 
                   <div
-                      className="prose dark:prose-invert max-w-none"
+                      className={cn("prose dark:prose-invert max-w-none", translatedBody && "opacity-50 line-through")}
                       dangerouslySetInnerHTML={{ __html: sanitizedBody }}
                   />
                   {attachments.length > 0 && (
@@ -292,6 +350,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
       {/* Modals */}
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+       <TranslationConfigModal isOpen={isTranslationConfigOpen} onOpenChange={setIsTranslationConfigOpen} />
       <BimiVmcStatusModal 
         isOpen={isBimiModalOpen}
         onOpenChange={setIsBimiModalOpen}
@@ -500,3 +559,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+
+    
