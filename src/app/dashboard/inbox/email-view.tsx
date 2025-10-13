@@ -164,41 +164,15 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                       </Button>
                   </div>
                   <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
-                  <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
-                      <div className="relative">
-                          <button
-                            onClick={() => setIsTranslateMenuOpen(!isTranslateMenuOpen)}
-                            className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}
-                          >
-                              <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                                <Languages className="size-5 text-primary" />
-                              </div>
-                          </button>
-                           <AnimatePresence>
-                              {isTranslateMenuOpen && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 flex items-center gap-1 p-1.5 rounded-xl bg-black/50 backdrop-blur-lg border border-primary/20"
-                                >
-                                  <Button 
-                                    className="px-3 h-8 text-xs bg-transparent hover:bg-primary/20"
-                                    onClick={handleTranslate}
-                                    disabled={isTranslating}
-                                  >
-                                    {isTranslating ? <Loader2 className="mr-2 animate-spin"/> : <Languages className="mr-2"/>}
-                                    Traducir
-                                  </Button>
-                                  <div className="w-px h-6 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20" onClick={() => {setIsTranslationConfigOpen(true); setIsTranslateMenuOpen(false);}}>
-                                    <Settings className="animate-[spin_8s_linear_infinite]" />
-                                  </Button>
-                                </motion.div>
-                              )}
-                          </AnimatePresence>
-                      </div>
+                  <div className="relative p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => setIsTranslateMenuOpen(!isTranslateMenuOpen)}
+                        className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.purple.500),theme(colors.blue.500),theme(colors.purple.500))] before:animate-rotating-border")}
+                      >
+                          <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
+                            <Languages className="size-5 text-primary" />
+                          </div>
+                      </button>
                       <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
@@ -206,6 +180,31 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                       </button>
                   </div>
               </div>
+              <AnimatePresence>
+                  {isTranslateMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="absolute top-full mt-2 flex items-center gap-1 p-1.5 rounded-xl bg-black/50 backdrop-blur-lg border border-primary/20"
+                      style={{left: '50%', transform: 'translateX(-50%)', zIndex: 50}}
+                    >
+                      <Button 
+                        className="px-3 h-8 text-xs bg-transparent hover:bg-primary/20"
+                        onClick={handleTranslate}
+                        disabled={isTranslating}
+                      >
+                        {isTranslating ? <Loader2 className="mr-2 animate-spin"/> : <Languages className="mr-2"/>}
+                        Traducir
+                      </Button>
+                      <div className="w-px h-6 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20" onClick={() => {setIsTranslationConfigOpen(true); setIsTranslateMenuOpen(false);}}>
+                        <Settings className="animate-[spin_8s_linear_infinite]" />
+                      </Button>
+                    </motion.div>
+                  )}
+              </AnimatePresence>
           </header>
 
           <ScrollArea className="flex-1">
