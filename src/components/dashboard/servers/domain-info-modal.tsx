@@ -54,13 +54,13 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                         0% { transform: translateY(-10px); }
                         100% { transform: translateY(100vh); }
                     }
-                    @keyframes ping-pong-scanner {
-                      0% {
-                        transform: translateX(-100%);
-                      }
-                      100% {
-                        transform: translateX(100%);
-                      }
+                    @keyframes scanner-line {
+                        from {
+                            left: -33.3%;
+                        }
+                        to {
+                            left: 100%;
+                        }
                     }
                 `}</style>
                 <div className="w-2/5 flex flex-col border-r border-cyan-400/20 bg-black/30">
@@ -135,7 +135,7 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                                 className="absolute top-0 h-full w-1/3"
                                                 style={{
                                                     background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)',
-                                                    animation: 'ping-pong-scanner 1.5s infinite linear alternate'
+                                                    animation: 'scanner-line 1.5s infinite linear alternate'
                                                 }}
                                             />
                                         </div>
