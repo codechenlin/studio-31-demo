@@ -117,7 +117,7 @@ export function TagFilterModal({ isOpen, onOpenChange, onFilter, initialSelected
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10 h-[40vh]">
+                <div className="z-10 h-[40vh]">
                     <ScrollArea className="h-full custom-scrollbar pr-4 -mr-4">
                         <motion.div 
                             layout
@@ -157,10 +157,10 @@ export function TagFilterModal({ isOpen, onOpenChange, onFilter, initialSelected
                 </div>
 
                 <DialogFooter className="z-10 pt-4 flex justify-end gap-2">
-                    <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancel}>
+                    <Button variant="outline" className="border-[#F00000] text-white hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={handleCancel}>
                         <X className="mr-2"/>Cancelar
                     </Button>
-                    <Button className="bg-cyan-600 hover:bg-cyan-500 text-white" onClick={handleApplyFilter}>
+                    <Button className="bg-[#007BA8] hover:bg-[#00ADEC] text-white" onClick={handleApplyFilter}>
                         <Tag className="mr-2"/>Filtrar
                     </Button>
                 </DialogFooter>
