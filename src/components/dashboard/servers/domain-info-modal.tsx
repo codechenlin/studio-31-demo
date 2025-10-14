@@ -54,6 +54,17 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                         0% { transform: translateY(-10px); }
                         100% { transform: translateY(100vh); }
                     }
+                    @keyframes ping-pong-scanner {
+                      0% {
+                        transform: translateX(-25%);
+                      }
+                      50% {
+                        transform: translateX(125%);
+                      }
+                      100% {
+                        transform: translateX(-25%);
+                      }
+                    }
                 `}</style>
                 <div className="w-2/5 flex flex-col border-r border-cyan-400/20 bg-black/30">
                     <DialogHeader className="p-6 border-b border-cyan-400/20">
@@ -129,7 +140,7 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                                     background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)'
                                                 }}
                                                 animate={{ x: ['-100%', '300%'] }}
-                                                transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
+                                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                                             />
                                         </div>
                                         <Mail className="size-16" />
