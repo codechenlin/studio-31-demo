@@ -54,15 +54,12 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                         0% { transform: translateY(-10px); }
                         100% { transform: translateY(100vh); }
                     }
-                    @keyframes ping-pong-scanner {
-                      0% {
+                     @keyframes ping-pong-scanner {
+                      from {
                         transform: translateX(-25%);
                       }
-                      50% {
+                      to {
                         transform: translateX(125%);
-                      }
-                      100% {
-                        transform: translateX(-25%);
                       }
                     }
                 `}</style>
@@ -134,13 +131,12 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                     <div className="flex items-center justify-center gap-8">
                                         <Globe className="size-16" />
                                          <div className="relative w-24 h-px bg-cyan-400/30 overflow-hidden">
-                                            <motion.div
+                                            <div
                                                 className="absolute top-0 left-0 h-full w-1/3"
                                                 style={{
-                                                    background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)'
+                                                    background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)',
+                                                    animation: 'ping-pong-scanner 1.5s infinite linear alternate'
                                                 }}
-                                                animate={{ x: ['-100%', '300%'] }}
-                                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                                             />
                                         </div>
                                         <Mail className="size-16" />
