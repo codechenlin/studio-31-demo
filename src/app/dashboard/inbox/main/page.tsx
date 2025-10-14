@@ -14,6 +14,7 @@ import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filte
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
+import { AntivirusConfigModal } from '@/components/dashboard/inbox/antivirus-config-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
@@ -137,6 +138,7 @@ export default function MainInboxPage() {
   const [emails, setEmails] = useState(initialEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
+  const [isAntivirusConfigModalOpen, setIsAntivirusConfigModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
@@ -324,7 +326,7 @@ export default function MainInboxPage() {
                         </svg>
                       </Button>
                       <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 text-amber-500 hover:text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 text-blue-500 hover:text-blue-500">
+                      <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 text-blue-500 hover:text-blue-500" onClick={() => setIsAntivirusConfigModalOpen(true)}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Button>
                   </div>
@@ -351,7 +353,7 @@ export default function MainInboxPage() {
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
-      <AntivirusStatusModal isOpen={false} onOpenChange={() => {}} />
+      <AntivirusConfigModal isOpen={isAntivirusConfigModalOpen} onOpenChange={setIsAntivirusConfigModalOpen} />
       <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} />
       <TagFilterModal isOpen={isTagFilterModalOpen} onOpenChange={setIsTagFilterModalOpen} onFilter={handleFilterByTags} initialSelectedTags={selectedTags} />
     </>
