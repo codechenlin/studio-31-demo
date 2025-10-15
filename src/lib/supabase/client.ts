@@ -11,9 +11,8 @@ export function createClient() {
     throw new Error("Supabase URL or Anon Key is missing from .env file.");
   }
 
-  return createBrowserClient(
-    supabaseUrl,
-    supabaseAnonKey
-  );
+  // Se elimina la lógica de cookies para el cliente del navegador, 
+  // ya que no es necesaria para operaciones públicas como la subida de archivos
+  // y puede causar conflictos con FormData en Server Actions.
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
-
