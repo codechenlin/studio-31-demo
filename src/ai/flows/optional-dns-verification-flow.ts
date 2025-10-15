@@ -8,7 +8,7 @@
  * - OptionalDnsHealthOutput - The return type for the verifyOptionalDnsHealth function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, isDnsAnalysisEnabled } from '@/ai/genkit';
 import { z } from 'genkit';
 import dns from 'node:dns/promises';
 
@@ -36,8 +36,8 @@ async function withRetries<T>(
       return await fn();
     } catch (error: any) {
       lastError = error;
-      if (error.message && error.message.includes('503')) {
-        console.warn(`Attempt ${i + 1} failed with 503 error. Retrying in ${delay / 1000}s...`);
+      if (error.message && (error.message.includes('503') || error.message.includes('429'))) {
+        console.warn(`Attempt ${i + 1} failed with retriable error. Retrying in ${delay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
         throw error; // Not a retriable error
@@ -51,6 +51,10 @@ async function withRetries<T>(
 export async function verifyOptionalDnsHealth(
   input: OptionalDnsHealthInput
 ): Promise<OptionalDnsHealthOutput | null> {
+  if (!isDnsAnalysisEnabled()) {
+    throw new Error('DNS analysis with AI is disabled by the administrator.');
+  }
+  
   try {
     return await withRetries(() => optionalDnsHealthCheckFlow(input));
   } catch (error) {
@@ -156,4 +160,3 @@ Registros a analizar:
     return output;
   }
 );
-

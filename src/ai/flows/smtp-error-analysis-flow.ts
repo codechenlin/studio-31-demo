@@ -8,7 +8,7 @@
  * - SmtpErrorAnalysisOutput - The return type for the analyzeSmtpError function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, isDnsAnalysisEnabled } from '@/ai/genkit';
 import { z } from 'genkit';
 
 export type SmtpErrorAnalysisInput = z.infer<typeof SmtpErrorAnalysisInputSchema>;
@@ -24,6 +24,10 @@ const SmtpErrorAnalysisOutputSchema = z.object({
 export async function analyzeSmtpError(
   input: SmtpErrorAnalysisInput
 ): Promise<SmtpErrorAnalysisOutput | null> {
+  if (!isDnsAnalysisEnabled()) {
+    throw new Error('SMTP error analysis with AI is disabled by the administrator.');
+  }
+  
   try {
     return await smtpErrorAnalysisFlow(input);
   } catch (error) {
@@ -65,5 +69,3 @@ const smtpErrorAnalysisFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

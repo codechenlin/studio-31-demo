@@ -14,7 +14,8 @@ import {
   Image as ImageIcon,
   HardDrive,
   File as FileIcon,
-  Shield
+  Shield,
+  BrainCircuit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ const menuItems = [
   { href: "/d92y02b11u/dashboard", label: "Escritorio", icon: LayoutDashboard },
   { href: "/d92y02b11u/dashboard/logos", label: "Logos y Portadas", icon: ImageIcon },
   { href: "/d92y02b11u/dashboard/subscription-plans", label: "Planes de Suscripción", icon: Shield },
+  { href: "/d92y02b11u/dashboard/ai-config", label: "Configuración de IA", icon: BrainCircuit },
 ];
 
 function AdminPanelContent({

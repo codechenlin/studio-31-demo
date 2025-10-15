@@ -1,0 +1,10 @@
+
+{
+  "provider": "deepseek",
+  "apiKey": "",
+  "modelName": "deepseek-chat",
+  "enabled": false,
+  "functions": {
+    "dnsAnalysis": false
+  }
+}
