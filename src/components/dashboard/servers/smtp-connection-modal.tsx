@@ -450,9 +450,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
               </div>
 
-              <div className="text-xs text-muted-foreground mt-4">
-                  Una configuración SMTP segura y verificada es crucial para asegurar la máxima entregabilidad y reputación de tus campañas de correo.
-              </div>
           </div>
       )
   }
@@ -839,12 +836,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     background: 'linear-gradient(to right, #F00000, #F07000)',
                                 }}
                             >
-                                <div 
-                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover/error-btn:opacity-100 transition-opacity"
-                                    style={{
-                                        animation: 'button-scan 2s linear infinite'
-                                    }}
-                                />
+                                <div className="ai-button-scan absolute inset-0"/>
                                 <div className="relative z-10 flex items-center justify-center gap-2">
                                     <div className="flex items-end gap-0.5 h-4">
                                         <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
@@ -1179,6 +1171,8 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
     );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1609,6 +1603,8 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
+
 
 
 
