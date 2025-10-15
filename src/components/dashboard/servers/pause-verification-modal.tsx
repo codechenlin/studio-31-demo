@@ -67,7 +67,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
         </div>
 
         <DialogFooter className="z-10 pt-4 grid grid-cols-3 gap-2">
-            <Button variant="outline" className="text-white border-white/30 hover:bg-white/10" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                 <X className="mr-2"/> Cerrar
             </Button>
             <Button variant="destructive" onClick={onCancelProcess}>

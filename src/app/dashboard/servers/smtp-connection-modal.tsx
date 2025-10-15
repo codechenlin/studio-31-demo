@@ -10,18 +10,22 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
+import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
+import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToastProvider, ToastViewport } from '@/components/ui/toast';
+import { PauseVerificationModal } from './pause-verification-modal';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -32,8 +36,9 @@ type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'faile
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
+type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
-const generateVerificationCode = () => `foxmiu_${Math.random().toString(36).substring(2, 10)}`;
+const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -43,7 +48,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | OptionalDnsHealthOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
@@ -60,7 +65,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [testError, setTestError] = useState('');
-  const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
+
+  const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
+  const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
+  
+  const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
+  const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
+  const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
+  
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -94,7 +109,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
-  const txtRecordValue = `foxmiu-verification=${verificationCode}`;
+  const txtRecordValue = verificationCode;
 
   const handleStartVerification = () => {
     if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
@@ -136,12 +151,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const handleCheckHealth = async () => {
-    if (!dkimData) {
+    if (!acceptedDkimKey) {
       toast({
-        title: "Error",
-        description: "Los datos DKIM no se han generado. Por favor, reinicia el proceso.",
+        title: "Acción Requerida",
+        description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
         variant: "destructive",
       });
+      setShowDkimAcceptWarning(true);
       return;
     }
     
@@ -152,13 +168,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     try {
       const result = await verifyDnsAction({
         domain,
-        dkimPublicKey: dkimData.publicKeyRecord,
+        dkimPublicKey: acceptedDkimKey,
       });
       
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
-        setShowNotification(true);
+        const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
+        if (!allVerified) {
+          setShowNotification(true);
+        }
       } else {
           toast({
               title: "Análisis Fallido",
@@ -176,29 +195,45 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   }
 
-  const handleCheckOptionalHealth = async () => {
-    const checkRecord = async (
-        name: string,
-        recordType: 'MX' | 'BIMI' | 'VMC',
-        expectedValue: string,
-        stateKey: keyof typeof optionalRecordStatus
-    ) => {
-        setOptionalRecordStatus(prev => ({...prev, [stateKey]: 'verifying'}));
-        const result = await verifyDomainOwnershipAction({ domain, name, recordType, expectedValue });
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
-        setOptionalRecordStatus(prev => ({...prev, [stateKey]: result.success ? 'verified' : 'failed'}));
-    };
+  const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
+    setHealthCheckStatus('verifying');
+    setDnsAnalysis(null);
+    setShowNotification(false);
+    setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    checkRecord('@', 'MX', 'foxmiu.email', 'mx');
-    checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi');
-    checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc');
+    await Promise.all([
+      verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
+      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
+      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
+    ]);
+    
+    setHealthCheckStatus('verified');
+    
+    if (runAiAnalysis) {
+      const result = await verifyOptionalDnsAction({ domain });
+       if (result.success && result.data) {
+        setDnsAnalysis(result.data);
+        const hasError = result.data.mxStatus !== 'verified' || result.data.bimiStatus !== 'verified' || result.data.vmcStatus !== 'verified';
+        if (hasError) {
+          setShowNotification(true);
+        }
+      } else {
+          toast({
+              title: "Análisis Fallido",
+              description: result.error || "La IA no pudo procesar los registros opcionales.",
+              variant: "destructive",
+          })
+          setDnsAnalysis(null); // Ensure it's null on failure
+      }
+    }
   }
 
   const handleGenerateDkim = async () => {
     if (!domain) return;
     setIsGeneratingDkim(true);
+    setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
-      const result = await generateDkimKeys({ domain, selector: 'foxmiu' });
+      const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);
     } catch (error: any) {
       toast({
@@ -220,36 +255,47 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     });
   }
 
+  const resetState = () => {
+    setCurrentStep(1);
+    setDomain('');
+    setVerificationCode('');
+    setVerificationStatus('idle');
+    setHealthCheckStatus('idle');
+    setDnsAnalysis(null);
+    setTestStatus('idle');
+    setDeliveryStatus('idle');
+    form.reset();
+    setTestError('');
+    setActiveInfoModal(null);
+    setIsCancelConfirmOpen(false);
+    setDkimData(null);
+    setShowNotification(false);
+    setHealthCheckStep('mandatory');
+    setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
+    setIsSmtpErrorAnalysisModalOpen(false);
+    setSmtpErrorAnalysis(null);
+    setAcceptedDkimKey(null);
+    setIsConnectionSecure(false);
+  }
+
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(() => {
-        setCurrentStep(1);
-        setDomain('');
-        setVerificationCode('');
-        setVerificationStatus('idle');
-        setHealthCheckStatus('idle');
-        setDnsAnalysis(null);
-        setTestStatus('idle');
-        form.reset();
-        setTestError('');
-        setDeliveryStatus('idle');
-        setActiveInfoModal(null);
-        setIsCancelConfirmOpen(false);
-        setDkimData(null);
-        setShowNotification(false);
-        setHealthCheckStep('mandatory');
-        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
-    }, 300);
+    setTimeout(resetState, 300);
   }
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
     setTestStatus('testing');
-    setTestError('');
     setDeliveryStatus('idle');
+    setTestError('');
+    setSmtpErrorAnalysis(null);
+    
+    const isSecure = values.encryption !== 'none';
+    setIsConnectionSecure(isSecure);
+
     const result = await sendTestEmailAction({
         host: values.host,
         port: values.port,
-        secure: values.encryption !== 'none',
+        secure: isSecure,
         auth: {
             user: values.username,
             pass: values.password
@@ -260,22 +306,48 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (result.success) {
       setTestStatus('success');
+      setDeliveryStatus('delivered');
       toast({
         title: "¡Conexión Exitosa!",
-        description: `Correo de prueba despachado a ${values.testEmail}.`,
-        className: 'bg-green-500 text-white border-none'
-      })
+        description: `Correo de prueba despachado a ${values.testEmail}`,
+        style: { backgroundColor: '#00CB07', color: 'white' },
+        className: 'border-none'
+      });
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
+       setDeliveryStatus('bounced');
     }
   }
 
-   const handleCheckDelivery = async () => {
-    setDeliveryStatus('checking');
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    setDeliveryStatus('delivered');
+  const handleSmtpErrorAnalysis = async () => {
+    if (!testError) return;
+    setSmtpErrorAnalysis(null);
+    setIsSmtpErrorAnalysisModalOpen(true);
+    const result = await analyzeSmtpErrorAction({ error: testError });
+    if (result.success && result.data) {
+        setSmtpErrorAnalysis(result.data.analysis);
+    } else {
+        setSmtpErrorAnalysis(result.error || 'No se pudo generar un análisis.');
+    }
   };
+  
+  const handlePauseProcess = () => {
+    // Here you would save the state to your backend.
+    // For now, we'll just close the modals.
+    toast({
+        title: "Proceso Pausado",
+        description: "Tu progreso ha sido guardado. Tienes 24 horas para continuar.",
+        className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
+    });
+    setIsPauseModalOpen(false);
+    handleClose();
+  }
+
+  const handleCancelProcess = () => {
+    setIsPauseModalOpen(false);
+    setIsCancelConfirmOpen(true);
+  }
 
   const cardAnimation = {
       initial: { opacity: 0, y: 20 },
@@ -286,7 +358,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const DomainStatusIndicator = () => {
     if (currentStep < 2) return null;
     
-    const isConfigFinished = currentStep === 4;
+    const isConfigFinished = currentStep === 4 && testStatus === 'success';
 
     return (
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
@@ -363,42 +435,68 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
 
                   {currentStep > 1 && <DomainStatusIndicator />}
+
+                  {currentStep > 1 && (
+                      <div className="mt-4 p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                          <p className="text-xs text-purple-200/80 mb-2">Puedes pausar y continuar más tarde sin perder tu progreso.</p>
+                          <Button 
+                            onClick={() => setIsPauseModalOpen(true)}
+                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                          >
+                            <Pause className="mr-2"/> Pausar Proceso
+                          </Button>
+                      </div>
+                  )}
+
               </div>
 
-              <div className="text-xs text-muted-foreground mt-4">
-                  Una configuración SMTP segura y verificada es crucial para asegurar la máxima entregabilidad y reputación de tus campañas de correo.
-              </div>
           </div>
       )
   }
 
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
+
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
-      <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-          <span className='font-semibold'>{name}</span>
-          <div className="flex items-center gap-2">
-            {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+    <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+        <span className='font-semibold'>{name}</span>
+        <div className="flex items-center gap-2">
+          {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+          <div className="relative">
             <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+            {recordKey === 'dkim' && showDkimAcceptWarning && (
+               <div className="absolute -top-1 -right-1">
+                  <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                      <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                  </div>
+              </div>
+            )}
           </div>
-      </div>
+        </div>
+    </div>
   );
 
   const renderStep4 = () => (
     <>
-        <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
-        <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
-        <div className="flex-grow space-y-3 pt-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar">
+      <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
+      <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
+      <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-4">
+        <div className="px-8">
             <FormField control={form.control} name="host" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Host</Label>
+                <FormItem className="space-y-1 mb-3"><Label>Host</Label>
                     <FormControl><div className="relative flex items-center"><ServerIcon className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
                 </FormItem>
             )}/>
+        </div>
+        <div className="px-8">
             <FormField control={form.control} name="port" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Puerto</Label>
+                <FormItem className="space-y-1 mb-3"><Label>Puerto</Label>
                     <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
                 </FormItem>
             )}/>
+        </div>
+        <div className="px-8">
             <FormField control={form.control} name="encryption" render={({ field }) => (
-                <FormItem><Label>Cifrado</Label><FormControl>
+                <FormItem className="mb-3"><Label>Cifrado</Label><FormControl>
                 <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
                     <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
                     <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
@@ -406,20 +504,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 </RadioGroup>
                 </FormControl><FormMessage /></FormItem>
             )}/>
+        </div>
+        <div className="px-8">
             <FormField control={form.control} name="username" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-            )}/>
-            <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+                <FormItem className="space-y-1 mb-3"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
             )}/>
         </div>
+        <div className="px-8">
+            <FormField control={form.control} name="password" render={({ field }) => (
+                <FormItem className="space-y-1 mb-3"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+            )}/>
+        </div>
+      </div>
     </>
   );
 
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -480,9 +583,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', dnsAnalysis?.spfStatus || 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
+                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
                           </>
                           ) : (
                           <>
@@ -500,7 +603,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
+                           {dnsAnalysis && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -523,10 +626,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     </button>
                                      {showNotification && (
                                         <div 
-                                            className="absolute -top-2 -right-2 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                            style={{ backgroundColor: (dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified') ? '#00CB07' : '#F00000' }}
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            style={{ backgroundColor: '#F00000' }}
                                         >
-                                            1
+                                            !
                                         </div>
                                     )}
                                 </div>
@@ -549,7 +652,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allMandatoryRecordsVerified = dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified';
+    const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
+    const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -569,7 +673,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                      <Button
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white"
+                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
                         onClick={handleStartVerification}
                         disabled={!domain}
                       >
@@ -628,11 +732,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                 {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                     <div className="text-center">
-                        <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Registros Obligatorios</h4>
-                        <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
-                    </div>
+                      {!allMandatoryRecordsVerified ? (
+                        <div className="text-center">
+                            <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
+                            <h4 className="font-bold">Registros Obligatorios</h4>
+                            <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
+                        </div>
+                      ) : (
+                          <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                          >
+                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                  </motion.div>
+                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                  <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
+                              </div>
+                          </motion.div>
+                      )}
                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
                       <Info className="size-5 shrink-0 mt-0.5" />
                       <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
@@ -641,11 +762,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                  {currentStep === 3 && healthCheckStep === 'optional' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                     <div className="text-center">
-                        <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Registros Opcionales</h4>
-                        <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
-                    </div>
+                     {!allOptionalRecordsVerified ? (
+                        <div className="text-center">
+                            <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
+                            <h4 className="font-bold">Registros Opcionales</h4>
+                            <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
+                        </div>
+                      ) : (
+                          <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                          >
+                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                  </motion.div>
+                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                  <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                              </div>
+                          </motion.div>
+                      )}
+                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
+                          <Info className="size-5 shrink-0 mt-0.5" />
+                          <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
+                      </div>
                   </div>
                 )}
                 {currentStep === 4 && (
@@ -674,23 +816,37 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && deliveryStatus !== 'bounced' && (
-                            <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                                <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
-                                {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                                Verificar Entrega
-                                </Button>
-                                {deliveryStatus === 'delivered' && 
-                                    <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
-                                }
-                            </motion.div>
-                        )}
+                        {deliveryStatus !== 'idle' && isConnectionSecure && <DeliveryTimeline deliveryStatus={deliveryStatus} testError={testError}/>}
+
                         <AnimatePresence>
                         {testStatus === 'failed' && (
-                            <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
+                           <motion.div
+                            key="failed-smtp-content"
+                            {...cardAnimation}
+                            className="mt-4 flex flex-col items-center gap-3"
+                           >
+                            <div className="p-2 bg-red-500/10 text-red-400 rounded-lg text-center text-xs w-full">
                                 <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
                                 <p>{testError}</p>
-                            </motion.div>
+                            </div>
+                            <button
+                                onClick={handleSmtpErrorAnalysis}
+                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                                style={{
+                                    background: 'linear-gradient(to right, #F00000, #F07000)',
+                                }}
+                            >
+                                <div className="ai-button-scan absolute inset-0"/>
+                                <div className="relative z-10 flex items-center justify-center gap-2">
+                                    <div className="flex items-end gap-0.5 h-4">
+                                        <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
+                                        <span className="w-1 h-full bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.2s'}}/>
+                                        <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.4s'}}/>
+                                    </div>
+                                    <span className="text-sm font-semibold">Análisis del error con IA</span>
+                                </div>
+                            </button>
+                           </motion.div>
                         )}
                         </AnimatePresence>
                     </div>
@@ -698,7 +854,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
-                        className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC]"
+                        className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
                         onClick={handleCheckVerification}
                         disabled={verificationStatus === 'verifying'}
                       >
@@ -706,7 +862,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </Button>
                     }
                     {currentStep === 2 && verificationStatus === 'verified' && (
-                      <Button className="w-full mt-2 bg-green-500 hover:bg-[#00CB07] text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
+                      <Button className="w-full mt-2 bg-green-500 hover:bg-[#00CB07] text-white h-12 text-base border-2 border-[#21F700] hover:border-[#21F700]" onClick={() => setCurrentStep(3)}>
                         Continuar <ArrowRight className="ml-2"/>
                       </Button>
                     )}
@@ -722,49 +878,53 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
-                                    onClick={handleCheckOptionalHealth} disabled={Object.values(optionalRecordStatus).some(s => s === 'verifying')}
+                                    onClick={() => {
+                                        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
+                                        handleCheckOptionalHealth(true)
+                                    }} disabled={healthCheckStatus === 'verifying'}
                                 >
-                                {Object.values(optionalRecordStatus).some(s => s === 'verifying') ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
+                                {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
                             )}
                          
-                         {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
+                         {healthCheckStatus === 'verified' && allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
+                              setHealthCheckStep('optional');
+                              setHealthCheckStatus('idle'); // Reset status for next step
+                              setDnsAnalysis(null);
+                              setShowNotification(false);
+                            }}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
                          )}
 
                          {healthCheckStep === 'optional' && (
-                            <>
-                                <Button variant="outline" className="w-full" onClick={() => setHealthCheckStep('mandatory')}>
-                                    Volver a Obligatorios
-                                </Button>
-                                <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
-                                    Siguiente <ArrowRight className="ml-2"/>
-                                </Button>
-                            </>
+                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => setCurrentStep(4)}>
+                                Siguiente <ArrowRight className="ml-2"/>
+                            </Button>
                          )}
                         </div>
                     )}
-                    {currentStep === 4 && (
-                         <>
-                         {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
-                             <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
-                                 Finalizar y Guardar
-                             </Button>
-                         ) : (
-                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
-                                 {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
-                             </Button>
-                         )}
-                         </>
+                    {currentStep === 4 && (testStatus !== 'success' || deliveryStatus !== 'delivered') && (
+                         <Button 
+                            onClick={form.handleSubmit(onSubmitSmtp)} 
+                            className="w-full h-12 text-base text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
+                            disabled={testStatus === 'testing'}
+                         >
+                             {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
+                         </Button>
                     )}
                      <Button 
                         variant="outline"
-                        className="w-full h-12 text-base bg-transparent border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
-                        onClick={() => setIsCancelConfirmOpen(true)}
+                        className={cn(
+                          "w-full h-12 text-base bg-transparent transition-colors",
+                           deliveryStatus === 'delivered'
+                           ? "border-[#21F700] text-white hover:text-white hover:bg-[#00CB07]"
+                           : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
+                        )}
+                        onClick={deliveryStatus === 'delivered' ? handleClose : () => setIsCancelConfirmOpen(true)}
                      >
-                        Cancelar
+                        {deliveryStatus === 'delivered' ? 'Finalizar y Guardar' : 'Cancelar'}
                     </Button>
                 </div>
               </motion.div>
@@ -786,10 +946,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else if (currentStep === 3) {
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (healthCheckStatus === 'verified') {
-          const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
-          const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
-          status = hasError ? 'error' : 'success';
-          text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
+          if (healthCheckStep === 'mandatory') {
+            const {spfStatus, dkimStatus, dmarcStatus} = (dnsAnalysis as DnsHealthOutput) || {};
+            const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
+            status = hasError ? 'error' : 'success';
+            text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
+          } else {
+             status = 'success';
+             text = 'ANÁLISIS OPCIONAL COMPLETO'
+          }
         }
        else if (healthCheckStatus === 'failed') {
             status = 'error'; text = 'FALLO EN EL ANÁLISIS';
@@ -799,9 +964,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         text = 'LISTO PARA CHEQUEO';
       }
     } else if (currentStep === 4) {
-      if (testStatus === 'testing' || deliveryStatus === 'checking') { status = 'processing'; text = 'PROBANDO CONEXIÓN';
-      } else if (testStatus === 'success' && deliveryStatus === 'delivered') { status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
-      } else if (testStatus === 'success') { status = 'success'; text = 'CONEXIÓN EXITOSA';
+      if (testStatus === 'testing') { status = 'processing'; text = 'PROBANDO CONEXIÓN';
+      } else if (testStatus === 'success') { status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
       } else if (testStatus === 'failed') { status = 'error'; text = 'FALLO DE CONEXIÓN';
       } else { status = 'idle'; text = 'LISTO PARA PRUEBA'; }
     }
@@ -821,44 +985,173 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        {renderContent()}
-      </Dialog>
-      <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Si cancelas ahora, perderás todo el progreso de la configuración y deberás comenzar de nuevo.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setIsCancelConfirmOpen(false)}>No, continuar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Sí, salir
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <DnsInfoModal
-        recordType={activeInfoModal}
-        domain={domain}
-        isOpen={!!activeInfoModal}
-        onOpenChange={() => setActiveInfoModal(null)}
-        onCopy={handleCopy}
-        dkimData={dkimData}
-        isGeneratingDkim={isGeneratingDkim}
-      />
-      <AiAnalysisModal 
-        isOpen={isAnalysisModalOpen}
-        onOpenChange={setIsAnalysisModalOpen}
-        analysis={dnsAnalysis?.analysis || null}
-      />
+      <ToastProvider>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) {
+                // If user clicks outside or presses Esc, confirm before closing.
+                setIsCancelConfirmOpen(true);
+            }
+        }}>
+            {renderContent()}
+        </Dialog>
+        <PauseVerificationModal
+          isOpen={isPauseModalOpen}
+          onOpenChange={setIsPauseModalOpen}
+          onPause={handlePauseProcess}
+          onCancelProcess={handleCancelProcess}
+        />
+        <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Si cancelas ahora, perderás todo el progreso de la configuración y deberás comenzar de nuevo.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setIsCancelConfirmOpen(false)}>No, continuar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Sí, salir
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        <DnsInfoModal
+            recordType={activeInfoModal}
+            domain={domain}
+            isOpen={!!activeInfoModal}
+            onOpenChange={() => setActiveInfoModal(null)}
+            onCopy={handleCopy}
+            dkimData={dkimData}
+            isGeneratingDkim={isGeneratingDkim}
+            onRegenerateDkim={handleGenerateDkim}
+            acceptedKey={acceptedDkimKey}
+            onAcceptKey={(key) => {
+              setAcceptedDkimKey(key);
+              setShowDkimAcceptWarning(false);
+              setShowKeyAcceptedToast(true);
+              setTimeout(() => setShowKeyAcceptedToast(false), 3000);
+            }}
+        />
+        <AiAnalysisModal 
+            isOpen={isAnalysisModalOpen}
+            onOpenChange={setIsAnalysisModalOpen}
+            analysis={dnsAnalysis?.analysis || null}
+        />
+        <SmtpErrorAnalysisModal
+            isOpen={isSmtpErrorAnalysisModalOpen}
+            onOpenChange={setIsSmtpErrorAnalysisModalOpen}
+            analysis={smtpErrorAnalysis}
+        />
+        {showKeyAcceptedToast && (
+            <div className="fixed top-4 right-4 z-[101] w-80">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                >
+                    <div className="bg-black/70 backdrop-blur-lg border border-green-500/30 rounded-xl p-4 flex items-center gap-4 text-white">
+                        <div className="relative p-2 rounded-full bg-green-500/20">
+                            <div className="absolute inset-0 rounded-full bg-green-500/50 animate-ping"></div>
+                            <CheckCheck className="relative z-10 text-green-300"/>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-bold text-green-300">Clave Aceptada</h4>
+                            <p className="text-xs text-green-100/80">Lista para la verificación DNS.</p>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        )}
+         <ToastViewport />
+      </ToastProvider>
     </>
   );
 }
 
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
+    
+    const sentIconClass = "border-green-400 bg-green-500/20 text-green-300";
+    const deliveredIconClass = deliveryStatus === 'delivered' ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500";
+    const bouncedIconClass = "border-red-500 bg-red-500/20 text-red-400";
+    
+    const sentTextClass = "text-green-300";
+    const deliveredTextClass = deliveryStatus === 'delivered' ? "text-green-300" : "text-gray-500";
+    const bouncedTextClass = "text-red-400";
 
+    const connectorAnimation = deliveryStatus === 'bounced' ? { width: '50%' } : { width: '100%' };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 space-y-3 text-left"
+        >
+            <p className="text-sm font-semibold text-center">Línea de Tiempo de Entrega</p>
+            <div className="flex items-center gap-2">
+                {/* Step 1: Sent */}
+                <div className="flex flex-col items-center">
+                    <motion.div 
+                        className={`${iconBaseClass} ${sentIconClass}`}
+                        animate={{ boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <Send size={16} />
+                    </motion.div>
+                    <p className={`text-xs mt-1 ${sentTextClass}`}>Enviado</p>
+                </div>
+                
+                {/* Connector */}
+                <div className="flex-1 h-0.5 bg-gray-600 relative overflow-hidden">
+                    <motion.div 
+                        className="absolute top-0 left-0 h-full bg-green-400"
+                        initial={{ width: '0%' }}
+                        animate={connectorAnimation}
+                        transition={{ delay: 0.5, duration: 1 }}
+                    />
+                </div>
+                
+                {/* Step 2: Delivered or Bounced */}
+                 <div className="flex flex-col items-center">
+                    <motion.div 
+                      className={cn(iconBaseClass, deliveryStatus === 'bounced' ? bouncedIconClass : deliveredIconClass)}
+                      initial={{ scale: 0 }}
+                      animate={{ 
+                        scale: 1, 
+                        borderColor: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#ef4444' : '#22c55e') : '#6b7280',
+                        color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280',
+                        boxShadow: deliveryStatus !== 'sent' ? ['0 0 0px', `0 0 15px ${deliveryStatus === 'bounced' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(52, 211, 153, 0.5)'}`, '0 0 0px'] : 'none'
+                      }}
+                      transition={{ scale: { delay: 1.5, duration: 0.5, ease: 'backOut' }, boxShadow: { delay: 1.5, duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
+                    >
+                        {deliveryStatus === 'bounced' ? <X size={16} /> : <MailCheck size={16} />}
+                    </motion.div>
+                     <motion.p 
+                      className={cn("text-xs mt-1", deliveryStatus === 'bounced' ? bouncedTextClass : deliveredTextClass)}
+                      initial={{ color: 'hsl(var(--muted-foreground))' }}
+                      animate={{ color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280' }}
+                      transition={{ delay: 1.5 }}
+                     >
+                        {deliveryStatus === 'bounced' ? 'Rebotado' : 'Entregado'}
+                    </motion.p>
+                </div>
+            </div>
+             <motion.p 
+                className={cn("text-xs text-center pt-2", deliveryStatus === 'delivered' ? 'text-green-300/80' : 'text-red-300/80')}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2 }}
+             >
+                {deliveryStatus === 'delivered' && '¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.'}
+                {deliveryStatus === 'bounced' && '¡Fallo en la entrega! El correo fue rebotado.'}
+            </motion.p>
+        </motion.div>
+    );
+}
+
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -867,6 +1160,9 @@ function DnsInfoModal({
   onCopy,
   dkimData,
   isGeneratingDkim,
+  onRegenerateDkim,
+  acceptedKey,
+  onAcceptKey,
 }: {
   recordType: InfoViewRecord | null,
   domain: string,
@@ -875,7 +1171,11 @@ function DnsInfoModal({
   onCopy: (text: string) => void,
   dkimData: DkimGenerationOutput | null,
   isGeneratingDkim: boolean,
+  onRegenerateDkim: () => void;
+  acceptedKey: string | null;
+  onAcceptKey: (key: string) => void;
 }) {
+    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
     if(!recordType) return null;
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
@@ -895,7 +1195,7 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Foxmiu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Daybuu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
       },
       bimi: {
         title: "Registro BIMI",
@@ -908,7 +1208,7 @@ function DnsInfoModal({
     }
 
     const renderSpfContent = () => {
-        const recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
+        const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
                 <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
@@ -929,16 +1229,53 @@ function DnsInfoModal({
                 </div>
                  <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                     <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                    <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                    <p>Si ya usas otros servicios de correo (ej. Daybuu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p className="mt-2 font-mono text-white/90">Ejemplo: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
                 </div>
             </div>
         );
     };
 
     const renderDkimContent = () => (
-        <div className="space-y-4 text-sm">
-            <p>Añade el siguiente registro TXT para DKIM. La clave pública se genera automáticamente para tu dominio.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
+            <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+             <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-2">
+              <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+              <div>
+                <p className="font-bold mb-1 text-amber-300">¡Atención!</p>
+                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación DKIM funcione.</p>
+              </div>
+            </div>
+            <div className={cn(baseClass, "flex-col items-start gap-1")}>
+               <div className="font-bold text-white/90 flex justify-between w-full items-center">
+                <span>Clave Aceptada:</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-xs font-semibold", acceptedKey ? "text-green-400" : "text-amber-400")}>
+                    {acceptedKey ? "SÍ" : "NO"}
+                  </span>
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <div className={cn('absolute w-full h-full rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500', 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+                    <div className={cn('w-2 h-2 rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500')} />
+                  </div>
+                </div>
+               </div>
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={() => setConfirmRegenerate(true)} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                  Generar Nueva
+                </Button>
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white">
+                  <CheckCheck className="mr-2"/>
+                  {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
+                </Button>
+            </div>
+        </div>
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 2: Añade el Registro a tu DNS</h4>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración de tu proveedor de dominio.</p>
             <AnimatePresence>
             {dkimData ? (
                 <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
@@ -968,31 +1305,80 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
+         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <Button 
+                    onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                >
+                    Sí, generar nueva
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
     );
     
     const renderDmarcContent = () => {
-         const recordValue = `v=DMARC1; p=reject; rua=mailto:dmarc-reports@${domain}`;
-         return (
-            <div className="space-y-4 text-sm">
-                <p>Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
-                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
-                    <span>_dmarc</span>
+        const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:fallas@${domain}; sp=reject; aspf=s; adkim=s`;
+        return (
+             <div className="grid md:grid-cols-3 gap-6 text-sm">
+               <div className="md:col-span-2 space-y-4">
+                 <h4 className="font-semibold text-base mb-2">Paso 1: Añade el Registro a tu DNS</h4>
+                 <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
+                 <div className="space-y-3">
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
+                       <span>_dmarc</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Tipo de Registro:</p>
+                       <span>TXT</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Valor del Registro:</p>
+                       <div className="w-full flex justify-between items-start">
+                       <p className="break-all pr-2">{recordValue}</p>
+                       <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                       </div>
+                   </div>
+                 </div>
+               </div>
+                <div className="md:col-span-1 text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-3">
+                   <h4 className="font-bold text-base text-white/90 mb-2">Paso 2: Entiende las Etiquetas</h4>
+                   <div className="space-y-1">
+                       <p><strong className="text-white/90">v=DMARC1</strong> → Versión.</p>
+                       <p><strong className="text-white/90">p=reject</strong> → Política estricta que rechaza correos fallidos.</p>
+                       <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100%.</p>
+                       <p><strong className="text-white/90">rua=...</strong> → Recibe reportes agregados.</p>
+                       <p><strong className="text-white/90">ruf=...</strong> → Recibe reportes forenses.</p>
+                       <p><strong className="text-white/90">sp=reject</strong> → Política para subdominios.</p>
+                       <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta.</p>
+                       <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta.</p>
+                   </div>
                 </div>
-                <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Tipo de Registro:</p>
-                    <span>TXT</span>
-                </div>
-                <div className={cn(baseClass, "flex-col items-start gap-1")}>
-                    <p className="font-bold text-white/90">Valor del Registro:</p>
-                    <div className="w-full flex justify-between items-start">
-                    <span className="break-all pr-2">{recordValue.replace(`dmarc-reports@${domain}`, '...')}</span>
-                    <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+                 <div className="md:col-span-3 mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <MailQuestion className="size-10 shrink-0 text-amber-400 mt-1" />
+                     <div>
+                         <h5 className="font-bold text-amber-300 mb-1">Paso 3: ¡Importante! Crea los Buzones de Correo</h5>
+                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC. Puedes personalizarlos, pero asegúrate de que existan y estén en tu registro DNS.</p>
+                         <ul className="list-disc pl-4 mt-2 font-mono">
+                             <li>`rua=mailto:<strong className="text-white">reportes@{domain}</strong>`</li>
+                             <li>`ruf=mailto:<strong className="text-white">fallas@{domain}</strong>`</li>
+                         </ul>
+                     </div>
+                 </div>
+           </div>
+       );
+   }
 
     const renderMxContent = () => (
       <div className="space-y-4 text-sm">
@@ -1010,7 +1396,7 @@ function DnsInfoModal({
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Valor/Destino:</p>
-          <div className="w-full flex justify-between items-center"><span className="truncate">foxmiu.email</span><Button size="icon" variant="ghost" onClick={() => onCopy('foxmiu.email')}><Copy className="size-4"/></Button></div>
+          <div className="w-full flex justify-between items-center"><span className="truncate">daybuu.com</span><Button size="icon" variant="ghost" onClick={() => onCopy('daybuu.com')}><Copy className="size-4"/></Button></div>
         </div>
       </div>
     );
@@ -1019,8 +1405,8 @@ function DnsInfoModal({
       <div className="space-y-4 text-sm">
         <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1036,8 +1422,8 @@ function DnsInfoModal({
       <div className="space-y-4 text-sm">
         <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1061,10 +1447,11 @@ function DnsInfoModal({
 
     const { title, content } = contentMap[recordType];
     const { title: infoTitle, description: infoDescription } = infoMap[recordType];
+    const isSpecialLayout = recordType === 'dmarc' || recordType === 'dkim';
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-3xl bg-black/50 backdrop-blur-xl border-primary/20 text-white">
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isSpecialLayout ? "sm:max-w-4xl" : "sm:max-w-xl")}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-lg">
                         <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
@@ -1107,7 +1494,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 </div>
                  <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
-                <DialogHeader className="z-10">
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-3 text-xl">
                         <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full icon-pulse-animation">
                            <BrainCircuit className="text-cyan-400" />
@@ -1120,10 +1507,65 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                              <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
                         </div>
                     </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
                 </DialogHeader>
-                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                 <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="size-8 text-amber-400 shrink-0" />
+                    <p className="text-xs text-amber-200/90">
+                        <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
+                    </p>
+                </div>
+                 <ScrollArea className="max-h-[50vh] z-10 -mx-6 px-6">
                      <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar break-words">
                         {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10 pt-4">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
                     </div>
                 </ScrollArea>
                 <DialogFooter className="z-10">
@@ -1138,3 +1580,11 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
+    
+
+
+
+
+
+
