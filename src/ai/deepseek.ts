@@ -9,13 +9,8 @@ import {
   type Plugin,
   type ModelAction,
   GenerateRequest,
-  Part,
-  ToolRequest,
-  GenerationCommon,
   Candidate,
   finishReason,
-  mediaType,
-  Role,
 } from 'genkit';
 import { z } from 'zod';
 
@@ -89,7 +84,7 @@ function fromDeepSeekResponse(response: DeepSeekResponse): Candidate[] {
 async function deepseekGenerate(
   request: GenerateRequest,
   config: DeepSeekConfig
-): Promise<GenerationCommon> {
+) {
   const modelName = request.model.name;
   if (!modelName.startsWith('deepseek/')) {
     throw new Error(`Not a DeepSeek model: ${request.model.name}`);
@@ -128,7 +123,7 @@ export const deepseekPlugin: Plugin<[DeepSeekConfig] | []> = definePlugin(
     configSchema: DeepSeekConfigSchema,
   },
   async (config) => {
-    const model: ModelAction = (req, streaming) => {
+    const model: ModelAction = (req) => {
       // All `deepseek/...` models will be handled by this function.
       return deepseekGenerate(req, config);
     };
@@ -136,15 +131,13 @@ export const deepseekPlugin: Plugin<[DeepSeekConfig] | []> = definePlugin(
     return {
       models: [
         {
-          name: 'deepseek-chat', // This is a default/example, the actual name is dynamic
-          // We can use a wildcard or a more dynamic registration if Genkit supports it,
-          // but for now we rely on the string format `deepseek/model-name`
+          name: 'deepseek/deepseek-chat', // This is a default, `onFirstRequest` will handle dynamic models.
           action: model,
         },
       ],
       // This informs Genkit that any model starting with `deepseek/` should use our plugin.
       onFirstRequest: (modelRef) => {
-        if (modelRef.provider === 'deepseek') {
+        if (modelRef.name.startsWith('deepseek/')) {
             return {
                 model: {
                     name: modelRef.name,
