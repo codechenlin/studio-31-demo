@@ -3,13 +3,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info, Plus, MailPlus } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
 import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
+import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -103,6 +105,11 @@ export default function ServersPage() {
   const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   const [providers, setProviders] = useState(initialProviders.map(p => ({ ...p, formattedEmailsCount: '...' })));
+  
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(true); // SIMULATED STATE
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
+  const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -133,6 +140,9 @@ export default function ServersPage() {
       status={selectedStatus}
     />
     <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
+    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} hasVerifiedDomains={hasVerifiedDomains} />
+    <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} hasVerifiedDomains={hasVerifiedDomains} />
+
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
         @keyframes particle-move {
@@ -267,6 +277,18 @@ export default function ServersPage() {
                       Conectar Ahora <ChevronRight className="size-4" />
                     </span>
                  </Button>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                     <Button variant="outline" className="w-full text-xs h-9" onClick={() => setIsSubdomainModalOpen(true)}>
+                        <Plus className="mr-1"/>
+                        Sub Dominio
+                         <div className={cn("ml-auto size-2.5 rounded-full transition-all", hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                     </Button>
+                     <Button variant="outline" className="w-full text-xs h-9" onClick={() => setIsAddEmailModalOpen(true)}>
+                        <MailPlus className="mr-1"/>
+                        Correos
+                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                     </Button>
+                  </div>
               </div>
             </div>
           </motion.div>
