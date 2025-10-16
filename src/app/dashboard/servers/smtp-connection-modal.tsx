@@ -364,7 +364,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const isConfigFinished = currentStep === 4 && testStatus === 'success';
 
     return (
-        <div className="p-3 mb-4 rounded-lg border border-white/10 bg-black/20 text-center">
+        <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
                  <motion.div
@@ -433,24 +433,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         );
                     })}
                   </ul>
-                  
                   {currentStep > 1 && (
-                    <div className="mt-4">
-                        <DomainStatusIndicator />
-                        <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
-                            <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
-                            <Button
-                                onClick={() => setIsPauseModalOpen(true)}
-                                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                            >
-                                <Pause className="mr-2"/> Pausar Proceso
-                            </Button>
-                        </div>
-                    </div>
+                      <div className="mt-8 space-y-4">
+                          <DomainStatusIndicator />
+                          <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                              <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
+                              <Button
+                                  onClick={() => setIsPauseModalOpen(true)}
+                                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                              >
+                                  <Pause className="mr-2"/> Pausar Proceso
+                              </Button>
+                          </div>
+                      </div>
                   )}
-
               </div>
-
           </div>
       )
   }
@@ -2081,6 +2078,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
 
 
 
