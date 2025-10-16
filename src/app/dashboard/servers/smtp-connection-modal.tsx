@@ -1495,6 +1495,91 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
+
+
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
+    
+    const sentIconClass = "border-green-400 bg-green-500/20 text-green-300";
+    const deliveredIconClass = deliveryStatus === 'delivered' ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500";
+    const bouncedIconClass = "border-red-500 bg-red-500/20 text-red-400";
+    
+    const sentTextClass = "text-green-300";
+    const deliveredTextClass = deliveryStatus === 'delivered' ? "text-green-300" : "text-gray-500";
+    const bouncedTextClass = "text-red-400";
+
+    const connectorAnimation = deliveryStatus === 'bounced' ? { width: '50%' } : { width: '100%' };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 space-y-3 text-left"
+        >
+            <p className="text-sm font-semibold text-center">Línea de Tiempo de Entrega</p>
+            <div className="flex items-center gap-2">
+                {/* Step 1: Sent */}
+                <div className="flex flex-col items-center">
+                    <motion.div 
+                        className={`${iconBaseClass} ${sentIconClass}`}
+                        animate={{ boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <Send size={16} />
+                    </motion.div>
+                    <p className={`text-xs mt-1 ${sentTextClass}`}>Enviado</p>
+                </div>
+                
+                {/* Connector */}
+                <div className="flex-1 h-0.5 bg-gray-600 relative overflow-hidden">
+                    <motion.div 
+                        className="absolute top-0 left-0 h-full bg-green-400"
+                        initial={{ width: '0%' }}
+                        animate={connectorAnimation}
+                        transition={{ delay: 0.5, duration: 1 }}
+                    />
+                </div>
+                
+                {/* Step 2: Delivered or Bounced */}
+                 <div className="flex flex-col items-center">
+                    <motion.div 
+                      className={cn(iconBaseClass, deliveryStatus === 'bounced' ? bouncedIconClass : deliveredIconClass)}
+                      initial={{ scale: 0 }}
+                      animate={{ 
+                        scale: 1, 
+                        borderColor: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#ef4444' : '#22c55e') : '#6b7280',
+                        color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280',
+                        boxShadow: deliveryStatus !== 'sent' ? ['0 0 0px', `0 0 15px ${deliveryStatus === 'bounced' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(52, 211, 153, 0.5)'}`, '0 0 0px'] : 'none'
+                      }}
+                      transition={{ scale: { delay: 1.5, duration: 0.5, ease: 'backOut' }, boxShadow: { delay: 1.5, duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
+                    >
+                        {deliveryStatus === 'bounced' ? <X size={16} /> : <MailCheck size={16} />}
+                    </motion.div>
+                     <motion.p 
+                      className={cn("text-xs mt-1", deliveryStatus === 'bounced' ? bouncedTextClass : deliveredTextClass)}
+                      initial={{ color: 'hsl(var(--muted-foreground))' }}
+                      animate={{ color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280' }}
+                      transition={{ delay: 1.5 }}
+                     >
+                        {deliveryStatus === 'bounced' ? 'Rebotado' : 'Entregado'}
+                    </motion.p>
+                </div>
+            </div>
+             <motion.p 
+                className={cn("text-xs text-center pt-2", deliveryStatus === 'delivered' ? 'text-green-300/80' : 'text-red-300/80')}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2 }}
+             >
+                {deliveryStatus === 'delivered' && '¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.'}
+                {deliveryStatus === 'bounced' && '¡Fallo en la entrega! El correo fue rebotado.'}
+            </motion.p>
+        </motion.div>
+    );
+}
+
     
 
     
