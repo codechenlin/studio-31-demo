@@ -433,18 +433,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
                   {currentStep > 1 && <DomainStatusIndicator />}
 
-                  {currentStep > 1 && (
-                      <div className="mt-4 p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
-                          <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
-                          <Button 
-                            onClick={() => setIsPauseModalOpen(true)}
-                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                          >
-                            <Pause className="mr-2"/> Pausar Proceso
-                          </Button>
-                      </div>
-                  )}
-
               </div>
           </div>
       )
@@ -518,11 +506,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[650px]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[700px]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
+            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start overflow-hidden">
               <AnimatePresence mode="wait">
               <motion.div
                   key={currentStep}
@@ -1495,9 +1483,6 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-    
-
 
 function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
     const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
