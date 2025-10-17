@@ -75,9 +75,9 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                     </DialogHeader>
                     <div className='p-4'>
                         <Tabs defaultValue="domains" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="domains"><Globe className="mr-2"/>Principales</TabsTrigger>
-                                <TabsTrigger value="subdomains"><GitBranch className="mr-2"/>Subdominios</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-2 bg-black/20 border border-cyan-400/20">
+                                <TabsTrigger value="domains" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-200"><Globe className="mr-2"/>Principales</TabsTrigger>
+                                <TabsTrigger value="subdomains" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-200"><GitBranch className="mr-2"/>Subdominios</TabsTrigger>
                             </TabsList>
                             <TabsContent value="domains" className="mt-2">
                                 <ScrollArea className="h-80 -mr-4 pr-4">

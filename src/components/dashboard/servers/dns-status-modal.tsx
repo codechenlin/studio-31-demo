@@ -203,21 +203,23 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                         {domain.status === 'ok' ? <CheckCircle className="size-5 text-green-400" /> : <AlertCircle className="size-5 text-red-400" />}
                                         <span className="font-mono text-white/90">{domain.name}</span>
                                       </div>
-                                    </div>
-                                    {domain.status === 'error' && (
-                                       <div className="pl-8 pt-3">
-                                         <Button 
-                                            size="sm" 
-                                            className="h-8 bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 w-full relative group overflow-hidden" 
+                                      {domain.status === 'error' && (
+                                        <button
                                             onClick={() => handleAnalyzeDomain(domain.name)}
-                                         >
-                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-                                            <div className="absolute inset-0 rounded-lg" style={{ animation: 'ai-wave 2s infinite ease-out' }} />
-                                            <Bot className="mr-2 relative z-10"/>
-                                            <span className="relative z-10">Analizar con IA</span>
-                                        </Button>
-                                       </div>
-                                    )}
+                                            className="relative group/btn inline-flex items-center justify-center overflow-hidden rounded-md p-2 text-white h-9"
+                                            style={{ background: 'linear-gradient(to right, #AD00EC, #1700E6)' }}
+                                        >
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur opacity-0 group-hover/btn:opacity-75 transition duration-200" />
+                                            <div className="relative flex items-center gap-2">
+                                                <div className="relative size-5">
+                                                    <div className="absolute inset-0 bg-white/20 rounded-full animate-[ai-wave_2s_infinite_ease-out]"/>
+                                                    <Bot className="relative size-5"/>
+                                                </div>
+                                                <span className="text-sm font-semibold">Analizar con IA</span>
+                                            </div>
+                                        </button>
+                                       )}
+                                    </div>
                                 </motion.li>
                               ))}
                             </ul>
