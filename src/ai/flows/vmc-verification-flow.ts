@@ -53,13 +53,15 @@ const fetchUrlContent = async (url: string): Promise<string> => {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-            return `Error: Failed to fetch with status ${response.status}`;
+            const errorText = `Failed to fetch ${url}: ${response.status} ${response.statusText}`;
+            console.error(errorText);
+            return `Error: ${errorText}`;
         }
         return await response.text();
     } catch (error: any) {
-        console.error(`Error fetching content from ${url}:`, error);
-        return `Error: ${error.message}`;
+        const errorText = `Error fetching content from ${url}: ${error.message}`;
+        console.error(errorText);
+        return `Error: ${errorText}`;
     }
 }
 
@@ -97,23 +99,24 @@ export async function verifyVmcAuthenticity(
       const svgUrl = lMatch ? lMatch[1].trim() : '';
       const pemUrl = aMatch ? aMatch[1].trim() : '';
 
-      const fetchPromises: Promise<string>[] = [];
+      const promises: Promise<string>[] = [];
 
       if (svgUrl) {
-          fetchPromises.push(fetchUrlContent(svgUrl));
+          promises.push(fetchUrlContent(svgUrl));
       } else {
-          fetchPromises.push(Promise.resolve('Error: No SVG URL found in BIMI record.'));
+          svgContent = 'Error: No SVG URL found in BIMI record.';
       }
       
       if (pemUrl) {
-          fetchPromises.push(fetchUrlContent(pemUrl));
+          promises.push(fetchUrlContent(pemUrl));
       } else {
-          fetchPromises.push(Promise.resolve('Error: No VMC URL found in BIMI record.'));
+          pemContent = 'Error: No VMC URL found in BIMI record.';
       }
       
-      const [fetchedSvgContent, fetchedPemContent] = await Promise.all(fetchPromises);
-      svgContent = fetchedSvgContent;
-      pemContent = fetchedPemContent;
+      const [fetchedSvgContent, fetchedPemContent] = await Promise.all(promises);
+
+      if(svgUrl) svgContent = fetchedSvgContent;
+      if(pemUrl) pemContent = fetchedPemContent;
 
     } else {
       svgContent = bimiRecord ? 'Registro BIMI inválido (falta v=BIMI1).' : 'No se encontró registro BIMI.';
@@ -122,8 +125,8 @@ export async function verifyVmcAuthenticity(
 
   } catch(e: any) {
      console.error("An error occurred during DNS resolution or content fetching:", e);
-     svgContent = svgContent.startsWith('Error:') ? svgContent : `Failed to fetch: ${e.message}`;
-     pemContent = pemContent.startsWith('Error:') ? pemContent : `Failed to fetch: ${e.message}`;
+     svgContent = `Error: Fallo en la obtención de recursos - ${e.message}`;
+     pemContent = `Error: Fallo en la obtención de recursos - ${e.message}`;
   }
 
 
@@ -156,20 +159,20 @@ Realiza las siguientes validaciones paso a paso:
     *   Resultado: \`true\` si la política es estricta, sino \`false\`.
 
 3.  **Seguridad del SVG (svgSecure)**:
-    *   Analiza el \`svgContent\`. Si contiene un error de fetch, es inválido.
-    *   Debe ser un archivo SVG válido y cumplir con la especificación "SVG Tiny P/S".
+    *   Analiza el \`svgContent\`. Si contiene una cadena que empieza con "Error:", es inválido.
+    *   Si no hay error, debe ser un archivo SVG válido y cumplir con la especificación "SVG Tiny P/S".
     *   **Prohibido**: No debe contener scripts, referencias a archivos externos (excepto a los espacios de nombre de W3C), ni elementos interactivos.
     *   Resultado: \`true\` si es un SVG seguro y válido, sino \`false\`.
 
 4.  **Cadena de Confianza del VMC (vmcChainValid)**:
-    *   Analiza el \`pemContent\`. Si contiene un error de fetch, es inválido.
-    *   Debe ser un certificado X.509 válido en formato PEM.
+    *   Analiza el \`pemContent\`. Si contiene una cadena que empieza con "Error:", es inválido.
+    *   Si no hay error, debe ser un certificado X.509 válido en formato PEM.
     *   Valida su firma digital y su cadena de confianza. Debe estar emitido por una Autoridad de Certificación (CA) de confianza para VMC, como **DigiCert** o **Entrust**.
     *   Verifica que no esté expirado.
     *   Resultado: \`true\` si la cadena es válida y confiable, sino \`false\`.
 
 5.  **Identidad del VMC (vmcIdentityMatch)**:
-    *   Dentro del \`pemContent\`, extrae el campo "Subject" (Sujeto) y busca el nombre de la organización (\`O=\`).
+    *   Dentro del \`pemContent\`, si es un certificado válido, extrae el campo "Subject" (Sujeto) y busca el nombre de la organización (\`O=\`).
     *   Compara el nombre de esa organización con el dominio principal. Deben estar razonablemente relacionados. Por ejemplo, si el dominio es "google.com", la organización podría ser "Google LLC".
     *   Resultado: \`true\` si hay una coincidencia clara, sino \`false\`.
 
@@ -179,7 +182,7 @@ Realiza las siguientes validaciones paso a paso:
     *   En cualquier otro caso (si alguna validación falla), el estado es \`unverified\` ❌.
 
 7.  **Análisis (analysis)**:
-    *   Redacta un informe detallado explicando el resultado de cada paso. Si algo falla, explica por qué y cómo solucionarlo. Sé directo, claro y usa emojis para cada punto.
+    *   Redacta un informe detallado explicando el resultado de cada paso. Si algo falla, explica por qué y cómo solucionarlo. Sé directo, claro y usa emojis para cada punto. Si la falla es por un error de descarga (indicado por "Error:" en el contenido), menciónalo explícitamente.
 
 **Datos a Analizar:**
 - Dominio: ${domain}
