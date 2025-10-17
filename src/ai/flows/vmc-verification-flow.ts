@@ -41,16 +41,18 @@ const getTxtRecords = async (name: string): Promise<string[]> => {
       console.warn(`DNS lookup for ${name} returned no data. Status: ${data.Status}`);
       return [];
     }
-    
-    // Google DNS API returns TXT records as a single string with quotes, which need to be stripped,
-    // and multiple strings are returned as separate "data" fields.
-    return data.Answer.map((ans: { data: string }) => ans.data.replace(/"/g, '')).filter(Boolean);
+
+    // A single TXT record can be split into multiple strings. Google DNS returns them
+    // as separate items in the "data" array. We need to join them.
+    const joinedRecord = data.Answer.map((ans: { data: string }) => ans.data.replace(/"/g, '')).join('');
+    return joinedRecord ? [joinedRecord] : [];
 
   } catch (error: any) {
     console.error(`DNS lookup for ${name} failed:`, error);
     return []; // Return empty array on any fetch error
   }
 };
+
 
 const fetchUrlContent = async (url: string): Promise<string> => {
     try {
