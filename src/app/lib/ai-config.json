@@ -4,6 +4,7 @@
   "modelName": "deepseek-chat",
   "enabled": true,
   "functions": {
-    "dnsAnalysis": true
+    "dnsAnalysis": true,
+    "vmcVerification": false
   }
 }

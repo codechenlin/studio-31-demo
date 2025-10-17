@@ -14,6 +14,7 @@ interface AiConfig {
     enabled: boolean;
     functions: {
         dnsAnalysis: boolean;
+        vmcVerification: boolean;
     };
 }
 

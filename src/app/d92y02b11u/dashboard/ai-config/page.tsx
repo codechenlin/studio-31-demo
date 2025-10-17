@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { BrainCircuit, Key, Bot, Shield, Loader2, Wand2, Power, Dna, Save } from "lucide-react";
+import { BrainCircuit, Key, Bot, Shield, Loader2, Wand2, Power, Dna, Save, ShieldCheck } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { getAiConfig, saveAiConfig, testAiConnection, type AiConfig } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,7 +24,16 @@ export default function AiConfigPage() {
         const fetchConfig = async () => {
             const result = await getAiConfig();
             if (result.success && result.data) {
-                setConfig(result.data);
+                // Ensure functions object and its properties exist
+                const functions = result.data.functions || {};
+                const fullConfig = {
+                    ...result.data,
+                    functions: {
+                        dnsAnalysis: functions.dnsAnalysis || false,
+                        vmcVerification: functions.vmcVerification || false,
+                    }
+                };
+                setConfig(fullConfig);
             } else {
                  toast({ title: 'Error al Cargar', description: result.error, variant: 'destructive' });
             }
@@ -141,9 +150,16 @@ export default function AiConfigPage() {
                      <div className="flex items-center justify-between p-4 rounded-lg bg-background border">
                         <div className="space-y-1">
                             <Label htmlFor="dns-analysis" className="font-semibold flex items-center gap-2"><Dna/>Análisis de Salud DNS</Label>
-                            <p className="text-sm text-muted-foreground">Usa la IA para analizar y dar recomendaciones sobre los registros DNS en la página de Servidores.</p>
+                            <p className="text-sm text-muted-foreground">Usa la IA para analizar y dar recomendaciones sobre los registros DNS obligatorios y opcionales.</p>
                         </div>
                          <Switch id="dns-analysis" checked={config?.functions.dnsAnalysis} onCheckedChange={(checked) => updateFunctionToggle('dnsAnalysis', checked)} />
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-background border">
+                        <div className="space-y-1">
+                            <Label htmlFor="vmc-verification" className="font-semibold flex items-center gap-2"><ShieldCheck/>Validación de Certificados VMC</Label>
+                            <p className="text-sm text-muted-foreground">Utiliza la IA para verificar la autenticidad de los certificados VMC en los registros BIMI.</p>
+                        </div>
+                         <Switch id="vmc-verification" checked={config?.functions.vmcVerification} onCheckedChange={(checked) => updateFunctionToggle('vmcVerification', checked)} />
                     </div>
                 </CardContent>
             </Card>

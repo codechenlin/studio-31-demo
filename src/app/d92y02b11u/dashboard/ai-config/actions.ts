@@ -16,6 +16,7 @@ const AiConfigSchema = z.object({
   enabled: z.boolean(),
   functions: z.object({
     dnsAnalysis: z.boolean(),
+    vmcVerification: z.boolean(),
   }),
 });
 
@@ -34,6 +35,7 @@ async function readAiConfig(): Promise<AiConfig> {
       enabled: false,
       functions: {
         dnsAnalysis: false,
+        vmcVerification: false,
       },
     };
   }
