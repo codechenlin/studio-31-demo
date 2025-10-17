@@ -4,9 +4,10 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, MailPlus, Check, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Globe, GitBranch, Check } from 'lucide-react';
 
 const mockVerifiedDomains = ['mailflow.ai', 'marketingpro.com', 'analytics.data.info'];
 const mockVerifiedSubdomains = ['blog.mailflow.ai', 'shop.marketingpro.com'];
@@ -49,16 +50,18 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
         );
     }
     
+    // The rest of the component for when domains are verified...
+    // This part remains unchanged.
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-card/90 backdrop-blur-lg">
+             <DialogContent className="max-w-2xl bg-card/90 backdrop-blur-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3 text-xl"><MailPlus className="text-primary"/>Crear Nueva Dirección de Correo</DialogTitle>
+                    <DialogTitle>Crear Nueva Dirección de Correo</DialogTitle>
                     <DialogDescription>
-                       Selecciona el dominio o subdominio donde deseas crear la nueva dirección de correo electrónico.
+                       Selecciona el dominio o subdominio donde deseas crear la nueva dirección.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
+                 <div className="py-4">
                    <Tabs defaultValue="domains">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="domains">Dominios Principales</TabsTrigger>
