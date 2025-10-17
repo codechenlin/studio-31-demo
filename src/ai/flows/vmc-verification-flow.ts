@@ -87,7 +87,7 @@ export async function verifyVmcAuthenticity(
     // Step 1: Fetch DMARC and BIMI records
     dmarcRecords = await getTxtRecords(`_dmarc.${domain}`);
     const bimiResult = await getTxtRecords(`${selector}._bimi.${domain}`);
-    bimiRecord = bimiResult.length > 0 ? bimiResult.join('') : undefined;
+    bimiRecord = bimiResult.length > 0 ? bimiResult[0] : undefined;
 
     // Step 2: If BIMI exists, fetch SVG and PEM content
     if (bimiRecord && bimiRecord.includes('v=BIMI1')) {
