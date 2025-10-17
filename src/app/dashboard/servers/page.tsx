@@ -187,8 +187,8 @@ export default function ServersPage() {
             transform: translateX(-150%) skewX(-15deg);
           }
         }
-        @keyframes led-glow-green { 0%, 100% { box-shadow: 0 0 4px #39FF14, 0 0 8px #39FF14; } 50% { box-shadow: 0 0 8px #39FF14, 0 0 16px #39FF14; } }
-        @keyframes led-glow-yellow { 0%, 100% { box-shadow: 0 0 4px #facc15, 0 0 8px #facc15; } 50% { box-shadow: 0 0 8px #facc15, 0 0 16px #facc15; } }
+        @keyframes led-glow-green { 0%, 100% { box-shadow: 0 0 6px #39FF14, 0 0 12px #39FF14; transform: scale(1); } 50% { box-shadow: 0 0 12px #39FF14, 0 0 24px #39FF14; transform: scale(1.1); } }
+        @keyframes led-glow-yellow { 0%, 100% { box-shadow: 0 0 6px #facc15, 0 0 12px #facc15; transform: scale(1); } 50% { box-shadow: 0 0 12px #facc15, 0 0 24px #facc15; transform: scale(1.1); } }
         .led-pulse-green { animation: led-glow-green 2s infinite ease-in-out; }
         .led-pulse-yellow { animation: led-glow-yellow 2s infinite ease-in-out; }
       `}</style>
@@ -312,7 +312,7 @@ export default function ServersPage() {
                     >
                         <Plus className="mr-1"/>
                         <span>Sub Dominio</span>
-                        <div className={cn("ml-auto size-2.5 rounded-full led-pulse", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
+                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                     <Button
                         variant="outline"
@@ -321,7 +321,7 @@ export default function ServersPage() {
                     >
                         <MailPlus className="mr-1"/>
                         <span>Correos</span>
-                        <div className={cn("ml-auto size-2.5 rounded-full led-pulse", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
+                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                   </div>
               </div>
