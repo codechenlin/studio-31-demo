@@ -23,7 +23,7 @@ const mockData = {
     'sales-updates.co': ['daily-report@sales-updates.co'],
 };
 
-const mockVerifiedSubdomains = ['blog.mailflow.ai', 'shop.marketingpro.com'];
+const mockVerifiedSubdomains = ['blog.mailflow.ai', 'shop.marketingpro.com', 'a-very-long-subdomain-name-to-test-truncation.com'];
 
 const domains = Object.keys(mockData);
 
@@ -33,6 +33,13 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
     const handleSelectDomain = (domain: string) => {
         setSelectedDomain(domain);
     };
+
+    const truncateName = (name: string, length: number = 20) => {
+        if (name.length > length) {
+            return `${name.substring(0, length)}...`;
+        }
+        return name;
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -93,7 +100,7 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                                         : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
                                                 )}
                                             >
-                                                <span className="font-mono text-sm">{domain}</span>
+                                                <span className="font-mono text-sm">{truncateName(domain)}</span>
                                                 <ChevronRight className="size-4" />
                                             </button>
                                         ))}
@@ -115,7 +122,7 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                                             : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
                                                     )}
                                                 >
-                                                    <span className="font-mono text-sm">{subdomain}</span>
+                                                    <span className="font-mono text-sm">{truncateName(subdomain)}</span>
                                                     <ChevronRight className="size-4" />
                                                 </button>
                                             ))}
@@ -152,7 +159,7 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                     transition={{ duration: 0.3 }}
                                 >
                                     <h3 className="text-lg font-semibold text-white mb-4">
-                                        Mostrando correos para: <span className="font-mono text-cyan-300">{selectedDomain}</span>
+                                        Mostrando correos para: <span className="font-mono text-cyan-300">{truncateName(selectedDomain)}</span>
                                     </h3>
                                     <div className="space-y-3">
                                         {(mockData[selectedDomain as keyof typeof mockData] || []).map(email => (
@@ -203,4 +210,5 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
         </Dialog>
     );
 }
+
     
