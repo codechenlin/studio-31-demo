@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -24,7 +23,7 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
                  <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                  <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
-                <div className="p-8 text-center flex flex-col items-center">
+                <div className="p-8 text-center flex flex-col items-center z-10">
                     <motion.div
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
@@ -48,7 +47,7 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
                         </DialogDescription>
                     </DialogHeader>
                 </div>
-                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 flex justify-center">
+                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 flex justify-center z-10">
                     <Button
                       onClick={() => onOpenChange(false)}
                       className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold"
