@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -31,7 +32,7 @@ export function SubdomainModal({ isOpen, onOpenChange, hasVerifiedDomains }: Sub
                       className="relative w-24 h-24 mb-6 flex items-center justify-center"
                     >
                         <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-400/50 animate-spin-slow" />
-                        <div className="absolute inset-2 rounded-full border-2 border-dashed border-amber-400/30 animate-spin-slow" style={{ animationDirection: 'reverse' }} />
+                        <div className="absolute inset-2 rounded-full border-2 border-dashed border-amber-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
                         <AlertTriangle className="size-16 text-amber-400 animate-pulse" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)/0.7))' }}/>
                     </motion.div>
                     
@@ -47,10 +48,10 @@ export function SubdomainModal({ isOpen, onOpenChange, hasVerifiedDomains }: Sub
                         </DialogDescription>
                     </DialogHeader>
                 </div>
-                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 flex justify-center z-10">
+                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 z-10">
                     <Button
                       onClick={() => onOpenChange(false)}
-                      className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold"
+                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold"
                     >
                       <Check className="mr-2" />
                       Entendido
