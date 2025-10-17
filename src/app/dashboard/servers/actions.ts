@@ -9,15 +9,20 @@ import {
   verifyOptionalDnsHealth,
   type OptionalDnsHealthInput,
 } from '@/ai/flows/optional-dns-verification-flow';
+import {
+  verifyVmcAuthenticity,
+  type VmcVerificationInput,
+} from '@/ai/flows/vmc-verification-flow';
 
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 
 const actionSchema = z.object({
   domain: z.string().describe('El nombre de dominio a verificar.'),
-  dkimPublicKey: z.string().describe('La clave pública DKIM esperada para el selector "daybuu".'),
+  dkimPublicKey: z
+    .string()
+    .describe('La clave pública DKIM esperada para el selector "daybuu".'),
 });
-
 
 export async function verifyDnsAction(input: DnsHealthInput) {
   try {
@@ -36,10 +41,18 @@ const optionalDnsActionSchema = z.object({
   domain: z.string().describe('El nombre de dominio a verificar.'),
 });
 
-export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
+// This action now uses the more powerful VMC verification flow.
+export async function verifyOptionalDnsAction(input: VmcVerificationInput) {
   try {
     const validatedInput = optionalDnsActionSchema.parse(input);
-    const result = await verifyOptionalDnsHealth(validatedInput);
+    // Use the new, more powerful VMC authenticity checker
+    const result = await verifyVmcAuthenticity(validatedInput);
+    
+    // Ensure we always return an object, not null
+    if (result === null) {
+      return { success: false, error: "El análisis de VMC no devolvió resultados." };
+    }
+      
     return { success: true, data: result };
   } catch (error) {
     console.error('Optional DNS verification action error:', error);
@@ -49,7 +62,6 @@ export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
   }
 }
 
-
 const verifyDomainOwnershipSchema = z.object({
   domain: z.string(),
   expectedValue: z.string(),
@@ -57,44 +69,61 @@ const verifyDomainOwnershipSchema = z.object({
   name: z.string(),
 });
 
-export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDomainOwnershipSchema>) {
-    const { domain, expectedValue, recordType, name } = verifyDomainOwnershipSchema.parse(input);
+export async function verifyDomainOwnershipAction(
+  input: z.infer<typeof verifyDomainOwnershipSchema>
+) {
+  const { domain, expectedValue, recordType, name } =
+    verifyDomainOwnershipSchema.parse(input);
   try {
     const fullName = name === '@' ? domain : `${name}.${domain}`;
-    
+
     if (recordType === 'MX') {
-        const records = await dns.resolveMx(domain);
-        const isVerified = records.some(record => record.exchange.includes(expectedValue));
-        return { success: isVerified, error: isVerified ? undefined : 'No se pudo encontrar el registro MX esperado.' };
+      const records = await dns.resolveMx(domain);
+      const isVerified = records.some((record) =>
+        record.exchange.includes(expectedValue)
+      );
+      return {
+        success: isVerified,
+        error: isVerified
+          ? undefined
+          : 'No se pudo encontrar el registro MX esperado.',
+      };
     }
 
     const records = await dns.resolveTxt(fullName);
-    const flatRecords = records.map(r => r.join(''));
+    const flatRecords = records.map((r) => r.join(''));
 
     let isVerified = false;
     if (recordType === 'VMC') {
-        isVerified = flatRecords.some(r => r.includes("v=BIMI1;") && r.includes("a="));
+      isVerified = flatRecords.some(
+        (r) => r.includes('v=BIMI1;') && r.includes('a=')
+      );
     } else if (recordType === 'BIMI') {
-        isVerified = flatRecords.some(r => r.includes("v=BIMI1;"));
+      isVerified = flatRecords.some((r) => r.includes('v=BIMI1;'));
     } else {
-        isVerified = flatRecords.some(r => r.includes(expectedValue));
+      isVerified = flatRecords.some((r) => r.includes(expectedValue));
     }
-    
+
     if (isVerified) {
       return { success: true };
     } else {
-      return { success: false, error: `No se pudo encontrar el registro ${recordType} de verificación. Asegúrate de que se haya propagado correctamente.` };
+      return {
+        success: false,
+        error: `No se pudo encontrar el registro ${recordType} de verificación. Asegúrate de que se haya propagado correctamente.`,
+      };
     }
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
       const fullName = name === '@' ? domain : `${name}.${domain}`;
-      return { success: false, error: `No se encontraron registros TXT para ${fullName}.` };
+      return {
+        success: false,
+        error: `No se encontraron registros TXT para ${fullName}.`,
+      };
     }
     console.error('Domain ownership verification error:', error);
-    return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
+    return {
+      success: false,
+      error: 'Ocurrió un error inesperado al verificar el dominio.',
+    };
   }
 }
-
-    
-
-    

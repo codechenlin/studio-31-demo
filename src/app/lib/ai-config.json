@@ -5,6 +5,6 @@
   "enabled": true,
   "functions": {
     "dnsAnalysis": true,
-    "vmcVerification": false
+    "vmcVerification": true
   }
 }
