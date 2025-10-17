@@ -10,7 +10,6 @@
 
 import { getAiConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
-import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
 
 export type VmcVerificationInput = z.infer<typeof VmcVerificationInputSchema>;
@@ -32,20 +31,24 @@ const VmcVerificationOutputSchema = z.object({
 
 const getTxtRecords = async (name: string): Promise<string[]> => {
   try {
-    // Force using a reliable public DNS resolver
-    const resolver = new dns.Resolver();
-    resolver.setServers(['8.8.8.8', '8.8.4.4']);
-    const records = await resolver.resolveTxt(name);
-    // Correctly join multi-part TXT records
-    return records.map(r => r.join(''));
-  } catch (error: any) {
-    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND' || error.code === 'ESERVFAIL') {
-      console.warn(`DNS lookup for ${name} returned no data.`);
+    const response = await fetch(`https://dns.google/resolve?name=${name}&type=TXT`);
+    if (!response.ok) {
+      console.warn(`DNS lookup for ${name} failed with status: ${response.status}`);
       return [];
     }
-    // Re-throw other errors to be caught by the main try-catch
-    console.error(`DNS lookup failed for ${name}:`, error);
-    throw new Error(`DNS lookup for ${name} failed: ${error.message}`);
+    const data = await response.json();
+    if (data.Status !== 0 || !data.Answer) {
+      console.warn(`DNS lookup for ${name} returned no data. Status: ${data.Status}`);
+      return [];
+    }
+    
+    // Google DNS API returns TXT records as a single string with quotes, which need to be stripped,
+    // and multiple strings are returned as separate "data" fields.
+    return data.Answer.map((ans: { data: string }) => ans.data.replace(/"/g, '')).filter(Boolean);
+
+  } catch (error: any) {
+    console.error(`DNS lookup for ${name} failed:`, error);
+    return []; // Return empty array on any fetch error
   }
 };
 
@@ -98,7 +101,7 @@ export async function verifyVmcAuthenticity(
       
       const svgUrl = lMatch ? lMatch[1].trim() : '';
       const pemUrl = aMatch ? aMatch[1].trim() : '';
-
+      
       const promises: Promise<string>[] = [];
 
       if (svgUrl) {
@@ -213,3 +216,5 @@ Realiza las siguientes validaciones paso a paso:
     throw new Error(`Error al analizar la autenticidad del VMC: ${error.message}`);
   }
 }
+
+    
