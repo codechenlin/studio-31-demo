@@ -21,21 +21,29 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
     if (!hasVerifiedDomains) {
         return (
              <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-lg bg-card/90 backdrop-blur-lg">
-                    <DialogHeader>
-                        <div className="flex justify-center pb-4">
-                            <AlertTriangle className="size-14 text-amber-400" />
+                <DialogContent className="sm:max-w-lg bg-zinc-900/90 border-amber-500/50 backdrop-blur-lg text-white overflow-hidden p-0">
+                   <div className="relative p-8 text-center bg-gradient-to-b from-amber-500/10 via-black/20 to-black/20">
+                     <div className="absolute inset-0 bg-grid-zinc-400/[0.05] bg-grid-16 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                     <div className="flex justify-center pb-4">
+                        <div className="relative size-20">
+                            <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-[spin-slow_5s_linear_infinite]" />
+                            <AlertTriangle className="absolute inset-0 m-auto size-14 text-amber-400 animate-pulse" style={{filter: 'drop-shadow(0 0 10px hsl(var(--primary)))'}} />
                         </div>
-                        <DialogTitle className="text-center text-xl">Acción Requerida</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Es necesario verificar un dominio principal antes de poder crear direcciones de correo electrónico.
-                             <br /><br />
-                            <strong>Ejemplo:</strong> Verifica <strong>`ejemplo.com`</strong> para luego poder crear `ventas@ejemplo.com`.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button className="w-full" onClick={() => onOpenChange(false)}>Entendido</Button>
-                    </DialogFooter>
+                     </div>
+                     <DialogHeader>
+                        <DialogTitle className="text-center text-xl text-amber-300">Acción Requerida</DialogTitle>
+                     </DialogHeader>
+                   </div>
+                    <div className="px-8 pb-8">
+                      <DialogDescription className="text-center text-muted-foreground">
+                          Es necesario verificar un dominio principal antes de poder crear direcciones de correo electrónico.
+                           <br /><br />
+                          <strong>Ejemplo:</strong> Verifica <strong>`ejemplo.com`</strong> para luego poder crear `ventas@ejemplo.com`.
+                      </DialogDescription>
+                      <DialogFooter className="mt-6">
+                          <Button className="w-full bg-amber-600 hover:bg-amber-500 text-white" onClick={() => onOpenChange(false)}>Entendido</Button>
+                      </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         );
