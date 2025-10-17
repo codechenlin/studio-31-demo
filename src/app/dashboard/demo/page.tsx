@@ -8,12 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkSpamAction } from './actions';
+import { checkSpamAction, verifyVmcAuthenticityAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirusAction } from './actions';
 import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
+import { type VmcVerificationOutput } from '@/ai/flows/vmc-verification-flow';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const spamExamples = [
     "¡¡¡GANA DINERO RÁPIDO!!! Haz clic aquí para obtener tu premio millonario. Oferta por tiempo limitado. No te lo pierdas.",
@@ -22,6 +26,14 @@ const spamExamples = [
 ];
 
 const eicarTestString = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
+
+const StatusBadge = ({ status, text }: { status: boolean; text: string }) => (
+    <div className={cn("flex items-center gap-2 p-2 rounded-md text-sm border", status ? "bg-green-500/10 border-green-500/20 text-green-300" : "bg-red-500/10 border-red-500/20 text-red-300")}>
+        {status ? <CheckCircleIcon className="size-4" /> : <XCircle className="size-4" />}
+        <span>{text}</span>
+    </div>
+);
+
 
 export default function DemoPage() {
     const { toast } = useToast();
@@ -38,6 +50,13 @@ export default function DemoPage() {
     const [isVirusScanning, startVirusScan] = useTransition();
     const [virusResult, setVirusResult] = useState<VirusScanOutput | null>(null);
     const [virusError, setVirusError] = useState<string | null>(null);
+
+    // VMC Verifier State
+    const [vmcDomain, setVmcDomain] = useState('');
+    const [vmcSelector, setVmcSelector] = useState('default');
+    const [isVmcVerifying, startVmcVerification] = useTransition();
+    const [vmcResult, setVmcResult] = useState<VmcVerificationOutput | null>(null);
+    const [vmcError, setVmcError] = useState<string | null>(null);
 
     const handleSpamCheck = () => {
         if (!spamText) {
@@ -83,6 +102,23 @@ export default function DemoPage() {
         });
     };
     
+    const handleVmcVerification = () => {
+        if (!vmcDomain) {
+            toast({ title: 'Campo vacío', description: 'Por favor, introduce un dominio para verificar.', variant: 'destructive' });
+            return;
+        }
+        setVmcResult(null);
+        setVmcError(null);
+        startVmcVerification(async () => {
+            const result = await verifyVmcAuthenticityAction({ domain: vmcDomain, selector: vmcSelector });
+            if (result.success && result.data) {
+                setVmcResult(result.data);
+            } else {
+                setVmcError(result.error || 'Ocurrió un error desconocido.');
+            }
+        });
+    };
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast({
@@ -101,9 +137,66 @@ export default function DemoPage() {
                     Página de Pruebas
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Esta página es para probar integraciones con APIs externas y nuevas animaciones.
+                    Esta página es para probar integraciones con APIs externas, nuevas funcionalidades y animaciones.
                 </p>
             </div>
+            
+            {/* VMC Verifier Panel */}
+            <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-purple-500/30 shadow-xl">
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-purple-400"/>Prueba de Verificador BIMI/VMC</CardTitle>
+                    <CardDescription>Introduce un dominio y un selector para validar su autenticidad con IA.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2">
+                            <Label htmlFor="vmc-domain">Dominio</Label>
+                            <div className="relative">
+                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
+                                <Input id="vmc-domain" placeholder="google.com" value={vmcDomain} onChange={e => setVmcDomain(e.target.value)} className="pl-10"/>
+                            </div>
+                        </div>
+                        <div>
+                             <Label htmlFor="vmc-selector">Selector</Label>
+                            <Input id="vmc-selector" placeholder="default" value={vmcSelector} onChange={e => setVmcSelector(e.target.value)} />
+                        </div>
+                    </div>
+                     <Button onClick={handleVmcVerification} disabled={isVmcVerifying} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90">
+                        {isVmcVerifying ? <Loader2 className="mr-2 animate-spin"/> : <Bot className="mr-2"/>}
+                        Verificar Autenticidad con IA
+                    </Button>
+                </CardContent>
+                {(isVmcVerifying || vmcResult || vmcError) && (
+                    <CardFooter className="flex flex-col items-start gap-4">
+                        <Separator />
+                         {isVmcVerifying && (
+                            <div className="w-full flex flex-col items-center justify-center gap-2 text-muted-foreground py-8">
+                                <Loader2 className="animate-spin text-purple-400 size-8" />
+                                <p className="font-semibold">La IA está analizando el dominio...</p>
+                            </div>
+                         )}
+                         {vmcError && <p className="text-destructive text-sm p-4 bg-destructive/10 rounded-md w-full">{vmcError}</p>}
+                         {vmcResult && (
+                             <div className="w-full space-y-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                     <StatusBadge status={vmcResult.bimiRecordValid} text="Registro BIMI" />
+                                     <StatusBadge status={vmcResult.dmarcPolicyOk} text="Política DMARC" />
+                                     <StatusBadge status={vmcResult.svgSecure} text="SVG Seguro" />
+                                     <StatusBadge status={vmcResult.vmcChainValid} text="Cadena VMC Válida" />
+                                     <StatusBadge status={vmcResult.vmcIdentityMatch} text="Identidad VMC" />
+                                      <StatusBadge status={vmcResult.overallStatus === 'verified'} text={vmcResult.overallStatus.toUpperCase()} />
+                                </div>
+                                <div className="p-4 bg-black/30 rounded-lg">
+                                    <h4 className="font-bold mb-2">Análisis de la IA:</h4>
+                                     <ScrollArea className="max-h-40">
+                                        <p className="text-sm text-white/80 whitespace-pre-line">{vmcResult.analysis}</p>
+                                     </ScrollArea>
+                                </div>
+                             </div>
+                         )}
+                    </CardFooter>
+                )}
+            </Card>
 
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Spam Checker Panel */}
@@ -163,7 +256,7 @@ export default function DemoPage() {
                                     </div>
                                 ) : (
                                     <div className="p-3 rounded-md bg-green-500/10 text-green-700 dark:text-green-300 border border-green-500/20 flex items-start gap-2">
-                                        <CheckCircle />
+                                        <CheckCircleIcon />
                                         <div>
                                             <p><strong>Resultado:</strong> <span className="font-bold">{spamResult.result}</span></p>
                                             <p><strong>Puntuación:</strong> {spamResult.score.toFixed(2)} (Umbral: {threshold.toFixed(1)})</p>
@@ -376,12 +469,3 @@ export default function DemoPage() {
         </>
     );
 }
-    
-
-    
-
-    
-
-    
-
-    
