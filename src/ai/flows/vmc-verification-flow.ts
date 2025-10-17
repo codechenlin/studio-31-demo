@@ -36,7 +36,8 @@ const getTxtRecords = async (name: string): Promise<string[]> => {
     const resolver = new dns.Resolver();
     resolver.setServers(['8.8.8.8', '8.8.4.4']);
     const records = await resolver.resolveTxt(name);
-    return records.flat(); // Flatten the array of arrays
+    // Correctly join multi-part TXT records
+    return records.map(r => r.join(''));
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND' || error.code === 'ESERVFAIL') {
       console.warn(`DNS lookup for ${name} returned no data.`);
