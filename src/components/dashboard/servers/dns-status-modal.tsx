@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertTriangle, Bot, Shield } from 'lucide-react';
+import { CheckCircle, Bot, Shield, AlertTriangle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DnsAnalysisModal } from './dns-analysis-modal';
@@ -211,7 +211,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                       </div>
                                       {domain.status === 'error' && (
                                         <button
-                                            onClick={() => handleAnalyzeDomain(domain.name === 'mi-dominio-super-largo-para-probar-el-truncado.com' ? 'mi-dominio-super-largo-para-probar-el-truncado.com' : domain.name)}
+                                            onClick={() => handleAnalyzeDomain(domain.name)}
                                             className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white h-9"
                                             style={{
                                                 background: 'linear-gradient(to right, #AD00EC, #1700E6)',
