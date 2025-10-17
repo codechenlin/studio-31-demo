@@ -4,10 +4,11 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, Mail, Server, Database, ChevronRight, X, FolderOpen, CheckCircle } from 'lucide-react';
+import { Globe, Mail, Server, Database, ChevronRight, X, FolderOpen, CheckCircle, GitBranch } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface DomainInfoModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ const mockData = {
     'notifications.app.net': ['no-reply@notifications.app.net', 'status@notifications.app.net', 'alerts@notifications.app.net'],
     'sales-updates.co': ['daily-report@sales-updates.co'],
 };
+
+const mockVerifiedSubdomains = ['blog.mailflow.ai', 'shop.marketingpro.com'];
 
 const domains = Object.keys(mockData);
 
@@ -70,25 +73,64 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                             Dominios Verificados
                         </DialogTitle>
                     </DialogHeader>
-                    <ScrollArea className="flex-1 p-4">
-                        <div className="space-y-2">
-                            {domains.map(domain => (
-                                <button
-                                    key={domain}
-                                    onClick={() => handleSelectDomain(domain)}
-                                    className={cn(
-                                        "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
-                                        selectedDomain === domain
-                                            ? "bg-cyan-500/20 border-cyan-400 text-white"
-                                            : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
+                    <div className='p-4'>
+                        <Tabs defaultValue="domains" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="domains"><Globe className="mr-2"/>Principales</TabsTrigger>
+                                <TabsTrigger value="subdomains"><GitBranch className="mr-2"/>Subdominios</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="domains" className="mt-2">
+                                <ScrollArea className="h-80 -mr-4 pr-4">
+                                    <div className="space-y-2">
+                                        {domains.map(domain => (
+                                            <button
+                                                key={domain}
+                                                onClick={() => handleSelectDomain(domain)}
+                                                className={cn(
+                                                    "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
+                                                    selectedDomain === domain
+                                                        ? "bg-cyan-500/20 border-cyan-400 text-white"
+                                                        : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
+                                                )}
+                                            >
+                                                <span className="font-mono text-sm">{domain}</span>
+                                                <ChevronRight className="size-4" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </TabsContent>
+                             <TabsContent value="subdomains" className="mt-2">
+                                <ScrollArea className="h-80 -mr-4 pr-4">
+                                    {mockVerifiedSubdomains.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {mockVerifiedSubdomains.map(subdomain => (
+                                                <button
+                                                    key={subdomain}
+                                                    onClick={() => handleSelectDomain(subdomain)}
+                                                    className={cn(
+                                                        "w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2",
+                                                        selectedDomain === subdomain
+                                                            ? "bg-cyan-500/20 border-cyan-400 text-white"
+                                                            : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50"
+                                                    )}
+                                                >
+                                                    <span className="font-mono text-sm">{subdomain}</span>
+                                                    <ChevronRight className="size-4" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground pt-10 flex flex-col items-center">
+                                            <GitBranch className="size-10 mb-2"/>
+                                            <p className="font-semibold">No hay subdominios</p>
+                                            <p className="text-sm">Aún no has verificado ningún subdominio.</p>
+                                        </div>
                                     )}
-                                >
-                                    <span className="font-mono text-sm">{domain}</span>
-                                    <ChevronRight className="size-4" />
-                                </button>
-                            ))}
-                        </div>
-                    </ScrollArea>
+                                </ScrollArea>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
 
                 <div className="w-3/5 flex flex-col relative overflow-hidden info-grid">

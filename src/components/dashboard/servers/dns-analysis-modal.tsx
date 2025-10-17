@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Bot, Loader2, Dna, Terminal } from 'lucide-react';
+import { Bot, Loader2, Dna, Terminal, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -87,7 +87,11 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
                     )}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2 text-sm text-green-300">
+                        <div className="relative size-3 rounded-full bg-[#39FF14] led-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                        <span>EN LÍNEA</span>
+                    </div>
                     <Button onClick={() => onOpenChange(false)} className="bg-purple-800 hover:bg-purple-700 text-white">
                         Entendido
                     </Button>
@@ -96,4 +100,3 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
         </Dialog>
     );
 }
-

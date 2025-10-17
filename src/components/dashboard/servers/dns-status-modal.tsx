@@ -152,6 +152,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         @keyframes glitch-line { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(${Math.random() * 600}px); } }
                         .glitch-line { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,0,0,0.3); animation: glitch-line ${Math.random() * 2 + 1}s infinite; }
                         @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                        @keyframes ai-wave { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
                      `}</style>
 
                      <div className="w-1/3 bg-gray-900/50 relative flex items-center justify-center overflow-hidden border-r border-red-500/20">
@@ -180,8 +181,8 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                     <div className="w-2/3 flex flex-col p-8 bg-black/30 backdrop-blur-sm relative">
                         <div className="absolute inset-0 bg-grid-red-500/10 [mask-image:radial-gradient(ellipse_at_top_right,white_10%,transparent_60%)]" />
                         <DialogHeader className="text-left z-10">
-                            <DialogTitle className="text-2xl font-bold text-red-300">
-                                Diagnóstico de DNS
+                            <DialogTitle className="text-2xl font-bold" style={{ color: '#F00000' }}>
+                                Estado del Sistema: Incidencia
                             </DialogTitle>
                             <DialogDescription className="text-red-200/70">
                                 Algunos de tus dominios tienen configuraciones incorrectas que podrían afectar la entrega de correos.
@@ -205,8 +206,15 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                     </div>
                                     {domain.status === 'error' && (
                                        <div className="pl-8 pt-3">
-                                         <Button size="sm" className="h-8 bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 w-full" onClick={() => handleAnalyzeDomain(domain.name)}>
-                                            <Bot className="mr-2" /> Analizar con IA
+                                         <Button 
+                                            size="sm" 
+                                            className="h-8 bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:opacity-90 w-full relative group overflow-hidden" 
+                                            onClick={() => handleAnalyzeDomain(domain.name)}
+                                         >
+                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                                            <div className="absolute inset-0 rounded-lg" style={{ animation: 'ai-wave 2s infinite ease-out' }} />
+                                            <Bot className="mr-2 relative z-10"/>
+                                            <span className="relative z-10">Analizar con IA</span>
                                         </Button>
                                        </div>
                                     )}
