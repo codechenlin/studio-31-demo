@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Bot, Shield, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Bot, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DnsAnalysisModal } from './dns-analysis-modal';
@@ -30,7 +30,7 @@ const mockErrorDomains = [
     { name: 'mailflow.ai', status: 'ok' },
     { name: 'analytics.data.info', status: 'error' },
     { name: 'customer-service.io', status: 'ok' },
-    { name: 'my-other-domain.com', status: 'error' },
+    { name: 'mi-dominio-super-largo-para-probar-el-truncado.com', status: 'error' },
     { name: 'test-env.dev', status: 'ok' },
 ];
 
@@ -152,7 +152,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         @keyframes glitch-line { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(${Math.random() * 600}px); } }
                         .glitch-line { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,0,0,0.3); animation: glitch-line ${Math.random() * 2 + 1}s infinite; }
                         @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                        @keyframes ai-wave { 0% { opacity: 0.3; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.3; transform: scale(0.5); } }
+                        @keyframes ai-wave { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } }
                         .ai-button-scan {
                           background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
                           background-size: 200% 100%;
@@ -219,10 +219,10 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                         >
                                             <div className="ai-button-scan absolute inset-0"/>
                                             <div className="relative z-10 flex items-center justify-center gap-2">
-                                                <div className="relative flex items-end gap-0.5 h-4">
-                                                    <div className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0s'}}/>
-                                                    <div className="w-1 h-full bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0.2s'}}/>
-                                                    <div className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0.4s'}}/>
+                                                <div className="relative w-4 h-4 flex items-center justify-center">
+                                                  <div className="absolute w-full h-full bg-white/20 rounded-full" style={{ animation: 'ai-wave 2s infinite ease-in-out' }}/>
+                                                  <div className="absolute w-full h-full bg-white/20 rounded-full" style={{ animation: 'ai-wave 2s infinite ease-in-out 1s' }}/>
+                                                  <Bot className="size-4 text-white"/>
                                                 </div>
                                                 <span className="text-sm font-semibold">Analizar con IA</span>
                                             </div>

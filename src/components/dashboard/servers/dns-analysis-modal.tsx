@@ -39,30 +39,30 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
         }
     }, [isOpen, domain]);
 
+    const truncatedDomain = domain && domain.length > 20 ? `${domain.substring(0, 20)}...` : domain;
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/30 text-white overflow-hidden" showCloseButton={false}>
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-500 animate-pulse" />
-                <DialogHeader>
-                    <div className="flex justify-between items-start">
-                        <DialogTitle className="flex items-center gap-3 text-xl">
-                            <Bot className="text-purple-400" />
-                            Análisis de IA para: <span className="font-mono text-purple-300">{domain}</span>
-                        </DialogTitle>
-                         <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
-                            <div className="relative flex items-center justify-center size-3">
-                                <div className="absolute w-full h-full rounded-full bg-[#39FF14] animate-pulse" style={{filter: 'blur(3px)'}} />
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"/>
-                            </div>
-                            EN LÍNEA
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <Bot className="text-purple-400" />
+                        Análisis de IA para: <span className="font-mono text-purple-300">{truncatedDomain}</span>
+                    </DialogTitle>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
+                        <div className="relative flex items-center justify-center size-3">
+                            <div className="absolute w-full h-full rounded-full bg-[#39FF14] animate-pulse" style={{filter: 'blur(3px)'}} />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"/>
                         </div>
+                        EN LÍNEA
                     </div>
-                    <DialogDescription className="text-purple-200/70">
-                        Nuestra inteligencia artificial ha examinado tus registros DNS y ha generado el siguiente diagnóstico.
-                    </DialogDescription>
                 </DialogHeader>
+                <DialogDescription className="text-purple-200/70 z-10">
+                    Nuestra inteligencia artificial ha examinado tus registros DNS y ha generado el siguiente diagnóstico.
+                </DialogDescription>
 
-                <div className="py-4 min-h-[300px] flex items-center justify-center">
+                <div className="py-4 min-h-[300px] flex items-center justify-center z-10">
                     {isLoading ? (
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -96,7 +96,7 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
                     )}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="z-10">
                     <Button onClick={() => onOpenChange(false)} className="w-full bg-purple-800 hover:bg-purple-700 text-white">
                         Entendido
                     </Button>

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info, Plus, MailPlus } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
@@ -26,6 +26,7 @@ const initialProviders = [
     colors: 'from-cyan-500/10 to-blue-500/10',
     borderColor: 'hover:border-cyan-400',
     domainsCount: 102,
+    subdomainsCount: 50,
     emailsCount: 5234,
     lastDnsCheck: 'hace 4h',
     status: 'ok' as ProviderStatus,
@@ -40,6 +41,7 @@ const initialProviders = [
     colors: 'from-purple-500/10 to-indigo-500/10',
     borderColor: 'hover:border-purple-400',
     domainsCount: 58,
+    subdomainsCount: 12,
     emailsCount: 8912,
     lastDnsCheck: 'hace 2h',
     status: 'error' as ProviderStatus,
@@ -54,6 +56,7 @@ const initialProviders = [
     colors: 'from-orange-500/10 to-amber-500/10',
     borderColor: 'hover:border-orange-400',
     domainsCount: 23,
+    subdomainsCount: 5,
     emailsCount: 3489,
     lastDnsCheck: 'hace 8h',
      status: 'ok' as ProviderStatus,
@@ -68,6 +71,7 @@ const initialProviders = [
     colors: 'from-green-500/10 to-emerald-500/10',
     borderColor: 'hover:border-green-400',
     domainsCount: 76,
+    subdomainsCount: 20,
     emailsCount: 9102,
     lastDnsCheck: 'hace 1h',
     status: 'error' as ProviderStatus,
@@ -183,6 +187,10 @@ export default function ServersPage() {
             transform: translateX(-150%) skewX(-15deg);
           }
         }
+        @keyframes led-glow-green { 0%, 100% { box-shadow: 0 0 4px #39FF14, 0 0 8px #39FF14; } 50% { box-shadow: 0 0 8px #39FF14, 0 0 16px #39FF14; } }
+        @keyframes led-glow-yellow { 0%, 100% { box-shadow: 0 0 4px #facc15, 0 0 8px #facc15; } 50% { box-shadow: 0 0 8px #facc15, 0 0 16px #facc15; } }
+        .led-pulse-green { animation: led-glow-green 2s infinite ease-in-out; }
+        .led-pulse-yellow { animation: led-glow-yellow 2s infinite ease-in-out; }
       `}</style>
       
       <div className="absolute inset-0 z-0 opacity-20 dark:opacity-30 pointer-events-none">
@@ -269,6 +277,11 @@ export default function ServersPage() {
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
+                            <GitBranch className="size-4"/>
+                            <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>
+                            <span>Subdominios</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Send className="size-4"/>
                             <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>
                             <span>Correos</span>
@@ -294,21 +307,21 @@ export default function ServersPage() {
                  <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white dark:hover:text-black"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white hover:text-black group"
                         onClick={() => handleSubdomainClick(provider.hasVerifiedDomains)}
                     >
-                        <Plus className="mr-1"/>
-                        Sub Dominio
-                        <div className={cn("ml-auto size-2.5 rounded-full transition-all animate-pulse", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                        <Plus className="mr-1 text-white group-hover:text-black"/>
+                        <span className="text-white group-hover:text-black">Sub Dominio</span>
+                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white dark:hover:text-black"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white hover:text-black group"
                         onClick={() => handleAddEmailClick(provider.hasVerifiedDomains)}
                     >
-                        <MailPlus className="mr-1"/>
-                        Correos
-                        <div className={cn("ml-auto size-2.5 rounded-full transition-all animate-pulse", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                        <MailPlus className="mr-1 text-white group-hover:text-black"/>
+                        <span className="text-white group-hover:text-black">Correos</span>
+                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                   </div>
               </div>
