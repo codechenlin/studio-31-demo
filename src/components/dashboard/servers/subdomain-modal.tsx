@@ -4,7 +4,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, GitBranch } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SubdomainModalProps {
     isOpen: boolean;
@@ -16,7 +17,7 @@ export function SubdomainModal({ isOpen, onOpenChange, hasVerifiedDomains }: Sub
     if (!hasVerifiedDomains) {
         return (
              <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-lg bg-zinc-900/90 border-amber-500/50 backdrop-blur-lg text-white overflow-hidden p-0">
+                <DialogContent showCloseButton={false} className="sm:max-w-lg bg-zinc-900/90 border-amber-500/50 backdrop-blur-lg text-white overflow-hidden p-0">
                    <div className="relative p-8 text-center bg-gradient-to-b from-amber-500/10 via-black/20 to-black/20">
                      <div className="absolute inset-0 bg-grid-zinc-400/[0.05] bg-grid-16 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                      <div className="flex justify-center pb-4">
