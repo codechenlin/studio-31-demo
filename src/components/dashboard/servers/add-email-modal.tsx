@@ -10,14 +10,9 @@ import { motion } from 'framer-motion';
 interface AddEmailModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  hasVerifiedDomains: boolean;
 }
 
-export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddEmailModalProps) {
-    if (hasVerifiedDomains) {
-        return null; // Don't show the modal if domains are verified
-    }
-  
+export function AddEmailModal({ isOpen, onOpenChange }: AddEmailModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden p-0">
@@ -37,10 +32,10 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
                     </motion.div>
                     
                     <DialogHeader>
-                        <DialogTitle className="relative inline-flex items-center justify-center gap-2 text-2xl font-bold mb-2 p-2 rounded-lg bg-black/30 border border-amber-400/20">
+                        <div className="relative inline-flex items-center justify-center gap-2 text-2xl font-bold mb-2 p-2 rounded-lg bg-black/30 border border-amber-400/20">
                             <Eye className="text-amber-300"/>
-                            Acción Requerida
-                        </DialogTitle>
+                            <DialogTitle>Acción Requerida</DialogTitle>
+                        </div>
                         <DialogDescription className="text-amber-100/80">
                             No puedes añadir un correo porque aún no has verificado un dominio principal.
                             <br /><br />
@@ -51,7 +46,7 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
                 <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 z-10">
                     <Button
                       onClick={() => onOpenChange(false)}
-                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold"
+                      className="w-full bg-orange-800 text-white font-bold transition-all duration-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-orange-500"
                     >
                       <Check className="mr-2" />
                       Entendido
