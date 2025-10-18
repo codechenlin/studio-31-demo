@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X, ShieldQuestion } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction, validateVmcWithApiAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -27,23 +27,29 @@ const spamExamples = [
 
 const eicarTestString = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
 
-const StatusBadge = ({ status, text }: { status: boolean | null | undefined; text: string }) => {
-    let statusClass, Icon;
+const StatusBadge = ({ status, text, trueText, falseText }: { status: boolean | null | undefined; text: string, trueText?: string, falseText?: string }) => {
+    let statusClass, Icon, displayText;
     if (status === true) {
         statusClass = "bg-green-500/10 border-green-500/20 text-green-300";
         Icon = CheckCircleIcon;
+        displayText = trueText || "OK";
     } else if (status === false) {
         statusClass = "bg-red-500/10 border-red-500/20 text-red-300";
         Icon = XCircle;
+        displayText = falseText || "ERROR";
     } else { // null or undefined
-        statusClass = "bg-gray-500/10 border-gray-500/20 text-gray-300";
+        statusClass = "bg-gray-500/10 border-gray-500/20 text-gray-400";
         Icon = ShieldQuestion;
+        displayText = "N/A";
     }
 
     return (
-        <div className={cn("flex items-center gap-2 p-2 rounded-md text-sm border", statusClass)}>
-            <Icon className="size-4" />
-            <span>{text}</span>
+        <div className="flex items-center gap-4 justify-between p-2 rounded-md text-sm border-2" style={{ borderColor: status === true ? 'rgba(0, 203, 7, 0.2)' : status === false ? 'rgba(240, 0, 0, 0.2)' : 'rgba(100,100,100,0.2)', backgroundColor: status === true ? 'rgba(0,203,7,0.05)' : status === false ? 'rgba(240,0,0,0.05)' : 'rgba(100,100,100,0.05)'}}>
+            <span className="font-semibold text-white/80">{text}</span>
+            <div className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold", statusClass)}>
+              <Icon className="size-4" />
+              <span>{displayText}</span>
+            </div>
         </div>
     );
 };
@@ -141,6 +147,16 @@ export default function DemoPage() {
         });
     };
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pass': return '#00CB07';
+            case 'pass_without_vmc': return '#f59e0b';
+            case 'indeterminate_revocation': return '#3b82f6';
+            case 'fail': return '#F00000';
+            default: return '#9ca3af';
+        }
+    };
+
     return (
         <>
         <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 bg-background items-center">
@@ -155,7 +171,7 @@ export default function DemoPage() {
             </div>
             
             {/* VMC Verifier Panel */}
-            <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-purple-500/30 shadow-xl">
+            <Card className="w-full max-w-6xl bg-card/50 backdrop-blur-sm border-purple-500/30 shadow-xl">
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-purple-400"/>Prueba de Verificador BIMI/VMC</CardTitle>
                     <CardDescription>Introduce un dominio para validar su autenticidad con el nuevo sistema API.</CardDescription>
@@ -187,34 +203,36 @@ export default function DemoPage() {
                          {vmcError && <p className="text-destructive text-sm p-4 bg-destructive/10 rounded-md w-full">{vmcError}</p>}
                          {vmcResult && (
                              <div className="w-full space-y-4">
-                                <div className="p-3 rounded-lg flex items-center justify-center" style={{ background: vmcResult.status === 'pass' ? 'rgba(0,203,7,0.1)' : 'rgba(240,0,0,0.1)', border: `1px solid ${vmcResult.status === 'pass' ? 'rgba(0,203,7,0.3)' : 'rgba(240,0,0,0.3)'}`}}>
-                                    <h3 className="text-lg font-bold" style={{color: vmcResult.status === 'pass' ? '#00CB07' : '#F00000'}}>
-                                        Estado Global: {vmcResult.status.toUpperCase()}
+                                <div className="p-4 rounded-lg flex items-center justify-center gap-3" style={{ background: `radial-gradient(ellipse at center, ${getStatusColor(vmcResult.status)}33, transparent 70%)`, border: `1px solid ${getStatusColor(vmcResult.status)}80`}}>
+                                    <h3 className="text-xl font-bold tracking-wider" style={{color: getStatusColor(vmcResult.status)}}>
+                                        ESTADO GLOBAL: {vmcResult.status.toUpperCase().replace(/_/g, ' ')}
                                     </h3>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-3 p-3 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold">BIMI</h4>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                     {/* BIMI Card */}
+                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold text-lg text-purple-300">BIMI</h4>
                                         <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
                                         <StatusBadge status={vmcResult.bimi.syntax_ok} text="Sintaxis OK" />
                                         <StatusBadge status={vmcResult.bimi.dmarc_enforced} text="DMARC Forzado" />
                                     </div>
-                                    <div className="space-y-3 p-3 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold">SVG</h4>
+                                    {/* SVG Card */}
+                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold text-lg text-purple-300">SVG</h4>
                                         <StatusBadge status={vmcResult.svg.exists} text="Logo Existe" />
                                         <StatusBadge status={vmcResult.svg.compliant} text="Cumple Especificación" />
+                                        <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.svg.message}</p>
                                     </div>
-                                    <div className="md:col-span-2 space-y-3 p-3 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold">VMC</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                            <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
-                                            <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
-                                            <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
-                                            <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
-                                            <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" />
-                                            <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
-                                        </div>
-                                         <p className="text-xs text-muted-foreground pt-2">Mensaje VMC: {vmcResult.vmc.message}</p>
+                                    {/* VMC Card */}
+                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold text-lg text-purple-300">VMC</h4>
+                                        <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
+                                        <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
+                                        <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
+                                        <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
+                                        <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
+                                        <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
+                                         <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.vmc.message}</p>
                                     </div>
                                 </div>
                              </div>
@@ -223,7 +241,7 @@ export default function DemoPage() {
                 )}
             </Card>
 
-            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Spam Checker Panel */}
                 <Card className="bg-card/50 backdrop-blur-sm border-amber-500/30 shadow-xl">
                     <CardHeader>
