@@ -10,11 +10,11 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkSpamAction, verifyVmcAuthenticityAction } from './actions';
+import { checkSpamAction, validateVmcWithApiAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirusAction } from './actions';
 import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
-import { type VmcVerificationOutput } from '@/ai/flows/vmc-verification-flow';
+import { type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-flow';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -27,12 +27,26 @@ const spamExamples = [
 
 const eicarTestString = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
 
-const StatusBadge = ({ status, text }: { status: boolean; text: string }) => (
-    <div className={cn("flex items-center gap-2 p-2 rounded-md text-sm border", status ? "bg-green-500/10 border-green-500/20 text-green-300" : "bg-red-500/10 border-red-500/20 text-red-300")}>
-        {status ? <CheckCircleIcon className="size-4" /> : <XCircle className="size-4" />}
-        <span>{text}</span>
-    </div>
-);
+const StatusBadge = ({ status, text }: { status: boolean | null | undefined; text: string }) => {
+    let statusClass, Icon;
+    if (status === true) {
+        statusClass = "bg-green-500/10 border-green-500/20 text-green-300";
+        Icon = CheckCircleIcon;
+    } else if (status === false) {
+        statusClass = "bg-red-500/10 border-red-500/20 text-red-300";
+        Icon = XCircle;
+    } else { // null or undefined
+        statusClass = "bg-gray-500/10 border-gray-500/20 text-gray-300";
+        Icon = ShieldQuestion;
+    }
+
+    return (
+        <div className={cn("flex items-center gap-2 p-2 rounded-md text-sm border", statusClass)}>
+            <Icon className="size-4" />
+            <span>{text}</span>
+        </div>
+    );
+};
 
 
 export default function DemoPage() {
@@ -52,10 +66,9 @@ export default function DemoPage() {
     const [virusError, setVirusError] = useState<string | null>(null);
 
     // VMC Verifier State
-    const [vmcDomain, setVmcDomain] = useState('');
-    const [vmcSelector, setVmcSelector] = useState('default');
+    const [vmcDomain, setVmcDomain] = useState('google.com');
     const [isVmcVerifying, startVmcVerification] = useTransition();
-    const [vmcResult, setVmcResult] = useState<VmcVerificationOutput | null>(null);
+    const [vmcResult, setVmcResult] = useState<VmcApiValidationOutput | null>(null);
     const [vmcError, setVmcError] = useState<string | null>(null);
 
     const handleSpamCheck = () => {
@@ -110,7 +123,7 @@ export default function DemoPage() {
         setVmcResult(null);
         setVmcError(null);
         startVmcVerification(async () => {
-            const result = await verifyVmcAuthenticityAction({ domain: vmcDomain, selector: vmcSelector });
+            const result = await validateVmcWithApiAction({ domain: vmcDomain });
             if (result.success && result.data) {
                 setVmcResult(result.data);
             } else {
@@ -145,25 +158,21 @@ export default function DemoPage() {
             <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-purple-500/30 shadow-xl">
                  <CardHeader>
                     <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-purple-400"/>Prueba de Verificador BIMI/VMC</CardTitle>
-                    <CardDescription>Introduce un dominio y un selector para validar su autenticidad con IA.</CardDescription>
+                    <CardDescription>Introduce un dominio para validar su autenticidad con el nuevo sistema API.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-2">
+                     <div className="grid grid-cols-1 gap-4">
+                        <div>
                             <Label htmlFor="vmc-domain">Dominio</Label>
                             <div className="relative">
                                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
                                 <Input id="vmc-domain" placeholder="google.com" value={vmcDomain} onChange={e => setVmcDomain(e.target.value)} className="pl-10"/>
                             </div>
                         </div>
-                        <div>
-                             <Label htmlFor="vmc-selector">Selector</Label>
-                            <Input id="vmc-selector" placeholder="default" value={vmcSelector} onChange={e => setVmcSelector(e.target.value)} />
-                        </div>
                     </div>
                      <Button onClick={handleVmcVerification} disabled={isVmcVerifying} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90">
-                        {isVmcVerifying ? <Loader2 className="mr-2 animate-spin"/> : <Bot className="mr-2"/>}
-                        Verificar Autenticidad con IA
+                        {isVmcVerifying ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                        Validar Dominio con API
                     </Button>
                 </CardContent>
                 {(isVmcVerifying || vmcResult || vmcError) && (
@@ -172,25 +181,41 @@ export default function DemoPage() {
                          {isVmcVerifying && (
                             <div className="w-full flex flex-col items-center justify-center gap-2 text-muted-foreground py-8">
                                 <Loader2 className="animate-spin text-purple-400 size-8" />
-                                <p className="font-semibold">La IA está analizando el dominio...</p>
+                                <p className="font-semibold">Contactando el servidor de validación...</p>
                             </div>
                          )}
                          {vmcError && <p className="text-destructive text-sm p-4 bg-destructive/10 rounded-md w-full">{vmcError}</p>}
                          {vmcResult && (
                              <div className="w-full space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                     <StatusBadge status={vmcResult.bimiRecordValid} text="Registro BIMI" />
-                                     <StatusBadge status={vmcResult.dmarcPolicyOk} text="Política DMARC" />
-                                     <StatusBadge status={vmcResult.svgSecure} text="SVG Seguro" />
-                                     <StatusBadge status={vmcResult.vmcChainValid} text="Cadena VMC Válida" />
-                                     <StatusBadge status={vmcResult.vmcIdentityMatch} text="Identidad VMC" />
-                                      <StatusBadge status={vmcResult.overallStatus === 'verified'} text={vmcResult.overallStatus.toUpperCase()} />
+                                <div className="p-3 rounded-lg flex items-center justify-center" style={{ background: vmcResult.status === 'pass' ? 'rgba(0,203,7,0.1)' : 'rgba(240,0,0,0.1)', border: `1px solid ${vmcResult.status === 'pass' ? 'rgba(0,203,7,0.3)' : 'rgba(240,0,0,0.3)'}`}}>
+                                    <h3 className="text-lg font-bold" style={{color: vmcResult.status === 'pass' ? '#00CB07' : '#F00000'}}>
+                                        Estado Global: {vmcResult.status.toUpperCase()}
+                                    </h3>
                                 </div>
-                                <div className="p-4 bg-black/30 rounded-lg">
-                                    <h4 className="font-bold mb-2">Análisis de la IA:</h4>
-                                     <ScrollArea className="max-h-40">
-                                        <p className="text-sm text-white/80 whitespace-pre-line">{vmcResult.analysis}</p>
-                                     </ScrollArea>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-3 p-3 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold">BIMI</h4>
+                                        <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
+                                        <StatusBadge status={vmcResult.bimi.syntax_ok} text="Sintaxis OK" />
+                                        <StatusBadge status={vmcResult.bimi.dmarc_enforced} text="DMARC Forzado" />
+                                    </div>
+                                    <div className="space-y-3 p-3 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold">SVG</h4>
+                                        <StatusBadge status={vmcResult.svg.exists} text="Logo Existe" />
+                                        <StatusBadge status={vmcResult.svg.compliant} text="Cumple Especificación" />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-3 p-3 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold">VMC</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
+                                            <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
+                                            <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
+                                            <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
+                                            <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" />
+                                            <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
+                                        </div>
+                                         <p className="text-xs text-muted-foreground pt-2">Mensaje VMC: {vmcResult.vmc.message}</p>
+                                    </div>
                                 </div>
                              </div>
                          )}
@@ -342,128 +367,6 @@ export default function DemoPage() {
                         )}
                     </CardFooter>
                 </Card>
-            </div>
-            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-400">
-                        <LayoutTemplate size={32} />
-                    </div>
-                    <span className="font-mono text-xs">1</span>
-                </div>
-            </div>
-            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-500">
-                        <Share2 size={32} />
-                    </div>
-                    <span className="font-mono text-xs">1</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-green-500">
-                        <GitCommit size={32} />
-                    </div>
-                    <span className="font-mono text-xs">2</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-purple-500">
-                        <Megaphone size={32} />
-                    </div>
-                    <span className="font-mono text-xs">3</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-red-500">
-                        <Gift size={32} />
-                    </div>
-                    <span className="font-mono text-xs">4</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-teal-500">
-                        <Receipt size={32} />
-                    </div>
-                    <span className="font-mono text-xs">5</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-orange-500">
-                        <ScrollText size={32} />
-                    </div>
-                    <span className="font-mono text-xs">6</span>
-                </div>
-            </div>
-            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-orange-500">
-                        <ShoppingBag size={32} />
-                    </div>
-                    <span className="font-mono text-xs">1</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-teal-500">
-                        <ShoppingBasket size={32} />
-                    </div>
-                    <span className="font-mono text-xs">2</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-sky-500">
-                        <ShoppingCart size={32} />
-                    </div>
-                    <span className="font-mono text-xs">3</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-lime-500">
-                        <Package size={32}/>
-                    </div>
-                    <span className="font-mono text-xs">4</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-indigo-500">
-                        <UserPlus size={32} />
-                    </div>
-                    <span className="font-mono text-xs">5</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-fuchsia-500">
-                        <UserCog size={32} />
-                    </div>
-                    <span className="font-mono text-xs">6</span>
-                </div>
-            </div>
-            <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-500">
-                        <PackageCheck size={32} />
-                    </div>
-                    <span className="font-mono text-xs">1</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-teal-500">
-                        <CreditCard size={32} />
-                    </div>
-                    <span className="font-mono text-xs">2</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-orange-500">
-                        <Receipt size={32} />
-                    </div>
-                    <span className="font-mono text-xs">3</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="text-indigo-500">
-                        <ShoppingBag size={32} />
-                    </div>
-                    <span className="font-mono text-xs">4</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-fuchsia-500">
-                        <Briefcase size={32} />
-                    </div>
-                    <span className="font-mono text-xs">5</span>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-rose-500">
-                        <Store size={32} />
-                    </div>
-                    <span className="font-mono text-xs">6</span>
-                </div>
             </div>
         </main>
         </>
