@@ -208,8 +208,26 @@ export default function DemoPage() {
                                         ESTADO GLOBAL: {vmcResult.status.toUpperCase().replace(/_/g, ' ')}
                                     </h3>
                                 </div>
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                     {/* BIMI Card */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {/* DNS Info Card */}
+                                    <div className="lg:col-span-2 space-y-3 p-4 bg-black/30 rounded-lg">
+                                        <h4 className="font-bold text-lg text-purple-300">Registros DNS</h4>
+                                        <div className="space-y-2 text-xs font-mono">
+                                            <div className="p-2 rounded bg-black/20">
+                                                <p className="font-bold text-purple-200">BIMI ({vmcResult.dns.bimi.name}):</p>
+                                                <p className="text-white/80 break-all">{vmcResult.dns.bimi.values?.join(' ') || 'No encontrado'}</p>
+                                            </div>
+                                            <div className="p-2 rounded bg-black/20">
+                                                <p className="font-bold text-purple-200">DMARC ({vmcResult.dns.dmarc.name}):</p>
+                                                <p className="text-white/80 break-all">{vmcResult.dns.dmarc.values?.join(' ') || 'No encontrado'}</p>
+                                            </div>
+                                            <div className="p-2 rounded bg-black/20">
+                                                <p className="font-bold text-purple-200">MX:</p>
+                                                <p className="text-white/80 break-all">{vmcResult.dns.mx.exchanges?.join(', ') || 'No encontrado'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* BIMI Card */}
                                     <div className="space-y-3 p-4 bg-black/30 rounded-lg">
                                         <h4 className="font-bold text-lg text-purple-300">BIMI</h4>
                                         <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
@@ -224,14 +242,16 @@ export default function DemoPage() {
                                         <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.svg.message}</p>
                                     </div>
                                     {/* VMC Card */}
-                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
+                                    <div className="lg:col-span-2 space-y-3 p-4 bg-black/30 rounded-lg">
                                         <h4 className="font-bold text-lg text-purple-300">VMC</h4>
-                                        <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
-                                        <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
-                                        <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
-                                        <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
-                                        <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
-                                        <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
+                                          <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
+                                          <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
+                                          <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
+                                          <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
+                                          <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
+                                        </div>
                                          <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.vmc.message}</p>
                                     </div>
                                 </div>
