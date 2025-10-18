@@ -35,7 +35,7 @@ export async function checkApiHealth(): Promise<ApiHealthOutput> {
         'X-API-KEY': API_KEY,
         'Content-Type': 'application/json',
       },
-      agent: API_BASE.startsWith('https') ? httpsAgent : undefined,
+      // agent: API_BASE.startsWith('https') ? httpsAgent : undefined, // This might cause issues in some environments.
     });
 
     if (!response.ok) {

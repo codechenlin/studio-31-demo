@@ -108,8 +108,8 @@ async function callApi(domain: string): Promise<VmcValidatorOutput> {
                 'User-Agent': 'Mailflow-AI-Validator/1.0',
                 'Accept': 'application/json',
             },
-            // Use the custom agent only for https URLs
-            agent: API_BASE.startsWith('https') ? httpsAgent : undefined,
+            // Use the custom agent only for https URLs, this might cause issues in some environments.
+            // agent: API_BASE.startsWith('https') ? httpsAgent : undefined,
         });
 
         if (!response.ok) {
