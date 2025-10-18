@@ -6,6 +6,7 @@ import { scanFileForVirus } from '@/ai/flows/virus-scan-flow';
 import { type VirusScanOutput, VirusScanInputSchema } from '@/ai/flows/virus-scan-types';
 import { z } from 'zod';
 import { checkApiHealth } from '@/ai/flows/api-health-check-flow';
+import { validateVmcWithApi, type VmcValidatorInput } from '@/ai/flows/vmc-validator-api-flow';
 
 const SpamCheckerInputSchema = z.object({
   text: z.string().describe('The text content to be analyzed for spam.'),
@@ -59,4 +60,22 @@ export async function checkApiHealthAction() {
     console.error('API health check action error:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Server action to run the VMC validation flow.
+ */
+const VmcValidatorInputSchema = z.object({
+  domain: z.string().min(1, 'El dominio es requerido.'),
+});
+
+export async function validateVmcWithApiAction(input: VmcValidatorInput) {
+    try {
+        const validatedInput = VmcValidatorInputSchema.parse(input);
+        const result = await validateVmcWithApi(validatedInput);
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error('VMC validation action error:', error);
+        return { success: false, error: error.message };
+    }
 }

@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, Power, CheckCircle2 } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, Power, CheckCircle2, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkSpamAction, scanFileForVirusAction, checkApiHealthAction } from './actions';
+import { checkSpamAction, scanFileForVirusAction, checkApiHealthAction, validateVmcWithApiAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
 import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
+import { type VmcValidatorOutput } from '@/ai/flows/vmc-validator-api-flow';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function DemoPage() {
     const { toast } = useToast();
@@ -28,6 +30,12 @@ export default function DemoPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isScanning, startScan] = useTransition();
     const [scanResult, setScanResult] = useState<VirusScanOutput | null>(null);
+
+    // VMC Validator State
+    const [vmcDomain, setVmcDomain] = useState('paypal.com');
+    const [isVmcValidating, startVmcValidation] = useTransition();
+    const [vmcResult, setVmcResult] = useState<VmcValidatorOutput | null>(null);
+    const [vmcError, setVmcError] = useState<string | null>(null);
 
     // API Health Check State
     const [isCheckingHealth, startHealthCheck] = useTransition();
@@ -83,7 +91,25 @@ export default function DemoPage() {
                 setHealthError(result.error || 'Ocurrió un error desconocido.');
             }
         });
-    }
+    };
+    
+    const handleVmcValidation = () => {
+        if (!vmcDomain) {
+            toast({ title: 'Dominio Requerido', description: 'Por favor, introduce un dominio para validar.', variant: 'destructive' });
+            return;
+        }
+        setVmcResult(null);
+        setVmcError(null);
+        startVmcValidation(async () => {
+            const result = await validateVmcWithApiAction({ domain: vmcDomain });
+            if (result.success) {
+                setVmcResult(result.data || null);
+            } else {
+                setVmcError(result.error || 'Ocurrió un error desconocido.');
+            }
+        });
+    };
+
 
     return (
         <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 bg-background items-center">
@@ -96,15 +122,70 @@ export default function DemoPage() {
                     Utiliza estos paneles para probar las integraciones con APIs externas.
                 </p>
             </div>
-            
-            <Card className="w-full max-w-4xl">
+
+            {/* Mini Panel de Prueba 02 - VMC Validator */}
+            <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-xl">
+                        <Globe className="text-primary"/>
+                        Mini Panel de Prueba 02: Validador VMC
+                    </CardTitle>
+                    <CardDescription>
+                        Introduce un dominio para validar su configuración BIMI, SVG y VMC usando la API externa.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                            placeholder="ej. paypal.com"
+                            value={vmcDomain}
+                            onChange={(e) => setVmcDomain(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleVmcValidation()}
+                            className="flex-1"
+                        />
+                        <Button onClick={handleVmcValidation} disabled={isVmcValidating} className="w-full sm:w-auto">
+                            {isVmcValidating ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                            Validar Dominio
+                        </Button>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <div className="w-full">
+                        {isVmcValidating && (
+                            <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="animate-spin" />
+                                Validando y analizando {vmcDomain}... Esto puede tardar un momento.
+                            </div>
+                        )}
+                        {vmcError && (
+                            <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Validación</p>
+                                <p className="mt-1 font-mono text-xs">{vmcError}</p>
+                            </div>
+                        )}
+                        {vmcResult && (
+                             <div className="w-full text-sm">
+                                <p className="font-bold mb-2">Respuesta Completa de la API:</p>
+                                <ScrollArea className="max-h-80 w-full rounded-md border bg-black/20 p-4">
+                                    <pre className="text-xs text-white whitespace-pre-wrap break-all">
+                                        {JSON.stringify(vmcResult, null, 2)}
+                                    </pre>
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </div>
+                </CardFooter>
+            </Card>
+
+            {/* Mini Panel de Prueba 01 - API Health Check */}
+            <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-xl">
                         <Power className="text-primary"/>
                         Mini Panel de Prueba 01: Conexión API
                     </CardTitle>
                     <CardDescription>
-                        Este panel verifica la conectividad básica con la API externa de validación VMC/BIMI.
+                        Este panel verifica la conectividad básica con la API externa de validación.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -114,114 +195,29 @@ export default function DemoPage() {
                     </Button>
                 </CardContent>
                 <CardFooter>
-                    {isCheckingHealth && (
-                        <div className="w-full flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="animate-spin" />
-                            Verificando conexión...
-                        </div>
-                    )}
-                    {healthError && (
-                        <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
-                            <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
-                            <p className="mt-1 font-mono text-xs">{healthError}</p>
-                        </div>
-                    )}
-                    {healthResult && (
-                        <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
-                            <p className="font-bold flex items-center gap-2"><CheckCircle2/>Sistema en Línea</p>
-                            <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
-                                {JSON.stringify(healthResult, null, 2)}
-                            </pre>
-                        </div>
-                    )}
-                </CardFooter>
-            </Card>
-
-            {/* Spam Checker Panel */}
-            <Card className="w-full max-w-4xl">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-xl">
-                        <Flame className="text-primary"/>
-                        Probador de Spam (APILayer)
-                    </CardTitle>
-                    <CardDescription>Introduce un texto y ajusta la sensibilidad para ver si es detectado como spam.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="spam-text">Texto a Analizar</Label>
-                        <Input id="spam-text" value={spamText} onChange={e => setSpamText(e.target.value)} />
+                    <div className="w-full">
+                        {isCheckingHealth && (
+                            <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="animate-spin" />
+                                Verificando conexión con el servidor...
+                            </div>
+                        )}
+                        {healthError && (
+                            <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
+                                <p className="mt-1 font-mono text-xs">{healthError}</p>
+                            </div>
+                        )}
+                        {healthResult && (
+                            <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
+                                <p className="font-bold flex items-center gap-2"><CheckCircle2/>Sistema en Línea</p>
+                                <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
+                                    {JSON.stringify(healthResult, null, 2)}
+                                </pre>
+                            </div>
+                        )}
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="spam-threshold">Sensibilidad del Filtro (1-10)</Label>
-                        <div className="flex items-center gap-4">
-                            <Slider
-                                id="spam-threshold"
-                                min={1} max={10} step={0.1}
-                                value={[spamThreshold]}
-                                onValueChange={(value) => setSpamThreshold(value[0])}
-                            />
-                            <span className="font-mono text-lg font-bold w-16 text-center">{spamThreshold.toFixed(1)}</span>
-                        </div>
-                    </div>
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                     <Button onClick={handleSpamCheck} disabled={isSpamChecking}>
-                        {isSpamChecking ? <Loader2 className="mr-2 animate-spin"/> : <Microscope className="mr-2"/>}
-                        Analizar Texto
-                    </Button>
-                    {spamResult && (
-                        <div className="w-full text-sm p-4 rounded-md border" style={{
-                            borderColor: spamResult.is_spam ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
-                            backgroundColor: spamResult.is_spam ? 'hsl(var(--destructive) / 0.1)' : 'hsl(var(--primary) / 0.1)',
-                        }}>
-                            <p><strong>Resultado:</strong> <span style={{ color: spamResult.is_spam ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>{spamResult.result}</span></p>
-                            <p><strong>Puntuación:</strong> {spamResult.score.toFixed(2)}</p>
-                        </div>
-                    )}
                 </CardFooter>
-            </Card>
-
-            {/* Virus Scanner Panel */}
-            <Card className="w-full max-w-4xl">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-xl">
-                        <ShieldCheck className="text-primary"/>
-                        Escáner de Virus (ClamAV)
-                    </CardTitle>
-                    <CardDescription>Sube un archivo para escanearlo en busca de virus y malware.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Label htmlFor="virus-scan-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                             {isScanning ? (
-                                <Loader2 className="w-8 h-8 mb-2 text-primary animate-spin" />
-                             ) : (
-                                <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                             )}
-                            <p className="mb-2 text-sm text-muted-foreground">
-                                {selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : 'Haz clic para subir un archivo'}
-                            </p>
-                        </div>
-                        <Input id="virus-scan-file" type="file" className="hidden" onChange={handleFileChange} />
-                    </Label>
-                </CardContent>
-                 <CardFooter className="flex-col items-start gap-4">
-                     <Button onClick={handleVirusScan} disabled={isScanning || !selectedFile}>
-                        {isScanning ? <Loader2 className="mr-2 animate-spin"/> : <ShieldAlert className="mr-2"/>}
-                        Escanear Archivo
-                    </Button>
-                    {scanResult && (
-                         <div className="w-full text-sm p-4 rounded-md border" style={{
-                            borderColor: scanResult.isInfected ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
-                            backgroundColor: scanResult.isInfected ? 'hsl(var(--destructive) / 0.1)' : 'hsl(var(--primary) / 0.1)',
-                         }}>
-                            <p className="font-bold flex items-center gap-2" style={{color: scanResult.isInfected ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>
-                                {scanResult.isInfected ? <AlertTriangle/> : <CheckCircleIcon/>}
-                                {scanResult.message}
-                            </p>
-                         </div>
-                    )}
-                 </CardFooter>
             </Card>
         </main>
     );
