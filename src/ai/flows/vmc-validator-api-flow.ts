@@ -71,7 +71,7 @@ const VmcApiValidationOutputSchema = z.object({
 export type VmcApiValidationOutput = z.infer<typeof VmcApiValidationOutputSchema>;
 
 
-const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
+const API_BASE = "https://6000-firebase-studio-1754705152134.cluster-fnjdffmttjhy2qqdugh3yehhs2.cloudworkstations.dev";
 
 export async function validateVmcWithApi(input: VmcApiValidationInput): Promise<VmcApiValidationOutput> {
   return vmcValidatorApiFlow(input);
