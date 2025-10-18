@@ -22,6 +22,17 @@ const DnsRecordSchema = z.object({
   values: z.array(z.string()),
 });
 
+const MxRecordValueSchema = z.object({
+    preference: z.number(),
+    exchange: z.string(),
+});
+
+const MxDnsRecordSchema = z.object({
+    name: z.string(),
+    type: z.string(),
+    values: z.array(MxRecordValueSchema)
+})
+
 const BimiSchema = z.object({
   exists: z.boolean(),
   syntax_ok: z.boolean(),
@@ -60,10 +71,7 @@ const VmcValidatorOutputSchema = z.object({
   dns: z.object({
     bimi: DnsRecordSchema,
     dmarc: DnsRecordSchema,
-    mx: z.object({
-      exchanges: z.array(z.string()),
-      preferences: z.array(z.number()),
-    }),
+    mx: MxDnsRecordSchema,
   }),
   bimi: BimiSchema,
   svg: SvgSchema,
