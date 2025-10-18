@@ -10,7 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import https from 'https';
 
 const VmcApiValidationInputSchema = z.object({
   domain: z.string().describe('The domain to validate.'),
@@ -71,15 +70,11 @@ const VmcApiValidationOutputSchema = z.object({
 export type VmcApiValidationOutput = z.infer<typeof VmcApiValidationOutputSchema>;
 
 
-const API_BASE = "https://6000-firebase-studio-1754705152134.cluster-fnjdffmttjhy2qqdugh3yehhs2.cloudworkstations.dev";
+const API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud";
 
 export async function validateVmcWithApi(input: VmcApiValidationInput): Promise<VmcApiValidationOutput> {
   return vmcValidatorApiFlow(input);
 }
-
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false,
-});
 
 const vmcValidatorApiFlow = ai.defineFlow(
   {
@@ -96,7 +91,7 @@ const vmcValidatorApiFlow = ai.defineFlow(
     const headers = { "X-API-KEY": API_KEY, "User-Agent": "MailflowAI/1.0" };
     
     try {
-        let response = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers, agent: httpsAgent });
+        let response = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers });
 
         if (!response.ok) {
             throw new Error(`API request failed with status: ${response.status}`);
@@ -114,7 +109,7 @@ const vmcValidatorApiFlow = ai.defineFlow(
             for (let i = 0; i < max_retries; i++) {
                 await new Promise(r => setTimeout(r, retry_after_seconds * 1000));
                 
-                const retryRes = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers, agent: httpsAgent });
+                const retryRes = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers });
                 const retryJson = await retryRes.json();
                 
                 // If revocation becomes OK, we have a definitive answer.
