@@ -7,14 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X, ShieldQuestion, ChevronDown, ChevronRight, Server, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkSpamAction, validateVmcWithApiAction, checkApiHealthAction } from './actions';
-import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
-import { scanFileForVirusAction } from './actions';
-import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
+import { validateVmcWithApiAction, checkApiHealthAction } from './actions';
 import { type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-flow';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export default function DemoPage() {
@@ -61,6 +57,53 @@ export default function DemoPage() {
             }
         });
     };
+    
+    const renderDnsResult = (dnsData: VmcApiValidationOutput['dns']) => {
+      if (!dnsData) return <p className="text-sm text-muted-foreground">No se devolvieron datos de DNS.</p>;
+
+      const records = [
+          { name: 'BIMI', data: dnsData.bimi },
+          { name: 'DMARC', data: dnsData.dmarc },
+          { name: 'MX', data: dnsData.mx }
+      ];
+
+      return (
+          <div className="space-y-3">
+              {records.map(record => (
+                  <div key={record.name} className="p-3 rounded-md bg-black/30 border border-border/50">
+                      <p className="font-semibold text-primary">{record.name}</p>
+                      {record.data && (
+                          <div className="font-mono text-xs text-muted-foreground mt-1 space-y-1">
+                              <p><span className="font-semibold text-foreground/70">Nombre:</span> {record.data.name}</p>
+                              <p><span className="font-semibold text-foreground/70">Tipo:</span> {record.data.type}</p>
+                               {record.name === 'MX' ? (
+                                   record.data.exchanges && <p><span className="font-semibold text-foreground/70">Servidores:</span> {(record.data.exchanges as string[]).join(', ')}</p>
+                               ) : (
+                                   record.data.values && <p className="break-all"><span className="font-semibold text-foreground/70">Valores:</span> {(record.data.values as string[]).join(' ')}</p>
+                               )}
+                          </div>
+                      )}
+                  </div>
+              ))}
+          </div>
+      )
+    }
+    
+    const renderObjectDetails = (obj: object) => (
+        <div className="space-y-2 text-xs">
+            {Object.entries(obj).map(([key, value]) => {
+                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) return null; // Don't render nested objects here
+                 return (
+                    <div key={key} className="flex justify-between border-b border-border/20 pb-1">
+                        <span className="text-muted-foreground">{key}:</span>
+                        <span className="font-mono text-foreground font-semibold break-all text-right">
+                            {typeof value === 'boolean' ? (value ? <CheckCircleIcon className="text-green-500 inline"/> : <XCircle className="text-red-500 inline"/>) : String(value ?? 'N/A')}
+                        </span>
+                    </div>
+                )
+            })}
+        </div>
+    )
 
     return (
         <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 bg-background items-center">
@@ -104,11 +147,37 @@ export default function DemoPage() {
                          )}
                          {vmcError && <div className="w-full text-destructive text-sm p-4 bg-destructive/10 rounded-md border border-destructive/50 flex items-center gap-3"><AlertTriangle/>{vmcError}</div>}
                          {vmcResult && (
-                             <div className="w-full space-y-2">
-                                <h4 className="font-semibold">Resultado de la API:</h4>
-                                <ScrollArea className="h-80 w-full bg-black/80 text-white rounded-md p-4">
-                                    <pre><code>{JSON.stringify(vmcResult, null, 2)}</code></pre>
-                                </ScrollArea>
+                             <div className="w-full space-y-4">
+                                <div className={cn(
+                                  "p-3 rounded-lg border flex items-center justify-center gap-3 text-lg font-bold",
+                                  vmcResult.status === "pass" ? "bg-green-500/10 border-green-500/30 text-green-300" : "bg-red-500/10 border-red-500/30 text-red-300"
+                                )}>
+                                  <ShieldCheck/>
+                                  <span className="uppercase">Estado Global: {vmcResult.status}</span>
+                                </div>
+                                
+                                <Accordion type="single" collapsible className="w-full">
+                                  <AccordionItem value="dns">
+                                    <AccordionTrigger>Registros DNS</AccordionTrigger>
+                                    <AccordionContent>
+                                        <ScrollArea className="h-48">
+                                           {renderDnsResult(vmcResult.dns)}
+                                        </ScrollArea>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                   <AccordionItem value="bimi">
+                                    <AccordionTrigger>Análisis BIMI</AccordionTrigger>
+                                    <AccordionContent>{renderObjectDetails(vmcResult.bimi)}</AccordionContent>
+                                  </AccordionItem>
+                                  <AccordionItem value="svg">
+                                    <AccordionTrigger>Análisis SVG</AccordionTrigger>
+                                    <AccordionContent>{renderObjectDetails(vmcResult.svg)}</AccordionContent>
+                                  </AccordionItem>
+                                  <AccordionItem value="vmc">
+                                    <AccordionTrigger>Análisis VMC</AccordionTrigger>
+                                    <AccordionContent>{renderObjectDetails(vmcResult.vmc)}</AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
                              </div>
                          )}
                     </CardFooter>
@@ -161,3 +230,4 @@ export default function DemoPage() {
         </main>
     );
 }
+
