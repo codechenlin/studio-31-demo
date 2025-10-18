@@ -7,6 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import https from 'https';
 
 const HealthCheckOutputSchema = z.object({
   status: z.string(),
@@ -18,6 +19,10 @@ const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
 export async function checkApiHealth(): Promise<HealthCheckOutput> {
   return apiHealthCheckFlow();
 }
+
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const apiHealthCheckFlow = ai.defineFlow(
   {
@@ -34,7 +39,7 @@ const apiHealthCheckFlow = ai.defineFlow(
     const headers = { "X-API-KEY": API_KEY, "User-Agent": "MailflowAI-HealthCheck/1.0" };
 
     try {
-      const response = await fetch(`${API_BASE}/health`, { headers });
+      const response = await fetch(`${API_BASE}/health`, { headers, agent: httpsAgent });
 
       if (!response.ok) {
         throw new Error(`API request failed with status: ${response.status} ${response.statusText}`);

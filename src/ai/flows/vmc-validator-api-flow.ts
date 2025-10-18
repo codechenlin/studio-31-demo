@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import https from 'https';
 
 const VmcApiValidationInputSchema = z.object({
   domain: z.string().describe('The domain to validate.'),
@@ -76,6 +77,9 @@ export async function validateVmcWithApi(input: VmcApiValidationInput): Promise<
   return vmcValidatorApiFlow(input);
 }
 
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const vmcValidatorApiFlow = ai.defineFlow(
   {
@@ -92,7 +96,7 @@ const vmcValidatorApiFlow = ai.defineFlow(
     const headers = { "X-API-KEY": API_KEY, "User-Agent": "MailflowAI/1.0" };
     
     try {
-        let response = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers });
+        let response = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers, agent: httpsAgent });
 
         if (!response.ok) {
             throw new Error(`API request failed with status: ${response.status}`);
@@ -110,7 +114,7 @@ const vmcValidatorApiFlow = ai.defineFlow(
             for (let i = 0; i < max_retries; i++) {
                 await new Promise(r => setTimeout(r, retry_after_seconds * 1000));
                 
-                const retryRes = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers });
+                const retryRes = await fetch(`${API_BASE}/validate?domain=${encodeURIComponent(domain)}`, { headers, agent: httpsAgent });
                 const retryJson = await retryRes.json();
                 
                 // If revocation becomes OK, we have a definitive answer.
