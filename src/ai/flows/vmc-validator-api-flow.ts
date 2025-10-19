@@ -19,7 +19,7 @@ async function callApi(domain: string): Promise<VmcApiValidationOutput> {
 
   const url = `${API_BASE}/validate?domain=${encodeURIComponent(domain)}`;
   const headers = {
-    'Authorization': `Bearer ${API_KEY}`,
+    'X-API-KEY': API_KEY,
     'Content-Type': 'application/json',
     'User-Agent': 'MailflowAI-Validation-Client/1.0',
     'Accept': 'application/json',

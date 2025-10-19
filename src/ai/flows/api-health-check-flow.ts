@@ -27,7 +27,7 @@ export async function checkApiHealth(): Promise<ApiHealthOutput> {
     const response = await fetch(`${API_BASE}/health`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'X-API-KEY': API_KEY,
         'Content-Type': 'application/json',
       },
     });
