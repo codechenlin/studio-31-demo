@@ -11,10 +11,10 @@ export type VmcAnalysisInput = z.infer<typeof VmcAnalysisInputSchema>;
 // Output schema for the AI's analysis
 export const VmcAnalysisOutputSchema = z.object({
     bimi_is_valid: z.boolean().describe("Determina si el registro BIMI es válido. Debe tener 'exists: true' y 'dmarc_enforced: true' para ser válido."),
-    bimi_description: z.string().describe("Descripción corta de por qué el registro BIMI se considera válido o falso."),
+    bimi_description: z.string().describe("Análisis técnico detallado de por qué el registro BIMI se considera válido o falso."),
     svg_is_valid: z.boolean().describe("Determina si la imagen SVG es válida y segura. Debe tener 'compliant: true'."),
-    svg_description: z.string().describe("Descripción corta de por qué el SVG es correcto o falso."),
+    svg_description: z.string().describe("Análisis técnico detallado de por qué el SVG es correcto o falso, citando errores específicos si existen."),
     vmc_is_authentic: z.boolean().describe("Determina si el certificado VMC es auténtico. Debe tener 'authentic: true', 'chain_ok: true' y 'revocation_ok: true'."),
-    vmc_description: z.string().describe("Descripción corta de por qué el VMC es auténtico o falso.")
+    vmc_description: z.string().describe("Análisis técnico detallado de por qué el VMC es auténtico o falso, considerando la cadena de confianza y la revocación.")
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;

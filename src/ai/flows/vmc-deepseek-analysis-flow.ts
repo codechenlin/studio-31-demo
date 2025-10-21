@@ -64,7 +64,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
 
   // 2. Prepare and send data to DeepSeek AI
   const prompt = `
-    Eres un experto en seguridad de correo electrónico y autenticación de marca. Analiza el siguiente objeto JSON, que contiene los resultados de una validación de BIMI, SVG y VMC para el dominio '${input.domain}'. Tu tarea es determinar la validez de cada componente y proporcionar una justificación clara y concisa.
+    Eres un experto en seguridad de correo electrónico y autenticación de marca. Analiza el siguiente objeto JSON, que contiene los resultados de una validación de BIMI, SVG y VMC para el dominio '${input.domain}'. Tu tarea es determinar la validez de cada componente y proporcionar un análisis técnico detallado de tu razonamiento.
     El JSON de entrada puede contener dos ramas principales de datos: 'python_method' y 'openssl_method'. Debes considerar la información de ambas para formar tu veredicto.
 
     Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
@@ -88,25 +88,34 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     ${JSON.stringify(validationData, null, 2)}
     \`\`\`
 
-    **Reglas de Análisis:**
+    **Reglas de Análisis Detallado:**
 
     1.  **Registro BIMI (bimi_is_valid):**
-        *   **VÁLIDO (true):** Solo si el registro BIMI existe Y la sintaxis es correcta (tiene 'v=BIMI1' y 'l=') Y la política DMARC está en modo 'reject' o 'quarantine'.
-        *   **FALSO (false):** En cualquier otro caso.
-        *   **Descripción (bimi_description):** Si es falso, explica por qué (ej. "No existe el registro BIMI.", "La sintaxis es incorrecta", o "DMARC no está en modo seguro."). Si es válido, di "El registro BIMI está presente y la política DMARC es segura.". Si el registro no existe, menciónalo claramente.
+        *   **Veredicto Final (true/false):** ¿Existe el registro? ¿Es correcta su sintaxis? ¿La política DMARC es segura ('reject' o 'quarantine')? El veredicto es **VÁLIDO** solo si se cumplen TODAS estas condiciones.
+        *   **Análisis Detallado (bimi_description):** Explica tu razonamiento paso a paso.
+            *   Menciona si el registro BIMI fue encontrado (\`dns.bimi.exists\`).
+            *   Verifica y cita la sintaxis encontrada (ej. \`v=BIMI1; l=...\`).
+            *   Verifica y cita la política DMARC encontrada (\`dns.dmarc.record\`) y si cumple con ser 'reject' o 'quarantine'.
+            *   Concluye explicando cómo estos puntos llevaron a tu veredicto final. Si no se encontró el registro, indícalo claramente como la razón principal.
 
     2.  **Imagen SVG (svg_is_valid):**
-        *   **VÁLIDO (true):** Solo si el SVG existe Y es compatible con las reglas BIMI-safe.
-        *   **FALSO (false):** Si no existe o no es compatible.
-        *   **Descripción (svg_description):** Si es falso, explica por qué (ej. "El archivo SVG no se encontró." o "El SVG no cumple con las reglas de seguridad BIMI."). Si es válido, di "El logo SVG es compatible con BIMI.".
+        *   **Veredicto Final (true/false):** ¿Se encontró el archivo SVG? ¿Es compatible con las estrictas reglas de seguridad de BIMI-safe? El veredicto es **VÁLIDO** solo si ambas son ciertas.
+        *   **Análisis Detallado (svg_description):**
+            *   Indica si el SVG fue localizado (\`svg.exists\`).
+            *   Reporta el estado de compatibilidad (\`svg.compliant\`).
+            *   Si no es compatible, cita los errores específicos encontrados en el array \`svg.errors\` para justificar por qué falló.
+            *   Concluye resumiendo si el logo es seguro para ser usado con BIMI o no, y por qué.
 
     3.  **Certificado VMC (vmc_is_authentic):**
-        *   **AUTÉNTICO (true):** Solo si el certificado VMC existe, es auténtico, la cadena de confianza está completa Y el estado de revocación es "bueno" (revocation_ok = true).
-        *   **FALSO (false):** En cualquier otro caso.
-        *   **Descripción (vmc_description):** Si es falso, explica la razón principal (ej. "No se encontró un certificado VMC.", "La cadena de confianza del certificado está rota.", "El certificado ha sido revocado."). Si es auténtico, di "El certificado VMC es auténtico y fue verificado por una autoridad oficial.". Si no se encuentra un VMC, la descripción debe indicarlo.
+        *   **Veredicto Final (true/false):** ¿Existe el VMC? ¿Es criptográficamente auténtico? ¿La cadena de confianza está completa y es válida? ¿El estado de revocación es "bueno"? El veredicto es **AUTÉNTICO** solo si TODAS estas condiciones son verdaderas.
+        *   **Análisis Detallado (vmc_description):**
+            *   Menciona si se encontró un certificado VMC (\`vmc.exists\`).
+            *   Verifica la autenticidad (\`vmc.authentic\`) y la cadena de confianza (\`vmc.chain_ok\` / \`openssl.chain_ok\`). Cita la salida de OpenSSL si es relevante, especialmente \`stderr\` si hay errores.
+            *   Verifica el estado de revocación (\`vmc.revocation_ok\`).
+            *   Explica cómo la combinación de estos factores (autenticidad, confianza, revocación) te llevó a concluir si el VMC fue emitido por una autoridad oficial y es seguro. Si no se encontró, indícalo como la razón.
 
     **Instrucciones Adicionales:**
-    - Sé directo y conciso.
+    - Sé directo y técnico en tus descripciones.
     - Tu respuesta final DEBE ser únicamente el objeto JSON solicitado.
   `;
   
