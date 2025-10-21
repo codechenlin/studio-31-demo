@@ -80,45 +80,30 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   const vmcPrompt = await getVmcAnalysisPrompt();
 
   // 3. Prepare and send data to DeepSeek AI
-  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
+  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\`\n\n**Importante:** Tu respuesta DEBE ser únicamente el objeto JSON, sin texto adicional ni formato Markdown.`;
   
   try {
     const rawResponse = await deepseekChat(prompt, {
       apiKey: aiConfig.apiKey,
-      model: aiConfig.modelName,
+      model: aiConfig.modelName || 'deepseek-chat', // Use deepseek-chat as a robust default
     });
     
-    // Flexible JSON parsing logic
-    let jsonString: string | null = null;
-    const markdownMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    // Robust JSON parsing logic
+    let jsonString = rawResponse;
     
-    if (markdownMatch && markdownMatch[1]) {
-        jsonString = markdownMatch[1];
-    } else {
-        // Fallback: try to find a JSON-like string if markdown is missing
-        const jsonLikeMatch = rawResponse.match(/(\{[\s\S]*\})/);
-        if (jsonLikeMatch && jsonLikeMatch[1]) {
-            jsonString = jsonLikeMatch[1];
-        }
-    }
+    // Attempt to find a JSON object within the string, even if it has leading/trailing text.
+    const firstBrace = jsonString.indexOf('{');
+    const lastBrace = jsonString.lastIndexOf('}');
 
-    if (!jsonString) {
-      // If still no JSON, try parsing the whole thing as a last resort
-      try {
-        const parsedJson = JSON.parse(rawResponse);
-        return VmcAnalysisOutputSchema.parse(parsedJson);
-      } catch (e) {
-        // If everything fails, throw the final error.
-        throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
-      }
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonString = jsonString.substring(firstBrace, lastBrace + 1);
     }
     
-    // Parse the extracted JSON string
     try {
         const parsedJson = JSON.parse(jsonString);
         return VmcAnalysisOutputSchema.parse(parsedJson);
-    } catch (e) {
-        console.error("Failed to parse JSON from AI response:", e, "\nRaw JSON string:", jsonString);
+    } catch (parseError) {
+        console.error("Failed to parse JSON from AI response:", parseError, "\nRaw AI response:", rawResponse);
         throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
     }
 
