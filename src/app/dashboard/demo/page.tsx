@@ -61,16 +61,10 @@ export default function DemoPage() {
                 verdict: result.bimi_is_valid ? "VÁLIDO" : "FALSO/INVÁLIDO"
             },
             {
-                title: "Imagen SVG",
-                isValid: result.svg_is_valid,
-                description: result.svg_description,
-                verdict: result.svg_is_valid ? "CORRECTA" : "FALSA"
-            },
-            {
                 title: "Certificado VMC",
                 isValid: result.vmc_is_authentic,
                 description: result.vmc_description,
-                verdict: result.vmc_is_authentic ? "AUTÉNTICO" : "FALSO"
+                verdict: result.verdict || "INDETERMINADO"
             }
         ]
 

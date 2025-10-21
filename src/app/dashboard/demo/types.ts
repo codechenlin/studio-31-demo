@@ -8,13 +8,18 @@ export const VmcAnalysisInputSchema = z.object({
 export type VmcAnalysisInput = z.infer<typeof VmcAnalysisInputSchema>;
 
 
-// Output schema for the AI's analysis
+// Output schema for the AI's analysis, matching the detailed prompt
 export const VmcAnalysisOutputSchema = z.object({
+    verdict: z.string().describe("Resumen general del resultado BIMI/VMC para el dominio."),
     bimi_is_valid: z.boolean().describe("Determina si el registro BIMI es válido."),
     bimi_description: z.string().describe("Análisis técnico detallado de por qué el registro BIMI se considera válido o falso."),
-    svg_is_valid: z.boolean().describe("Determina si la imagen SVG es válida y segura."),
-    svg_description: z.string().describe("Análisis técnico detallado de por qué el SVG es correcto o falso, citando errores específicos si existen."),
-    vmc_is_authentic: z.boolean().describe("Determina si el certificado VMC es auténtico."),
-    vmc_description: z.string().describe("Análisis técnico detallado de por qué el VMC es auténtico o falso, considerando la cadena de confianza y la revocación.")
+    vmc_is_authentic: z.boolean().describe("Determina si el certificado VMC es auténtico (refleja si vmc_status es VALID)."),
+    vmc_description: z.string().describe("Lista de viñetas con evidencia técnica concreta que justifica el veredicto del VMC."),
+    dmarc_policy: z.enum(["reject", "quarantine", "none", "unknown"]).describe("Política DMARC encontrada."),
+    openssl_verify_ok: z.boolean().describe("Resultado de 'verify.ok' del método OpenSSL."),
+    ocsp_status: z.enum(["GOOD", "REVOKED", "UNKNOWN", "NOT_CHECKED"]).describe("Estado de la verificación OCSP."),
+    svg_hash_match: z.boolean().describe("Indica si el hash del SVG coincide con el declarado en el certificado."),
+    chain_summary: z.array(z.record(z.any())).describe("Resumen de la cadena de certificados."),
+    method_consistency: z.enum(["CONSISTENT", "MIXED", "DIVERGENT"]).describe("Consistencia entre los métodos de validación."),
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
