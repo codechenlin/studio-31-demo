@@ -155,6 +155,63 @@ export default function DemoPage() {
                         </CardFooter>
                     )}
                 </Card>
+                 {/* Panel 2: AI Analysis */}
+                <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                            <Bot className="text-accent"/>
+                            Mini Panel de Prueba 02: Análisis con IA
+                        </CardTitle>
+                        <CardDescription>
+                           Valida un dominio y obtén un análisis técnico de la IA sobre sus registros BIMI y VMC.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <Label htmlFor="domain-input" className="font-semibold">Dominio a Analizar</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className="relative flex-grow">
+                                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                    <Input
+                                        id="domain-input"
+                                        placeholder="ejemplo.com"
+                                        value={domainToAnalyze}
+                                        onChange={(e) => setDomainToAnalyze(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                <Button onClick={handleAnalysis} disabled={isAnalyzing || !domainToAnalyze}>
+                                    {isAnalyzing ? <Loader2 className="mr-2 animate-spin"/> : <Dna className="mr-2"/>}
+                                    Validar y Analizar
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                     {(isAnalyzing || analysisResult || analysisError) && (
+                        <CardFooter>
+                            <div className="w-full">
+                                {isAnalyzing && (
+                                    <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="animate-spin" />
+                                        La IA está analizando los datos del dominio...
+                                    </div>
+                                )}
+                                {analysisError && (
+                                    <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Análisis</p>
+                                        <p className="mt-1 font-mono text-xs">{analysisError}</p>
+                                    </div>
+                                )}
+                                {analysisResult && (
+                                   <div className="w-full text-sm space-y-4">
+                                       <h3 className="font-bold text-lg text-center">Veredicto de la IA</h3>
+                                       {renderAnalysisResult(analysisResult)}
+                                   </div>
+                                )}
+                            </div>
+                        </CardFooter>
+                     )}
+                </Card>
             </div>
         </main>
     );
