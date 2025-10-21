@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
+const API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
 const API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
 
 const ApiHealthOutputSchema = z.object({
