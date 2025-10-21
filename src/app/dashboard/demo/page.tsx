@@ -69,27 +69,38 @@ export default function DemoPage() {
         ]
 
         return (
-            <Accordion type="single" collapsible defaultValue="item-0" className="w-full space-y-2">
-                {analysisItems.map((item, index) => (
-                    <AccordionItem key={index} value={`item-${index}`} className="bg-black/20 border-border/30 rounded-lg">
-                        <AccordionTrigger className="p-4 text-base font-semibold hover:no-underline">
-                           <div className="flex items-center gap-3">
-                            {item.isValid 
-                                ? <CheckCircle className="size-6 text-green-400" />
-                                : <AlertTriangle className="size-6 text-red-400" />
-                            }
-                            <span>{item.title}:</span>
-                             <span className={cn("font-bold", item.isValid ? "text-green-400" : "text-red-400")}>{item.verdict}</span>
-                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                           <div className="p-3 bg-black/40 rounded-md font-mono text-xs text-white/80 whitespace-pre-wrap border border-border/20">
-                             {item.description}
-                           </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+             <div className="w-full text-sm space-y-4">
+                {result.detailed_analysis && (
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-lg text-center text-cyan-300">Análisis Detallado de la IA</h3>
+                        <div className="p-3 bg-black/40 rounded-md font-mono text-xs text-white/80 whitespace-pre-wrap border border-cyan-400/20">
+                            {result.detailed_analysis}
+                        </div>
+                    </div>
+                )}
+                <h3 className="font-bold text-lg text-center">Veredicto de la IA</h3>
+                <Accordion type="single" collapsible defaultValue="item-0" className="w-full space-y-2">
+                    {analysisItems.map((item, index) => (
+                        <AccordionItem key={index} value={`item-${index}`} className="bg-black/20 border-border/30 rounded-lg">
+                            <AccordionTrigger className="p-4 text-base font-semibold hover:no-underline">
+                               <div className="flex items-center gap-3">
+                                {item.isValid 
+                                    ? <CheckCircle className="size-6 text-green-400" />
+                                    : <AlertTriangle className="size-6 text-red-400" />
+                                }
+                                <span>{item.title}:</span>
+                                 <span className={cn("font-bold", item.isValid ? "text-green-400" : "text-red-400")}>{item.verdict}</span>
+                               </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-4">
+                               <div className="p-3 bg-black/40 rounded-md font-mono text-xs text-white/80 whitespace-pre-wrap border border-border/20">
+                                 {item.description}
+                               </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </div>
         )
     }
 
@@ -196,12 +207,7 @@ export default function DemoPage() {
                                         <p className="mt-1 font-mono text-xs">{analysisError}</p>
                                     </div>
                                 )}
-                                {analysisResult && (
-                                   <div className="w-full text-sm space-y-4">
-                                       <h3 className="font-bold text-lg text-center">Veredicto de la IA</h3>
-                                       {renderAnalysisResult(analysisResult)}
-                                   </div>
-                                )}
+                                {analysisResult && renderAnalysisResult(analysisResult)}
                             </div>
                         </CardFooter>
                      )}

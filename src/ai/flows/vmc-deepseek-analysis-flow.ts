@@ -80,7 +80,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   const vmcPrompt = await getVmcAnalysisPrompt();
 
   // 3. Prepare and send data to DeepSeek AI
-  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\`\n\n**Importante:** Tu respuesta DEBE ser únicamente el objeto JSON, sin texto adicional ni formato Markdown.`;
+  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
   
   try {
     const rawResponse = await deepseekChat(prompt, {
@@ -88,27 +88,29 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
       model: "deepseek-coder",
     });
     
-    // Robust JSON parsing logic
-    let jsonString = rawResponse;
-    
-    const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
-    if (markdownMatch && markdownMatch[1]) {
-        jsonString = markdownMatch[1];
-    }
-    
-    // If no markdown block, try to find the JSON object within the string
-    const firstBrace = jsonString.indexOf('{');
-    const lastBrace = jsonString.lastIndexOf('}');
+    const jsonStartMarker = '<<<JSON_START>>>';
+    const jsonEndMarker = '<<<JSON_END>>>';
 
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+    const jsonStartIndex = rawResponse.indexOf(jsonStartMarker);
+    const jsonEndIndex = rawResponse.indexOf(jsonEndMarker);
+
+    if (jsonStartIndex === -1 || jsonEndIndex === -1) {
+      throw new Error("La IA no devolvió los delimitadores JSON esperados.");
     }
+    
+    const analysisText = rawResponse.substring(0, jsonStartIndex).trim();
+    const jsonString = rawResponse.substring(jsonStartIndex + jsonStartMarker.length, jsonEndIndex).trim();
     
     try {
         const parsedJson = JSON.parse(jsonString);
-        return VmcAnalysisOutputSchema.parse(parsedJson);
+        const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
+        
+        return {
+            ...validatedOutput,
+            detailed_analysis: analysisText
+        };
     } catch (parseError) {
-        console.error("Failed to parse JSON from AI response:", parseError, "\nRaw AI response:", rawResponse);
+        console.error("Failed to parse JSON from AI response:", parseError, "\nExtracted JSON string:", jsonString);
         throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
     }
 

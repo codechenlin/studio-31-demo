@@ -21,5 +21,8 @@ export const VmcAnalysisOutputSchema = z.object({
     svg_hash_match: z.boolean().describe("Indica si el hash del SVG coincide con el declarado en el certificado."),
     chain_summary: z.array(z.record(z.any())).describe("Resumen de la cadena de certificados."),
     method_consistency: z.enum(["CONSISTENT", "MIXED", "DIVERGENT"]).describe("Consistencia entre los métodos de validación."),
+    svg_is_valid: z.boolean().describe("Determina si el SVG cumple con los requisitos de BIMI.").optional(),
+    svg_description: z.string().describe("Análisis detallado de la validez del SVG.").optional(),
+    detailed_analysis: z.string().describe("El análisis completo en texto plano para revisión humana.").optional(),
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
