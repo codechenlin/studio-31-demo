@@ -2,8 +2,12 @@
 'use server';
 
 import { checkApiHealth, type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
-import { validateVmcWithApi } from '@/ai/flows/vmc-validator-api-flow';
-import { type VmcApiValidationInput, type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-types';
+import { 
+    validateAndAnalyzeDomain, 
+    type VmcAnalysisInput, 
+    type VmcAnalysisOutput 
+} from '@/ai/flows/vmc-deepseek-analysis-flow';
+
 
 export async function checkApiHealthAction() {
   try {
@@ -18,12 +22,12 @@ export async function checkApiHealthAction() {
   }
 }
 
-export async function validateVmcWithApiAction(input: VmcApiValidationInput): Promise<{ success: boolean; data?: VmcApiValidationOutput; error?: string }> {
+export async function validateDomainWithAI(input: VmcAnalysisInput): Promise<{ success: boolean; data?: VmcAnalysisOutput; error?: string }> {
   try {
-    const result = await validateVmcWithApi(input);
+    const result = await validateAndAnalyzeDomain(input);
     return { success: true, data: result };
   } catch (error: any) {
-    console.error('VMC validation action error:', error);
+    console.error('VMC validation with AI action error:', error);
     return { success: false, error: error.message };
   }
 }

@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Terminal, Server, Dna } from 'lucide-react';
 import { checkApiHealthAction } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
-import { validateVmcWithApiAction } from './actions';
-import { type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-types';
+import { validateDomainWithAI } from './actions';
+import { type VmcAnalysisOutput } from '@/ai/flows/vmc-deepseek-analysis-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -20,10 +20,10 @@ export default function DemoPage() {
     const [healthResult, setHealthResult] = useState<ApiHealthOutput | null>(null);
     const [healthError, setHealthError] = useState<string | null>(null);
     
-    const [isValidatingVmc, startVmcValidation] = useTransition();
-    const [vmcResult, setVmcResult] = useState<VmcApiValidationOutput | null>(null);
-    const [vmcError, setVmcError] = useState<string | null>(null);
-    const [domainToValidate, setDomainToValidate] = useState('paypal.com');
+    const [isAnalyzing, startAnalysis] = useTransition();
+    const [analysisResult, setAnalysisResult] = useState<VmcAnalysisOutput | null>(null);
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [domainToAnalyze, setDomainToAnalyze] = useState('paypal.com');
     
     const handleHealthCheck = () => {
         setHealthResult(null);
@@ -38,64 +38,60 @@ export default function DemoPage() {
         });
     };
 
-    const handleVmcValidation = () => {
-        if (!domainToValidate) return;
-        setVmcResult(null);
-        setVmcError(null);
-        startVmcValidation(async () => {
-            const result = await validateVmcWithApiAction({ domain: domainToValidate });
-            if (result.success) {
-                setVmcResult(result.data || null);
+    const handleAnalysis = () => {
+        if (!domainToAnalyze) return;
+        setAnalysisResult(null);
+        setAnalysisError(null);
+        startAnalysis(async () => {
+            const result = await validateDomainWithAI({ domain: domainToAnalyze });
+            if (result.success && result.data) {
+                setAnalysisResult(result.data);
             } else {
-                setVmcError(result.error || 'Ocurrió un error desconocido.');
+                setAnalysisError(result.error || 'Ocurrió un error desconocido.');
             }
         });
     };
 
-    const renderVmcResult = (result: VmcApiValidationOutput) => {
-        const statusColors = {
-            pass: 'text-green-400',
-            pass_without_vmc: 'text-yellow-400',
-            indeterminate_revocation: 'text-amber-400',
-            fail: 'text-red-400',
-            partial: 'text-orange-400'
-        }
-        const openSslStatusColor = result.vmc.openssl?.status === 'pass' ? 'text-green-400' : 'text-red-400';
+    const renderAnalysisResult = (result: VmcAnalysisOutput) => {
+        const getStatusClasses = (isValid: boolean) => 
+            isValid 
+            ? "bg-green-900/40 border-green-500/50 text-green-300" 
+            : "bg-red-900/40 border-red-500/50 text-red-300";
 
+        const getStatusIcon = (isValid: boolean) => 
+            isValid 
+            ? <CheckCircle className="size-8 shrink-0 text-green-400" />
+            : <AlertTriangle className="size-8 shrink-0 text-red-400" />;
+        
         return (
-            <div className="space-y-4">
-                <p className="text-center font-bold text-lg">
-                    Estado Global: <span className={cn(statusColors[result.status])}>{result.status.replace(/_/g, ' ')}</span>
-                </p>
-                
-                {result.vmc.openssl && (
-                    <div className="p-4 rounded-lg bg-black/40 border border-purple-500/30">
-                        <h4 className="font-bold text-base flex items-center gap-2 mb-2 text-purple-300">
-                           <Server/> Resultados OpenSSL
-                        </h4>
-                        <div className="space-y-2 text-xs">
-                             <p><strong>Estado:</strong> <span className={openSslStatusColor}>{result.vmc.openssl.status}</span></p>
-                            <p><strong>Formato:</strong> {result.vmc.openssl.format}</p>
-                            <p><strong>Cadena OK:</strong> <span className={result.vmc.openssl.chain_ok ? 'text-green-400' : 'text-red-400'}>{result.vmc.openssl.chain_ok === null ? 'N/A' : String(result.vmc.openssl.chain_ok)}</span></p>
-                            {result.vmc.openssl.stderr && <p><strong>Stderr:</strong> <code className="bg-red-900/50 p-1 rounded-sm">{result.vmc.openssl.stderr}</code></p>}
+             <div className="space-y-4">
+                <div className={cn("p-4 rounded-lg border", getStatusClasses(result.bimi_is_valid))}>
+                    <div className="flex items-start gap-4">
+                        {getStatusIcon(result.bimi_is_valid)}
+                        <div>
+                            <h4 className="font-bold">Registro BIMI: {result.bimi_is_valid ? "VÁLIDO" : "FALSO/INVÁLIDO"}</h4>
+                            <p className="text-sm">{result.bimi_description}</p>
                         </div>
                     </div>
-                )}
-                
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="dns">
-                    <AccordionTrigger><Dna className="mr-2"/>Registros DNS</AccordionTrigger>
-                    <AccordionContent>
-                      <pre className="text-xs bg-black/30 p-2 rounded-md">{JSON.stringify(result.dns, null, 2)}</pre>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="vmc-details">
-                    <AccordionTrigger><ShieldCheck className="mr-2"/>Detalles VMC Completo</AccordionTrigger>
-                    <AccordionContent>
-                      <pre className="text-xs bg-black/30 p-2 rounded-md">{JSON.stringify(result, null, 2)}</pre>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                </div>
+                 <div className={cn("p-4 rounded-lg border", getStatusClasses(result.svg_is_valid))}>
+                    <div className="flex items-start gap-4">
+                        {getStatusIcon(result.svg_is_valid)}
+                        <div>
+                            <h4 className="font-bold">Imagen SVG: {result.svg_is_valid ? "CORRECTA" : "FALSA"}</h4>
+                            <p className="text-sm">{result.svg_description}</p>
+                        </div>
+                    </div>
+                </div>
+                 <div className={cn("p-4 rounded-lg border", getStatusClasses(result.vmc_is_authentic))}>
+                    <div className="flex items-start gap-4">
+                        {getStatusIcon(result.vmc_is_authentic)}
+                        <div>
+                            <h4 className="font-bold">Certificado VMC: {result.vmc_is_authentic ? "AUTÉNTICO" : "FALSO"}</h4>
+                            <p className="text-sm">{result.vmc_description}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -157,15 +153,15 @@ export default function DemoPage() {
                     )}
                 </Card>
 
-                 {/* Panel 3: Validador VMC con OpenSSL */}
+                 {/* Panel 2: Validador VMC con Análisis IA */}
                 <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-xl">
                             <Bot className="text-primary"/>
-                            Mini Panel de Prueba 03: Validador VMC con OpenSSL
+                            Mini Panel de Prueba 02: Análisis con IA
                         </CardTitle>
                         <CardDescription>
-                            Introduce un dominio para realizar una validación completa de BIMI, SVG, VMC y OpenSSL.
+                           Valida un dominio y obtén un análisis de la IA sobre su autenticidad.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -174,35 +170,32 @@ export default function DemoPage() {
                             <div className="flex gap-2 mt-1">
                                 <Input
                                     id="domain-input"
-                                    value={domainToValidate}
-                                    onChange={(e) => setDomainToValidate(e.target.value)}
+                                    value={domainToAnalyze}
+                                    onChange={(e) => setDomainToAnalyze(e.target.value)}
                                     placeholder="ejemplo.com"
                                 />
-                                <Button onClick={handleVmcValidation} disabled={isValidatingVmc || !domainToValidate}>
-                                    {isValidatingVmc ? <Loader2 className="mr-2 animate-spin"/> : <Globe className="mr-2"/>}
-                                    Validar
+                                <Button onClick={handleAnalysis} disabled={isAnalyzing || !domainToAnalyze}>
+                                    {isAnalyzing ? <Loader2 className="mr-2 animate-spin"/> : <Globe className="mr-2"/>}
+                                    Analizar
                                 </Button>
                             </div>
                         </div>
-                        {(isValidatingVmc || vmcResult || vmcError) && (
+                         {(isAnalyzing || analysisResult || analysisError) && (
                             <div className="pt-4">
-                                {isValidatingVmc && (
-                                    <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                        <Loader2 className="animate-spin" />
-                                        Validando dominio...
+                                {isAnalyzing && (
+                                    <div className="w-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="animate-spin mb-2" />
+                                        <p>Contactando API externa...</p>
+                                        <p>Enviando respuesta a DeepSeek para análisis...</p>
                                     </div>
                                 )}
-                                {vmcError && (
+                                {analysisError && (
                                     <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
-                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Validación</p>
-                                        <p className="mt-1 font-mono text-xs">{vmcError}</p>
+                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Análisis</p>
+                                        <p className="mt-1 font-mono text-xs">{analysisError}</p>
                                     </div>
                                 )}
-                                {vmcResult && (
-                                    <ScrollArea className="h-72">
-                                        {renderVmcResult(vmcResult)}
-                                    </ScrollArea>
-                                )}
+                                {analysisResult && renderAnalysisResult(analysisResult)}
                             </div>
                         )}
                     </CardContent>
