@@ -88,22 +88,40 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
       model: aiConfig.modelName,
     });
     
-    // Extract JSON from the response
-    const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
-    if (!jsonMatch || !jsonMatch[1]) {
-      // Fallback for when the model doesn't use markdown code blocks
+    // Flexible JSON parsing logic
+    let jsonString: string | null = null;
+    const markdownMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    
+    if (markdownMatch && markdownMatch[1]) {
+        jsonString = markdownMatch[1];
+    } else {
+        // Fallback: try to find a JSON-like string if markdown is missing
+        const jsonLikeMatch = rawResponse.match(/(\{[\s\S]*\})/);
+        if (jsonLikeMatch && jsonLikeMatch[1]) {
+            jsonString = jsonLikeMatch[1];
+        }
+    }
+
+    if (!jsonString) {
+      // If still no JSON, try parsing the whole thing as a last resort
       try {
         const parsedJson = JSON.parse(rawResponse);
         return VmcAnalysisOutputSchema.parse(parsedJson);
       } catch (e) {
-         throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
+        // If everything fails, throw the final error.
+        throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
       }
     }
     
-    const parsedJson = JSON.parse(jsonMatch[1]);
-    const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
+    // Parse the extracted JSON string
+    try {
+        const parsedJson = JSON.parse(jsonString);
+        return VmcAnalysisOutputSchema.parse(parsedJson);
+    } catch (e) {
+        console.error("Failed to parse JSON from AI response:", e, "\nRaw JSON string:", jsonString);
+        throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
+    }
 
-    return validatedOutput;
   } catch (error: any) {
     console.error('Error durante el análisis con Deepseek:', error);
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
