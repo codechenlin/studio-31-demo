@@ -9,7 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { VmcApiValidationInputSchema, VmcApiValidationOutputSchema, type VmcApiValidationInput, type VmcApiValidationOutput } from './vmc-validator-api-types';
 
-const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
+const API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
 const API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
 
 async function callApi(domain: string): Promise<VmcApiValidationOutput> {
