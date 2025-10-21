@@ -9,28 +9,11 @@
 import { z } from 'genkit';
 import { deepseekChat } from '@/ai/deepseek';
 import { getAiConfigForFlows } from '@/ai/genkit';
+import { type VmcAnalysisInput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/actions';
+
 
 const EXTERNAL_API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud:9090";
 const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
-
-// Input schema for our main flow
-export const VmcAnalysisInputSchema = z.object({
-  domain: z.string().describe('The domain to validate and analyze.'),
-});
-export type VmcAnalysisInput = z.infer<typeof VmcAnalysisInputSchema>;
-
-
-// Output schema for the AI's analysis
-export const VmcAnalysisOutputSchema = z.object({
-    bimi_is_valid: z.boolean().describe("Determina si el registro BIMI es válido. Debe tener 'exists: true' y 'dmarc_enforced: true' para ser válido."),
-    bimi_description: z.string().describe("Descripción corta de por qué el registro BIMI se considera válido o falso."),
-    svg_is_valid: z.boolean().describe("Determina si la imagen SVG es válida y segura. Debe tener 'compliant: true'."),
-    svg_description: z.string().describe("Descripción corta de por qué el SVG es correcto o falso."),
-    vmc_is_authentic: z.boolean().describe("Determina si el certificado VMC es auténtico. Debe tener 'authentic: true', 'chain_ok: true' y 'revocation_ok: true'."),
-    vmc_description: z.string().describe("Descripción corta de por qué el VMC es auténtico o falso.")
-});
-export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
-
 
 /**
  * Fetches validation data from the external API.
@@ -66,7 +49,7 @@ async function fetchDomainValidation(domain: string): Promise<any> {
  * @param input The domain to be processed.
  * @returns An analysis object from the AI.
  */
-export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise<VmcAnalysisOutput> {
+export async function validateAndAnalyzeDomain(input: VmcAnalysisInput) {
   const aiConfig = getAiConfigForFlows();
 
   if (!aiConfig?.enabled || !aiConfig.functions?.vmcVerification) {
@@ -83,6 +66,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   // 2. Prepare and send data to DeepSeek AI
   const prompt = `
     Eres un experto en seguridad de correo electrónico y autenticación de marca. Analiza el siguiente objeto JSON, que contiene los resultados de una validación de BIMI, SVG y VMC para el dominio '${input.domain}'. Tu tarea es determinar la validez de cada componente y proporcionar una justificación clara y concisa.
+    El JSON de entrada puede contener dos ramas principales de datos: 'python_method' y 'openssl_method'. Debes considerar la información de ambas para formar tu veredicto.
 
     Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
     \`\`\`json
@@ -108,23 +92,23 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     **Reglas de Análisis:**
 
     1.  **Registro BIMI (bimi_is_valid):**
-        *   **VÁLIDO (true):** Solo si \`bimi.exists\` es \`true\` Y \`bimi.dmarc_enforced\` es \`true\`.
+        *   **VÁLIDO (true):** Solo si el registro BIMI existe Y la sintaxis es correcta (tiene 'v=BIMI1' y 'l=') Y la política DMARC está en modo 'reject' o 'quarantine'.
         *   **FALSO (false):** En cualquier otro caso.
-        *   **Descripción (bimi_description):** Si es falso, explica por qué (ej. "No existe el registro BIMI." o "DMARC no está en modo 'reject' o 'quarantine'."). Si es válido, di "El registro BIMI está presente y la política DMARC es segura.".
+        *   **Descripción (bimi_description):** Si es falso, explica por qué (ej. "No existe el registro BIMI.", "La sintaxis es incorrecta", o "DMARC no está en modo seguro."). Si es válido, di "El registro BIMI está presente y la política DMARC es segura.". Si el registro no existe, menciónalo claramente.
 
     2.  **Imagen SVG (svg_is_valid):**
-        *   **VÁLIDO (true):** Solo si \`svg.exists\` es \`true\` Y \`svg.compliant\` es \`true\`.
+        *   **VÁLIDO (true):** Solo si el SVG existe Y es compatible con las reglas BIMI-safe.
         *   **FALSO (false):** Si no existe o no es compatible.
-        *   **Descripción (svg_description):** Si es falso, explica por qué (ej. "El archivo SVG no se encontró en la URL." o "El SVG no cumple con las reglas BIMI-safe."). Si es válido, di "El logo SVG es compatible con BIMI.".
+        *   **Descripción (svg_description):** Si es falso, explica por qué (ej. "El archivo SVG no se encontró." o "El SVG no cumple con las reglas de seguridad BIMI."). Si es válido, di "El logo SVG es compatible con BIMI.".
 
     3.  **Certificado VMC (vmc_is_authentic):**
-        *   **AUTÉNTICO (true):** Solo si \`vmc.exists\` es \`true\`, \`vmc.authentic\` es \`true\`, \`vmc.chain_ok\` es \`true\`, Y \`vmc.revocation_ok\` es \`true\`.
-        *   **FALSO (false):** En cualquier otro caso (incluyendo si \`revocation_ok\` es \`false\` o \`null\`).
-        *   **Descripción (vmc_description):** Si es falso, explica la razón principal (ej. "No se encontró un certificado VMC.", "La cadena de confianza del certificado está rota.", "El certificado ha sido revocado.", "No se pudo verificar el estado de revocación."). Si es auténtico, di "El certificado VMC es auténtico y fue verificado por una autoridad oficial.".
+        *   **AUTÉNTICO (true):** Solo si el certificado VMC existe, es auténtico, la cadena de confianza está completa Y el estado de revocación es "bueno" (revocation_ok = true).
+        *   **FALSO (false):** En cualquier otro caso.
+        *   **Descripción (vmc_description):** Si es falso, explica la razón principal (ej. "No se encontró un certificado VMC.", "La cadena de confianza del certificado está rota.", "El certificado ha sido revocado."). Si es auténtico, di "El certificado VMC es auténtico y fue verificado por una autoridad oficial.". Si no se encuentra un VMC, la descripción debe indicarlo.
 
     **Instrucciones Adicionales:**
-    - Sé directo y conciso en tus descripciones.
-    - No inventes información. Basa tu análisis únicamente en los datos JSON proporcionados.
+    - Sé directo y conciso.
+    - Tu respuesta final DEBE ser únicamente el objeto JSON solicitado.
   `;
   
   try {

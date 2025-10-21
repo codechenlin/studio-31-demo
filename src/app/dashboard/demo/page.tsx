@@ -10,7 +10,7 @@ import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Te
 import { checkApiHealthAction } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
 import { validateDomainWithAI } from './actions';
-import { type VmcAnalysisOutput } from '@/ai/flows/vmc-deepseek-analysis-flow';
+import { type VmcAnalysisOutput } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
