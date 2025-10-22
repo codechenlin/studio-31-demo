@@ -20,9 +20,9 @@ const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32
 /**
  * Fetches validation data from the external API.
  * @param domain The domain to validate.
- * @returns The full JSON response from the external API.
+ * @returns The full JSON response from the external API or an error object.
  */
-async function fetchDomainValidation(domain: string): Promise<any> {
+async function fetchDomainValidation(domain: string): Promise<{ success: boolean; data: any }> {
   const url = `${EXTERNAL_API_BASE}/validate/full?domain=${encodeURIComponent(domain)}`;
   
   try {
@@ -36,13 +36,15 @@ async function fetchDomainValidation(domain: string): Promise<any> {
 
     if (!response.ok) {
       const errorBody = await response.text().catch(() => 'No se pudo leer el cuerpo del error.');
-      throw new Error(`La API externa devolvió un error: ${response.status} ${response.statusText}. Cuerpo: ${errorBody}`);
+      const errorMessage = `La API externa devolvió un error: ${response.status} ${response.statusText}. Cuerpo: ${errorBody}`;
+      return { success: false, data: { error: errorMessage } };
     }
 
-    return await response.json();
+    return { success: true, data: await response.json() };
   } catch (error: any) {
     console.error('Fallo al conectar con la API externa:', error);
-    throw new Error(`No se pudo conectar con la API de validación: ${error.message}`);
+    const errorMessage = `No se pudo conectar con la API de validación: ${error.message}`;
+    return { success: false, data: { error: errorMessage } };
   }
 }
 
@@ -74,13 +76,44 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   }
 
   // 1. Fetch data from the external API
-  const validationData = await fetchDomainValidation(input.domain);
+  const validationResponse = await fetchDomainValidation(input.domain);
   
-  // 2. Get the prompt from the config file
-  const vmcPrompt = await getVmcAnalysisPrompt();
+  let prompt: string;
 
-  // 3. Prepare and send data to DeepSeek AI
-  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
+  if (!validationResponse.success) {
+    // If the API call failed, generate a prompt to analyze the error itself.
+    const errorData = JSON.stringify(validationResponse.data, null, 2);
+    prompt = `
+      Eres un experto en diagnóstico de APIs. Recibiste el siguiente error al intentar validar un dominio: ${errorData}.
+
+      Tu tarea es:
+      1.  Primero, escribe un análisis en texto plano explicando la causa probable del error en términos sencillos. Si el error menciona "MissingSchema" y "'self'", explica que esto usualmente significa un registro DNS mal configurado (probablemente BIMI) en el dominio del cliente, donde se usó 'self' en lugar de una URL HTTPS válida.
+      2.  Después del análisis, genera un objeto JSON con el siguiente formato, llenándolo con valores que reflejen el error.
+      
+      Formato de salida (debe estar entre <<<JSON_START>>> y <<<JSON_END>>>):
+      {
+        "verdict": "ERROR DE VALIDACIÓN",
+        "bimi_is_valid": false,
+        "bimi_description": "La validación no pudo completarse debido a un error en la API externa o en la configuración del dominio.",
+        "vmc_is_authentic": false,
+        "vmc_description": "La autenticidad del VMC no pudo ser verificada.",
+        "dmarc_policy": "unknown",
+        "openssl_verify_ok": false,
+        "ocsp_status": "UNKNOWN",
+        "svg_hash_match": false,
+        "svg_is_valid": false,
+        "svg_description": "No se pudo analizar el SVG debido al error inicial.",
+        "chain_summary": [],
+        "method_consistency": "DIVERGENT",
+        "validation_score": 0
+      }
+    `;
+  } else {
+    // If API call was successful, use the standard analysis prompt.
+    const validationData = validationResponse.data;
+    const vmcPrompt = await getVmcAnalysisPrompt();
+    prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
+  }
   
   try {
     const rawResponse = await deepseekChat(prompt, {
