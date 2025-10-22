@@ -88,7 +88,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
 
       Tu tarea es:
       1.  Primero, escribe un análisis en texto plano explicando la causa probable del error en términos sencillos. Si el error menciona "MissingSchema" y "'self'", explica que esto usualmente significa un registro DNS mal configurado (probablemente BIMI) en el dominio del cliente, donde se usó 'self' en lugar de una URL HTTPS válida.
-      2.  Después del análisis, genera un objeto JSON con el siguiente formato, llenándolo con valores que reflejen el error.
+      2.  Después del análisis, genera un objeto JSON válido entre los delimitadores <<<JSON_START>>> y <<<JSON_END>>>, llenándolo con valores que reflejen el estado de error.
       
       Formato de salida (debe estar entre <<<JSON_START>>> y <<<JSON_END>>>):
       {
