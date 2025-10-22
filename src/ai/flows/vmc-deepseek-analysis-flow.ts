@@ -37,7 +37,7 @@ async function fetchDomainValidation(domain: string): Promise<{ success: boolean
     if (!response.ok) {
       const errorBody = await response.text().catch(() => 'No se pudo leer el cuerpo del error.');
       const errorMessage = `La API externa devolvió un error: ${response.status} ${response.statusText}. Cuerpo: ${errorBody}`;
-      return { success: false, data: { error: errorMessage } };
+      return { success: false, data: { error: errorMessage, rawBody: errorBody } };
     }
 
     return { success: true, data: await response.json() };
@@ -78,57 +78,27 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   // 1. Fetch data from the external API
   const validationResponse = await fetchDomainValidation(input.domain);
   
-  let prompt: string;
-
-  if (!validationResponse.success) {
-    // If the API call failed, generate a prompt to analyze the error itself.
-    const errorData = JSON.stringify(validationResponse.data, null, 2);
-    prompt = `
-      Eres un experto en diagnóstico de APIs. Recibiste el siguiente error al intentar validar un dominio: ${errorData}.
-
-      Tu tarea es:
-      1.  Primero, escribe un análisis en texto plano explicando la causa probable del error en términos sencillos. Si el error menciona "MissingSchema" y "'self'", explica que esto usualmente significa un registro DNS mal configurado (probablemente BIMI) en el dominio del cliente, donde se usó 'self' en lugar de una URL HTTPS válida.
-      2.  Después del análisis, genera un objeto JSON válido entre los delimitadores <<<JSON_START>>> y <<<JSON_END>>>, llenándolo con valores que reflejen el estado de error.
-      
-      Formato de salida (debe estar entre <<<JSON_START>>> y <<<JSON_END>>>):
-      {
-        "verdict": "ERROR DE VALIDACIÓN",
-        "bimi_is_valid": false,
-        "bimi_description": "La validación no pudo completarse debido a un error en la API externa o en la configuración del dominio.",
-        "vmc_is_authentic": false,
-        "vmc_description": "La autenticidad del VMC no pudo ser verificada.",
-        "dmarc_policy": "unknown",
-        "openssl_verify_ok": false,
-        "ocsp_status": "UNKNOWN",
-        "svg_hash_match": false,
-        "svg_is_valid": false,
-        "svg_description": "No se pudo analizar el SVG debido al error inicial.",
-        "chain_summary": [],
-        "method_consistency": "DIVERGENT",
-        "validation_score": 0
-      }
-    `;
-  } else {
-    // If API call was successful, use the standard analysis prompt.
-    const validationData = validationResponse.data;
-    const vmcPrompt = await getVmcAnalysisPrompt();
-    prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
-  }
+  // 2. Prepare the data to be sent to the AI (either success data or error data)
+  const dataToAnalyze = validationResponse.success ? validationResponse.data : validationResponse.data;
+  
+  // 3. Get the main prompt and construct the final prompt for the AI
+  const vmcPromptTemplate = await getVmcAnalysisPrompt();
+  const prompt = `${vmcPromptTemplate}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(dataToAnalyze, null, 2)}\n\`\`\``;
   
   try {
+    // 4. Call the AI with the constructed prompt
     const rawResponse = await deepseekChat(prompt, {
       apiKey: aiConfig.apiKey,
-      model: "deepseek-coder",
+      model: aiConfig.modelName || "deepseek-coder",
     });
     
-    // Improved JSON extraction logic
+    // 5. Extract the analysis text and the JSON block from the AI's response
     let jsonString = '';
     const jsonBlockMatch = rawResponse.match(/<<<JSON_START>>>([\s\S]*?)<<<JSON_END>>>/);
     
     if (jsonBlockMatch && jsonBlockMatch[1]) {
         jsonString = jsonBlockMatch[1];
     } else {
-        // Fallback: Find the first '{' and the last '}'
         const firstBrace = rawResponse.indexOf('{');
         const lastBrace = rawResponse.lastIndexOf('}');
         if (firstBrace !== -1 && lastBrace > firstBrace) {
@@ -140,13 +110,16 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
         throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
     }
     
+    // Extract the text part before the JSON block
     const analysisTextMatch = rawResponse.match(/(.*?)(?:<<<JSON_START>>>|```json)/s);
     const analysisText = analysisTextMatch ? analysisTextMatch[1].trim() : 'Análisis no proporcionado.';
 
+    // 6. Parse and validate the JSON output
     try {
         const parsedJson = JSON.parse(jsonString);
         const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
         
+        // 7. Combine the analysis text with the validated JSON data
         return {
             ...validatedOutput,
             detailed_analysis: analysisText
