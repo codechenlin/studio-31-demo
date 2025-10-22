@@ -24,5 +24,6 @@ export const VmcAnalysisOutputSchema = z.object({
     svg_is_valid: z.boolean().describe("Determina si el SVG cumple con los requisitos de BIMI.").optional(),
     svg_description: z.string().describe("Análisis detallado de la validez del SVG.").optional(),
     detailed_analysis: z.string().describe("El análisis completo en texto plano para revisión humana.").optional(),
+    validation_score: z.number().describe("Un puntaje de 0 a 100 que representa el porcentaje de autenticidad global.").optional(),
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
