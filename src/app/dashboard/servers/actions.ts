@@ -9,10 +9,7 @@ import {
   verifyOptionalDnsHealth,
   type OptionalDnsHealthInput,
 } from '@/ai/flows/optional-dns-verification-flow';
-import {
-  verifyVmcAuthenticity,
-  type VmcVerificationInput,
-} from '@/ai/flows/vmc-verification-flow';
+import { validateAndAnalyzeDomain, type VmcAnalysisInput } from '@/ai/flows/vmc-deepseek-analysis-flow';
 
 import { z } from 'zod';
 import dns from 'node:dns/promises';
@@ -42,11 +39,11 @@ const optionalDnsActionSchema = z.object({
 });
 
 // This action now uses the more powerful VMC verification flow.
-export async function verifyOptionalDnsAction(input: VmcVerificationInput) {
+export async function verifyOptionalDnsAction(input: VmcAnalysisInput) {
   try {
     const validatedInput = optionalDnsActionSchema.parse(input);
     // Use the new, more powerful VMC authenticity checker
-    const result = await verifyVmcAuthenticity(validatedInput);
+    const result = await validateAndAnalyzeDomain(validatedInput);
     
     // Ensure we always return an object, not null
     if (result === null) {
