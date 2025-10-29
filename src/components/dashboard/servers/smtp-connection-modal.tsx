@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -643,6 +643,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     
+    const mxRecordStatus = optionalRecordStatus.mx;
+
     const propagationWarning = (
         <motion.div 
             initial={{ opacity: 0, y: 10 }}
@@ -652,7 +654,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         >
             <Eye className="size-10 text-amber-400 shrink-0 mt-1" />
             <p>
-                La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si una verificación falla, espera un tiempo antes de volver a intentarlo.
+                La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
             </p>
         </motion.div>
     );
@@ -742,11 +744,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {propagationWarning}
                         </div>
                       ) : (
-                        <>
                           <motion.div
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                              className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
                           >
                               <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
                               <div className="relative z-10 flex flex-col items-center text-center gap-2">
@@ -756,9 +757,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
+                               {propagationWarning}
                           </motion.div>
-                          {propagationWarning}
-                        </>
                       )}
                   </div>
                 )}
@@ -766,7 +766,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   <div className="w-full flex-grow flex flex-col justify-center items-center">
                     {healthCheckStatus === 'verifying' ? (
                        <div className="text-center flex flex-col items-center gap-4">
-                          <div className="relative w-24 h-24">
+                           <div className="relative w-24 h-24">
                               <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
                               <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
                               <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
@@ -777,7 +777,33 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     ) : dnsAnalysis && 'verdict' in dnsAnalysis ? (
                        <div className="w-full space-y-4">
                          <ScoreDisplay score={(dnsAnalysis as VmcAnalysisOutput).validation_score || 0} />
-                         <p className="text-xs text-muted-foreground">Puntaje global de autenticidad de marca.</p>
+                          {mxRecordStatus !== 'idle' && (
+                            <motion.div
+                                initial={{opacity: 0, y: 10}}
+                                animate={{opacity: 1, y: 0}}
+                                className={cn(
+                                    "p-3 rounded-lg border flex items-start gap-3",
+                                    mxRecordStatus === 'verified' ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
+                                )}
+                            >
+                                {mxRecordStatus === 'verified' ? (
+                                    <CheckCircle className="size-6 shrink-0 text-green-400 mt-0.5" />
+                                ) : (
+                                    <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
+                                )}
+                                <div className="text-left text-xs">
+                                    <h5 className={cn("font-bold", mxRecordStatus === 'verified' ? 'text-green-300' : 'text-amber-300')}>
+                                        {mxRecordStatus === 'verified' ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
+                                    </h5>
+                                    <p className={mxRecordStatus === 'verified' ? 'text-green-200/80' : 'text-amber-200/80'}>
+                                        {mxRecordStatus === 'verified'
+                                            ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Mailflow.'
+                                            : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
+                                        }
+                                    </p>
+                                </div>
+                            </motion.div>
+                         )}
                        </div>
                     ) : (
                       <div className="text-center">
@@ -1064,7 +1090,435 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
-// ... (el resto de las funciones como DnsInfoModal, AiAnalysisModal, etc., se mantienen igual, omitidas por brevedad)
+function DnsInfoModal({
+  recordType,
+  domain,
+  isOpen,
+  onOpenChange,
+  onCopy,
+  dkimData,
+  isGeneratingDkim,
+  onRegenerateDkim,
+  acceptedKey,
+  onAcceptKey,
+}: {
+  recordType: InfoViewRecord | null,
+  domain: string,
+  isOpen: boolean,
+  onOpenChange: () => void,
+  onCopy: (text: string) => void,
+  dkimData: DkimGenerationOutput | null,
+  isGeneratingDkim: boolean,
+  onRegenerateDkim: () => void;
+  acceptedKey: string | null;
+  onAcceptKey: (key: string) => void;
+}) {
+    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+    if(!recordType) return null;
+
+    const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
+    
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
+      spf: {
+        title: "Registro SPF",
+        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
+      },
+      dkim: {
+        title: "Registro DKIM",
+        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
+      },
+      dmarc: {
+        title: "Registro DMARC",
+        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
+      },
+       mx: {
+        title: "Registro MX",
+        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Daybuu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+      },
+      bimi: {
+        title: "Registro BIMI",
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+      },
+      vmc: {
+        title: "Certificado VMC",
+        description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+      },
+    }
+
+    const renderSpfContent = () => {
+        const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
+        return (
+            <div className="space-y-4 text-sm">
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+                    <span>@</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                   <p className="font-bold text-white/90">Valor del Registro:</p>
+                   <div className="w-full flex justify-between items-center">
+                     <span className="truncate">{recordValue}</span>
+                     <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                   </div>
+                </div>
+                 <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                    <p>Si ya usas otros servicios de correo (ej. Daybuu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p className="mt-2 font-mono text-white/90">Ejemplo: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
+                </div>
+            </div>
+        );
+    };
+
+    const renderDkimContent = () => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
+            <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+             <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-2">
+              <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+              <div>
+                <p className="font-bold mb-1 text-amber-300">¡Atención!</p>
+                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación DKIM funcione.</p>
+              </div>
+            </div>
+            <div className={cn(baseClass, "flex-col items-start gap-1")}>
+               <div className="font-bold text-white/90 flex justify-between w-full items-center">
+                <span>Clave Aceptada:</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-xs font-semibold", acceptedKey ? "text-green-400" : "text-amber-400")}>
+                    {acceptedKey ? "SÍ" : "NO"}
+                  </span>
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <div className={cn('absolute w-full h-full rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500', 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+                    <div className={cn('w-2 h-2 rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500')} />
+                  </div>
+                </div>
+               </div>
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={() => setConfirmRegenerate(true)} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                  Generar Nueva
+                </Button>
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white">
+                  <CheckCheck className="mr-2"/>
+                  {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
+                </Button>
+            </div>
+        </div>
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 2: Añade el Registro a tu DNS</h4>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración de tu proveedor de dominio.</p>
+            <AnimatePresence>
+            {dkimData ? (
+                <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button></p>
+                    <div className="w-full flex justify-between items-center">
+                    <span>{dkimData.selector}._domainkey</span>
+                    </div>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor del Registro:</p>
+                    <div className="w-full flex justify-between items-start">
+                    <p className="break-all pr-2">{dkimData.publicKeyRecord}</p>
+                    <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.publicKeyRecord)}><Copy className="size-4"/></Button>
+                    </div>
+                </div>
+                </motion.div>
+            ) : (
+                <div className="flex items-center justify-center p-4">
+                    <Loader2 className="animate-spin" />
+                    <p className="ml-2">Generando clave DKIM...</p>
+                </div>
+            )}
+            </AnimatePresence>
+        </div>
+         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <Button 
+                    onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                >
+                    Sí, generar nueva
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+    );
+    
+    const renderDmarcContent = () => {
+        const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:fallas@${domain}; sp=reject; aspf=s; adkim=s`;
+        return (
+             <div className="grid md:grid-cols-3 gap-6 text-sm">
+               <div className="md:col-span-2 space-y-4">
+                 <h4 className="font-semibold text-base mb-2">Paso 1: Añade el Registro a tu DNS</h4>
+                 <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
+                 <div className="space-y-3">
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
+                       <span>_dmarc</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Tipo de Registro:</p>
+                       <span>TXT</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Valor del Registro:</p>
+                       <div className="w-full flex justify-between items-start">
+                       <p className="break-all pr-2">{recordValue}</p>
+                       <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                       </div>
+                   </div>
+                 </div>
+               </div>
+                <div className="md:col-span-1 text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-3">
+                   <h4 className="font-bold text-base text-white/90 mb-2">Paso 2: Entiende las Etiquetas</h4>
+                   <div className="space-y-1">
+                       <p><strong className="text-white/90">v=DMARC1</strong> → Versión.</p>
+                       <p><strong className="text-white/90">p=reject</strong> → Política estricta que rechaza correos fallidos.</p>
+                       <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100%.</p>
+                       <p><strong className="text-white/90">rua=...</strong> → Recibe reportes agregados.</p>
+                       <p><strong className="text-white/90">ruf=...</strong> → Recibe reportes forenses.</p>
+                       <p><strong className="text-white/90">sp=reject</strong> → Política para subdominios.</p>
+                       <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta.</p>
+                       <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta.</p>
+                   </div>
+                </div>
+                 <div className="md:col-span-3 mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <MailQuestion className="size-10 shrink-0 text-amber-400 mt-1" />
+                     <div>
+                         <h5 className="font-bold text-amber-300 mb-1">Paso 3: ¡Importante! Crea los Buzones de Correo</h5>
+                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC. Puedes personalizarlos, pero asegúrate de que existan y estén en tu registro DNS.</p>
+                         <ul className="list-disc pl-4 mt-2 font-mono">
+                             <li>`rua=mailto:<strong className="text-white">reportes@{domain}</strong>`</li>
+                             <li>`ruf=mailto:<strong className="text-white">fallas@{domain}</strong>`</li>
+                         </ul>
+                     </div>
+                 </div>
+           </div>
+       );
+   }
+
+    const renderMxContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+          <span>@</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Prioridad:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('0')}><Copy className="size-4"/></Button></p>
+          <span>0</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor/Destino:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">daybuu.com</span><Button size="icon" variant="ghost" onClick={() => onCopy('daybuu.com')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+    const renderBimiContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg</span><Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+
+    const renderVmcContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="break-all pr-2">v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem</span><Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+
+    const contentMap = {
+        spf: { title: "Registro SPF", content: renderSpfContent() },
+        dkim: { title: "Registro DKIM", content: renderDkimContent() },
+        dmarc: { title: "Registro DMARC", content: renderDmarcContent() },
+        mx: { title: "Registro MX", content: renderMxContent() },
+        bimi: { title: "Registro BIMI", content: renderBimiContent() },
+        vmc: { title: "Certificado VMC", content: renderVmcContent() },
+    };
+
+    const { title, content } = contentMap[recordType];
+    const { title: infoTitle, description: infoDescription } = infoMap[recordType];
+    const isSpecialLayout = recordType === 'dmarc' || recordType === 'dkim';
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isSpecialLayout ? "sm:max-w-4xl" : "sm:max-w-xl")}>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-3 text-lg">
+                        <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
+                        Instrucciones para {title}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    {content}
+                </div>
+                <DialogFooter className="sm:justify-between">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className="flex items-center gap-2 text-cyan-300">
+                                <HelpCircle />
+                                Cómo funciona
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-black/70 border-cyan-400/20 text-white backdrop-blur-md">
+                            <div className="grid gap-4">
+                                <h4 className="font-medium leading-none text-cyan-300">{infoTitle}</h4>
+                                <p className="text-sm text-cyan-100/90">{infoDescription}</p>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                     <Button type="button" variant="outline" onClick={onOpenChange}>
+                       Cerrar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-cyan-400" />
+                        </div>
+                        Diagnóstico Detallado de la IA
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                             <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="size-8 shrink-0 text-amber-400" />
+                    <p className="text-xs text-amber-200/90">
+                        <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
+                    </p>
+                </div>
+                 <ScrollArea className="max-h-[50vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10 pt-4">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
     const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
     
@@ -1189,7 +1643,7 @@ function ScoreDisplay({ score }: { score: number }) {
 
     return (
         <div className="relative w-full p-4 rounded-2xl bg-black/30 border border-cyan-400/20 flex flex-col items-center gap-2 overflow-hidden">
-            <h3 className="font-bold text-base text-center text-cyan-300 z-10">Puntaje de Autenticidad</h3>
+            <h3 className="font-bold text-base text-center text-cyan-300 z-10">Puntaje global de autenticidad de marca.</h3>
             <div className="relative w-32 h-32">
                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
                  <defs>
