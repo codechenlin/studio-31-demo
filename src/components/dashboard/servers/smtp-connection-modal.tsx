@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion, animate } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -450,6 +450,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
+
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -641,6 +643,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     
+    const propagationWarning = (
+        <div className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+            <Eye className="size-10 text-amber-400 shrink-0 mt-1" />
+            <p>
+                La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
+            </p>
+        </div>
+    );
+
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
@@ -723,8 +734,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                             <h4 className="font-bold">Registros Obligatorios</h4>
                             <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
+                            {propagationWarning}
                         </div>
                       ) : (
+                        <>
                           <motion.div
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
@@ -739,6 +752,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
                           </motion.div>
+                          {propagationWarning}
+                        </>
                       )}
                   </div>
                 )}
@@ -1067,7 +1082,6 @@ function DnsInfoModal({
   acceptedKey: string | null;
   onAcceptKey: (key: string) => void;
 }) {
-    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
     if(!recordType) return null;
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
@@ -1155,7 +1169,7 @@ function DnsInfoModal({
                </div>
             </div>
             <div className="flex gap-2">
-                <Button onClick={() => setConfirmRegenerate(true)} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                <Button onClick={() => onRegenerateDkim()} disabled={isGeneratingDkim} className="w-full" variant="outline">
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
@@ -1197,20 +1211,6 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
-        <Dialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>¿Generar Nueva Clave DKIM?</DialogTitle>
-              <DialogDescription>
-                Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmRegenerate(false)}>Cancelar</Button>
-              <Button onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}>Sí, generar nueva</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
     </div>
     );
     
@@ -1627,4 +1627,6 @@ function ScoreDisplay({ score }: { score: number }) {
         </div>
     )
 }
+    
+
     
