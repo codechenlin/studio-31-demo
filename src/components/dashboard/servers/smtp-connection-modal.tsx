@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
-import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
+import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -50,7 +50,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | OptionalDnsHealthOutput | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | VmcAnalysisOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
@@ -208,29 +208,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setShowNotification(false);
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    await Promise.all([
-      verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
-      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
-      verifyDomainOwnershipAction({ domain, name: 'daybuu._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
-    ]);
-    
-    setHealthCheckStatus('verified');
-    
     if (runAiAnalysis) {
       const result = await verifyOptionalDnsAction({ domain });
+      setHealthCheckStatus('verified'); // Mark as done even if AI fails
        if (result.success && result.data) {
         setDnsAnalysis(result.data);
-        // Note: The shape of 'data' is now VmcAnalysisOutput, not OptionalDnsHealthOutput
-        // You might need to adjust logic here if you depend on the old structure.
-        // For now, let's assume we just display the analysis, so no specific status check is needed.
-        setShowNotification(true); // Always show analysis for VMC
+        setOptionalRecordStatus({
+            mx: (result.data as VmcAnalysisOutput).mx_is_valid ? 'verified' : 'failed',
+            bimi: (result.data as VmcAnalysisOutput).bimi_is_valid ? 'verified' : 'failed',
+            vmc: (result.data as VmcAnalysisOutput).vmc_is_authentic ? 'verified' : 'failed',
+        });
+        setShowNotification(true);
       } else {
           toast({
               title: "Análisis Fallido",
               description: result.error || "La IA no pudo procesar los registros opcionales.",
               variant: "destructive",
           })
-          setDnsAnalysis(null); // Ensure it's null on failure
+          setDnsAnalysis(null);
+          setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
       }
     }
   }
@@ -340,8 +336,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const handlePauseProcess = () => {
-    // Here you would save the state to your backend.
-    // For now, we'll just close the modals.
     toast({
         title: "Proceso Pausado",
         description: "Tu progreso ha sido guardado. Tienes 24 horas para continuar.",
@@ -455,8 +449,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           </div>
       )
   }
-
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -647,9 +639,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const renderRightPanelContent = () => {
-    const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
-    const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
-
+    const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
+    
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
@@ -749,36 +740,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                               </div>
                           </motion.div>
                       )}
-                     <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
-                      <Info className="size-5 shrink-0 mt-0.5" />
-                      <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
-                    </div>
                   </div>
                 )}
                  {currentStep === 3 && healthCheckStep === 'optional' && (
-                  <div className="w-full flex-grow flex flex-col justify-center">
-                     {!allOptionalRecordsVerified ? (
-                        <div className="text-center">
-                            <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
-                            <h4 className="font-bold">Registros Opcionales</h4>
-                            <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
-                        </div>
-                      ) : (
-                          <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                          >
-                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                                  </motion.div>
-                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                  <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                              </div>
-                          </motion.div>
-                      )}
+                  <div className="w-full flex-grow flex flex-col justify-center items-center">
+                    {healthCheckStatus === 'verifying' ? (
+                       <div className="text-center flex flex-col items-center gap-4">
+                          <div className="relative w-24 h-24">
+                              <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
+                              <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                              <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
+                          </div>
+                          <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
+                          <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
+                      </div>
+                    ) : dnsAnalysis && 'verdict' in dnsAnalysis ? (
+                       <>
+                         <ScoreDisplay score={(dnsAnalysis as VmcAnalysisOutput).validation_score || 0} />
+                         <p className="text-xs text-muted-foreground mt-2">Puntaje global de autenticidad de marca.</p>
+                       </>
+                    ) : (
+                      <div className="text-center">
+                          <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
+                          <h4 className="font-bold">Registros Opcionales</h4>
+                          <p className="text-sm text-muted-foreground">Analiza tus registros MX, BIMI y VMC para mejorar la reputación y visibilidad de tu marca.</p>
+                      </div>
+                    )}
                   </div>
                 )}
                 {currentStep === 4 && (
@@ -869,10 +856,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white"
-                                    onClick={() => {
-                                        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
-                                        handleCheckOptionalHealth(true)
-                                    }} disabled={healthCheckStatus === 'verifying'}
+                                    onClick={() => handleCheckOptionalHealth(true)} disabled={healthCheckStatus === 'verifying'}
                                 >
                                 {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
@@ -938,8 +922,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (healthCheckStatus === 'verified') {
           if (healthCheckStep === 'mandatory') {
-            const {spfStatus, dkimStatus, dmarcStatus} = (dnsAnalysis as DnsHealthOutput) || {};
-            const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
+            const hasError = dnsAnalysis && 'spfStatus' in dnsAnalysis && (dnsAnalysis.spfStatus !== 'verified' || dnsAnalysis.dkimStatus !== 'verified' || dnsAnalysis.dmarcStatus !== 'verified');
             status = hasError ? 'error' : 'success';
             text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
           } else {
@@ -979,7 +962,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       <ToastProvider>
         <Dialog open={isOpen} onOpenChange={(open) => {
             if (!open) {
-                // If user clicks outside or presses Esc, confirm before closing.
                 setIsCancelConfirmOpen(true);
             }
         }}>
@@ -1029,7 +1011,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         <AiAnalysisModal 
             isOpen={isAnalysisModalOpen}
             onOpenChange={setIsAnalysisModalOpen}
-            analysis={dnsAnalysis?.analysis || null}
+            analysis={(dnsAnalysis as any)?.detailed_analysis || (dnsAnalysis as any)?.analysis || null}
         />
         <SmtpErrorAnalysisModal
             isOpen={isSmtpErrorAnalysisModalOpen}
@@ -1061,9 +1043,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </>
   );
 }
-
-// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
-// The copy of these modals is omitted for brevity but they are part of the file
+// Note: The rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) are assumed to be in the same file or imported correctly.
+// The code for them is lengthy and has been omitted here for brevity as no changes were requested for them.
 function DnsInfoModal({
   recordType,
   domain,
@@ -1511,7 +1492,6 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         >
             <p className="text-sm font-semibold text-center">Línea de Tiempo de Entrega</p>
             <div className="flex items-center gap-2">
-                {/* Step 1: Sent */}
                 <div className="flex flex-col items-center">
                     <motion.div 
                         className={`${iconBaseClass} ${sentIconClass}`}
@@ -1523,7 +1503,6 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
                     <p className={`text-xs mt-1 ${sentTextClass}`}>Enviado</p>
                 </div>
                 
-                {/* Connector */}
                 <div className="flex-1 h-0.5 bg-gray-600 relative overflow-hidden">
                     <motion.div 
                         className="absolute top-0 left-0 h-full bg-green-400"
@@ -1533,7 +1512,6 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
                     />
                 </div>
                 
-                {/* Step 2: Delivered or Bounced */}
                  <div className="flex flex-col items-center">
                     <motion.div 
                       className={cn(iconBaseClass, deliveryStatus === 'bounced' ? bouncedIconClass : deliveredIconClass)}
@@ -1572,20 +1550,16 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
 }
 
 const ScoreDisplay = ({ score }: { score: number }) => {
-    const count = React.useRef(0);
     const [displayScore, setDisplayScore] = React.useState(0);
     
-    React.useEffect(() => {
-        const controls = motion.animate(count.current, score, {
-            duration: 1.5,
-            ease: "circOut",
-            onUpdate(value) {
-                setDisplayScore(Math.round(value));
-            }
-        });
-        return () => controls.stop();
+    useEffect(() => {
+      const controls = motion.animate(0, score, {
+        duration: 1.5,
+        ease: "circOut",
+        onUpdate: value => setDisplayScore(Math.round(value)),
+      });
+      return () => controls.stop();
     }, [score]);
-
 
     const circumference = 2 * Math.PI * 45;
 

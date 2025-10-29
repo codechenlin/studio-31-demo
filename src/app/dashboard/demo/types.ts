@@ -14,7 +14,7 @@ export const VmcAnalysisOutputSchema = z.object({
     bimi_is_valid: z.boolean().describe("Determina si el registro BIMI es válido."),
     bimi_description: z.string().describe("Análisis técnico detallado de por qué el registro BIMI se considera válido o falso."),
     vmc_is_authentic: z.boolean().describe("Determina si el certificado VMC es auténtico (refleja si vmc_status es VALID)."),
-    vmc_description: z.string().describe("Lista de viñetas con evidencia técnica concreta que justifica el veredicto del VMC."),
+    vmc_description: z.string().describe("Lista de viñetas separadas por '; ' con evidencia técnica concreta que justifica el veredicto del VMC."),
     dmarc_policy: z.enum(["reject", "quarantine", "none", "unknown"]).describe("Política DMARC encontrada."),
     openssl_verify_ok: z.boolean().describe("Resultado de 'verify.ok' del método OpenSSL."),
     ocsp_status: z.enum(["GOOD", "REVOKED", "UNKNOWN", "NOT_CHECKED"]).describe("Estado de la verificación OCSP."),
@@ -25,5 +25,6 @@ export const VmcAnalysisOutputSchema = z.object({
     svg_description: z.string().describe("Análisis detallado de la validez del SVG.").optional(),
     detailed_analysis: z.string().describe("El análisis completo en texto plano para revisión humana.").optional(),
     validation_score: z.number().describe("Un puntaje de 0 a 100 que representa el porcentaje de autenticidad global.").optional(),
+    mx_is_valid: z.boolean().describe("Determina si el registro MX es válido.").optional(),
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
