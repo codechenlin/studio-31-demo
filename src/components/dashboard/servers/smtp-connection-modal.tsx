@@ -223,9 +223,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             setShowNotification(true);
         }
       } else {
-          console.error("Optional DNS Analysis Error:", result.error);
-          setDnsAnalysis(null);
+          // This block now handles the case where the API call itself fails,
+          // or returns a `success: false` payload.
+          // We set a minimal dnsAnalysis object to ensure the UI renders the score and MX status.
+          setDnsAnalysis({ validation_score: 0 } as VmcAnalysisOutput);
           setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
+          console.error("Optional DNS Analysis Error:", result.error);
       }
     }
   }
@@ -449,8 +452,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
-
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -645,30 +646,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const mxRecordStatus = optionalRecordStatus.mx;
 
     const propagationWarning = (
-        <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3"
-        >
-            <Eye className="size-10 shrink-0 text-amber-400 mt-1" />
-            <p>
-                La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
-            </p>
-        </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3"
+      >
+        <Eye className="size-10 shrink-0 text-amber-400 mt-1" />
+        <p>
+            La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
+        </p>
+      </motion.div>
     );
     
-     const propagationSuccessWarning = (
-        <motion.div 
+    const propagationSuccessMessage = (
+        <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3"
         >
             <Globe className="size-6 shrink-0 text-cyan-400 mt-1" />
-            <p>
-                La propagación se ha completado correctamente.
-            </p>
+            <p>La propagación se ha completado correctamente.</p>
         </motion.div>
     );
 
@@ -770,7 +769,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                               {propagationSuccessWarning}
+                               {propagationSuccessMessage}
                           </motion.div>
                       )}
                   </div>
@@ -787,44 +786,29 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
                           <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
                       </div>
-                    ) : allOptionalRecordsVerified ? (
-                        <motion.div
-                            initial={{opacity: 0, scale: 0.8}}
-                            animate={{opacity: 1, scale: 1}}
-                            className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                        >
-                            <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                            <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                    <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                                </motion.div>
-                                <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                            </div>
-                        </motion.div>
                     ) : (
                        <div className="w-full space-y-4">
-                        {dnsAnalysis && 'validation_score' in dnsAnalysis && <ScoreDisplay score={dnsAnalysis.validation_score || 0} />}
-                        {mxRecordStatus !== 'idle' && (
+                        {(dnsAnalysis || healthCheckStatus === 'failed') && 'validation_score' in (dnsAnalysis || {}) && <ScoreDisplay score={dnsAnalysis.validation_score || 0} />}
+                        {(dnsAnalysis || healthCheckStatus === 'failed') && (
                             <motion.div
                                 initial={{opacity: 0, y: 10}}
                                 animate={{opacity: 1, y: 0}}
                                 className={cn(
                                     "p-3 rounded-lg border flex items-start gap-3",
-                                    mxRecordStatus === 'verified' ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
+                                    optionalRecordStatus.mx === 'verified' ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
                                 )}
                             >
-                                {mxRecordStatus === 'verified' ? (
+                                {optionalRecordStatus.mx === 'verified' ? (
                                     <CheckCircle className="size-6 shrink-0 text-green-400 mt-0.5" />
                                 ) : (
                                     <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
                                 )}
                                 <div className="text-left text-xs">
-                                    <h5 className={cn("font-bold", mxRecordStatus === 'verified' ? 'text-green-300' : 'text-amber-300')}>
-                                        {mxRecordStatus === 'verified' ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
+                                    <h5 className={cn("font-bold", optionalRecordStatus.mx === 'verified' ? 'text-green-300' : 'text-amber-300')}>
+                                        {optionalRecordStatus.mx === 'verified' ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
                                     </h5>
-                                    <p className={mxRecordStatus === 'verified' ? 'text-green-200/80' : 'text-amber-200/80'}>
-                                        {mxRecordStatus === 'verified'
+                                    <p className={optionalRecordStatus.mx === 'verified' ? 'text-green-200/80' : 'text-amber-200/80'}>
+                                        {optionalRecordStatus.mx === 'verified'
                                             ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Daybuu.'
                                             : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
                                         }
@@ -940,7 +924,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          {healthCheckStatus === 'verified' && allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
                               setHealthCheckStep('optional');
-                              setHealthCheckStatus('idle'); // Reset status for next step
+                              setHealthCheckStatus('idle');
                               setDnsAnalysis(null);
                               setShowNotification(false);
                             }}>
@@ -1709,3 +1693,5 @@ function ScoreDisplay({ score }: { score: number }) {
 }
     
 
+
+    
