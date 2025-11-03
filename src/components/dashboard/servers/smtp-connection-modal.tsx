@@ -579,6 +579,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
+                            <div className="pt-2 text-xs text-muted-foreground">
+                                <p><strong className="text-foreground">Como trabajan juntos:</strong></p>
+                                <p><strong className="text-foreground">SPF 📤:</strong> ¿Quién puede enviar?</p>
+                                <p><strong className="text-foreground">DKIM ✍️:</strong> ¿El correo fue alterado?</p>
+                                <p><strong className="text-foreground">DMARC 🛡️:</strong> ¿Qué hacer si falla SPF/DKIM?</p>
+                            </div>
                           </>
                           ) : (
                           <>
@@ -1284,7 +1290,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1708,3 +1714,4 @@ function ScoreDisplay({ score }: { score: number }) {
     )
 }
     
+
