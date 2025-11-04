@@ -224,6 +224,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else {
       setDnsAnalysis(null);
       setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
+      // No mostrar toast de error aquí, la UI lo manejará mostrando el estado fallido.
       console.error("Optional DNS Analysis Error:", result.error);
     }
     setHealthCheckStatus('verified');
@@ -514,7 +515,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[650px]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[700px]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -578,7 +579,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                            <div className="pt-2 text-xs text-muted-foreground">
+                             <div className="pt-2 text-xs text-muted-foreground">
                                 <p><strong>Como trabajan juntos:</strong></p>
                                 <p><strong>SPF 📤:</strong> ¿Quién puede enviar?</p>
                                 <p><strong>DKIM ✍️:</strong> ¿El correo fue alterado?</p>
@@ -594,7 +595,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              <div className="pt-2 text-xs text-muted-foreground">
                                 <p><strong>Como trabajan juntos:</strong></p>
                                 <p><strong>MX 📬:</strong> ¿Dónde se entregan mis correos?</p>
-                                <p><strong>BIMI 🎨:</strong> ¿Qué logo representa mi marca?</p>
+                                <p><strong>BIMI 🎨:</strong> ¿Que logo representa mi marca?</p>
                                 <p><strong>VMC ✅:</strong> ¿Qué certifica que el logo registrado me pertenece?</p>
                             </div>
                           </>
@@ -782,7 +783,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       )}
                   </div>
                 )}
-                 {currentStep === 3 && healthCheckStep === 'optional' && (
+                {currentStep === 3 && healthCheckStep === 'optional' && (
                   <div className="w-full flex-grow flex flex-col justify-center items-center">
                     {healthCheckStatus === 'verifying' ? (
                        <div className="text-center flex flex-col items-center gap-4">
@@ -796,7 +797,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </div>
                     ) : (
                        <div className="w-full space-y-4">
-                        {allOptionalRecordsVerified ? (
+                        {(healthCheckStatus === 'verified' && dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) ? (
+                            <ScoreDisplay score={dnsAnalysis.validation_score} />
+                        ) : (healthCheckStatus === 'verified' && !dnsAnalysis) ? (
+                            <ScoreDisplay score={0} />
+                        ) : null }
+
+                        {allOptionalRecordsVerified && healthCheckStatus === 'verified' ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -811,38 +818,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
                                 </div>
                             </motion.div>
-                        ) : (
-                          <>
-                            {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined && <ScoreDisplay score={dnsAnalysis.validation_score} />}
-                            {dnsAnalysis && 'mx_is_valid' in dnsAnalysis && mxRecordStatus !== undefined && !allOptionalRecordsVerified && (
-                                <motion.div
-                                    initial={{opacity: 0, y: 10}}
-                                    animate={{opacity: 1, y: 0}}
-                                    className={cn(
-                                        "p-3 rounded-lg border flex items-start gap-3",
-                                        mxRecordStatus ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
-                                    )}
-                                >
-                                    {mxRecordStatus ? (
-                                        <CheckCircle className="size-6 shrink-0 text-green-400 mt-0.5" />
-                                    ) : (
-                                        <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
-                                    )}
-                                    <div className="text-left text-xs">
-                                        <h5 className={cn("font-bold", mxRecordStatus ? 'text-green-300' : 'text-amber-300')}>
-                                            {mxRecordStatus ? 'Registro MX Verificado' : 'Registro MX no Encontrado o Incorrecto'}
-                                        </h5>
-                                        <p className={mxRecordStatus ? 'text-green-200/80' : 'text-amber-200/80'}>
-                                            {mxRecordStatus
-                                                ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Daybuu.'
-                                                : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
-                                            }
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            )}
-                          </>
-                        )}
+                        ) : healthCheckStatus === 'verified' && 'mx_is_valid' in (dnsAnalysis || {}) && (dnsAnalysis as VmcAnalysisOutput).mx_is_valid === false ? (
+                           <motion.div
+                                initial={{opacity: 0, y: 10}}
+                                animate={{opacity: 1, y: 0}}
+                                className="p-3 rounded-lg border flex items-start gap-3 bg-amber-900/40 border-amber-400/50"
+                            >
+                                <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
+                                <div className="text-left text-xs">
+                                    <h5 className="font-bold text-amber-300">Registro MX no Encontrado o Incorrecto</h5>
+                                    <p className="text-amber-200/80">No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.</p>
+                                </div>
+                            </motion.div>
+                        ) : null}
+
                         {!dnsAnalysis && healthCheckStatus !== 'verifying' && (
                             <div className="text-center">
                                 <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
@@ -1130,8 +1119,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
-// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
-// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1297,7 +1284,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1561,165 +1548,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
-function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
-    const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
     
-    const sentIconClass = "border-green-400 bg-green-500/20 text-green-300";
-    const deliveredIconClass = deliveryStatus === 'delivered' ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500";
-    const bouncedIconClass = "border-red-500 bg-red-500/20 text-red-400";
-    
-    const sentTextClass = "text-green-300";
-    const deliveredTextClass = deliveryStatus === 'delivered' ? "text-green-300" : "text-gray-500";
-    const bouncedTextClass = "text-red-400";
-
-    const connectorAnimation = deliveryStatus === 'bounced' ? { width: '50%' } : { width: '100%' };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 space-y-3 text-left"
-        >
-            <p className="text-sm font-semibold text-center">Línea de Tiempo de Entrega</p>
-            <div className="flex items-center gap-2">
-                <div className="flex flex-col items-center">
-                    <motion.div 
-                        className={`${iconBaseClass} ${sentIconClass}`}
-                        animate={{ boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                        <Send size={16} />
-                    </motion.div>
-                    <p className={`text-xs mt-1 ${sentTextClass}`}>Enviado</p>
-                </div>
-                
-                <div className="flex-1 h-0.5 bg-gray-600 relative overflow-hidden">
-                    <motion.div 
-                        className="absolute top-0 left-0 h-full bg-green-400"
-                        initial={{ width: '0%' }}
-                        animate={connectorAnimation}
-                        transition={{ delay: 0.5, duration: 1 }}
-                    />
-                </div>
-                
-                 <div className="flex flex-col items-center">
-                    <motion.div 
-                      className={cn(iconBaseClass, deliveryStatus === 'bounced' ? bouncedIconClass : deliveredIconClass)}
-                      initial={{ scale: 0 }}
-                      animate={{ 
-                        scale: 1, 
-                        borderColor: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#ef4444' : '#22c55e') : '#6b7280',
-                        color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280',
-                        boxShadow: deliveryStatus !== 'sent' ? ['0 0 0px', `0 0 15px ${deliveryStatus === 'bounced' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(52, 211, 153, 0.5)'}`, '0 0 0px'] : 'none'
-                      }}
-                      transition={{ scale: { delay: 1.5, duration: 0.5, ease: 'backOut' }, boxShadow: { delay: 1.5, duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
-                    >
-                        {deliveryStatus === 'bounced' ? <X size={16} /> : <MailCheck size={16} />}
-                    </motion.div>
-                     <motion.p 
-                      className={cn("text-xs mt-1", deliveryStatus === 'bounced' ? bouncedTextClass : deliveredTextClass)}
-                      initial={{ color: 'hsl(var(--muted-foreground))' }}
-                      animate={{ color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280' }}
-                      transition={{ delay: 1.5 }}
-                     >
-                        {deliveryStatus === 'bounced' ? 'Rebotado' : 'Entregado'}
-                    </motion.p>
-                </div>
-            </div>
-             <motion.p 
-                className={cn("text-xs text-center pt-2", deliveryStatus === 'delivered' ? 'text-green-300/80' : 'text-red-300/80')}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2 }}
-             >
-                {deliveryStatus === 'delivered' && '¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.'}
-                {deliveryStatus === 'bounced' && '¡Fallo en la entrega! El correo fue rebotado.'}
-            </motion.p>
-        </motion.div>
-    );
-}
-
-function ScoreDisplay({ score }: { score: number }) {
-    const [displayScore, setDisplayScore] = React.useState(0);
-    
-    useEffect(() => {
-      const controls = animate(0, score, {
-        duration: 1.5,
-        ease: "circOut",
-        onUpdate: value => setDisplayScore(Math.round(value)),
-      });
-      return () => controls.stop();
-    }, [score]);
-
-    const circumference = 2 * Math.PI * 45;
-
-    const getScoreColor = () => {
-        if (score >= 90) return 'text-green-400';
-        if (score >= 70) return 'text-yellow-400';
-        if (score >= 50) return 'text-orange-400';
-        return 'text-red-400';
-    };
-
-    const getScoreBg = () => {
-        if (score >= 90) return 'url(#gradient-green)';
-        if (score >= 70) return 'url(#gradient-yellow)';
-        if (score >= 50) return 'url(#gradient-orange)';
-        return 'url(#gradient-red)';
-    }
-    
-    const getScoreShadow = () => {
-        if (score >= 90) return `drop-shadow(0 0 10px #22c55e)`;
-        if (score >= 70) return `drop-shadow(0 0 10px #facc15)`;
-        if (score >= 50) return `drop-shadow(0 0 10px #f97316)`;
-        return `drop-shadow(0 0 10px #ef4444)`;
-    }
-    
-    const getConfidenceLevel = () => {
-        if (score >= 90) return { text: "Excelente", color: "text-green-300" };
-        if (score >= 70) return { text: "Alto", color: "text-yellow-300" };
-        if (score >= 50) return { text: "Medio", color: "text-orange-300" };
-        return { text: "Bajo", color: "text-red-300" };
-    };
-
-    const confidence = getConfidenceLevel();
-
-    return (
-        <div className="relative w-full p-4 rounded-2xl bg-black/30 border border-cyan-400/20 flex flex-col items-center gap-2 overflow-hidden">
-            <h3 className="font-bold text-base text-center text-cyan-300 z-10">Puntaje global de autenticidad de marca.</h3>
-            <div className="relative w-32 h-32">
-               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                 <defs>
-                  <linearGradient id="gradient-green" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#4ade80"/><stop offset="100%" stopColor="#16a34a"/></linearGradient>
-                  <linearGradient id="gradient-yellow" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#fde047"/><stop offset="100%" stopColor="#facc15"/></linearGradient>
-                  <linearGradient id="gradient-orange" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#fb923c"/><stop offset="100%" stopColor="#f97316"/></linearGradient>
-                  <linearGradient id="gradient-red" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#f87171"/><stop offset="100%" stopColor="#ef4444"/></linearGradient>
-                </defs>
-                <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="transparent" />
-                <motion.circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    stroke={getScoreBg()}
-                    strokeWidth="4"
-                    fill="transparent"
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    initial={{ strokeDashoffset: circumference }}
-                    animate={{ strokeDashoffset: circumference - (score / 100) * circumference }}
-                    transition={{ duration: 1.5, ease: "circOut" }}
-                    transform="rotate(-90 50 50)"
-                />
-               </svg>
-               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                 <p className={cn("text-4xl font-bold", getScoreColor())} style={{ filter: getScoreShadow() }}>
-                    {displayScore}
-                </p>
-                <p className={cn("text-xs font-semibold tracking-wider uppercase", confidence.color)}>{confidence.text}</p>
-               </div>
-            </div>
-        </div>
-    )
-}
-    
-
-
