@@ -516,7 +516,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[95vh]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[96vh]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -581,10 +581,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
-                                <p><strong>Como trabajan juntos:</strong></p>
-                                <p><strong>SPF 📤:</strong> Quién puede enviar?</p>
-                                <p><strong>DKIM ✍️:</strong> El correo fue alterado?</p>
-                                <p><strong>DMARC 🛡️:</strong> Qué hacer si falla SPF/DKIM?</p>
+                                <b>Como trabajan juntos:</b><br/>
+                                <b>SPF 📤:</b> Quién puede enviar?<br/>
+                                <b>DKIM ✍️:</b> El correo fue alterado?<br/>
+                                <b>DMARC 🛡️:</b> Qué hacer si falla SPF/DKIM?
                             </div>
                           </>
                           ) : (
@@ -594,10 +594,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
-                                <p><strong>Como trabajan juntos:</strong></p>
-                                <p><strong>MX 📬:</strong> Dónde se entregan mis correos?</p>
-                                <p><strong>BIMI 🎨:</strong> Que logo representa mi marca?</p>
-                                <p><strong>VMC ✅:</strong> Qué certifica que el logo registrado me pertenece?</p>
+                                <b>Como trabajan juntos:</b><br/>
+                                <b>MX 📬:</b> Dónde se entregan mis correos?<br/>
+                                <b>BIMI 🎨:</b> Que logo representa mi marca?<br/>
+                                <b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?
                             </div>
                           </>
                           )}
@@ -653,7 +653,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
-    const mxRecordStatus = dnsAnalysis && 'mx_is_valid' in dnsAnalysis ? (dnsAnalysis as VmcAnalysisOutput).mx_is_valid : undefined;
 
     const propagationWarning = (
       <motion.div
@@ -802,7 +801,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <ScoreDisplay score={dnsAnalysis.validation_score} />
                         )}
                         
-                        {allOptionalRecordsVerified && healthCheckStatus === 'verified' ? (
+                        {allOptionalRecordsVerified && healthCheckStatus === 'verified' && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -817,25 +816,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
                                 </div>
                             </motion.div>
-                        ) : healthCheckStatus === 'verified' && mxRecordStatus === false ? (
-                           <motion.div
-                                initial={{opacity: 0, y: 10}}
-                                animate={{opacity: 1, y: 0}}
-                                className="p-3 rounded-lg border flex items-start gap-3 bg-amber-900/40 border-amber-400/50"
-                            >
-                                <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
-                                <div className="text-left text-xs">
-                                    <h5 className="font-bold text-amber-300">Registro MX no Encontrado o Incorrecto</h5>
-                                    <p className="text-amber-200/80">No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.</p>
-                                </div>
-                            </motion.div>
-                        ) : (
-                          <div className="text-center">
+                        )}
+
+                        {!allOptionalRecordsVerified && healthCheckStatus === 'verified' && (
+                            <div className="text-center">
                               <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
                               <h4 className="font-bold">Registros Opcionales</h4>
                               <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
-                              {propagationWarning}
-                          </div>
+                               {propagationWarning}
+                            </div>
                         )}
                        </div>
                     )}
@@ -1171,7 +1160,7 @@ function DnsInfoModal({
       vmc: {
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
-      }
+      },
     }
 
     const renderSpfContent = () => {
@@ -1284,7 +1273,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:opacity-90"
+                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1598,5 +1587,7 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
 }
 
 
+
+    
 
     
