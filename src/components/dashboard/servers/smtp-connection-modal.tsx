@@ -670,18 +670,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       </motion.div>
     );
     
-    const propagationSuccessMessage = (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3"
-        >
-            <Globe className="size-6 shrink-0 text-cyan-400 mt-1" />
-            <p>La propagación se ha completado correctamente.</p>
-        </motion.div>
-    );
-
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
@@ -810,32 +798,51 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         )}
                         {healthCheckStatus === 'verified' && (
                            <div className="w-full space-y-4">
-                            {(dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) && (
-                                <ScoreDisplay score={dnsAnalysis.validation_score} />
-                            )}
-                            
-                            {allOptionalRecordsVerified && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                                >
-                                    <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                                    <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                        <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                            <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined ? (
+                                    <ScoreDisplay score={dnsAnalysis.validation_score} />
+                                ) : null}
+                                
+                                {allOptionalRecordsVerified ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                                    >
+                                        <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                                        <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                            <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                                <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                            </motion.div>
+                                            <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                            <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    dnsAnalysis && 'mx_is_valid' in dnsAnalysis && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="mt-4 p-3 rounded-lg border text-xs flex items-start gap-3"
+                                            style={{
+                                                background: dnsAnalysis.mx_is_valid
+                                                    ? 'linear-gradient(to right, rgba(0, 203, 7, 0.1), transparent)'
+                                                    : 'linear-gradient(to right, rgba(240, 0, 0, 0.1), transparent)',
+                                                borderColor: dnsAnalysis.mx_is_valid
+                                                    ? 'rgba(0, 203, 7, 0.3)'
+                                                    : 'rgba(240, 0, 0, 0.3)',
+                                            }}
+                                        >
+                                            <MailCheck
+                                                className={cn("size-8 shrink-0 mt-1", dnsAnalysis.mx_is_valid ? "text-green-400" : "text-red-400")}
+                                            />
+                                            <p className={cn(dnsAnalysis.mx_is_valid ? "text-green-200/90" : "text-red-200/90")}>
+                                                {dnsAnalysis.mx_is_valid
+                                                    ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
+                                                    : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
+                                            </p>
                                         </motion.div>
-                                        <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                        <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {!allOptionalRecordsVerified && (
-                                <div className="text-center">
-                                    {propagationWarning}
-                                </div>
-                            )}
+                                    )
+                                )}
                            </div>
                         )}
                     </div>
@@ -1603,3 +1610,4 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
     
 
     
+
