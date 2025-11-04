@@ -1161,13 +1161,13 @@ function DnsInfoModal({
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
       },
-    }
+    };
 
     const renderSpfContent = () => {
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración DNS de tu dominio con tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
@@ -1223,7 +1223,7 @@ function DnsInfoModal({
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
-                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white">
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white">
                   <CheckCheck className="mr-2"/>
                   {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
                 </Button>
@@ -1231,7 +1231,7 @@ function DnsInfoModal({
         </div>
         <div className="space-y-4">
            <h4 className="font-semibold text-base mb-2">Paso 2: Añade el Registro a tu DNS</h4>
-            <p>Una vez aceptada, copia y pega estos valores en la configuración de tu proveedor de dominio.</p>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración DNS de tu proveedor de dominio.</p>
             <AnimatePresence>
             {dkimData ? (
                 <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
@@ -1270,10 +1270,10 @@ function DnsInfoModal({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel className="hover:bg-[#F00000] hover:text-white">Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
+                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1587,6 +1587,8 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
 }
 
 
+
+    
 
     
 
