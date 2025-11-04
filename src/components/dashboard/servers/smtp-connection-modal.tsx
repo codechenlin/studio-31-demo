@@ -202,33 +202,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   }
 
-  const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
+  const handleCheckOptionalHealth = async () => {
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
     setShowNotification(false);
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    if (runAiAnalysis) {
-      const result = await verifyOptionalDnsAction({ domain });
-      setHealthCheckStatus('verified');
-      if (result.success && result.data) {
-        const typedData = result.data as VmcAnalysisOutput;
-        setDnsAnalysis(typedData);
-        setOptionalRecordStatus({
-            mx: typedData.mx_is_valid ? 'verified' : 'failed',
-            bimi: typedData.bimi_is_valid ? 'verified' : 'failed',
-            vmc: typedData.vmc_is_authentic ? 'verified' : 'failed',
-        });
-        if (!typedData.mx_is_valid || !typedData.bimi_is_valid || !typedData.vmc_is_authentic) {
-            setShowNotification(true);
-        }
-      } else {
-          setDnsAnalysis({ validation_score: 0, mx_is_valid: false } as Partial<VmcAnalysisOutput> as VmcAnalysisOutput);
-          setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
-          console.error("Optional DNS Analysis Error:", result.error);
+    const result = await verifyOptionalDnsAction({ domain });
+
+    if (result.success && result.data) {
+      const typedData = result.data as VmcAnalysisOutput;
+      setDnsAnalysis(typedData);
+      setOptionalRecordStatus({
+        mx: typedData.mx_is_valid ? 'verified' : 'failed',
+        bimi: typedData.bimi_is_valid ? 'verified' : 'failed',
+        vmc: typedData.vmc_is_authentic ? 'verified' : 'failed',
+      });
+      if (!typedData.mx_is_valid || !typedData.bimi_is_valid || !typedData.vmc_is_authentic) {
+        setShowNotification(true);
       }
+    } else {
+      setDnsAnalysis(null);
+      setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
+      console.error("Optional DNS Analysis Error:", result.error);
     }
-  }
+    setHealthCheckStatus('verified');
+  };
 
   const handleGenerateDkim = async () => {
     if (!domain) return;
@@ -580,10 +579,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
-                                <p><strong className="text-foreground">Como trabajan juntos:</strong></p>
-                                <p><strong className="text-foreground">SPF 📤:</strong> ¿Quién puede enviar?</p>
-                                <p><strong className="text-foreground">DKIM ✍️:</strong> ¿El correo fue alterado?</p>
-                                <p><strong className="text-foreground">DMARC 🛡️:</strong> ¿Qué hacer si falla SPF/DKIM?</p>
+                                <p><strong>Como trabajan juntos:</strong></p>
+                                <p><strong>SPF 📤:</strong> ¿Quién puede enviar?</p>
+                                <p><strong>DKIM ✍️:</strong> ¿El correo fue alterado?</p>
+                                <p><strong>DMARC 🛡️:</strong> ¿Qué hacer si falla SPF/DKIM?</p>
                             </div>
                           </>
                           ) : (
@@ -592,6 +591,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
+                             <div className="pt-2 text-xs text-muted-foreground">
+                                <p><strong>Como trabajan juntos:</strong></p>
+                                <p><strong>MX 📬:</strong> ¿Dónde se entregan mis correos?</p>
+                                <p><strong>BIMI 🎨:</strong> ¿Qué logo representa mi marca?</p>
+                                <p><strong>VMC ✅:</strong> ¿Qué certifica que el logo registrado me pertenece?</p>
+                            </div>
                           </>
                           )}
                            
@@ -645,7 +650,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
-    const allOptionalRecordsVerified = dnsAnalysis && 'mx_is_valid' in dnsAnalysis && dnsAnalysis.mx_is_valid && dnsAnalysis.bimi_is_valid && dnsAnalysis.vmc_is_authentic;
+    const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
     const mxRecordStatus = (dnsAnalysis as VmcAnalysisOutput)?.mx_is_valid;
     
     const propagationWarning = (
@@ -792,24 +797,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     ) : (
                        <div className="w-full space-y-4">
                         {allOptionalRecordsVerified ? (
-                          <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                          >
-                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                                  </motion.div>
-                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                  <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                              </div>
-                          </motion.div>
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden space-y-3"
+                            >
+                                <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                                <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                    <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                        <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                    </motion.div>
+                                    <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                    <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                                </div>
+                            </motion.div>
                         ) : (
                           <>
-                            {dnsAnalysis && 'validation_score' in dnsAnalysis && <ScoreDisplay score={dnsAnalysis.validation_score || 0} />}
-                            {dnsAnalysis && mxRecordStatus !== undefined && (
+                            {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined && <ScoreDisplay score={dnsAnalysis.validation_score} />}
+                            {dnsAnalysis && 'mx_is_valid' in dnsAnalysis && mxRecordStatus !== undefined && !allOptionalRecordsVerified && (
                                 <motion.div
                                     initial={{opacity: 0, y: 10}}
                                     animate={{opacity: 1, y: 0}}
@@ -825,7 +830,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     )}
                                     <div className="text-left text-xs">
                                         <h5 className={cn("font-bold", mxRecordStatus ? 'text-green-300' : 'text-amber-300')}>
-                                            {mxRecordStatus ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
+                                            {mxRecordStatus ? 'Registro MX Verificado' : 'Registro MX no Encontrado o Incorrecto'}
                                         </h5>
                                         <p className={mxRecordStatus ? 'text-green-200/80' : 'text-amber-200/80'}>
                                             {mxRecordStatus
@@ -937,7 +942,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white"
-                                    onClick={() => handleCheckOptionalHealth(true)} disabled={healthCheckStatus === 'verifying'}
+                                    onClick={() => handleCheckOptionalHealth()} disabled={healthCheckStatus === 'verifying'}
                                 >
                                 {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
@@ -946,7 +951,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          {healthCheckStatus === 'verified' && allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
                               setHealthCheckStep('optional');
-                              setHealthCheckStatus('idle');
+                              setHealthCheckStatus('idle'); // Reset status for next step
                               setDnsAnalysis(null);
                               setShowNotification(false);
                             }}>
@@ -1125,6 +1130,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1283,14 +1290,14 @@ function DnsInfoModal({
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                  Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1714,4 +1721,5 @@ function ScoreDisplay({ score }: { score: number }) {
     )
 }
     
+
 

@@ -81,18 +81,25 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   // 2. Prepare the data to be sent to the AI (either success data or error data)
   const dataToAnalyze = validationResponse.success ? validationResponse.data : validationResponse.data;
   
-  // 3. Get the main prompt and construct the final prompt for the AI
+  // 3. Perform our own MX record check
+  const mxPointsToDaybuu = validationResponse.success &&
+      Array.isArray(dataToAnalyze.mx?.records) &&
+      dataToAnalyze.mx.records.some((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
+      
+  dataToAnalyze.mx_points_to_daybuu = mxPointsToDaybuu;
+
+  // 4. Get the main prompt and construct the final prompt for the AI
   const vmcPromptTemplate = await getVmcAnalysisPrompt();
   const prompt = `${vmcPromptTemplate}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(dataToAnalyze, null, 2)}\n\`\`\``;
   
   try {
-    // 4. Call the AI with the constructed prompt
+    // 5. Call the AI with the constructed prompt
     const rawResponse = await deepseekChat(prompt, {
       apiKey: aiConfig.apiKey,
       model: aiConfig.modelName || "deepseek-coder",
     });
     
-    // 5. Extract the analysis text and the JSON block from the AI's response
+    // 6. Extract the analysis text and the JSON block from the AI's response
     let jsonString = '';
     const jsonBlockMatch = rawResponse.match(/<<<JSON_START>>>([\s\S]*?)<<<JSON_END>>>/);
     
@@ -114,12 +121,12 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     const analysisTextMatch = rawResponse.match(/(.*?)(?:<<<JSON_START>>>|```json)/s);
     const analysisText = analysisTextMatch ? analysisTextMatch[1].trim() : 'Análisis no proporcionado.';
 
-    // 6. Parse and validate the JSON output
+    // 7. Parse and validate the JSON output
     try {
         const parsedJson = JSON.parse(jsonString);
         const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
         
-        // 7. Combine the analysis text with the validated JSON data
+        // 8. Combine the analysis text with the validated JSON data
         return {
             ...validatedOutput,
             detailed_analysis: analysisText
