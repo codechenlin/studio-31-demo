@@ -14,7 +14,7 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction,  } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAI } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -22,7 +22,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
-import { validateDomainWithAI } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -30,6 +29,7 @@ import { PauseVerificationModal } from './pause-verification-modal';
 import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
+
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -596,10 +596,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
-                                <p><b>Como trabajan juntos:</b></p>
-                                <p><b>MX 📬:</b> Dónde se entregan mis correos?</p>
-                                <p><b>BIMI 🎨:</b> Que logo representa mi marca?</p>
-                                <p><b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?</p>
+                                 <p><b>Como trabajan juntos:</b></p>
+                                 <p><b>MX 📬:</b> Dónde se entregan mis correos?</p>
+                                 <p><b>BIMI 🎨:</b> Que logo representa mi marca?</p>
+                                 <p><b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?</p>
                             </div>
                           </>
                           )}
@@ -654,8 +654,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
-    const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
-
+    
     const propagationWarning = (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -768,7 +767,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                              
+                              {propagationWarning}
                           </motion.div>
                       )}
                   </div>
@@ -776,14 +775,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                  {currentStep === 3 && healthCheckStep === 'optional' && (
                     <div className="w-full flex-grow flex flex-col justify-center items-center">
                         {healthCheckStatus === 'idle' && (
-                            <div className="text-center">
-                                <div className="flex justify-center mb-4 relative">
+                           <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center flex flex-col items-center gap-4"
+                            >
+                                <div className="flex justify-center mb-2 relative">
                                     <div className="absolute inset-0 -m-4 bg-gradient-to-tr from-primary/10 via-accent/10 to-primary/10 rounded-full blur-xl" />
                                     <Layers2 className="size-20 text-primary/80 relative" />
                                 </div>
                                 <h4 className="font-bold text-xl">Registros Opcionales</h4>
-                                <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">Verifica tus registros MX, BIMI y VMC para mejorar la reputación, entregabilidad y visibilidad de tu marca en los buzones de entrada.</p>
-                            </div>
+                                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                    Verifica tus registros MX, BIMI y VMC para mejorar la reputación, entregabilidad y visibilidad de tu marca.
+                                </p>
+                            </motion.div>
                         )}
                         {healthCheckStatus === 'verifying' && (
                             <div className="text-center flex flex-col items-center gap-4">
@@ -801,47 +806,29 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined ? (
                                     <ScoreDisplay score={dnsAnalysis.validation_score} />
                                 ) : null}
-                                
-                                {allOptionalRecordsVerified ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                                {dnsAnalysis && 'mx_is_valid' in dnsAnalysis && (
+                                     <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="mt-4 p-3 rounded-lg border text-xs flex items-start gap-3"
+                                        style={{
+                                            background: dnsAnalysis.mx_is_valid
+                                                ? 'linear-gradient(to right, rgba(0, 203, 7, 0.1), transparent)'
+                                                : 'linear-gradient(to right, rgba(240, 0, 0, 0.1), transparent)',
+                                            borderColor: dnsAnalysis.mx_is_valid
+                                                ? 'rgba(0, 203, 7, 0.3)'
+                                                : 'rgba(240, 0, 0, 0.3)',
+                                        }}
                                     >
-                                        <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                                        <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                            <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                                <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                                            </motion.div>
-                                            <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                            <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                                        </div>
+                                        <MailCheck
+                                            className={cn("size-8 shrink-0 mt-1", dnsAnalysis.mx_is_valid ? "text-green-400" : "text-red-400")}
+                                        />
+                                        <p className={cn(dnsAnalysis.mx_is_valid ? "text-green-200/90" : "text-red-200/90")}>
+                                            {dnsAnalysis.mx_is_valid
+                                                ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
+                                                : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
+                                        </p>
                                     </motion.div>
-                                ) : (
-                                    dnsAnalysis && 'mx_is_valid' in dnsAnalysis && (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="mt-4 p-3 rounded-lg border text-xs flex items-start gap-3"
-                                            style={{
-                                                background: dnsAnalysis.mx_is_valid
-                                                    ? 'linear-gradient(to right, rgba(0, 203, 7, 0.1), transparent)'
-                                                    : 'linear-gradient(to right, rgba(240, 0, 0, 0.1), transparent)',
-                                                borderColor: dnsAnalysis.mx_is_valid
-                                                    ? 'rgba(0, 203, 7, 0.3)'
-                                                    : 'rgba(240, 0, 0, 0.3)',
-                                            }}
-                                        >
-                                            <MailCheck
-                                                className={cn("size-8 shrink-0 mt-1", dnsAnalysis.mx_is_valid ? "text-green-400" : "text-red-400")}
-                                            />
-                                            <p className={cn(dnsAnalysis.mx_is_valid ? "text-green-200/90" : "text-red-200/90")}>
-                                                {dnsAnalysis.mx_is_valid
-                                                    ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
-                                                    : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
-                                            </p>
-                                        </motion.div>
-                                    )
                                 )}
                            </div>
                         )}
@@ -1213,7 +1200,7 @@ function DnsInfoModal({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
         <div className="space-y-4">
            <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
-            <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración DNS de tu proveedor de dominio.</p>
              <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-2">
               <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
               <div>
@@ -1290,7 +1277,7 @@ function DnsInfoModal({
                 <AlertDialogCancel className="hover:bg-[#F00000] hover:text-white">Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1553,3 +1540,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    

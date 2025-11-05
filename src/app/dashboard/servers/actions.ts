@@ -34,22 +34,14 @@ export async function verifyDnsAction(input: DnsHealthInput) {
   }
 }
 
-export async function verifyOptionalDnsAction(input: VmcAnalysisInput) {
+export async function validateDomainWithAI(input: VmcAnalysisInput): Promise<{ success: boolean; data?: VmcAnalysisOutput; error?: string }> {
   try {
     const validatedInput = VmcAnalysisInputSchema.parse(input);
-    // Call the correct flow that uses the external API
     const result = await validateAndAnalyzeDomain(validatedInput);
-    
-    if (result === null) {
-      return { success: false, error: "El análisis de VMC no devolvió resultados." };
-    }
-      
     return { success: true, data: result };
-  } catch (error) {
-    console.error('Optional DNS verification action error:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unexpected error occurred.';
-    return { success: false, error: errorMessage };
+  } catch (error: any) {
+    console.error('VMC validation with AI action error:', error);
+    return { success: false, error: error.message };
   }
 }
 
@@ -118,3 +110,5 @@ export async function verifyDomainOwnershipAction(
     };
   }
 }
+
+    
