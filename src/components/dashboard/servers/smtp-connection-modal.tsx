@@ -841,7 +841,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
                                         )}
                                     >
-                                        {(dnsAnalysis as VmcAnalysisOutput).mx_is_valid ? <Check className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                        {(dnsAnalysis as VmcAnalysisOutput).mx_is_valid ? <Check className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                         <p>
                                           {(dnsAnalysis as VmcAnalysisOutput).mx_is_valid
                                             ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
@@ -866,7 +866,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                         ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal para recibir todos los correos entrantes."
-                                        : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo y solo recibirá correos si tu servidor principal (prioridad 0) falla.`}
+                                        : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo`}
                                     </p>
                                   </motion.div>
                                 )}
@@ -1648,5 +1648,7 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
