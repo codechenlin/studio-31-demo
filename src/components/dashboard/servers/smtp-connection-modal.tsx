@@ -810,12 +810,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                    <motion.div
                                        className="absolute inset-0 border-2 border-primary/20 rounded-full"
                                        animate={{ rotate: 360 }}
-                                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                                       transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                                    />
                                    <motion.div
                                        className="absolute inset-2 border-2 border-dashed border-accent/30 rounded-full"
                                        animate={{ rotate: -360 }}
-                                       transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                                       transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
                                    />
                                    <div className="absolute inset-0 flex items-center justify-center">
                                        <BrainCircuit className="text-primary size-10" />
@@ -1317,7 +1317,7 @@ function DnsInfoModal({
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                  Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -1424,7 +1424,7 @@ function DnsInfoModal({
             <p>Para usar el registro DNS BIMI, prepara tu logotipo como un SVG compatible (sin scripts ni recursos externos). Muchas guías lo llaman “SVG Tiny (P/S)” y recomiendan un diseño simple y legible, el archivo del logotipo debe estar en una URL pública con HTTPS y sin claves.</p>
           </div>
         </div>
-        <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
+        <p className="pt-2">Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
           <span>default._bimi</span>
