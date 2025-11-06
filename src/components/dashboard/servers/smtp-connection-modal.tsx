@@ -123,7 +123,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setVerificationCode(generateVerificationCode());
     setVerificationStatus('pending');
     setCurrentStep(2);
-    handleGenerateDkim(); // Generate initial DKIM when moving to step 2
+    handleGenerateDkim(true); // Generate initial DKIM when moving to step 2
   };
   
   const handleCheckVerification = async () => {
@@ -224,14 +224,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   };
 
-  const handleGenerateDkim = async () => {
+  const handleGenerateDkim = async (isInitial = false) => {
     if (!domain) return;
     setIsGeneratingDkim(true);
     setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
       const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);
-      if (currentStep > 1) { // Only show toast if user explicitly requests a new key
+      if (!isInitial) {
         toast({
           title: "¡Nueva Clave Generada!",
           description: "Se ha generado una nueva clave DKIM con éxito.",
@@ -1411,7 +1411,7 @@ function DnsInfoModal({
           <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
           <div>
             <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
-            <p>Para usar el registro DNS BIMI, prepara tu logotipo como un SVG compatible (sin scripts ni recursos externos). Muchas guías lo llaman “SVG Tiny (P/S)” y recomiendan un diseño simple y legible, el archivo del logotipo debe estar en una URL pública con HTTPS, sin claves ni inicio.</p>
+            <p>Para usar el registro DNS BIMI, prepara tu logotipo como un SVG compatible (sin scripts ni recursos externos). Muchas guías lo llaman “SVG Tiny (P/S)” y recomiendan un diseño simple y legible, el archivo del logotipo debe estar en una URL pública con HTTPS y sin claves.</p>
           </div>
         </div>
         <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
@@ -1638,6 +1638,8 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
 
