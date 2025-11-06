@@ -238,6 +238,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     try {
       const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);
+      toast({
+        title: "¡Nueva Clave Generada!",
+        description: "Se ha generado una nueva clave DKIM con éxito.",
+        className: "bg-[#00CB07] text-white border-none",
+      });
     } catch (error: any) {
       toast({
         title: 'Error al generar DKIM',
@@ -591,6 +596,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                           </>
                           )}
+                          <div className="pt-2 text-xs text-muted-foreground">
+                            <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                            <p><strong className="font-semibold">SPF:</strong> ¿Quién puede enviar?</p>
+                            <p><strong className="font-semibold">DKIM:</strong> ¿Está firmado y sin cambios?</p>
+                            <p><strong className="font-semibold">DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                          </div>
                            
                            {dnsAnalysis && (
                                <div className="pt-4 flex justify-center">
@@ -1246,9 +1257,9 @@ function DnsInfoModal({
                  <Button 
                     onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} 
                     disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} 
-                    className="w-full text-white hover:opacity-90"
+                    className="w-full text-white hover:opacity-90 disabled:opacity-50"
                     style={{
-                      background: dkimData?.publicKeyRecord === acceptedKey ? 'grey' : 'linear-gradient(to right, #00CE07, #A6EE00)',
+                      background: !dkimData || dkimData.publicKeyRecord === acceptedKey ? 'grey' : 'linear-gradient(to right, #00CE07, #A6EE00)',
                     }}
                 >
                   <CheckCheck className="mr-2"/>
@@ -1578,3 +1589,44 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const steps = [
+        { name: 'Despachado', status: deliveryStatus !== 'idle' },
+        { name: 'Entregado', status: deliveryStatus === 'delivered' },
+        { name: 'Rebotado', status: deliveryStatus === 'bounced' }
+    ];
+
+    return (
+        <div className="mt-4 w-full text-center">
+            <div className="flex justify-between items-center px-4">
+                {steps.map((step, index) => (
+                    <React.Fragment key={step.name}>
+                        <div className="flex flex-col items-center">
+                            <div className={cn(
+                                "size-6 rounded-full flex items-center justify-center border-2 transition-all",
+                                step.status && deliveryStatus !== 'bounced' && "bg-green-500 border-green-400",
+                                step.status && deliveryStatus === 'bounced' && index < 2 && "bg-green-500 border-green-400",
+                                deliveryStatus === 'bounced' && index === 2 && "bg-red-500 border-red-400 animate-pulse"
+                            )}>
+                                {step.status ? (
+                                    <Check className="size-4 text-white" />
+                                ) : (
+                                    <div className="size-2 rounded-full bg-muted-foreground/50" />
+                                )}
+                            </div>
+                            <p className="text-xs mt-1">{step.name}</p>
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div className={cn(
+                                "flex-1 h-0.5 mx-2",
+                                step.status ? (deliveryStatus === 'bounced' ? 'bg-green-500' : 'bg-green-500') : 'bg-muted-foreground/30'
+                            )} />
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+    
