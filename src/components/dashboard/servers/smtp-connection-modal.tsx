@@ -820,7 +820,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined ? (
                                     <ScoreDisplay score={dnsAnalysis.validation_score} />
                                 ) : null}
-                                {dnsAnalysis && 'mx_is_valid' in dnsAnalysis && (
+                               {dnsAnalysis && 'mx_is_valid' in dnsAnalysis && (
                                      <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
@@ -845,18 +845,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     animate={{ opacity: 1 }}
                                     className={cn(
                                       "p-3 rounded-lg border text-xs flex items-start gap-3",
-                                      dnsAnalysis.mx_priority === 0
+                                      (dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                         ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
                                         : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
                                     )}
                                   >
-                                    {dnsAnalysis.mx_priority === 0
+                                    {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                       ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" />
                                       : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                     <p>
-                                      {dnsAnalysis.mx_priority === 0
+                                      {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                         ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal para recibir todos los correos entrantes."
-                                        : `Prioridad ${dnsAnalysis.mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo y solo recibirá correos si tu servidor principal (prioridad 0) falla.`}
+                                        : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo y solo recibirá correos si tu servidor principal (prioridad 0) falla.`}
                                     </p>
                                   </motion.div>
                                 )}
@@ -1407,10 +1407,17 @@ function DnsInfoModal({
     
     const renderBimiContent = () => (
       <div className="space-y-4 text-sm">
+        <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+          <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+          <div>
+            <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
+            <p>Para usar el registro DNS BIMI, prepara tu logotipo como un SVG compatible (sin scripts ni recursos externos). Muchas guías lo llaman “SVG Tiny (P/S)” y recomiendan un diseño simple y legible, el archivo del logotipo debe estar en una URL pública con HTTPS, sin claves ni inicio.</p>
+          </div>
+        </div>
         <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>daybuu._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>default._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1424,12 +1431,12 @@ function DnsInfoModal({
 
     const renderVmcContent = () => (
       <div className="space-y-4 text-sm">
-         <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
-             <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
-             <div>
-                <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
-                <p>Para obtener un certificado VMC para tu dominio y crear un registro DNS tipo VMC, debes solicitarlo a entidades oficiales como DigiCert o Entrust, que son emisores reconocidos y seguros. El requisito fundamental es que tu logotipo esté registrado como marca comercial en una oficina oficial de propiedad intelectual y que tu dominio tenga implementado correctamente la política de autenticación DMARC.</p>
-             </div>
+        <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+          <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+          <div>
+            <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
+            <p>Para obtener un certificado VMC para tu dominio y crear un registro DNS tipo VMC, debes solicitarlo a entidades oficiales como DigiCert o Entrust, que son emisores reconocidos y seguros. El requisito fundamental es que tu logotipo esté registrado como marca comercial en una oficina oficial de propiedad intelectual y que tu dominio tenga implementado correctamente la política de autenticación DMARC.</p>
+          </div>
         </div>
         <p className="pt-2">Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -1631,5 +1638,7 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
