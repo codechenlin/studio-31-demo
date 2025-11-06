@@ -826,14 +826,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         animate={{ opacity: 1 }}
                                         className={cn(
                                           "p-3 rounded-lg border text-xs flex items-start gap-3",
-                                          dnsAnalysis.mx_is_valid
+                                          (dnsAnalysis as VmcAnalysisOutput).mx_is_valid
                                             ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
                                         )}
                                     >
-                                        {dnsAnalysis.mx_is_valid ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                        {(dnsAnalysis as VmcAnalysisOutput).mx_is_valid ? <Check className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
                                         <p>
-                                          {dnsAnalysis.mx_is_valid
+                                          {(dnsAnalysis as VmcAnalysisOutput).mx_is_valid
                                             ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
                                             : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
                                         </p>
@@ -851,7 +851,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     )}
                                   >
                                     {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
-                                      ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" />
+                                      ? <Check className="size-8 shrink-0 text-green-400 mt-1" />
                                       : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
@@ -1638,3 +1638,6 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+
+    
