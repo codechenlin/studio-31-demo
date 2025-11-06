@@ -81,12 +81,13 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   // 2. Prepare the data to be sent to the AI (either success data or error data)
   const dataToAnalyze = validationResponse.success ? validationResponse.data : validationResponse.data;
   
-  // 3. Perform our own MX record check
-  const mxPointsToDaybuu = validationResponse.success &&
-      Array.isArray(dataToAnalyze.mx?.records) &&
-      dataToAnalyze.mx.records.some((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
-      
-  dataToAnalyze.mx_points_to_daybuu = mxPointsToDaybuu;
+  // 3. Perform our own MX record check and extract priority
+  const mxRecords = validationResponse.success && Array.isArray(dataToAnalyze.mx?.records) ? dataToAnalyze.mx.records : [];
+  const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
+
+  dataToAnalyze.mx_points_to_daybuu = !!daybuuMxRecord;
+  dataToAnalyze.mx_priority = daybuuMxRecord ? daybuuMxRecord.priority : null;
+
 
   // 4. Get the main prompt and construct the final prompt for the AI
   const vmcPromptTemplate = await getVmcAnalysisPrompt();
@@ -141,3 +142,5 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
   }
 }
+
+    

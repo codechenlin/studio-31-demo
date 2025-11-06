@@ -7,8 +7,9 @@ import {
 } from '@/ai/flows/dns-verification-flow';
 import { 
   validateAndAnalyzeDomain,
+  type VmcAnalysisInput,
 } from '@/ai/flows/vmc-deepseek-analysis-flow';
-import { type VmcAnalysisInput, VmcAnalysisInputSchema } from '@/app/dashboard/demo/types';
+import { VmcAnalysisInputSchema, type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 
 
 import { z } from 'zod';
@@ -34,10 +35,10 @@ export async function verifyDnsAction(input: DnsHealthInput) {
   }
 }
 
-export async function validateDomainWithAI(input: VmcAnalysisInput): Promise<{ success: boolean; data?: VmcAnalysisOutput; error?: string }> {
+export async function validateDomainWithAIAction(input: VmcAnalysisInput): Promise<{ success: boolean; data?: VmcAnalysisOutput; error?: string }> {
   try {
     const validatedInput = VmcAnalysisInputSchema.parse(input);
-    const result = await validateAndAnalyzeDomain(validatedInput);
+    const result = await validateDomainWithAI(validatedInput);
     return { success: true, data: result };
   } catch (error: any) {
     console.error('VMC validation with AI action error:', error);
@@ -110,5 +111,7 @@ export async function verifyDomainOwnershipAction(
     };
   }
 }
+
+    
 
     

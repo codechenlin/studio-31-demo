@@ -26,12 +26,9 @@ export const VmcAnalysisOutputSchema = z.object({
     detailed_analysis: z.string().describe("El análisis completo en texto plano para revisión humana.").optional(),
     validation_score: z.number().describe("Un puntaje de 0 a 100 que representa el porcentaje de autenticidad global.").optional(),
     mx_is_valid: z.boolean().describe("Determina si el registro MX es válido.").optional(),
+    mx_priority: z.number().optional().describe("La prioridad del registro MX encontrado."),
+    mx_points_to_daybuu: z.boolean().optional().describe("Indica si el registro MX apunta a daybuu.com.")
 });
 export type VmcAnalysisOutput = z.infer<typeof VmcAnalysisOutputSchema>;
 
-// Types for OptionalDnsHealth flow (re-exporting from VmcAnalysis)
-export type OptionalDnsHealthInput = VmcAnalysisInput;
-export const OptionalDnsHealthInputSchema = VmcAnalysisInputSchema;
-
-export type OptionalDnsHealthOutput = VmcAnalysisOutput;
-export const OptionalDnsHealthOutputSchema = VmcAnalysisOutputSchema;
+    

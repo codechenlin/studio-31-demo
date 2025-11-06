@@ -582,12 +582,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                             <div className="pt-2 text-xs text-muted-foreground">
-                                <p><b>Como trabajan juntos:</b></p>
-                                <p><b>SPF 📤:</b> Quién puede enviar?</p>
-                                <p><b>DKIM ✍️:</b> El correo fue alterado?</p>
-                                <p><b>DMARC 🛡️:</b> Qué hacer si falla SPF/DKIM?</p>
-                            </div>
                           </>
                           ) : (
                           <>
@@ -595,12 +589,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
-                             <div className="pt-2 text-xs text-muted-foreground">
-                                 <p><b>Como trabajan juntos:</b></p>
-                                 <p><b>MX 📬:</b> Dónde se entregan mis correos?</p>
-                                 <p><b>BIMI 🎨:</b> Que logo representa mi marca?</p>
-                                 <p><b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?</p>
-                            </div>
                           </>
                           )}
                            
@@ -655,20 +643,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     
-    const propagationWarning = (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3"
-      >
-        <Eye className="size-10 shrink-0 text-amber-400 mt-1" />
-        <p>
-            La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
-        </p>
-      </motion.div>
+    const propagationSuccessMessage = (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-200/90 rounded-lg border border-blue-400/20 text-xs flex items-start gap-3"
+        >
+          <Globe className="size-10 shrink-0 text-blue-400 mt-1" />
+          <p>
+            ¡Excelente! La propagación de tus registros DNS obligatorios se ha completado correctamente en toda la red.
+          </p>
+        </motion.div>
     );
 
+    const propagationWarningMessage = (
+         <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3"
+        >
+            <Eye className="size-10 shrink-0 text-amber-400 mt-1" />
+            <p>
+                La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
+            </p>
+        </motion.div>
+    );
+    
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
@@ -751,7 +753,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                             <h4 className="font-bold">Registros Obligatorios</h4>
                             <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
-                            {propagationWarning}
+                            {propagationWarningMessage}
                         </div>
                       ) : (
                           <motion.div
@@ -767,17 +769,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                               <motion.div
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.5 }}
-                                  className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-200/90 rounded-lg border border-blue-400/20 text-xs flex items-start gap-3"
-                                >
-                                  <Globe className="size-10 shrink-0 text-blue-400 mt-1" />
-                                  <p>
-                                      ¡Excelente! La propagación de tus registros DNS obligatorios se ha completado correctamente en toda la red.
-                                  </p>
-                                </motion.div>
+                               {propagationSuccessMessage}
                           </motion.div>
                       )}
                   </div>
@@ -820,26 +812,42 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                      <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="mt-4 p-3 rounded-lg border text-xs flex items-start gap-3"
-                                        style={{
-                                            background: dnsAnalysis.mx_is_valid
-                                                ? 'linear-gradient(to right, rgba(0, 203, 7, 0.1), transparent)'
-                                                : 'linear-gradient(to right, rgba(240, 0, 0, 0.1), transparent)',
-                                            borderColor: dnsAnalysis.mx_is_valid
-                                                ? 'rgba(0, 203, 7, 0.3)'
-                                                : 'rgba(240, 0, 0, 0.3)',
-                                        }}
+                                        className={cn(
+                                          "mt-4 p-3 rounded-lg border text-xs flex items-start gap-3",
+                                          dnsAnalysis.mx_is_valid
+                                            ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
+                                            : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
+                                        )}
                                     >
-                                        <MailCheck
-                                            className={cn("size-8 shrink-0 mt-1", dnsAnalysis.mx_is_valid ? "text-green-400" : "text-red-400")}
-                                        />
-                                        <p className={cn(dnsAnalysis.mx_is_valid ? "text-green-200/90" : "text-red-200/90")}>
-                                            {dnsAnalysis.mx_is_valid
-                                                ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
-                                                : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
+                                        {dnsAnalysis.mx_is_valid ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                        <p>
+                                          {dnsAnalysis.mx_is_valid
+                                            ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
+                                            : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
                                         </p>
                                     </motion.div>
                                 )}
+                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && dnsAnalysis.mx_points_to_daybuu && (
+                                  <motion.div
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      className={cn(
+                                          "mt-2 p-3 rounded-lg border text-xs flex items-start gap-3",
+                                          (dnsAnalysis as any).mx_priority === 0
+                                              ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
+                                              : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
+                                      )}
+                                  >
+                                      {(dnsAnalysis as any).mx_priority === 0 ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                      <p>
+                                          {(dnsAnalysis as any).mx_priority === 0
+                                              ? "La prioridad 0 en tu registro MX es correcta. Esto asegura que seamos tu servidor principal para la recepción de correos."
+                                              : `Tu registro MX tiene una prioridad de ${(dnsAnalysis as any).mx_priority}. Esto nos configura como servidor de respaldo. Para garantizar la entrega directa a tu buzón, ajusta la prioridad a 0.`}
+                                      </p>
+                                  </motion.div>
+                                )}
+
+
                            </div>
                         )}
                     </div>
@@ -1237,13 +1245,13 @@ function DnsInfoModal({
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
-                <Button 
-                  onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} 
-                  disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} 
-                  className="w-full text-white hover:opacity-90"
-                  style={{
-                    background: dkimData?.publicKeyRecord === acceptedKey ? 'grey' : 'linear-gradient(to right, #00CE07, #A6EE00)',
-                  }}
+                 <Button 
+                    onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} 
+                    disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} 
+                    className="w-full text-white hover:opacity-90"
+                    style={{
+                      background: dkimData?.publicKeyRecord === acceptedKey ? 'grey' : 'linear-gradient(to right, #00CE07, #A6EE00)',
+                    }}
                 >
                   <CheckCheck className="mr-2"/>
                   {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
@@ -1291,10 +1299,10 @@ function DnsInfoModal({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="hover:bg-[#F00000] hover:text-white">Cancelar</AlertDialogCancel>
+                 <AlertDialogCancel className="hover:border-[#F00000] hover:bg-[#F00000] hover:text-white">Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                    className="bg-primary hover:bg-[#00CB07]"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1362,8 +1370,8 @@ function DnsInfoModal({
         <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
             <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
             <div>
-              <p className="font-bold mb-1 text-amber-300">¡Prioridad Máxima!</p>
-              <p>Establecer la prioridad en <strong className="text-white">0</strong> asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (ej: 10, 20) lo designa como respaldo, que solo se activará si el servidor principal falla.</p>
+                <p className="font-bold mb-1 text-amber-300">¡Prioridad Máxima!</p>
+                <p>Establecer la prioridad en <strong className="text-white">0</strong> asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (ej: 10, 20) lo designa como respaldo, que solo se activará si el servidor principal falla.</p>
             </div>
         </div>
         <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
@@ -1404,7 +1412,14 @@ function DnsInfoModal({
 
     const renderVmcContent = () => (
       <div className="space-y-4 text-sm">
-        <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
+        <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+             <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+             <div>
+                <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
+                <p>Para obtener un certificado VMC para tu dominio y crear un registro DNS tipo VMC, debes solicitarlo a entidades oficiales como DigiCert o Entrust, que son emisores reconocidos y seguros. El requisito fundamental es que tu logotipo esté registrado como marca comercial en una oficina oficial de propiedad intelectual y que tu dominio tenga implementado correctamente la política de autenticación DMARC.</p>
+             </div>
+        </div>
+        <p className="pt-2">Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
           <span>daybuu._bimi</span>
@@ -1564,3 +1579,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
