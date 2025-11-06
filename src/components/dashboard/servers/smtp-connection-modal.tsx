@@ -865,7 +865,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                       : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
-                                        ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal para recibir todos los correos entrantes."
+                                        ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal."
                                         : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo`}
                                     </p>
                                   </motion.div>
@@ -1216,7 +1216,7 @@ function DnsInfoModal({
       vmc: {
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
-      },
+      }
     };
 
     const renderSpfContent = () => {
@@ -1664,3 +1664,4 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
     
 
     
+
