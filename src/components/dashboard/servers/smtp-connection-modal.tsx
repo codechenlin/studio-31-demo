@@ -85,13 +85,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
 
 
-  useEffect(() => {
-    if (domain && !dkimData) {
-      // Do not auto-generate here. Let the user trigger it.
-    }
-  }, [domain, dkimData]);
-
-
   const smtpFormSchema = z.object({
     host: z.string().min(1, "El host es requerido."),
     port: z.coerce.number().min(1, "El puerto es requerido."),
@@ -589,6 +582,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
+                            <div className="pt-2 text-xs text-muted-foreground">
+                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                <p><strong className="font-semibold">✉️ SPF:</strong> ¿Quién puede enviar?</p>
+                                <p><strong className="font-semibold">✍️ DKIM:</strong> ¿Está firmado y sin cambios?</p>
+                                <p><strong className="font-semibold">🛡️ DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                             </div>
                           </>
                           ) : (
                           <>
@@ -596,21 +595,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
+                             <div className="pt-2 text-xs text-muted-foreground">
+                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                <p><strong className="font-semibold">📥 MX:</strong> ¿Dónde entregar los correos?</p>
+                                <p><strong className="font-semibold">🎨 BIMI:</strong> ¿Cuál es mi logo oficial?</p>
+                                <p><strong className="font-semibold">🔐 VMC:</strong> ¿Es mi logo una marca registrada?</p>
+                            </div>
                           </>
                           )}
-                          <div className="pt-2 text-xs text-muted-foreground">
-                            <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                            <p><strong className="font-semibold">✉️ SPF:</strong> ¿Quién puede enviar?</p>
-                            <p><strong className="font-semibold">✍️ DKIM:</strong> ¿Está firmado y sin cambios?</p>
-                            <p><strong className="font-semibold">🛡️ DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
-                            {healthCheckStep === 'optional' && (
-                                <>
-                                    <p><strong className="font-semibold">📥 MX:</strong> ¿Dónde entregar los correos?</p>
-                                    <p><strong className="font-semibold">🎨 BIMI:</strong> ¿Cuál es mi logo oficial?</p>
-                                    <p><strong className="font-semibold">🔐 VMC:</strong> ¿Es mi logo una marca registrada?</p>
-                                </>
-                            )}
-                          </div>
                            
                            {dnsAnalysis && (
                                <div className="pt-4 flex justify-center">
@@ -846,6 +838,27 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
                                         </p>
                                     </motion.div>
+                                )}
+                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && dnsAnalysis.mx_points_to_daybuu && (
+                                  <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className={cn(
+                                      "p-3 rounded-lg border text-xs flex items-start gap-3",
+                                      dnsAnalysis.mx_priority === 0
+                                        ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
+                                        : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
+                                    )}
+                                  >
+                                    {dnsAnalysis.mx_priority === 0
+                                      ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" />
+                                      : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                    <p>
+                                      {dnsAnalysis.mx_priority === 0
+                                        ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal para recibir todos los correos entrantes."
+                                        : `Prioridad ${dnsAnalysis.mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo y solo recibirá correos si tu servidor principal (prioridad 0) falla.`}
+                                    </p>
+                                  </motion.div>
                                 )}
                            </div>
                         )}
@@ -1618,3 +1631,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
