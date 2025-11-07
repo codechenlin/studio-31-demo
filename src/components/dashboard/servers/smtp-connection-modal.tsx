@@ -1000,7 +1000,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                             <Button className="w-full bg-primary hover:bg-primary/80 text-white h-12 text-base" onClick={() => {
+                             <Button 
+                                className="w-full h-12 text-base text-white border-2 bg-[#2a004f] border-[#BC00FF] hover:bg-[#BC00FF] hover:border-[#BC00FF]"
+                                onClick={() => {
                                 if (optionalRecordStatus.mx !== 'verified') {
                                     setIsMxWarningModalOpen(true);
                                 } else {
@@ -1127,11 +1129,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="flex justify-center mb-4">
                          <div className="relative w-20 h-20 flex items-center justify-center">
                             <motion.div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full" animate={{rotate: 360}} transition={{duration: 10, repeat: Infinity, ease: "linear"}} />
-                            <motion.div className="absolute inset-2 border border-dashed border-amber-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
+                            <motion.div className="absolute inset-2 border-2 border-dashed border-amber-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
                             <MailWarning className="text-amber-400 size-10"/>
                         </div>
                     </div>
                      <AlertDialogTitle className="text-center text-xl">Registro MX no Verificado</AlertDialogTitle>
+                     <div className="relative py-4">
+                        <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+                        <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300 shadow-[0_0_8px_2px_theme(colors.amber.300)]" />
+                     </div>
                     <AlertDialogDescription className="text-center text-amber-100/70 pt-2">
                         ¿Estás seguro de que deseas continuar?
                     </AlertDialogDescription>
@@ -1140,7 +1146,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     Sin un registro MX verificado, <strong className="text-white">no podrás recibir correos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{domain}</strong> a través de nuestra plataforma.
                 </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel className="hover:bg-[#00CB07] hover:border-[#00CB07] hover:text-white">Volver y Verificar</AlertDialogCancel>
+                    <AlertDialogCancel className="bg-transparent hover:bg-[#00CB07] hover:border-[#00CB07] hover:text-white">Volver y Verificar</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={() => setCurrentStep(4)} 
                         className="bg-amber-600 hover:bg-amber-500"
@@ -1250,7 +1256,7 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos."
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos.",
       },
       bimi: {
         title: "Registro BIMI",
@@ -1703,5 +1709,7 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
