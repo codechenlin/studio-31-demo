@@ -526,7 +526,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -1123,23 +1123,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         </AlertDialog>
         <AlertDialog open={isMxWarningModalOpen} onOpenChange={setIsMxWarningModalOpen}>
             <AlertDialogContent className="bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white">
-                <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 flex items-center justify-center">
+                 <AlertDialogHeader>
+                    <div className="flex justify-center mb-4">
+                         <div className="relative w-20 h-20 flex items-center justify-center">
                             <motion.div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full" animate={{rotate: 360}} transition={{duration: 10, repeat: Infinity, ease: "linear"}} />
                             <motion.div className="absolute inset-2 border border-dashed border-amber-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
-                            <MailWarning className="text-amber-400 size-8"/>
+                            <MailWarning className="text-amber-400 size-10"/>
                         </div>
-                        Registro MX no Verificado
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-amber-100/70 pt-2">
-                        Has elegido continuar sin un registro MX verificado. Esto es crucial, ya que sin él, <strong className="text-white">no podrás recibir correos electrónicos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{domain}</strong> a través de nuestra plataforma.
-                        <br/><br/>
+                    </div>
+                     <AlertDialogTitle className="text-center text-xl">Registro MX no Verificado</AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-amber-100/70 pt-2">
                         ¿Estás seguro de que deseas continuar?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
+                 <div className="p-4 my-2 rounded-lg bg-black/30 border border-amber-500/30 text-sm text-amber-200/90">
+                    Sin un registro MX verificado, <strong className="text-white">no podrás recibir correos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{domain}</strong> a través de nuestra plataforma.
+                </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Volver y Verificar</AlertDialogCancel>
+                    <AlertDialogCancel className="hover:bg-[#00CB07] hover:border-[#00CB07] hover:text-white">Volver y Verificar</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={() => setCurrentStep(4)} 
                         className="bg-amber-600 hover:bg-amber-500"
@@ -1702,9 +1703,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
-
-    
 
     
