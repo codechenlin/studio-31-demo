@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import { SpamAssassinInputSchema, type SpamAssassinInput } from '@/ai/flows/spam-assassin-types';
 
 export async function POST(request: Request) {
-  const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8081";
-  const API_KEY = "gfklVD7KBD099467gufdTBJ6785hflVNCI8GDOndk748DG8409421hujfGD87fBFK7fn";
+  const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud";
+  const API_KEY = "gydsbf68bf70b74004673nd73";
 
   try {
     const body: SpamAssassinInput = await request.json();
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': API_KEY,
+        'Authorization': `Bearer ${API_KEY}`,
       },
       body: JSON.stringify(validatedInput),
     });

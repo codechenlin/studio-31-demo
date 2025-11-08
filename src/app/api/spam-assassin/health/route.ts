@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8081";
+  const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud";
   const url = `${API_BASE}/health`;
 
   try {
@@ -24,3 +24,4 @@ export async function GET() {
     return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin: ${error.message}` }, { status: 500 });
   }
 }
+

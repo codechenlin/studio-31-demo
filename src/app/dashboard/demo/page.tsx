@@ -8,37 +8,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
 import { checkApiHealthAction, validateDomainWithAI } from './actions';
-import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
 import { type VmcAnalysisOutput } from './types';
 import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { motion } from 'framer-motion';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const defaultSpamEmail = `Subject: ¡Has ganado un premio!
-From: "Sorteos Millonarios" <sorteos@loteria-afortunada.xyz>
-To: "Afortunado Ganador" <tu@correo.com>
-Content-Type: text/html; charset="UTF-8"
+const defaultSpamEmail = {
+    from: "sorteos@loteria-afortunada.xyz",
+    to: "tu@correo.com",
+    subject: "¡Has ganado un premio!",
+    body: `¡FELICIDADES!
 
-<html>
-  <body>
-    <h1>¡FELICIDADES!</h1>
-    <p>Has sido seleccionado como el ganador de nuestro sorteo mensual. ¡Has ganado <strong>$1,000,000 de dólares</strong>!</p>
-    <p>Para reclamar tu premio, solo tienes que hacer clic en el siguiente enlace y verificar tus datos bancarios. ¡Es 100% seguro!</p>
-    <p><a href="http://sitio-phishing-muy-peligroso.com/reclamar-premio"><strong>>>> HAZ CLIC AQUÍ PARA RECLAMAR AHORA <<<</strong></a></p>
-    <p>¡No dejes pasar esta oportunidad ÚNICA! La oferta expira en 24 horas.</p>
-    <p>Saludos,<br>El Equipo de Sorteos Millonarios</p>
-  </body>
-</html>
-`;
+Has sido seleccionado como el ganador de nuestro sorteo mensual. ¡Has ganado $1,000,000 de dólares!
+
+Para reclamar tu premio, solo tienes que hacer clic en el siguiente enlace y verificar tus datos bancarios. ¡Es 100% seguro!
+
+>>> HAZ CLIC AQUÍ PARA RECLAMAR AHORA <<<
+
+¡No dejes pasar esta oportunidad ÚNICA! La oferta expira en 24 horas.
+
+Saludos,
+El Equipo de Sorteos Millonarios
+`
+};
 
 export default function DemoPage() {
     const [isCheckingApiHealth, startApiHealthCheck] = useTransition();
-    const [apiHealthResult, setApiHealthResult] = useState<ApiHealthOutput | null>(null);
+    const [apiHealthResult, setApiHealthResult] = useState<any | null>(null);
     const [apiHealthError, setApiHealthError] = useState<string | null>(null);
     
     const [isAnalyzing, startAnalysis] = useTransition();
@@ -49,7 +49,7 @@ export default function DemoPage() {
     const [isScanningSpam, startSpamScan] = useTransition();
     const [spamScanResult, setSpamScanResult] = useState<SpamAssassinOutput | null>(null);
     const [spamScanError, setSpamScanError] = useState<string | null>(null);
-    const [rawEmail, setRawEmail] = useState(defaultSpamEmail);
+    const [emailFields, setEmailFields] = useState(defaultSpamEmail);
     const [sensitivity, setSensitivity] = useState(5.0);
 
     const [isCheckingSpamHealth, startSpamHealthCheck] = useTransition();
@@ -103,7 +103,6 @@ export default function DemoPage() {
     };
 
      const handleSpamScan = () => {
-        if (!rawEmail) return;
         setSpamScanResult(null);
         setSpamScanError(null);
         startSpamScan(async () => {
@@ -111,7 +110,7 @@ export default function DemoPage() {
                 const response = await fetch('/api/spam-assassin/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ raw: rawEmail, sensitivity }),
+                    body: JSON.stringify({ ...emailFields, sensitivity }),
                 });
                 const result = await response.json();
                 if(response.ok) {
@@ -124,6 +123,10 @@ export default function DemoPage() {
             }
         });
     };
+
+    const handleEmailFieldChange = (field: keyof typeof emailFields, value: string) => {
+        setEmailFields(prev => ({...prev, [field]: value}));
+    }
 
     const renderAnalysisResult = (result: VmcAnalysisOutput) => {
         
@@ -355,29 +358,18 @@ export default function DemoPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <Label htmlFor="raw-email-input">Correo en formato RFC822</Label>
-                        <Textarea 
-                            id="raw-email-input" 
-                            value={rawEmail}
-                            onChange={e => setRawEmail(e.target.value)}
-                            className="h-64 font-mono text-xs"
-                            placeholder="Pega el contenido completo del correo aquí..."
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1"><Label htmlFor="email-from">De:</Label><Input id="email-from" value={emailFields.from} onChange={e => handleEmailFieldChange('from', e.target.value)} placeholder="remitente@ejemplo.com"/></div>
+                            <div className="space-y-1"><Label htmlFor="email-to">Para:</Label><Input id="email-to" value={emailFields.to} onChange={e => handleEmailFieldChange('to', e.target.value)} placeholder="destinatario@ejemplo.com"/></div>
+                        </div>
+                        <div className="space-y-1"><Label htmlFor="email-subject">Asunto:</Label><Input id="email-subject" value={emailFields.subject} onChange={e => handleEmailFieldChange('subject', e.target.value)} placeholder="Asunto del correo"/></div>
+                        <div className="space-y-1"><Label htmlFor="email-body">Cuerpo:</Label><Textarea id="email-body" value={emailFields.body} onChange={e => handleEmailFieldChange('body', e.target.value)} className="h-40 font-mono text-xs" placeholder="Contenido del correo..."/></div>
                         <div className="space-y-2">
                             <Label>Sensibilidad del Filtro ({sensitivity.toFixed(1)})</Label>
-                            <Slider
-                                value={[sensitivity]}
-                                min={1.0}
-                                max={10.0}
-                                step={0.1}
-                                onValueChange={(value) => setSensitivity(value[0])}
-                            />
-                             <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Estricto</span>
-                                <span>Relajado</span>
-                            </div>
+                            <Slider value={[sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={(value) => setSensitivity(value[0])}/>
+                             <div className="flex justify-between text-xs text-muted-foreground"><span>Estricto</span><span>Relajado</span></div>
                         </div>
-                         <Button onClick={handleSpamScan} disabled={isScanningSpam || !rawEmail} className="w-full">
+                         <Button onClick={handleSpamScan} disabled={isScanningSpam} className="w-full">
                             {isScanningSpam ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
                             Analizar Correo
                         </Button>
@@ -418,7 +410,7 @@ export default function DemoPage() {
                                      <Label>Detalles del Reporte de SpamAssassin</Label>
                                      <ScrollArea className="h-48 mt-1">
                                        <pre className="text-xs p-3 rounded-md bg-black/50 font-mono whitespace-pre-wrap">
-                                            {spamScanResult.details}
+                                            {spamScanResult.report}
                                         </pre>
                                      </ScrollArea>
                                  </div>
