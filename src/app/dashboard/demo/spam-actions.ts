@@ -2,7 +2,8 @@
 /**
  * @fileOverview Server action to trigger the SpamAssassin flow.
  */
-import { scanWithSpamAssassin, SpamAssassinInputSchema, type SpamAssassinInput } from '@/ai/flows/spam-assassin-flow';
+import { scanWithSpamAssassin, type SpamAssassinInput } from '@/ai/flows/spam-assassin-flow';
+import { SpamAssassinInputSchema } from '@/ai/flows/spam-assassin-types';
 
 export async function scanEmailForSpamAction(input: SpamAssassinInput): Promise<{ success: boolean; data?: any; error?: string }> {
   try {

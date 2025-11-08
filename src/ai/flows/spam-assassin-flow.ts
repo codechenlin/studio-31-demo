@@ -3,30 +3,14 @@
  * @fileOverview A flow to scan an email for spam using a self-hosted SpamAssassin API.
  *
  * - scanWithSpamAssassin: A function that handles the spam checking process.
- * - SpamAssassinInput: The input type for the scanWithSpamAssassin function.
- * - SpamAssassinOutput: The return type for the scanWithSpamAssassin function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { SpamAssassinInputSchema, SpamAssassinOutputSchema, type SpamAssassinInput, type SpamAssassinOutput } from './spam-assassin-types';
 
 const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud";
 const API_KEY = "gfklVD7KBD099467gufdTBJ6785hflVNCI8GDOndk748DG8409421hujfGD87fBFK7fn";
 
-export const SpamAssassinInputSchema = z.object({
-  raw: z.string().describe('El mensaje de correo electrónico completo en formato RFC822.'),
-  sensitivity: z.number().min(0.1).max(20.0).optional().default(5.0).describe('El umbral de sensibilidad de spam. Por defecto es 5.0.'),
-});
-export type SpamAssassinInput = z.infer<typeof SpamAssassinInputSchema>;
-
-export const SpamAssassinOutputSchema = z.object({
-  status: z.string(),
-  score: z.number(),
-  threshold: z.number(),
-  is_spam: z.boolean(),
-  details: z.string(),
-});
-export type SpamAssassinOutput = z.infer<typeof SpamAssassinOutputSchema>;
 
 export async function scanWithSpamAssassin(
   input: SpamAssassinInput
