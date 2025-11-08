@@ -8,7 +8,7 @@
 import { ai } from '@/ai/genkit';
 import { SpamAssassinInputSchema, SpamAssassinOutputSchema, type SpamAssassinInput, type SpamAssassinOutput } from './spam-assassin-types';
 
-const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud";
+const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8081";
 const API_KEY = "gfklVD7KBD099467gufdTBJ6785hflVNCI8GDOndk748DG8409421hujfGD87fBFK7fn";
 
 
