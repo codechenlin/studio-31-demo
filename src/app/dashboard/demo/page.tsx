@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
-import { checkApiHealthAction } from './actions';
+import { checkApiHealthAction, validateDomainWithAI } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
-import { validateDomainWithAI } from './actions';
 import { scanEmailForSpamAction } from './spam-actions';
+import { checkSpamAssassinHealthAction } from './spam-assassin-health-action';
+import { type SpamAssassinHealthOutput } from '@/ai/flows/spam-assassin-health-check-flow';
 import { type VmcAnalysisOutput } from './types';
-import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-flow';
+import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
@@ -39,9 +40,9 @@ Content-Type: text/html; charset="UTF-8"
 `;
 
 export default function DemoPage() {
-    const [isCheckingHealth, startHealthCheck] = useTransition();
-    const [healthResult, setHealthResult] = useState<ApiHealthOutput | null>(null);
-    const [healthError, setHealthError] = useState<string | null>(null);
+    const [isCheckingApiHealth, startApiHealthCheck] = useTransition();
+    const [apiHealthResult, setApiHealthResult] = useState<ApiHealthOutput | null>(null);
+    const [apiHealthError, setApiHealthError] = useState<string | null>(null);
     
     const [isAnalyzing, startAnalysis] = useTransition();
     const [analysisResult, setAnalysisResult] = useState<VmcAnalysisOutput | null>(null);
@@ -54,16 +55,33 @@ export default function DemoPage() {
     const [rawEmail, setRawEmail] = useState(defaultSpamEmail);
     const [sensitivity, setSensitivity] = useState(5.0);
 
-    
-    const handleHealthCheck = () => {
-        setHealthResult(null);
-        setHealthError(null);
-        startHealthCheck(async () => {
+    const [isCheckingSpamHealth, startSpamHealthCheck] = useTransition();
+    const [spamHealthResult, setSpamHealthResult] = useState<SpamAssassinHealthOutput | null>(null);
+    const [spamHealthError, setSpamHealthError] = useState<string | null>(null);
+
+
+    const handleApiHealthCheck = () => {
+        setApiHealthResult(null);
+        setApiHealthError(null);
+        startApiHealthCheck(async () => {
             const result = await checkApiHealthAction();
             if (result.success) {
-                setHealthResult(result.data || null);
+                setApiHealthResult(result.data || null);
             } else {
-                setHealthError(result.error || 'Ocurrió un error desconocido.');
+                setApiHealthError(result.error || 'Ocurrió un error desconocido.');
+            }
+        });
+    };
+    
+    const handleSpamAssassinHealthCheck = () => {
+        setSpamHealthResult(null);
+        setSpamHealthError(null);
+        startSpamHealthCheck(async () => {
+            const result = await checkSpamAssassinHealthAction();
+            if (result.success) {
+                setSpamHealthResult(result.data || null);
+            } else {
+                setSpamHealthError(result.error || 'Ocurrió un error desconocido.');
             }
         });
     };
@@ -170,43 +188,43 @@ export default function DemoPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-6xl">
-                {/* Panel 1: Health Check */}
+                {/* Panel 1: VMC API Health Check */}
                 <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-xl">
                             <Power className="text-primary"/>
-                            Mini Panel de Prueba 01: Prueba de Conexión
+                            Mini Panel de Prueba 01: VMC API Health
                         </CardTitle>
                         <CardDescription>
                             Verifica la conectividad básica con la API de validación VMC.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleHealthCheck} disabled={isCheckingHealth}>
-                            {isCheckingHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                        <Button onClick={handleApiHealthCheck} disabled={isCheckingApiHealth}>
+                            {isCheckingApiHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
                             Verificar Estado del Sistema
                         </Button>
                     </CardContent>
-                     {(isCheckingHealth || healthResult || healthError) && (
+                     {(isCheckingApiHealth || apiHealthResult || apiHealthError) && (
                         <CardFooter>
                             <div className="w-full">
-                                {isCheckingHealth && (
+                                {isCheckingApiHealth && (
                                     <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                         <Loader2 className="animate-spin" />
                                         Verificando conexión...
                                     </div>
                                 )}
-                                {healthError && (
+                                {apiHealthError && (
                                     <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
                                         <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
-                                        <p className="mt-1 font-mono text-xs">{healthError}</p>
+                                        <p className="mt-1 font-mono text-xs">{apiHealthError}</p>
                                     </div>
                                 )}
-                                {healthResult && (
+                                {apiHealthResult && (
                                     <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
                                         <p className="font-bold flex items-center gap-2"><CheckCircle/>Sistema en Línea</p>
                                         <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
-                                            {JSON.stringify(healthResult, null, 2)}
+                                            {JSON.stringify(apiHealthResult, null, 2)}
                                         </pre>
                                     </div>
                                 )}
@@ -266,14 +284,59 @@ export default function DemoPage() {
                         </CardFooter>
                      )}
                 </Card>
+
+                 {/* Panel 3: SpamAssassin Health Check */}
+                <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                            <Power className="text-amber-500"/>
+                            Mini Panel de Prueba 03: SpamAssassin API Health
+                        </CardTitle>
+                        <CardDescription>
+                            Verifica la conectividad básica con la API de SpamAssassin.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button onClick={handleSpamAssassinHealthCheck} disabled={isCheckingSpamHealth}>
+                            {isCheckingSpamHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                            Verificar Estado de SpamAssassin
+                        </Button>
+                    </CardContent>
+                     {(isCheckingSpamHealth || spamHealthResult || spamHealthError) && (
+                        <CardFooter>
+                            <div className="w-full">
+                                {isCheckingSpamHealth && (
+                                    <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="animate-spin" />
+                                        Verificando conexión...
+                                    </div>
+                                )}
+                                {spamHealthError && (
+                                    <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
+                                        <p className="mt-1 font-mono text-xs">{spamHealthError}</p>
+                                    </div>
+                                )}
+                                {spamHealthResult && (
+                                    <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
+                                        <p className="font-bold flex items-center gap-2"><CheckCircle/>Sistema en Línea</p>
+                                        <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
+                                            {JSON.stringify(spamHealthResult, null, 2)}
+                                        </pre>
+                                    </div>
+                                )}
+                            </div>
+                        </CardFooter>
+                    )}
+                </Card>
             </div>
             
-             {/* Panel 3: SpamAssassin */}
+             {/* Panel 4: SpamAssassin Scan */}
             <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg w-full max-w-6xl">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-xl">
                         <MailWarning className="text-amber-500"/>
-                        Mini Panel de Prueba 03: Verificador de Spam
+                        Mini Panel de Prueba 04: Verificador de Spam
                     </CardTitle>
                     <CardDescription>
                        Prueba la API de SpamAssassin para evaluar el puntaje de spam de un correo electrónico.
