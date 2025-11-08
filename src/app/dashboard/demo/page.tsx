@@ -6,15 +6,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna } from 'lucide-react';
+import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
 import { checkApiHealthAction } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
 import { validateDomainWithAI } from './actions';
+import { scanEmailForSpamAction } from './spam-actions';
 import { type VmcAnalysisOutput } from './types';
+import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-flow';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
+import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const defaultSpamEmail = `Subject: ¡Has ganado un premio!
+From: "Sorteos Millonarios" <sorteos@loteria-afortunada.xyz>
+To: "Afortunado Ganador" <tu@correo.com>
+Content-Type: text/html; charset="UTF-8"
+
+<html>
+  <body>
+    <h1>¡FELICIDADES!</h1>
+    <p>Has sido seleccionado como el ganador de nuestro sorteo mensual. ¡Has ganado <strong>$1,000,000 de dólares</strong>!</p>
+    <p>Para reclamar tu premio, solo tienes que hacer clic en el siguiente enlace y verificar tus datos bancarios. ¡Es 100% seguro!</p>
+    <p><a href="http://sitio-phishing-muy-peligroso.com/reclamar-premio"><strong>>>> HAZ CLIC AQUÍ PARA RECLAMAR AHORA <<<</strong></a></p>
+    <p>¡No dejes pasar esta oportunidad ÚNICA! La oferta expira en 24 horas.</p>
+    <p>Saludos,<br>El Equipo de Sorteos Millonarios</p>
+  </body>
+</html>
+`;
 
 export default function DemoPage() {
     const [isCheckingHealth, startHealthCheck] = useTransition();
@@ -25,6 +47,13 @@ export default function DemoPage() {
     const [analysisResult, setAnalysisResult] = useState<VmcAnalysisOutput | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [domainToAnalyze, setDomainToAnalyze] = useState('paypal.com');
+    
+    const [isScanningSpam, startSpamScan] = useTransition();
+    const [spamScanResult, setSpamScanResult] = useState<SpamAssassinOutput | null>(null);
+    const [spamScanError, setSpamScanError] = useState<string | null>(null);
+    const [rawEmail, setRawEmail] = useState(defaultSpamEmail);
+    const [sensitivity, setSensitivity] = useState(5.0);
+
     
     const handleHealthCheck = () => {
         setHealthResult(null);
@@ -49,6 +78,20 @@ export default function DemoPage() {
                 setAnalysisResult(result.data);
             } else {
                 setAnalysisError(result.error || 'Ocurrió un error desconocido.');
+            }
+        });
+    };
+
+     const handleSpamScan = () => {
+        if (!rawEmail) return;
+        setSpamScanResult(null);
+        setSpamScanError(null);
+        startSpamScan(async () => {
+            const result = await scanEmailForSpamAction({ raw: rawEmail, sensitivity });
+            if (result.success && result.data) {
+                setSpamScanResult(result.data);
+            } else {
+                setSpamScanError(result.error || 'Ocurrió un error desconocido.');
             }
         });
     };
@@ -122,7 +165,7 @@ export default function DemoPage() {
                     Página de Pruebas de API
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Utiliza estos paneles para interactuar con la API de validación externa.
+                    Utiliza estos paneles para interactuar con las APIs externas y de IA.
                 </p>
             </div>
 
@@ -135,7 +178,7 @@ export default function DemoPage() {
                             Mini Panel de Prueba 01: Prueba de Conexión
                         </CardTitle>
                         <CardDescription>
-                            Verifica la conectividad básica con la API de validación.
+                            Verifica la conectividad básica con la API de validación VMC.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -176,7 +219,7 @@ export default function DemoPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-xl">
                             <Bot className="text-accent"/>
-                            Mini Panel de Prueba 02: Análisis con IA
+                            Mini Panel de Prueba 02: Análisis VMC con IA
                         </CardTitle>
                         <CardDescription>
                            Valida un dominio y obtén un análisis técnico de la IA sobre sus registros BIMI y VMC.
@@ -224,6 +267,97 @@ export default function DemoPage() {
                      )}
                 </Card>
             </div>
+            
+             {/* Panel 3: SpamAssassin */}
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg w-full max-w-6xl">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-xl">
+                        <MailWarning className="text-amber-500"/>
+                        Mini Panel de Prueba 03: Verificador de Spam
+                    </CardTitle>
+                    <CardDescription>
+                       Prueba la API de SpamAssassin para evaluar el puntaje de spam de un correo electrónico.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <Label htmlFor="raw-email-input">Correo en formato RFC822</Label>
+                        <Textarea 
+                            id="raw-email-input" 
+                            value={rawEmail}
+                            onChange={e => setRawEmail(e.target.value)}
+                            className="h-64 font-mono text-xs"
+                            placeholder="Pega el contenido completo del correo aquí..."
+                        />
+                        <div className="space-y-2">
+                            <Label>Sensibilidad del Filtro ({sensitivity.toFixed(1)})</Label>
+                            <Slider
+                                value={[sensitivity]}
+                                min={1.0}
+                                max={10.0}
+                                step={0.1}
+                                onValueChange={(value) => setSensitivity(value[0])}
+                            />
+                             <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>Estricto</span>
+                                <span>Relajado</span>
+                            </div>
+                        </div>
+                         <Button onClick={handleSpamScan} disabled={isScanningSpam || !rawEmail} className="w-full">
+                            {isScanningSpam ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                            Analizar Correo
+                        </Button>
+                    </div>
+                     <div className="relative p-4 rounded-lg bg-background border border-border/50 flex flex-col">
+                        <h3 className="font-semibold text-center mb-4">Resultados del Análisis</h3>
+                        {isScanningSpam && (
+                             <div className="flex-grow flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="animate-spin" />
+                                Escaneando...
+                            </div>
+                        )}
+                         {spamScanError && (
+                             <div className="flex-grow flex items-center justify-center">
+                                <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                    <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Escaneo</p>
+                                    <p className="mt-1 font-mono text-xs">{spamScanError}</p>
+                                </div>
+                            </div>
+                        )}
+                        {spamScanResult && (
+                             <div className="space-y-3 flex-grow flex flex-col">
+                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.is_spam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
+                                    <p className="text-sm font-semibold uppercase">{spamScanResult.is_spam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
+                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.threshold.toFixed(1)}</p>
+                                    <div className="relative h-2 w-full bg-muted/50 rounded-full mt-2">
+                                        <div 
+                                          className={cn("absolute h-full rounded-full", spamScanResult.is_spam ? "bg-red-500" : "bg-green-500")}
+                                          style={{width: `${(spamScanResult.score / spamScanResult.threshold) * 100}%`}}
+                                        />
+                                        <div 
+                                            className="absolute top-0 h-full w-px bg-white/50"
+                                            style={{left: `${(spamScanResult.threshold / 10) * 100}%`}}
+                                        />
+                                    </div>
+                                </div>
+                                 <div className="flex-grow">
+                                     <Label>Detalles del Reporte de SpamAssassin</Label>
+                                     <ScrollArea className="h-48 mt-1">
+                                       <pre className="text-xs p-3 rounded-md bg-black/50 font-mono whitespace-pre-wrap">
+                                            {spamScanResult.details}
+                                        </pre>
+                                     </ScrollArea>
+                                 </div>
+                            </div>
+                        )}
+                        {!isScanningSpam && !spamScanResult && !spamScanError && (
+                             <div className="flex-grow flex items-center justify-center text-center text-muted-foreground">
+                                <p>Los resultados del escaneo aparecerán aquí.</p>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
         </main>
     );
 }
