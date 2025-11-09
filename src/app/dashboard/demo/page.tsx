@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useTransition, useEffect } from 'react';
@@ -9,85 +8,93 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
 import { checkApiHealthAction, validateDomainWithAI } from './actions';
 import { type VmcAnalysisOutput } from './types';
-import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 
-const defaultSpamEmail = {
-    from: "sorteos@loteria-afortunada.xyz",
-    to: "tu@correo.com",
-    subject: "¡Has ganado un premio!",
-    body: `¡FELICIDADES!
+const defaultSpamEmail = `From: test@example.com
+Subject: FREE MONEY
+To: user@yourdomain.com
 
-Has sido seleccionado como el ganador de nuestro sorteo mensual. ¡Has ganado $1,000,000 de dólares!
+Hello,
 
-Para reclamar tu premio, solo tienes que hacer clic en el siguiente enlace y verificar tus datos bancarios. ¡Es 100% seguro!
+Click here to claim your prize! This is not a scam. 100% real.
+Special offer just for you. Act now!
 
->>> HAZ CLIC AQUÍ PARA RECLAMAR AHORA <<<
+Best regards,
+Mr. Rich
+`;
 
-¡No dejes pasar esta oportunidad ÚNICA! La oferta expira en 24 horas.
+interface SpamAssassinResponse {
+  isSpam: boolean;
+  score: number;
+  sensitivity: number;
+  thresholdApplied: number;
+  details?: { rule: string; score: number }[];
+  virusDetected?: boolean | null;
+  headers?: Record<string, string>;
+  processingMs?: number;
+}
 
-Saludos,
-El Equipo de Sorteos Millonarios
-`
-};
 
 export default function DemoPage() {
-    const [isCheckingApiHealth, startApiHealthCheck] = useTransition();
-    const [apiHealthResult, setApiHealthResult] = useState<any | null>(null);
-    const [apiHealthError, setApiHealthError] = useState<string | null>(null);
+    const [isCheckingVmcApiHealth, startVmcApiHealthCheck] = useTransition();
+    const [vmcApiHealthResult, setVmcApiHealthResult] = useState<any | null>(null);
+    const [vmcApiHealthError, setVmcApiHealthError] = useState<string | null>(null);
     
     const [isAnalyzing, startAnalysis] = useTransition();
     const [analysisResult, setAnalysisResult] = useState<VmcAnalysisOutput | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [domainToAnalyze, setDomainToAnalyze] = useState('paypal.com');
     
-    const [isScanningSpam, startSpamScan] = useTransition();
-    const [spamScanResult, setSpamScanResult] = useState<SpamAssassinOutput | null>(null);
-    const [spamScanError, setSpamScanError] = useState<string | null>(null);
-    const [emailFields, setEmailFields] = useState(defaultSpamEmail);
-    const [sensitivity, setSensitivity] = useState(5.0);
-
+    // SpamAssassin States
     const [isCheckingSpamHealth, startSpamHealthCheck] = useTransition();
     const [spamHealthResult, setSpamHealthResult] = useState<any | null>(null);
     const [spamHealthError, setSpamHealthError] = useState<string | null>(null);
 
+    const [isScanningSpam, startSpamScan] = useTransition();
+    const [spamScanResult, setSpamScanResult] = useState<SpamAssassinResponse | null>(null);
+    const [spamScanError, setSpamScanError] = useState<string | null>(null);
+    const [emailContent, setEmailContent] = useState(defaultSpamEmail);
+    const [sensitivity, setSensitivity] = useState(5.0);
+    const [clamavScan, setClamavScan] = useState(false);
 
-    const handleApiHealthCheck = () => {
-        setApiHealthResult(null);
-        setApiHealthError(null);
-        startApiHealthCheck(async () => {
+
+    const handleVmcApiHealthCheck = () => {
+        setVmcApiHealthResult(null);
+        setVmcApiHealthError(null);
+        startVmcApiHealthCheck(async () => {
             const result = await checkApiHealthAction();
             if (result.success) {
-                setApiHealthResult(result.data || null);
+                setVmcApiHealthResult(result.data || null);
             } else {
-                setApiHealthError(result.error || 'Ocurrió un error desconocido.');
+                setVmcApiHealthError(result.error || 'Ocurrió un error desconocido.');
             }
         });
     };
-    
+
     const handleSpamAssassinHealthCheck = () => {
         setSpamHealthResult(null);
         setSpamHealthError(null);
         startSpamHealthCheck(async () => {
-             try {
-                const response = await fetch('/api/spam-assassin/health');
+            try {
+                const response = await fetch('/api/spam-assassin', { method: 'GET' });
                 const result = await response.json();
                 if (response.ok) {
                     setSpamHealthResult(result);
                 } else {
-                    setSpamHealthError(result.error || 'Error desconocido');
+                    setSpamHealthError(result.error || `Error del servidor: ${response.status}`);
                 }
             } catch (error: any) {
-                setSpamHealthError(error.message || 'Fallo en la conexión');
+                setSpamHealthError(`Fallo en la conexión: ${error.message}`);
             }
         });
     };
-
+    
     const handleAnalysis = () => {
         if (!domainToAnalyze) return;
         setAnalysisResult(null);
@@ -107,26 +114,23 @@ export default function DemoPage() {
         setSpamScanError(null);
         startSpamScan(async () => {
             try {
-                const response = await fetch('/api/spam-assassin/scan', {
+                 const response = await fetch('/api/spam-assassin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...emailFields, sensitivity }),
+                    body: JSON.stringify({ raw_mime: emailContent, sensitivity, clamav_scan: clamavScan }),
                 });
+
                 const result = await response.json();
                 if(response.ok) {
                     setSpamScanResult(result);
                 } else {
-                    setSpamScanError(result.error || 'Error desconocido');
+                    setSpamScanError(result.error || `Error del servidor: ${response.status}`);
                 }
             } catch (error: any) {
-                setSpamScanError(error.message || 'Fallo en la conexión');
+                setSpamScanError(`Fallo en la conexión: ${error.message}`);
             }
         });
     };
-
-    const handleEmailFieldChange = (field: keyof typeof emailFields, value: string) => {
-        setEmailFields(prev => ({...prev, [field]: value}));
-    }
 
     const renderAnalysisResult = (result: VmcAnalysisOutput) => {
         
@@ -214,31 +218,31 @@ export default function DemoPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button onClick={handleApiHealthCheck} disabled={isCheckingApiHealth}>
-                            {isCheckingApiHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
+                        <Button onClick={handleVmcApiHealthCheck} disabled={isCheckingVmcApiHealth}>
+                            {isCheckingVmcApiHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
                             Verificar Estado del Sistema
                         </Button>
                     </CardContent>
-                     {(isCheckingApiHealth || apiHealthResult || apiHealthError) && (
+                     {(isCheckingVmcApiHealth || vmcApiHealthResult || vmcApiHealthError) && (
                         <CardFooter>
                             <div className="w-full">
-                                {isCheckingApiHealth && (
+                                {isCheckingVmcApiHealth && (
                                     <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                         <Loader2 className="animate-spin" />
                                         Verificando conexión...
                                     </div>
                                 )}
-                                {apiHealthError && (
+                                {vmcApiHealthError && (
                                     <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
                                         <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
-                                        <p className="mt-1 font-mono text-xs">{apiHealthError}</p>
+                                        <p className="mt-1 font-mono text-xs">{vmcApiHealthError}</p>
                                     </div>
                                 )}
-                                {apiHealthResult && (
+                                {vmcApiHealthResult && (
                                     <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
                                         <p className="font-bold flex items-center gap-2"><CheckCircle/>Sistema en Línea</p>
                                         <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
-                                            {JSON.stringify(apiHealthResult, null, 2)}
+                                            {JSON.stringify(vmcApiHealthResult, null, 2)}
                                         </pre>
                                     </div>
                                 )}
@@ -298,59 +302,14 @@ export default function DemoPage() {
                         </CardFooter>
                      )}
                 </Card>
-
-                 {/* Panel 3: SpamAssassin Health Check */}
-                <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-xl">
-                            <Power className="text-amber-500"/>
-                            Mini Panel de Prueba 03: SpamAssassin API Health
-                        </CardTitle>
-                        <CardDescription>
-                            Verifica la conectividad básica con la API de SpamAssassin.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button onClick={handleSpamAssassinHealthCheck} disabled={isCheckingSpamHealth}>
-                            {isCheckingSpamHealth ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
-                            Verificar Estado de SpamAssassin
-                        </Button>
-                    </CardContent>
-                     {(isCheckingSpamHealth || spamHealthResult || spamHealthError) && (
-                        <CardFooter>
-                            <div className="w-full">
-                                {isCheckingSpamHealth && (
-                                    <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                        <Loader2 className="animate-spin" />
-                                        Verificando conexión...
-                                    </div>
-                                )}
-                                {spamHealthError && (
-                                    <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
-                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Conexión</p>
-                                        <p className="mt-1 font-mono text-xs">{spamHealthError}</p>
-                                    </div>
-                                )}
-                                {spamHealthResult && (
-                                    <div className="w-full text-sm p-4 rounded-md border bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/50">
-                                        <p className="font-bold flex items-center gap-2"><CheckCircle/>Sistema en Línea</p>
-                                        <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md">
-                                            {JSON.stringify(spamHealthResult, null, 2)}
-                                        </pre>
-                                    </div>
-                                )}
-                            </div>
-                        </CardFooter>
-                    )}
-                </Card>
             </div>
             
-             {/* Panel 4: SpamAssassin Scan */}
-            <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg w-full max-w-6xl">
+            {/* New SpamAssassin Panel */}
+             <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg w-full max-w-6xl">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-xl">
                         <MailWarning className="text-amber-500"/>
-                        Mini Panel de Prueba 04: Verificador de Spam
+                        Mini Panel de Prueba 03: Clasificador de Spam
                     </CardTitle>
                     <CardDescription>
                        Prueba la API de SpamAssassin para evaluar el puntaje de spam de un correo electrónico.
@@ -358,17 +317,33 @@ export default function DemoPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1"><Label htmlFor="email-from">De:</Label><Input id="email-from" value={emailFields.from} onChange={e => handleEmailFieldChange('from', e.target.value)} placeholder="remitente@ejemplo.com"/></div>
-                            <div className="space-y-1"><Label htmlFor="email-to">Para:</Label><Input id="email-to" value={emailFields.to} onChange={e => handleEmailFieldChange('to', e.target.value)} placeholder="destinatario@ejemplo.com"/></div>
-                        </div>
-                        <div className="space-y-1"><Label htmlFor="email-subject">Asunto:</Label><Input id="email-subject" value={emailFields.subject} onChange={e => handleEmailFieldChange('subject', e.target.value)} placeholder="Asunto del correo"/></div>
-                        <div className="space-y-1"><Label htmlFor="email-body">Cuerpo:</Label><Textarea id="email-body" value={emailFields.body} onChange={e => handleEmailFieldChange('body', e.target.value)} className="h-40 font-mono text-xs" placeholder="Contenido del correo..."/></div>
+                       <div>
+                         <Button onClick={handleSpamAssassinHealthCheck} disabled={isCheckingSpamHealth} size="sm" variant="outline">
+                            {isCheckingSpamHealth ? <Loader2 className="mr-2 animate-spin"/> : <Power className="mr-2"/>}
+                            Verificar Estado de API
+                        </Button>
+                        {(isCheckingSpamHealth || spamHealthResult || spamHealthError) && (
+                          <div className="mt-2 text-xs">
+                             {isCheckingSpamHealth && <p className="flex items-center gap-1 text-muted-foreground"><Loader2 className="animate-spin"/> Verificando...</p>}
+                             {spamHealthError && <p className="text-destructive flex items-center gap-1"><AlertTriangle/> {spamHealthError}</p>}
+                             {spamHealthResult && <pre className="p-2 bg-black/30 rounded text-green-300 border border-green-500/20">{JSON.stringify(spamHealthResult, null, 2)}</pre>}
+                          </div>
+                        )}
+                       </div>
+
+                        <div className="space-y-1"><Label htmlFor="email-content">Contenido del correo (MIME/RFC822)</Label><Textarea id="email-content" value={emailContent} onChange={e => setEmailContent(e.target.value)} className="h-40 font-mono text-xs" placeholder="From: ..."/></div>
+                        
                         <div className="space-y-2">
                             <Label>Sensibilidad del Filtro ({sensitivity.toFixed(1)})</Label>
                             <Slider value={[sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={(value) => setSensitivity(value[0])}/>
                              <div className="flex justify-between text-xs text-muted-foreground"><span>Estricto</span><span>Relajado</span></div>
                         </div>
+
+                         <div className="flex items-center space-x-2">
+                            <Switch id="clamav-scan" checked={clamavScan} onCheckedChange={setClamavScan} />
+                            <Label htmlFor="clamav-scan">Activar escaneo de antivirus (ClamAV)</Label>
+                        </div>
+                        
                          <Button onClick={handleSpamScan} disabled={isScanningSpam} className="w-full">
                             {isScanningSpam ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
                             Analizar Correo
@@ -392,17 +367,17 @@ export default function DemoPage() {
                         )}
                         {spamScanResult && (
                              <div className="space-y-3 flex-grow flex flex-col">
-                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.is_spam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
-                                    <p className="text-sm font-semibold uppercase">{spamScanResult.is_spam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
-                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.threshold.toFixed(1)}</p>
+                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.isSpam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
+                                    <p className="text-sm font-semibold uppercase">{spamScanResult.isSpam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
+                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.thresholdApplied.toFixed(1)}</p>
                                     <div className="relative h-2 w-full bg-muted/50 rounded-full mt-2">
                                         <div 
-                                          className={cn("absolute h-full rounded-full", spamScanResult.is_spam ? "bg-red-500" : "bg-green-500")}
-                                          style={{width: `${(spamScanResult.score / spamScanResult.threshold) * 100}%`}}
+                                          className={cn("absolute h-full rounded-full", spamScanResult.isSpam ? "bg-red-500" : "bg-green-500")}
+                                          style={{width: `${(spamScanResult.score / spamScanResult.thresholdApplied) * 100}%`}}
                                         />
                                         <div 
                                             className="absolute top-0 h-full w-px bg-white/50"
-                                            style={{left: `${(spamScanResult.threshold / 10) * 100}%`}}
+                                            style={{left: `${(spamScanResult.thresholdApplied / 10) * 100}%`}}
                                         />
                                     </div>
                                 </div>
@@ -410,7 +385,7 @@ export default function DemoPage() {
                                      <Label>Detalles del Reporte de SpamAssassin</Label>
                                      <ScrollArea className="h-48 mt-1">
                                        <pre className="text-xs p-3 rounded-md bg-black/50 font-mono whitespace-pre-wrap">
-                                            {spamScanResult.report}
+                                            {JSON.stringify(spamScanResult.details, null, 2)}
                                         </pre>
                                      </ScrollArea>
                                  </div>
