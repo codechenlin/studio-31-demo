@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition, useEffect } from 'react';
@@ -7,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
 import { checkApiHealthAction, validateDomainWithAI } from './actions';
+import { classifyWithSpamAssassin, healthCheckSpamAssassin } from './spam-actions';
 import { type VmcAnalysisOutput } from './types';
+import { type SpamAssassinOutput, SpamAssassinInputSchema } from '@/ai/flows/spam-assassin-types';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
@@ -15,22 +18,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
-import { classifyWithSpamAssassin, healthCheckSpamAssassin } from './spam-actions';
-import { SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
-
-
-const defaultSpamEmail = `From: test@example.com
-To: user@yourdomain.com
-Subject: FREE MONEY
-
-Hello,
-
-Click here to claim your prize! This is not a scam. 100% real.
-Special offer just for you. Act now!
-
-Best regards,
-Mr. Rich
-`;
 
 
 export default function DemoPage() {
@@ -53,10 +40,10 @@ export default function DemoPage() {
     const [spamScanError, setSpamScanError] = useState<string | null>(null);
     
     const [formValues, setFormValues] = useState({
-        from: 'ofertas@spamdomain.com',
-        to: 'usuario@tudominio.com',
-        subject: 'Gana dinero rápido',
-        body: 'Hola, haz clic aquí para ganar dinero rápido...',
+        from: 'prueba@example.com',
+        to: 'destino@example.com',
+        subject: 'FREE MONEY',
+        body: 'Hola, este es un correo de prueba.',
         sensitivity: 5.0,
     });
     const [clamavScan, setClamavScan] = useState(false);
@@ -120,7 +107,7 @@ export default function DemoPage() {
                 clamav_scan: clamavScan,
             });
 
-            if (result.success) {
+            if (result.success && result.data) {
                 setSpamScanResult(result.data);
             } else {
                 setSpamScanError(result.error);
@@ -304,7 +291,7 @@ export default function DemoPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-xl">
                         <MailWarning className="text-amber-500"/>
-                        Mini Panel de Prueba 03: Verificador de Spam
+                        Mini Panel de Prueba 03: Clasificador de Spam
                     </CardTitle>
                     <CardDescription>
                        Prueba la API de SpamAssassin para evaluar el puntaje de spam de un correo electrónico.
@@ -335,65 +322,53 @@ export default function DemoPage() {
                         
                         <div className="space-y-2">
                             <Label>Sensibilidad del Filtro ({formValues.sensitivity.toFixed(1)})</Label>
-                            <Slider value={[formValues.sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={handleSensitivityChange}/>
-                             <div className="flex justify-between text-xs text-muted-foreground"><span>Estricto</span><span>Relajado</span></div>
-                        </div>
-
-                         <div className="flex items-center space-x-2">
-                            <Switch id="clamav-scan" checked={clamavScan} onCheckedChange={setClamavScan} />
-                            <Label htmlFor="clamav-scan">Activar escaneo de antivirus (ClamAV)</Label>
+                            <Slider value={[formValues.sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={handleSensitivityChange} />
                         </div>
                         
-                         <Button onClick={handleSpamScan} disabled={isScanningSpam} className="w-full">
+                        <div className="flex items-center space-x-2">
+                           <Switch id="clamav-scan" checked={clamavScan} onCheckedChange={setClamavScan} />
+                           <Label htmlFor="clamav-scan">Activar escaneo ClamAV (Antivirus)</Label>
+                        </div>
+
+                         <Button onClick={handleSpamScan} disabled={isScanningSpam}>
                             {isScanningSpam ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
-                            Analizar Correo
+                            Escanear Correo
                         </Button>
                     </div>
-                     <div className="relative p-4 rounded-lg bg-background border border-border/50 flex flex-col">
-                        <h3 className="font-semibold text-center mb-4">Resultados del Análisis</h3>
-                        {isScanningSpam && (
-                             <div className="flex-grow flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                <Loader2 className="animate-spin" />
-                                Escaneando...
-                            </div>
-                        )}
-                         {spamScanError && (
-                             <div className="flex-grow flex items-center justify-center">
-                                <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
-                                    <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Escaneo</p>
-                                    <p className="mt-1 font-mono text-xs">{spamScanError}</p>
-                                </div>
-                            </div>
-                        )}
-                        {spamScanResult && (
-                             <div className="space-y-3 flex-grow flex flex-col">
-                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.is_spam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
-                                    <p className="text-sm font-semibold uppercase">{spamScanResult.is_spam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
-                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.threshold.toFixed(1)}</p>
-                                    <div className="relative h-2 w-full bg-muted/50 rounded-full mt-2">
-                                        <div 
-                                          className={cn("absolute h-full rounded-full", spamScanResult.is_spam ? "bg-red-500" : "bg-green-500")}
-                                          style={{width: `${(spamScanResult.score / spamScanResult.threshold) * 100}%`}}
-                                        />
-                                        <div 
-                                            className="absolute top-0 h-full w-px bg-white/50"
-                                            style={{left: `${(spamScanResult.threshold / 10) * 100}%`}}
-                                        />
+                     <div className="space-y-4">
+                        {(isScanningSpam || spamScanResult || spamScanError) && (
+                            <div className="w-full">
+                                {isScanningSpam && (
+                                    <div className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="animate-spin" />
+                                        Analizando correo...
                                     </div>
-                                </div>
-                                 <div className="flex-grow">
-                                     <Label>Reporte Completo</Label>
-                                     <ScrollArea className="h-48 mt-1">
-                                       <pre className="text-xs p-3 rounded-md bg-black/50 font-mono whitespace-pre-wrap">
-                                            {spamScanResult.report}
-                                        </pre>
-                                     </ScrollArea>
-                                 </div>
-                            </div>
-                        )}
-                        {!isScanningSpam && !spamScanResult && !spamScanError && (
-                             <div className="flex-grow flex items-center justify-center text-center text-muted-foreground">
-                                <p>Los resultados del escaneo aparecerán aquí.</p>
+                                )}
+                                {spamScanError && (
+                                    <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
+                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Escaneo</p>
+                                        <p className="mt-1 font-mono text-xs">{spamScanError}</p>
+                                    </div>
+                                )}
+                                {spamScanResult && (
+                                    <div className="w-full text-sm p-4 rounded-md border bg-black/20">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <p className={cn("font-bold text-lg", spamScanResult.is_spam ? 'text-red-400' : 'text-green-400')}>
+                                                {spamScanResult.is_spam ? 'Correo Detectado como SPAM' : 'Correo Legítimo'}
+                                            </p>
+                                             <div className="text-right">
+                                                <p className="font-mono text-xl font-bold">{spamScanResult.score.toFixed(2)} / {spamScanResult.threshold.toFixed(2)}</p>
+                                                <p className="text-xs text-muted-foreground">Puntaje / Umbral</p>
+                                             </div>
+                                        </div>
+                                        <h4 className="font-semibold mb-2 text-base">Reporte Detallado:</h4>
+                                        <ScrollArea className="h-64">
+                                            <pre className="mt-2 text-xs bg-black/30 p-3 rounded-md custom-scrollbar">
+                                                {spamScanResult.report}
+                                            </pre>
+                                        </ScrollArea>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
