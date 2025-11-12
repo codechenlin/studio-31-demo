@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -29,6 +30,12 @@ import { PauseVerificationModal } from './pause-verification-modal';
 import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
+import {
+  createOrGetDomainAction,
+  updateDomainVerificationCode,
+  setDomainAsVerified,
+} from '@/app/dashboard/servers/db-actions';
+import { type Domain } from './types';
 
 
 interface SmtpConnectionModalProps {
@@ -43,6 +50,25 @@ type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
+
+const initialState = {
+  success: false,
+  message: '',
+  domain: null,
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+      <Button
+          type="submit"
+          className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
+          disabled={pending}
+        >
+           {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+        </Button>
+  )
+}
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -84,6 +110,35 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
+  const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
+
+  const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
+
+  useEffect(() => {
+    if (formState.success && formState.domain) {
+      const newDomain = formState.domain.domain_name;
+      setCurrentDomainId(formState.domain.id);
+      setDomain(newDomain);
+      
+      const newCode = generateVerificationCode();
+      setVerificationCode(newCode);
+      
+      // We do this async, no need to wait for it to move to next step
+      updateDomainVerificationCode(formState.domain.id, newCode);
+      handleGenerateDkim(true, formState.domain.id);
+      
+      setVerificationStatus('pending');
+      setCurrentStep(2);
+      
+    } else if (formState.message && !formState.success) {
+      toast({
+        title: "Error al verificar dominio",
+        description: formState.message,
+        variant: "destructive",
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState]);
 
 
   const smtpFormSchema = z.object({
@@ -118,23 +173,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
     return `${name.substring(0, maxLength)}...`;
   };
-
-  const handleStartVerification = () => {
-    if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-      toast({
-        title: "Dominio no válido",
-        description: "Por favor, introduce un nombre de dominio válido.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setVerificationCode(generateVerificationCode());
-    setVerificationStatus('pending');
-    setCurrentStep(2);
-    handleGenerateDkim(true); // Generate initial DKIM when moving to step 2
-  };
   
   const handleCheckVerification = async () => {
+    if (!currentDomainId) return;
     setVerificationStatus('verifying');
     
     const result = await verifyDomainOwnershipAction({
@@ -147,6 +188,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     if (result.success) {
+      await setDomainAsVerified(currentDomainId);
       setVerificationStatus('verified');
       setHasVerifiedDomains(true); 
       form.setValue('username', `ejemplo@${domain}`);
@@ -161,7 +203,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const handleCheckHealth = async () => {
-    if (!acceptedDkimKey) {
+    if (!currentDomainId || !acceptedDkimKey) {
       toast({
         title: "Acción Requerida",
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
@@ -191,7 +233,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       } else {
           toast({
               title: "Análisis Fallido",
-              description: result.error || "La IA no pudo procesar los registros. Revisa tu clave de API de Gemini y la configuración de red.",
+              description: result.error || "La IA no pudo procesar los registros. Revisa tu clave de API y la configuración de red.",
               variant: "destructive",
           })
       }
@@ -206,6 +248,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
 
   const handleCheckOptionalHealth = async () => {
+    if(!currentDomainId) return;
+
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
     setShowNotification(false);
@@ -217,6 +261,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (result.success && result.data) {
       const typedData = result.data as VmcAnalysisOutput;
       setDnsAnalysis(typedData);
+      
       setOptionalRecordStatus({
         mx: typedData.mx_is_valid ? 'verified' : 'failed',
         bimi: typedData.bimi_is_valid ? 'verified' : 'failed',
@@ -232,12 +277,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   };
 
-  const handleGenerateDkim = async (isInitial = false) => {
-    if (!domain) return;
+  const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
+    const targetDomainId = domainId || currentDomainId;
+    if (!domain && !targetDomainId) return;
+    const currentDomain = domain || formState.domain?.domain_name;
+    if(!currentDomain || !targetDomainId) return;
+    
     setIsGeneratingDkim(true);
     setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
-      const result = await generateDkimKeys({ domain, selector: 'daybuu' });
+      const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
       setDkimData(result);
       if (!isInitial) {
         toast({
@@ -269,6 +318,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const resetState = () => {
     setCurrentStep(1);
     setDomain('');
+    setCurrentDomainId(null);
     setVerificationCode('');
     setVerificationStatus('idle');
     setHealthCheckStatus('idle');
@@ -295,6 +345,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
+    if(!currentDomainId) return;
     setTestStatus('testing');
     setDeliveryStatus('idle');
     setTestError('');
@@ -479,11 +530,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </div>
   );
 
-  const renderStep4 = () => (
+  const renderStep1Content = () => (
+    <form action={formAction} className="h-full flex flex-col">
+        <div className="flex-grow">
+          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+          <div className="space-y-2 pt-4">
+            <Label htmlFor="domain">Tu Dominio</Label>
+            <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" defaultValue={domain} />
+            </div>
+            {formState.message && !formState.success && <p className="text-sm text-destructive mt-2">{formState.message}</p>}
+          </div>
+        </div>
+        <div className="mt-auto pt-4 flex flex-col gap-2">
+          <SubmitButton />
+          <Button type="button" variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:text-white hover:bg-[#F00000]" onClick={() => setIsCancelConfirmOpen(true)}>
+            Cancelar
+          </Button>
+        </div>
+    </form>
+  );
+
+  const renderStep4Content = () => (
     <>
       <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
       <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
-      <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-4">
+      <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-4 pr-4">
         <div className="px-8">
             <FormField control={form.control} name="host" render={({ field }) => (
                 <FormItem className="space-y-1 mb-3"><Label>Host</Label>
@@ -530,130 +604,120 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
-              <AnimatePresence mode="wait">
-              <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col h-full"
-              >
-                  {currentStep === 1 && (
-                  <>
-                      <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-                      <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                      <div className="space-y-2 pt-4 flex-grow">
-                        <Label htmlFor="domain">Tu Dominio</Label>
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
-                        </div>
-                      </div>
-                  </>
-                  )}
-                  {currentStep === 2 && (
-                  <>
-                      <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
-                      <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
-                      <div className="space-y-3 pt-4 flex-grow">
-                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                              <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                              <div className="flex justify-between items-center">
-                                  <span>@</span>
-                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
-                                      <Copy className="size-4"/>
-                                  </Button>
-                              </div>
-                          </div>
-                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                              <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                              <div className="flex justify-between items-center">
-                                  <p className="break-all pr-2">{txtRecordValue}</p>
-                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
-                                      <Copy className="size-4"/>
-                                  </Button>
-                              </div>
-                          </div>
-                      </div>
-                  </>
-                  )}
-                  {currentStep === 3 && (
-                      <>
-                      <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
-                      <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
-                      <div className="space-y-3 mt-4 flex-grow">
-                          {healthCheckStep === 'mandatory' ? (
-                          <>
-                            <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                            <div className="pt-2 text-xs text-muted-foreground">
-                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
-                                <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
-                                <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
-                             </div>
-                          </>
-                          ) : (
-                          <>
-                             <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
-                             {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
-                             {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
-                             {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
-                             <div className="pt-2 text-xs text-muted-foreground">
-                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
-                                <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
-                                <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
-                            </div>
-                          </>
-                          )}
-                           
-                           {dnsAnalysis && (
-                               <div className="pt-4 flex justify-center">
-                                <div className="relative">
-                                    <button
-                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
-                                        onClick={() => {
-                                            setIsAnalysisModalOpen(true);
-                                            setShowNotification(false);
-                                        }}
-                                    >
-                                        <div className="ai-core-border-animation group-hover:hidden"></div>
-                                        <div className="ai-core group-hover:scale-125"></div>
-                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                            <div className="flex gap-1 items-end h-4">
-                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
-                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
-                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
-                                            </div>
-                                            <span className="text-sm font-semibold">Análisis de la IA</span>
-                                        </div>
-                                    </button>
-                                     {showNotification && (
-                                        <div 
-                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                            style={{ backgroundColor: '#F00000' }}
-                                        >
-                                            !
-                                        </div>
-                                    )}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 h-full">
+              <div className="h-full p-8 flex flex-col justify-start">
+                <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col h-full"
+                >
+                    {currentStep === 1 && renderStep1Content()}
+                    {currentStep === 2 && (
+                    <>
+                        <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
+                        <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
+                        <div className="space-y-3 pt-4 flex-grow">
+                            <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                                <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                                <div className="flex justify-between items-center">
+                                    <span>@</span>
+                                    <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
+                                        <Copy className="size-4"/>
+                                    </Button>
                                 </div>
+                            </div>
+                            <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                                <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
+                                <div className="flex justify-between items-center">
+                                    <p className="break-all pr-2">{txtRecordValue}</p>
+                                    <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
+                                        <Copy className="size-4"/>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                    )}
+                    {currentStep === 3 && (
+                        <>
+                        <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
+                        <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
+                        <div className="space-y-3 mt-4 flex-grow">
+                            {healthCheckStep === 'mandatory' ? (
+                            <>
+                              <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
+                              {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
+                              {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
+                              {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
+                              <div className="pt-2 text-xs text-muted-foreground">
+                                  <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                  <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
+                                  <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
+                                  <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                                </div>
-                           )}
+                            </>
+                            ) : (
+                            <>
+                               <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
+                               {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
+                               {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
+                               {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
+                               <div className="pt-2 text-xs text-muted-foreground">
+                                  <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                  <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
+                                  <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
+                                  <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
+                              </div>
+                            </>
+                            )}
+                             
+                             {dnsAnalysis && (
+                                 <div className="pt-4 flex justify-center">
+                                  <div className="relative">
+                                      <button
+                                          className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                          onClick={() => {
+                                              setIsAnalysisModalOpen(true);
+                                              setShowNotification(false);
+                                          }}
+                                      >
+                                          <div className="ai-core-border-animation group-hover:hidden"></div>
+                                          <div className="ai-core group-hover:scale-125"></div>
+                                          <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                              <div className="flex gap-1 items-end h-4">
+                                                  <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                                  <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                                  <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                              </div>
+                                              <span className="text-sm font-semibold">Análisis de la IA</span>
+                                          </div>
+                                      </button>
+                                       {showNotification && (
+                                          <div 
+                                              className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                              style={{ backgroundColor: '#F00000' }}
+                                          >
+                                              !
+                                          </div>
+                                      )}
+                                  </div>
+                                 </div>
+                             )}
 
-                      </div>
-                      </>
-                  )}
-                  {currentStep === 4 && renderStep4()}
-              </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="md:col-span-1 h-full">
-              {renderRightPanelContent()}
+                        </div>
+                        </>
+                    )}
+                    {currentStep === 4 && renderStep4Content()}
+                </motion.div>
+                </AnimatePresence>
+              </div>
+              <div className="h-full">
+                {renderRightPanelContent()}
+              </div>
             </div>
         </DialogContent>
       </Form>
@@ -705,16 +769,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 >
                 {currentStep === 1 && (
                   <div className="text-center flex-grow flex flex-col justify-center">
-                    <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
-                    <h4 className="font-bold">Empecemos</h4>
-                    <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
-                     <Button
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
-                        onClick={handleStartVerification}
-                        disabled={!domain}
-                      >
-                        Siguiente <ArrowRight className="ml-2"/>
-                      </Button>
+                    {/* Placeholder for when step 1 content is in the left panel */}
                   </div>
                 )}
                 {currentStep === 2 && (
@@ -1709,5 +1764,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    

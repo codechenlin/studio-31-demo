@@ -5,15 +5,35 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { type Domain } from './types';
 
-export async function createOrGetDomain(domainName: string): Promise<{ success: boolean; data?: Domain; error?: string }> {
+interface FormState {
+  success: boolean;
+  message: string;
+  domain?: Domain | null;
+}
+
+export async function createOrGetDomainAction(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   const supabase = createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-      console.error('User not authenticated in createOrGetDomain');
-      return { success: false, error: 'Usuario no autenticado. Por favor, inicie sesión de nuevo.' };
+    return { 
+      success: false, 
+      message: 'Usuario no autenticado. Por favor, inicie sesión de nuevo.' 
+    };
   };
+  
+  const domainName = formData.get('domain') as string;
+
+  if (!domainName || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domainName)) {
+      return { 
+        success: false, 
+        message: "Por favor, introduce un nombre de dominio válido." 
+      };
+  }
 
   // First, try to find the domain for the current user.
   let { data: existingDomain, error: fetchError } = await supabase
@@ -24,13 +44,14 @@ export async function createOrGetDomain(domainName: string): Promise<{ success: 
     .single();
 
   if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine.
-    console.error('Error fetching domain in createOrGetDomain:', fetchError);
-    return { success: false, error: 'Error al buscar el dominio: ' + fetchError.message };
+    console.error('Error fetching domain:', fetchError);
+    return { success: false, message: 'Error al buscar el dominio: ' + fetchError.message };
   }
   
   // If the domain already exists for this user, return it.
   if (existingDomain) {
-    return { success: true, data: existingDomain };
+    revalidatePath('/dashboard/servers');
+    return { success: true, message: 'Dominio encontrado.', domain: existingDomain };
   }
 
   // If it doesn't exist, create it.
@@ -41,13 +62,14 @@ export async function createOrGetDomain(domainName: string): Promise<{ success: 
     .single();
 
   if (insertError) {
-    console.error('Error creating domain in createOrGetDomain:', insertError);
-    return { success: false, error: 'Error al crear el dominio: ' + insertError.message };
+    console.error('Error creating domain:', insertError);
+    return { success: false, message: 'Error al crear el dominio: ' + insertError.message };
   }
   
   revalidatePath('/dashboard/servers');
-  return { success: true, data: newDomain };
+  return { success: true, message: 'Dominio creado con éxito.', domain: newDomain };
 }
+
 
 export async function updateDomainVerificationCode(domainId: string, verificationCode: string) {
   const supabase = createClient();
