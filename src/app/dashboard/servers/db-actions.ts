@@ -1,12 +1,11 @@
 
 'use server';
 
-import { createClient } from '@/lib/supabase/actions';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { type Domain } from './types';
 
 export async function createOrGetDomain(domainName: string): Promise<{ success: boolean; data?: Domain; error?: string }> {
-  // Always create a new client inside the Server Action
   const supabase = createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
