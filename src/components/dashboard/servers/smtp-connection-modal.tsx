@@ -54,7 +54,7 @@ const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toSt
 const initialState = {
   success: false,
   message: '',
-  domain: null,
+  domain: null as Domain | null,
 };
 
 function SubmitButton() {
@@ -112,7 +112,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
 
-  const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
+  const [formState, formAction] = React.useActionState(createOrGetDomainAction, initialState);
 
   useEffect(() => {
     if (formState.success && formState.domain) {
@@ -509,8 +509,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
-
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -528,73 +526,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           </div>
         </div>
     </div>
-  );
-
-  const renderStep1Content = () => (
-    <form action={formAction} className="h-full flex flex-col">
-        <div className="flex-grow">
-          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-          <div className="space-y-2 pt-4">
-            <Label htmlFor="domain">Tu Dominio</Label>
-            <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" defaultValue={domain} />
-            </div>
-            {formState.message && !formState.success && <p className="text-sm text-destructive mt-2">{formState.message}</p>}
-          </div>
-        </div>
-        <div className="mt-auto pt-4 flex flex-col gap-2">
-          <SubmitButton />
-          <Button type="button" variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:text-white hover:bg-[#F00000]" onClick={() => setIsCancelConfirmOpen(true)}>
-            Cancelar
-          </Button>
-        </div>
-    </form>
-  );
-
-  const renderStep4Content = () => (
-    <>
-      <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
-      <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
-      <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-4 pr-4">
-        <div className="px-8">
-            <FormField control={form.control} name="host" render={({ field }) => (
-                <FormItem className="space-y-1 mb-3"><Label>Host</Label>
-                    <FormControl><div className="relative flex items-center"><ServerIcon className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
-                </FormItem>
-            )}/>
-        </div>
-        <div className="px-8">
-            <FormField control={form.control} name="port" render={({ field }) => (
-                <FormItem className="space-y-1 mb-3"><Label>Puerto</Label>
-                    <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
-                </FormItem>
-            )}/>
-        </div>
-        <div className="px-8">
-            <FormField control={form.control} name="encryption" render={({ field }) => (
-                <FormItem className="mb-3"><Label>Cifrado</Label><FormControl>
-                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                </RadioGroup>
-                </FormControl><FormMessage /></FormItem>
-            )}/>
-        </div>
-        <div className="px-8">
-            <FormField control={form.control} name="username" render={({ field }) => (
-                <FormItem className="space-y-1 mb-3"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-            )}/>
-        </div>
-        <div className="px-8">
-            <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem className="space-y-1 mb-3"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-            )}/>
-        </div>
-      </div>
-    </>
   );
 
   const renderContent = () => {
@@ -615,7 +546,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     transition={{ duration: 0.3 }}
                     className="flex flex-col h-full"
                 >
-                    {currentStep === 1 && renderStep1Content()}
+                    {currentStep === 1 && (
+                      <form action={formAction} id="domain-form" className="h-full flex flex-col">
+                        <div className="flex-grow">
+                          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+                          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                          <div className="space-y-2 pt-4">
+                            <Label htmlFor="domain">Tu Dominio</Label>
+                            <div className="relative">
+                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" defaultValue={domain} onChange={e => setDomain(e.target.value)} />
+                            </div>
+                            {formState.message && !formState.success && <p className="text-sm text-destructive mt-2">{formState.message}</p>}
+                          </div>
+                        </div>
+                      </form>
+                    )}
                     {currentStep === 2 && (
                     <>
                         <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
@@ -711,7 +657,39 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         </div>
                         </>
                     )}
-                    {currentStep === 4 && renderStep4Content()}
+                    {currentStep === 4 && (
+                      <div className="flex-grow flex flex-col">
+                        <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
+                        <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
+                        <ScrollArea className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-6 pr-6 -ml-8 pl-8 mt-4">
+                            <FormField control={form.control} name="host" render={({ field }) => (
+                                <FormItem className="space-y-1 mb-3"><Label>Host</Label>
+                                    <FormControl><div className="relative flex items-center"><ServerIcon className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="port" render={({ field }) => (
+                                <FormItem className="space-y-1 mb-3"><Label>Puerto</Label>
+                                    <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="encryption" render={({ field }) => (
+                                <FormItem className="mb-3"><Label>Cifrado</Label><FormControl>
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                                </RadioGroup>
+                                </FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="username" render={({ field }) => (
+                                <FormItem className="space-y-1 mb-3"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="password" render={({ field }) => (
+                                <FormItem className="space-y-1 mb-3"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+                            )}/>
+                        </ScrollArea>
+                      </div>
+                    )}
                 </motion.div>
                 </AnimatePresence>
               </div>
@@ -769,7 +747,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 >
                 {currentStep === 1 && (
                   <div className="text-center flex-grow flex flex-col justify-center">
-                    {/* Placeholder for when step 1 content is in the left panel */}
+                    <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
+                    <h4 className="font-bold">Empecemos</h4>
+                    <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                   </div>
                 )}
                 {currentStep === 2 && (
@@ -1011,6 +991,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     </div>
                 )}
                 <div className="mt-auto pt-4 flex flex-col gap-2">
+                    {currentStep === 1 && (
+                      <>
+                        <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]">
+                          <SubmitButtonContent />
+                        </Button>
+                        <Button type="button" variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:text-white hover:bg-[#F00000]" onClick={() => setIsCancelConfirmOpen(true)}>
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
                         className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
@@ -1146,6 +1136,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     );
   };
   
+    const SubmitButtonContent = () => {
+    const { pending } = useFormStatus();
+    return (
+      <>
+        {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2" /></>}
+      </>
+    );
+  };
+
   return (
     <>
       <ToastProvider>
@@ -1764,3 +1763,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
