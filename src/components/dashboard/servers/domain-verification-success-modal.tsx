@@ -2,9 +2,9 @@
 "use client";
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck } from 'lucide-react';
+import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck, Globe, Dna, GitBranch, MailWarning } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -13,30 +13,55 @@ interface DomainVerificationSuccessModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   domain: string;
-  mxVerified: boolean;
+  dnsStatus: {
+    spf?: boolean;
+    dkim?: boolean;
+    dmarc?: boolean;
+    mx?: boolean;
+    bimi?: boolean;
+    vmc?: boolean;
+  }
 }
 
-const FeatureCard = ({ icon: Icon, title, description, color, delay }: { icon: React.ElementType, title: string, description: string, color: string, delay: number }) => (
+const FeatureCard = ({ icon: Icon, title, description, color, delay, enabled }: { icon: React.ElementType, title: string, description: string, color: string, delay: number, enabled: boolean }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay, duration: 0.5 }}
-        className="p-3 rounded-lg bg-black/20 border"
-        style={{ borderColor: `${color}4D` }}
+        className={cn(
+            "p-3 rounded-lg bg-black/20 border transition-all",
+            enabled ? "border-green-500/30" : "border-red-500/30"
+        )}
     >
         <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md" style={{ backgroundColor: `${color}26`}}>
-                <Icon className="size-5" style={{ color }}/>
+            <div className={cn("p-2 rounded-md", enabled ? "bg-green-900/40" : "bg-red-900/40")}>
+                <Icon className={cn("size-5", enabled ? "text-green-300" : "text-red-300")}/>
             </div>
             <div>
-                <h4 className="font-semibold text-sm text-white">{title}</h4>
+                <h4 className={cn("font-semibold text-sm", enabled ? "text-white" : "text-white/70 line-through")}>{title}</h4>
                 <p className="text-xs text-white/60">{description}</p>
             </div>
         </div>
     </motion.div>
 );
 
-export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, mxVerified }: DomainVerificationSuccessModalProps) {
+const RecordStatus = ({ label, icon: Icon, verified, description }: { label: string, icon: React.ElementType, verified: boolean, description: string }) => (
+    <div className="relative p-2 pl-3 border-l-2" style={{ borderColor: verified ? '#00CB07' : '#F00000' }}>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Icon className={cn("size-4", verified ? "text-green-400" : "text-red-400")} />
+                <span className="font-semibold text-sm">{label}</span>
+            </div>
+            {verified ? 
+                <CheckCircle className="size-5 text-green-400" style={{ filter: 'drop-shadow(0 0 4px #00CB07)'}}/> : 
+                <XCircle className="size-5 text-red-400" style={{ filter: 'drop-shadow(0 0 4px #F00000)'}}/>
+            }
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 pl-6">{description}</p>
+    </div>
+);
+
+export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, dnsStatus }: DomainVerificationSuccessModalProps) {
 
   const truncateDomain = (name: string, maxLength: number = 30): string => {
     if (name.length <= maxLength) {
@@ -44,89 +69,110 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, m
     }
     return `${name.substring(0, maxLength)}...`;
   };
+  
+  const allMandatoryVerified = dnsStatus.spf && dnsStatus.dkim && dnsStatus.dmarc;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-3xl bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl w-full bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
          <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-         <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-green-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+         <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-green-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
-        <div className="p-8 flex flex-col items-center text-center z-10">
-            <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 15 }}
-                className="relative w-28 h-28 mb-6"
-            >
-                <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
-                    <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
-                </svg>
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    <ShieldCheck className="size-20 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
-                </div>
-            </motion.div>
-            
-            <DialogHeader>
-                <DialogTitle className="text-3xl font-bold">¡Dominio Verificado!</DialogTitle>
-                <DialogDescription className="text-lg text-green-200/80 mt-2">
-                    El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
-                </DialogDescription>
-            </DialogHeader>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }} className="w-full max-w-md my-8">
-                 <div className={cn(
-                    "p-3 rounded-lg border flex items-center justify-between gap-3 text-sm font-semibold transition-all duration-500",
-                    mxVerified
-                        ? "bg-green-500/10 border-green-500/30 text-green-300" 
-                        : "bg-red-500/10 border-red-500/30 text-red-300"
-                )}>
-                    <p>Estado del Registro MX:</p>
-                    <div className="flex items-center gap-2">
-                        {mxVerified ? <CheckCircle className="size-5"/> : <XCircle className="size-5"/>}
-                        <span className="font-bold">{mxVerified ? 'VERIFICADO' : 'INVÁLIDO'}</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20">
+            {/* Column 1: Success Message */}
+            <div className="p-8 flex flex-col items-center text-center z-10">
+                <motion.div 
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 15 }}
+                    className="relative w-32 h-32 mb-6"
+                >
+                    <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
+                        <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
+                    </svg>
+                     <div className="absolute inset-0 flex items-center justify-center">
+                        <ShieldCheck className="size-24 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
                     </div>
-                 </div>
-            </motion.div>
-            
-            <div className="text-left max-w-2xl mx-auto space-y-6">
-                {mxVerified ? (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-                        <p className="text-center text-white/90">
-                           ¡Felicidades! Tu dominio está completamente configurado para <strong className="text-white">enviar y recibir</strong> correos. Ahora, cada correo que añadas, como <strong className="font-mono text-cyan-300">ventas@{truncateDomain(domain, 15)}</strong>, desbloqueará todo el poder de nuestro ecosistema.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                            <FeatureCard icon={Bot} title="Análisis Neuronal de Contenido" description="La IA evalúa cada correo para detectar amenazas." color="#00ADEC" delay={0.8} />
-                            <FeatureCard icon={ShieldCheck} title="Filtro Anti-Spam Adaptativo" description="Aprende de tus preferencias para un buzón más limpio." color="#AD00EC" delay={0.9} />
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-                        <p className="text-center text-white/90">
-                            Has verificado la propiedad del dominio, ¡genial! Ya puedes <strong className="text-white">enviar</strong> correos desde direcciones como <strong className="font-mono text-cyan-300">ventas@{truncateDomain(domain, 15)}</strong>.
-                        </p>
-                        <div className="mt-4 p-4 rounded-lg bg-amber-900/50 border border-amber-500/30 text-center">
-                            <h4 className="font-bold text-amber-300">Funcionalidad de Recepción Desactivada</h4>
-                            <p className="text-sm text-amber-200/80 mt-1">Para poder recibir correos y activar nuestro <strong className="text-white">Escudo Neuronal</strong> (Antivirus, Anti-Spam y Análisis de IA), necesitas configurar tu registro MX correctamente.</p>
-                        </div>
-                    </motion.div>
-                )}
+                </motion.div>
+                
+                <DialogHeader>
+                    <DialogTitle className="text-3xl font-bold">¡Dominio Verificado!</DialogTitle>
+                    <DialogDescription className="text-lg text-green-200/80 mt-2">
+                        El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <p className="text-sm text-white/70 mt-4">
+                    Has completado la autenticación de tu dominio. Ahora puedes configurar direcciones de correo SMTP y comenzar a enviar campañas con la máxima confianza y entregabilidad.
+                </p>
             </div>
-            
+
+            {/* Column 2: DNS Status */}
+            <div className="p-8 flex flex-col z-10">
+                <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="font-semibold text-white mb-2">Registros Obligatorios</h4>
+                        <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
+                           <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
+                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={!!dnsStatus.spf} description="Autorización de servidores de envío."/>
+                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={!!dnsStatus.dkim} description="Firma digital para autenticidad."/>
+                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={!!dnsStatus.dmarc} description="Política de protección y reporte."/>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-white mb-2">Registros Opcionales</h4>
+                         <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
+                           <RecordStatus label="Registro MX" icon={dnsStatus.mx ? CheckCircle : MailWarning} verified={!!dnsStatus.mx} description="Requerido para recibir correos."/>
+                           <RecordStatus label="Registro BIMI" icon={dnsStatus.bimi ? CheckCircle : GitBranch} verified={!!dnsStatus.bimi} description="Muestra tu logo en los buzones."/>
+                           <RecordStatus label="Certificado VMC" icon={dnsStatus.vmc ? CheckCircle : GitBranch} verified={!!dnsStatus.vmc} description="Verifica tu logo como marca registrada."/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Column 3: Unlocked Features */}
+            <div className="p-8 flex flex-col z-10 bg-black/20">
+                <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2"><Bot />Capacidades Desbloqueadas</h3>
+                 {dnsStatus.mx ? (
+                    <div className="space-y-4">
+                       <p className="text-sm text-green-200/80">
+                         ¡Atención, piloto! Con tu registro MX apuntando a nuestra constelación de servidores, tu dominio no solo enviará correos a la velocidad de la luz, sino que también se ha convertido en una fortaleza digital. Tu buzón de entrada ahora está protegido por nuestro <strong className="text-white">Escudo Neuronal Activo</strong>.
+                       </p>
+                        <FeatureCard icon={ShieldCheck} title="Antivirus y Anti-Phishing Cuántico" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
+                        <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." color="#00CB07" delay={0.9} enabled={true} />
+                        <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." color="#00CB07" delay={1.0} enabled={true} />
+                    </div>
+                 ) : (
+                    <div className="space-y-4">
+                        <p className="text-sm text-amber-200/80">
+                            Has encendido los motores de propulsión y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
+                        </p>
+                         <FeatureCard icon={ShieldCheck} title="Antivirus y Anti-Phishing Cuántico" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
+                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." color="#F00000" delay={0.9} enabled={false} />
+                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." color="#F00000" delay={1.0} enabled={false} />
+                         <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                            <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de Mailflow AI.
+                        </p>
+                    </div>
+                 )}
+                 <div className="mt-auto pt-6">
+                    <Separator className="bg-green-500/20 mb-4"/>
+                    <p className="text-xs text-muted-foreground">Recuerda mantener el registro TXT de verificación en tu DNS para que tu dominio permanezca activo.</p>
+                 </div>
+            </div>
         </div>
-         <DialogFooter className="p-6 bg-black/30 border-t border-green-500/20 z-10">
-            <Button
-              onClick={() => onOpenChange(false)}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg h-12 hover:opacity-90"
-            >
-              <Check className="mr-2"/>
-              Aceptar y Continuar
-            </Button>
+        <DialogFooter className="p-4 bg-black/50 border-t border-green-500/20 z-10">
+          <Button
+            onClick={() => onOpenChange(false)}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg h-12 hover:opacity-90"
+          >
+            <Check className="mr-2"/>
+            Aceptar y Continuar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-
-    

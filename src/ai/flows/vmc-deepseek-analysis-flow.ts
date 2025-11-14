@@ -35,7 +35,12 @@ async function fetchDomainValidation(domain: string): Promise<{ success: boolean
     });
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => 'No se pudo leer el cuerpo del error.');
+      let errorBody = 'No se pudo leer el cuerpo del error.';
+      try {
+        errorBody = await response.text();
+      } catch (textError) {
+        // Ignore error, use default message
+      }
       const errorMessage = `La API externa devolvió un error: ${response.status} ${response.statusText}. Cuerpo: ${errorBody}`;
       return { success: false, data: { error: errorMessage, rawBody: errorBody } };
     }
@@ -79,28 +84,28 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   const validationResponse = await fetchDomainValidation(input.domain);
   
   // 2. Prepare the data to be sent to the AI (either success data or error data)
-  const dataToAnalyze = validationResponse.success ? validationResponse.data : validationResponse.data;
+  const dataToAnalyze = validationResponse.data;
   
-  // 3. Perform our own MX record check and extract priority
-  const mxRecords = validationResponse.success && Array.isArray(dataToAnalyze.mx?.records) ? dataToAnalyze.mx.records : [];
-  const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
+  // If the API call was successful, augment the data with our own MX check
+  if (validationResponse.success) {
+      const mxRecords = Array.isArray(dataToAnalyze.mx?.records) ? dataToAnalyze.mx.records : [];
+      const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
+      dataToAnalyze.mx_points_to_daybuu = !!daybuuMxRecord;
+      dataToAnalyze.mx_priority = daybuuMxRecord ? daybuuMxRecord.priority : null;
+  }
 
-  dataToAnalyze.mx_points_to_daybuu = !!daybuuMxRecord;
-  dataToAnalyze.mx_priority = daybuuMxRecord ? daybuuMxRecord.priority : null;
-
-
-  // 4. Get the main prompt and construct the final prompt for the AI
+  // 3. Get the main prompt and construct the final prompt for the AI
   const vmcPromptTemplate = await getVmcAnalysisPrompt();
   const prompt = `${vmcPromptTemplate}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(dataToAnalyze, null, 2)}\n\`\`\``;
   
   try {
-    // 5. Call the AI with the constructed prompt
+    // 4. Call the AI with the constructed prompt
     const rawResponse = await deepseekChat(prompt, {
       apiKey: aiConfig.apiKey,
       model: aiConfig.modelName || "deepseek-coder",
     });
     
-    // 6. Extract the analysis text and the JSON block from the AI's response
+    // 5. Extract the analysis text and the JSON block from the AI's response
     let jsonString = '';
     const jsonBlockMatch = rawResponse.match(/<<<JSON_START>>>([\s\S]*?)<<<JSON_END>>>/);
     
@@ -122,12 +127,12 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     const analysisTextMatch = rawResponse.match(/(.*?)(?:<<<JSON_START>>>|```json)/s);
     const analysisText = analysisTextMatch ? analysisTextMatch[1].trim() : 'Análisis no proporcionado.';
 
-    // 7. Parse and validate the JSON output
+    // 6. Parse and validate the JSON output
     try {
         const parsedJson = JSON.parse(jsonString);
         const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
         
-        // 8. Combine the analysis text with the validated JSON data
+        // 7. Combine the analysis text with the validated JSON data
         return {
             ...validatedOutput,
             detailed_analysis: analysisText
@@ -142,5 +147,3 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
   }
 }
-
-    

@@ -16,6 +16,14 @@ import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/d
 
 
 type ProviderStatus = 'ok' | 'error';
+type DnsStatus = {
+    spf?: boolean;
+    dkim?: boolean;
+    dmarc?: boolean;
+    mx?: boolean;
+    bimi?: boolean;
+    vmc?: boolean;
+};
 
 const initialProviders = [
   {
@@ -120,7 +128,7 @@ export default function ServersPage() {
   const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successModalData, setSuccessModalData] = useState<{domain: string, mxVerified: boolean} | null>(null);
+  const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
@@ -159,9 +167,9 @@ export default function ServersPage() {
     setIsDnsModalOpen(true);
   };
   
-  const handleVerificationComplete = (domain: string, mxVerified: boolean) => {
+  const handleVerificationComplete = (domain: string, dnsStatus: DnsStatus) => {
     setIsSmtpModalOpen(false);
-    setSuccessModalData({ domain, mxVerified });
+    setSuccessModalData({ domain, dnsStatus });
     setTimeout(() => {
       setIsSuccessModalOpen(true);
     }, 300); // Small delay for smoother transition
@@ -187,7 +195,7 @@ export default function ServersPage() {
             isOpen={isSuccessModalOpen}
             onOpenChange={setIsSuccessModalOpen}
             domain={successModalData.domain}
-            mxVerified={successModalData.mxVerified}
+            dnsStatus={successModalData.dnsStatus}
         />
     )}
 
@@ -365,5 +373,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-    
