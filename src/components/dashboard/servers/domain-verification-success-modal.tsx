@@ -77,8 +77,32 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
          <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-green-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
         <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20">
-            {/* Column 1: Success Message */}
-            <div className="p-8 flex flex-col items-center text-center z-10 justify-between">
+            {/* Column 1: DNS Status */}
+            <div className="p-8 flex flex-col z-10">
+                <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="font-semibold text-white mb-2">Registros Obligatorios</h4>
+                        <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
+                           <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
+                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={true} description="Autorización de servidores de envío."/>
+                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={true} description="Firma digital para autenticidad."/>
+                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={true} description="Política de protección y reporte."/>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-white mb-2">Registros Opcionales</h4>
+                         <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
+                           <RecordStatus label="Registro MX" icon={dnsStatus.mx ? CheckCircle : MailWarning} verified={!!dnsStatus.mx} description="Requerido para recibir correos."/>
+                           <RecordStatus label="Registro BIMI" icon={dnsStatus.bimi ? CheckCircle : GitBranch} verified={!!dnsStatus.bimi} description="Muestra tu logo en los buzones."/>
+                           <RecordStatus label="Certificado VMC" icon={dnsStatus.vmc ? CheckCircle : GitBranch} verified={!!dnsStatus.vmc} description="Verifica tu logo como marca registrada."/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Column 2: Success Message */}
+             <div className="p-8 flex flex-col items-center text-center z-10 justify-between">
                 <div/>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -119,30 +143,6 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                 </div>
             </div>
 
-            {/* Column 2: DNS Status */}
-            <div className="p-8 flex flex-col z-10">
-                <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
-                <div className="space-y-4">
-                    <div>
-                        <h4 className="font-semibold text-white mb-2">Registros Obligatorios</h4>
-                        <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
-                           <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
-                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={dnsStatus.spf ?? false} description="Autorización de servidores de envío."/>
-                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={dnsStatus.dkim ?? false} description="Firma digital para autenticidad."/>
-                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={dnsStatus.dmarc ?? false} description="Política de protección y reporte."/>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-white mb-2">Registros Opcionales</h4>
-                         <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
-                           <RecordStatus label="Registro MX" icon={dnsStatus.mx ? CheckCircle : MailWarning} verified={!!dnsStatus.mx} description="Requerido para recibir correos."/>
-                           <RecordStatus label="Registro BIMI" icon={dnsStatus.bimi ? CheckCircle : GitBranch} verified={!!dnsStatus.bimi} description="Muestra tu logo en los buzones."/>
-                           <RecordStatus label="Certificado VMC" icon={dnsStatus.vmc ? CheckCircle : GitBranch} verified={!!dnsStatus.vmc} description="Verifica tu logo como marca registrada."/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Column 3: Unlocked Features */}
             <div className="p-8 flex flex-col z-10 bg-black/20">
                 <h3 className="text-xl font-bold text-cyan-300 mb-4 flex items-center gap-2"><Bot />Capacidades Desbloqueadas</h3>
@@ -151,7 +151,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                        <p className="text-sm text-green-200/80">
                          ¡Atención, piloto! Con tu registro MX apuntando a nuestra constelación de servidores, tu dominio no solo enviará correos a la velocidad de la luz, sino que también se ha convertido en una fortaleza digital. Tu buzón de entrada ahora está protegido por nuestro <strong className="text-white">Escudo Neuronal Activo</strong>.
                        </p>
-                        <FeatureCard icon={ShieldCheck} title="Antivirus y Anti-Phishing Cuántico" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
+                        <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." color="#00CB07" delay={0.9} enabled={true} />
                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." color="#00CB07" delay={1.0} enabled={true} />
                     </div>
@@ -160,7 +160,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                         <p className="text-sm text-amber-200/80">
                            Has encendido los motores de red y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
-                         <FeatureCard icon={ShieldCheck} title="Antivirus y Anti-Phishing Cuántico" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
+                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." color="#F00000" delay={0.9} enabled={false} />
                          <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." color="#F00000" delay={1.0} enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
