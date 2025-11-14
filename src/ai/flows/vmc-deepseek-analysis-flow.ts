@@ -87,7 +87,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   const dataToAnalyze = validationResponse.data;
   
   // If the API call was successful, augment the data with our own MX check
-  if (validationResponse.success) {
+  if (validationResponse.success && dataToAnalyze.mx) {
       const mxRecords = Array.isArray(dataToAnalyze.mx?.records) ? dataToAnalyze.mx.records : [];
       const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
       dataToAnalyze.mx_points_to_daybuu = !!daybuuMxRecord;
@@ -147,3 +147,4 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
   }
 }
+
