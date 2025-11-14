@@ -94,6 +94,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
+  
+  const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
 
   const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
 
@@ -439,11 +442,134 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
   const renderContent = () => {
     return (
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-2 gap-0 h-[99vh]" showCloseButton={false}>
-            <div className="hidden md:block h-full">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
+            <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
-            <div className="h-full">
+            <div className="md:col-span-1 h-full p-8 flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+              <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col h-full"
+              >
+                  {currentStep === 1 && (
+                      <form action={formAction} id="domain-form" className="flex flex-col h-full">
+                          <div className="flex-grow">
+                            <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+                            <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                            <div className="space-y-2 pt-4">
+                                <Label htmlFor="domain">Tu Dominio</Label>
+                                <div className="relative">
+                                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                    <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
+                                </div>
+                            </div>
+                          </div>
+                      </form>
+                  )}
+                  {currentStep === 2 && (
+                  <div className="flex-grow flex flex-col">
+                      <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
+                      <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
+                      <div className="space-y-3 pt-4 flex-grow">
+                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                              <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                              <div className="flex justify-between items-center">
+                                  <span>@</span>
+                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
+                                      <Copy className="size-4"/>
+                                  </Button>
+                              </div>
+                          </div>
+                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                              <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
+                              <div className="flex justify-between items-center">
+                                  <p className="break-all pr-2">{txtRecordValue}</p>
+                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
+                                      <Copy className="size-4"/>
+                                  </Button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  )}
+                  {currentStep === 3 && (
+                      <div className="flex flex-col h-full">
+                      <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
+                      <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
+                      <div className="space-y-3 mt-4 flex-grow">
+                          {healthCheckStep === 'mandatory' ? (
+                          <>
+                            <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
+                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
+                            <div className="pt-2 text-xs text-muted-foreground">
+                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
+                                <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
+                                <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                             </div>
+                          </>
+                          ) : (
+                          <>
+                             <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
+                             {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
+                             {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
+                             {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
+                             <div className="pt-2 text-xs text-muted-foreground">
+                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
+                                <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
+                                <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
+                            </div>
+                          </>
+                          )}
+                           
+                           {dnsAnalysis && (
+                               <div className="pt-4 flex justify-center">
+                                <div className="relative">
+                                    <button
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                        onClick={() => {
+                                            setIsAnalysisModalOpen(true);
+                                            setShowNotification(false);
+                                        }}
+                                    >
+                                        <div className="ai-core-border-animation group-hover:hidden"></div>
+                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                            <div className="flex gap-1 items-end h-4">
+                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                            </div>
+                                            <span className="text-sm font-semibold">Análisis de la IA</span>
+                                        </div>
+                                    </button>
+                                     {showNotification && (
+                                        <div 
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            style={{ backgroundColor: '#F00000' }}
+                                        >
+                                            !
+                                        </div>
+                                    )}
+                                </div>
+                               </div>
+                           )}
+
+                      </div>
+                      </div>
+                  )}
+              </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className="md:col-span-1 h-full">
               {renderRightPanelContent()}
             </div>
         </DialogContent>
@@ -877,6 +1003,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
+        <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
         <DnsInfoModal
             recordType={activeInfoModal}
             domain={domain}
@@ -1338,5 +1466,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
+    
 
     
