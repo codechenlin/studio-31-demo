@@ -28,6 +28,7 @@ import { PauseVerificationModal } from './pause-verification-modal';
 import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
+import { DomainInfoModal } from './domain-info-modal';
 import {
   createOrGetDomainAction,
   updateDomainVerificationCode,
@@ -81,6 +82,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
+  const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
+  const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
 
   const [optionalRecordStatus, setOptionalRecordStatus] = useState({
       mx: 'idle' as HealthCheckStatus,
@@ -497,12 +500,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                       formState.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
                                     )}
                                   >
-                                    <div className="absolute top-0 left-0 w-1.5 h-full" style={{background: `linear-gradient(to bottom, ${formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F07000' : '#FFAB00'})`}}/>
-                                    <div className="absolute -top-1 -right-1 w-20 h-20 opacity-10">
-                                      <div className="absolute inset-0 border-2 border-dashed rounded-full animate-spin-slow" style={{borderColor: formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}} />
-                                    </div>
+                                    <div className="absolute top-0 left-0 w-full h-1" style={{background: `linear-gradient(to right, ${formState.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'})`, animation: 'scanner-line 2s infinite linear'}} />
                                     <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
-                                    <span>{formState.message}</span>
+                                    <div className="flex-1">
+                                      <p>{formState.message}</p>
+                                      {formState.status === 'DOMAIN_FOUND' && formState.domain && (
+                                        <Button 
+                                          className="mt-3 h-8 text-xs bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white hover:opacity-90"
+                                          onClick={() => {
+                                            setInfoModalDomain(formState.domain);
+                                            setIsDomainInfoModalOpen(true);
+                                          }}
+                                        >
+                                          Mostrar Detalles
+                                        </Button>
+                                      )}
+                                    </div>
                                   </motion.div>
                                 )}
                             </div>
@@ -652,7 +665,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         <div className="w-full flex-grow flex flex-col justify-center">
             <AnimatePresence mode="wait">
               <motion.div
-                  key={`step-content-${currentStep}-${healthCheckStep}`}
+                  key={`step-content-${currentStep}-${healthCheckStep}-${pending}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -906,7 +919,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                              <Button 
                                 className="w-full h-12 text-base text-white border-2 bg-green-800 border-green-500 hover:bg-green-700 hover:border-green-400"
                                 onClick={handleFinish}>
-                                Finalizar
+                                Finalizar y Guardar <Check className="ml-2"/>
                             </Button>
                          )}
                         </div>
@@ -1039,6 +1052,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <DomainInfoModal domain={infoModalDomain} isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen}/>
         <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
         <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
         <DnsInfoModal
@@ -1552,6 +1566,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-
-    
