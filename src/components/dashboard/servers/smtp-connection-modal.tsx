@@ -32,14 +32,14 @@ import {
   createOrGetDomainAction,
   updateDomainVerificationCode,
   setDomainAsVerified,
-} from './db-actions';
+} from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onVerificationComplete: (domain: string, dnsStatus: { spf?: boolean; dkim?: boolean; dmarc?: boolean; mx?: boolean; bimi?: boolean; vmc?: boolean; }) => void;
+  onVerificationComplete: (domain: string, dnsStatus: any) => void;
 }
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
@@ -88,7 +88,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   
-  const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
+  const [acceptedKey, setAcceptedKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
@@ -100,10 +100,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
 
   const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
+  
+  const { pending } = useFormStatus();
 
   useEffect(() => {
-    if (formState.message && !formState.success) {
-      // Errors or warnings are handled by the UI based on status, but we can toast generic errors.
+    if (formState.message && !formState.success && formState.status !== 'idle') {
       if(formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
           toast({ title: "Error", description: formState.message, variant: "destructive" });
       }
@@ -161,7 +162,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckHealth = async () => {
-    if (!currentDomainId || !acceptedDkimKey) {
+    if (!currentDomainId || !acceptedKey) {
       toast({
         title: "Acción Requerida",
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
@@ -178,7 +179,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     try {
       const result = await verifyDnsAction({
         domain,
-        dkimPublicKey: acceptedDkimKey,
+        dkimPublicKey: acceptedKey,
       });
       
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
@@ -241,7 +242,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if(!currentDomain || !targetDomainId) return;
     
     setIsGeneratingDkim(true);
-    setAcceptedDkimKey(null); // Reset accepted key on new generation
+    setAcceptedKey(null); // Reset accepted key on new generation
     try {
       const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
       setDkimData(result);
@@ -286,7 +287,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setShowNotification(false);
     setHealthCheckStep('mandatory');
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
-    setAcceptedDkimKey(null);
+    setAcceptedKey(null);
   }
 
   const handleClose = () => {
@@ -648,11 +649,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   exit={{ opacity: 0, y: -10 }}
                   className="w-full flex flex-col justify-between flex-grow"
                 >
-                {currentStep === 1 && (
+                {currentStep === 1 && !pending && (
                   <div className="text-center flex-grow flex flex-col justify-center">
                     <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
+                  </div>
+                )}
+                 {currentStep === 1 && pending && (
+                  <div className="text-center flex-grow flex flex-col justify-center">
+                      <div className="relative w-24 h-24 mx-auto mb-4">
+                          <div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full animate-spin-slow" />
+                          <div className="absolute inset-2 border-2 border-dashed border-amber-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
+                          <Search className="size-16 text-amber-400 animate-pulse absolute inset-0 m-auto" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)/0.7))' }}/>
+                      </div>
+                      <h4 className="font-bold text-lg">Buscando dominio en la red...</h4>
+                      <p className="text-sm text-muted-foreground">Validando y configurando tu espacio de trabajo.</p>
                   </div>
                 )}
                 {currentStep === 2 && (
@@ -835,7 +847,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 1 && (
                       <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]" disabled={!domain || pending}>
-                        <SubmitButtonContent />
+                        <SubmitButtonContent/>
                       </Button>
                     )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
@@ -904,7 +916,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </AnimatePresence>
         </div>
       </div>
-    );
+    )
   };
   
   const StatusIndicator = ({pending}: {pending: boolean}) => {
@@ -1031,7 +1043,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             onRegenerateDkim={handleGenerateDkim}
             acceptedKey={acceptedKey}
             onAcceptKey={(key) => {
-              setAcceptedDkimKey(key);
+              setAcceptedKey(key);
               setShowDkimAcceptWarning(false);
               setShowKeyAcceptedToast(true);
               setTimeout(() => setShowKeyAcceptedToast(false), 3000);
@@ -1475,6 +1487,51 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                     </div>
                 </ScrollArea>
                 <DialogFooter className="z-10 pt-4">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
                         className="text-white bg-green-800 hover:bg-[#00CB07]"
