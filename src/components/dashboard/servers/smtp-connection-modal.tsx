@@ -112,27 +112,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   
 
   useEffect(() => {
-    if (formState.status !== 'idle') {
-      if (formState.success && formState.domain) {
-          const newDomain = formState.domain.domain_name;
-          setCurrentDomainId(formState.domain.id);
-          setDomain(newDomain);
-          
-          const newCode = generateVerificationCode();
-          setVerificationCode(newCode);
-          
-          updateDomainVerificationCode(formState.domain.id, newCode);
-          handleGenerateDkim(true, formState.domain.id);
-          
-          setVerificationStatus('pending');
-          setCurrentStep(2);
-      } else if (!formState.success) {
-        if (formState.status !== 'DOMAIN_TAKEN' && formState.status !== 'DOMAIN_FOUND') {
-          toast({ title: "Error", description: formState.message, variant: "destructive" });
+    if (formState.status !== 'idle' && !isPending) {
+        if(formState.status === 'DOMAIN_FOUND' && formState.domain) {
+            setInfoModalDomain(formState.domain);
+        } else if (formState.success && formState.domain) {
+            const newDomain = formState.domain.domain_name;
+            setCurrentDomainId(formState.domain.id);
+            setDomain(newDomain);
+            const newCode = generateVerificationCode();
+            setVerificationCode(newCode);
+            updateDomainVerificationCode(formState.domain.id, newCode);
+            handleGenerateDkim(true, formState.domain.id);
+            setVerificationStatus('pending');
+            setCurrentStep(2);
+        } else if (!formState.success && formState.status !== 'DOMAIN_TAKEN' && formState.status !== 'DOMAIN_FOUND') {
+            toast({ title: "Error", description: formState.message, variant: "destructive" });
         }
-      }
     }
-  }, [formState]);
+  }, [formState, isPending, toast]);
   
   const handleSubmitForm = (formData: FormData) => {
     startTransition(() => {
@@ -698,7 +695,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 {currentStep === 2 && (
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
-                          <style>{`
+                           <style>{`
                               @keyframes pulse-radar {
                                   0% { transform: scale(0.5); opacity: 0; }
                                   50% { opacity: 1; }
@@ -706,10 +703,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                               }
                           `}</style>
                           {verificationStatus === 'verifying' && (
-                             <div className="absolute w-full h-full flex items-center justify-center">
-                               <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
-                               <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
-                             </div>
+                            <div className="absolute w-full h-full flex items-center justify-center">
+                                <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                                <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1.25s' }} />
+                            </div>
                           )}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
@@ -1526,4 +1523,91 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
             </DialogContent>
         </Dialog>
     );
+}
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
+
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const steps = [
+        { name: 'Despachado', status: deliveryStatus !== 'idle' },
+        { name: 'Entregado', status: deliveryStatus === 'delivered' },
+        { name: 'Rebotado', status: deliveryStatus === 'bounced' }
+    ];
+
+    return (
+        <div className="mt-4 w-full text-center">
+            <div className="flex justify-between items-center px-4">
+                {steps.map((step, index) => (
+                    <React.Fragment key={step.name}>
+                        <div className="flex flex-col items-center">
+                            <div className={cn(
+                                "size-6 rounded-full flex items-center justify-center border-2 transition-all",
+                                step.status && deliveryStatus !== 'bounced' && "bg-green-500 border-green-400",
+                                step.status && deliveryStatus === 'bounced' && index < 2 && "bg-green-500 border-green-400",
+                                deliveryStatus === 'bounced' && index === 2 && "bg-red-500 border-red-400 animate-pulse"
+                            )}>
+                                {step.status ? (
+                                    <Check className="size-4 text-white" />
+                                ) : (
+                                    <div className="size-2 rounded-full bg-muted-foreground/50" />
+                                )}
+                            </div>
+                            <p className="text-xs mt-1">{step.name}</p>
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div className={cn(
+                                "flex-1 h-0.5 mx-2",
+                                step.status ? (deliveryStatus === 'bounced' ? 'bg-green-500' : 'bg-green-500') : 'bg-muted-foreground/30'
+                            )} />
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    )
 }
