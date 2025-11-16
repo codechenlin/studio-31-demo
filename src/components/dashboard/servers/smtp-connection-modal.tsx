@@ -32,8 +32,6 @@ import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
 import { 
   createOrGetDomainAction,
-  updateDomainVerificationCode,
-  setDomainAsVerified,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -102,34 +100,30 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
-  const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
   
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
 
-  const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
+  const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
-  
 
   useEffect(() => {
-    if (formState.status !== 'idle' && !isPending) {
-        if(formState.status === 'DOMAIN_FOUND' && formState.domain) {
-            setInfoModalDomain(formState.domain);
-        } else if (formState.success && formState.domain) {
-            const newDomain = formState.domain.domain_name;
-            setCurrentDomainId(formState.domain.id);
+    if (state.status !== 'idle' && !isPending) {
+        if(state.status === 'DOMAIN_FOUND' && state.domain) {
+            setInfoModalDomain(state.domain);
+        } else if (state.success && state.domain) {
+            const newDomain = state.domain.domain_name;
             setDomain(newDomain);
             const newCode = generateVerificationCode();
             setVerificationCode(newCode);
-            updateDomainVerificationCode(formState.domain.id, newCode);
-            handleGenerateDkim(true, formState.domain.id);
+            handleGenerateDkim(true, state.domain.id);
             setVerificationStatus('pending');
             setCurrentStep(2);
-        } else if (!formState.success && formState.status !== 'DOMAIN_TAKEN' && formState.status !== 'DOMAIN_FOUND') {
-            toast({ title: "Error", description: formState.message, variant: "destructive" });
+        } else if (!state.success && state.status !== 'DOMAIN_TAKEN' && state.status !== 'DOMAIN_FOUND') {
+            toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
-  }, [formState, isPending, toast]);
+  }, [state, isPending]);
   
   const handleSubmitForm = (formData: FormData) => {
     startTransition(() => {
@@ -147,7 +141,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckVerification = async () => {
-    if (!currentDomainId) return;
     setVerificationStatus('verifying');
     
     const result = await verifyDomainOwnershipAction({
@@ -160,7 +153,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     if (result.success) {
-      await setDomainAsVerified(currentDomainId);
       setVerificationStatus('verified');
     } else {
       setVerificationStatus('failed');
@@ -173,7 +165,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckHealth = async () => {
-    if (!currentDomainId || !acceptedKey) {
+    if (!acceptedKey) {
       toast({
         title: "Acción Requerida",
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
@@ -218,8 +210,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   }
 
   const handleCheckOptionalHealth = async () => {
-    if(!currentDomainId) return;
-
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
     setShowNotification(false);
@@ -248,9 +238,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
 
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
-    const targetDomainId = domainId || currentDomainId;
-    const currentDomain = domain || formState.domain?.domain_name;
-    if(!currentDomain || !targetDomainId) return;
+    const currentDomain = domain || state.domain?.domain_name;
+    if(!currentDomain) return;
     
     setIsGeneratingDkim(true);
     setAcceptedKey(null); // Reset accepted key on new generation
@@ -287,7 +276,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const resetState = () => {
     setCurrentStep(1);
     setDomain('');
-    setCurrentDomainId(null);
     setVerificationCode('');
     setVerificationStatus('idle');
     setHealthCheckStatus('idle');
@@ -493,26 +481,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                     <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
                                 </div>
-                                {!formState.success && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && !isPending && (
+                                {!state.success && (state.status === 'DOMAIN_TAKEN' || state.status === 'DOMAIN_FOUND') && !isPending && (
                                   <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className={cn(
                                       "relative mt-2 p-3 rounded-lg border text-sm flex items-start gap-3 overflow-hidden",
-                                      formState.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
-                                      formState.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
+                                      state.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
+                                      state.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
                                     )}
                                   >
-                                    <div className="absolute top-0 left-0 w-full h-1" style={{background: `linear-gradient(to right, ${formState.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'})`, animation: 'scanner-line 2s infinite linear'}} />
-                                    <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
+                                    <div className="absolute top-0 left-0 w-full h-1" style={{background: `linear-gradient(to right, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'}, ${state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'})`, animation: 'scanner-line 2s infinite linear'}} />
+                                    <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
                                     <div className="flex-1">
-                                      <p>{formState.message}</p>
-                                      {formState.status === 'DOMAIN_FOUND' && formState.domain && (
+                                      <p>{state.message}</p>
+                                      {state.status === 'DOMAIN_FOUND' && state.domain && (
                                         <Button 
                                           className="mt-3 h-8 text-xs text-white hover:opacity-90"
                                            style={{background: 'linear-gradient(to right, #AD00EC, #1700E6)'}}
                                           onClick={() => {
-                                            setInfoModalDomain(formState.domain);
+                                            setInfoModalDomain(state.domain);
                                             setIsDomainInfoModalOpen(true);
                                           }}
                                         >
@@ -743,7 +731,27 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 )}
                 {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                      {!allMandatoryRecordsVerified ? (
+                     {healthCheckStatus === 'verifying' ? (
+                       <div className="text-center flex flex-col items-center gap-4">
+                           <div className="relative w-24 h-24">
+                                <motion.div
+                                    className="absolute inset-0 border-2 border-primary/20 rounded-full"
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                                />
+                                <motion.div
+                                    className="absolute inset-2 border-2 border-dashed border-accent/30 rounded-full"
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <BrainCircuit className="text-primary size-10" />
+                                </div>
+                           </div>
+                           <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
+                           <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS obligatorios de tu dominio.</p>
+                       </div>
+                    ) : !allMandatoryRecordsVerified ? (
                         <div className="text-center">
                             <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                             <h4 className="font-bold">Registros Obligatorios</h4>
@@ -1570,9 +1578,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
-type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
-
-function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: any, testError: string }) {
     const steps = [
         { name: 'Despachado', status: deliveryStatus !== 'idle' },
         { name: 'Entregado', status: deliveryStatus === 'delivered' },
@@ -1611,5 +1617,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
