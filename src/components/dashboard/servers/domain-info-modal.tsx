@@ -55,7 +55,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl w-full h-[99vh] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[99vh] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
                  <style>{`
                     .info-grid {
                         background-image:
@@ -104,16 +104,22 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                             <h2 className="text-2xl font-bold mt-4 font-mono">{truncateDomain(domain.domain_name)}</h2>
                             <p className="text-sm text-cyan-200/80">Verificado el: {format(new Date(domain.updated_at), "d 'de' MMMM, yyyy", { locale: es })}</p>
                             
+                            <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-8" onClick={() => onOpenChange(false)}>
+                                <X className="mr-2"/> Cerrar
+                            </Button>
+
                             {domain.verification_code && (
                                <div className="w-full text-left mt-6">
-                                    <h4 className="text-sm font-bold text-cyan-300/80 mb-2">Registro de Verificación</h4>
+                                    <h4 className="text-sm font-bold text-cyan-300/80 mb-2">
+                                        Registro de Verificación <span className="text-white/50 font-normal">| Tipo de registro: TXT</span>
+                                    </h4>
                                     <div className="p-3 bg-black/30 rounded-lg border border-cyan-400/20 font-mono text-xs text-white/80">
                                         <div className="flex justify-between items-center">
                                             <span className="break-all pr-2">{domain.verification_code}</span>
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon" 
-                                                className="size-7 shrink-0 text-cyan-300 hover:bg-cyan-500/20"
+                                                className="size-7 shrink-0 text-cyan-300 hover:bg-cyan-500/20 hover:text-white"
                                                 onClick={() => handleCopy(domain.verification_code || '')}
                                             >
                                                 <Copy className="size-4" />
@@ -122,10 +128,6 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                                     </div>
                                 </div>
                             )}
-
-                             <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-8" onClick={() => onOpenChange(false)}>
-                                <X className="mr-2"/> Cerrar
-                            </Button>
                         </motion.div>
                     </div>
                     {/* Right Column */}
