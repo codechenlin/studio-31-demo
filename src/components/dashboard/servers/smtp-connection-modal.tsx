@@ -668,7 +668,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         <div className="w-full flex-grow flex flex-col justify-center">
             <AnimatePresence mode="wait">
               <motion.div
-                  key={`step-content-${currentStep}-${healthCheckStep}-${isPending}`}
+                  key={`step-content-${currentStep}-${healthCheckStep}-${isPending}-${verificationStatus}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -693,7 +693,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   </div>
                 )}
                 {currentStep === 2 && (
-                  <div className="text-center flex-grow flex flex-col">
+                  <div className="text-center flex-grow flex flex-col justify-center">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                            <style>{`
                               @keyframes pulse-radar {
@@ -703,10 +703,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                               }
                           `}</style>
                           {verificationStatus === 'verifying' && (
-                            <div className="absolute w-full h-full flex items-center justify-center">
-                                <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
-                                <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1.25s' }} />
-                            </div>
+                             <div className="absolute w-full h-full flex items-center justify-center">
+                               <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                               <div className="absolute w-40 h-40 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1.25s' }} />
+                             </div>
                           )}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
@@ -1611,3 +1611,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
