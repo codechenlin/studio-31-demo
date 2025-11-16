@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect, useTransition, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +17,8 @@ import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAIAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
@@ -29,8 +30,8 @@ import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
-import { createOrGetDomainAction } from '@/app/dashboard/servers/db-actions';
-import {
+import { 
+  createOrGetDomainAction,
   updateDomainVerificationCode,
   setDomainAsVerified,
 } from '@/app/dashboard/servers/db-actions';
@@ -61,11 +62,10 @@ const initialState: {
   domain: null,
 };
 
-function SubmitButtonContent() {
-  const { pending } = useFormStatus();
+function SubmitButtonContent({ isPending }: { isPending: boolean }) {
   return (
     <>
-      {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+      {isPending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
     </>
   );
 }
@@ -108,31 +108,41 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
 
   const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
+  const [isPending, startTransition] = useTransition();
   
-  const { pending } = useFormStatus();
 
   useEffect(() => {
-    if (formState.message && !formState.success && formState.status !== 'idle') {
-      if (formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
+    if (formState.status !== 'idle') {
+      if (formState.success && formState.domain) {
+          const newDomain = formState.domain.domain_name;
+          setCurrentDomainId(formState.domain.id);
+          setDomain(newDomain);
+          
+          const newCode = generateVerificationCode();
+          setVerificationCode(newCode);
+          
+          updateDomainVerificationCode(formState.domain.id, newCode);
+          handleGenerateDkim(true, formState.domain.id);
+          
+          setVerificationStatus('pending');
+          setCurrentStep(2);
+      } else if (!formState.success) {
+        if (formState.status !== 'DOMAIN_TAKEN' && formState.status !== 'DOMAIN_FOUND') {
           toast({ title: "Error", description: formState.message, variant: "destructive" });
+        }
+        if (formState.status === 'DOMAIN_FOUND') {
+            setInfoModalDomain(formState.domain);
+            setIsDomainInfoModalOpen(true);
+        }
       }
     }
-
-    if (formState.status === 'DOMAIN_CREATED' && formState.success && formState.domain) {
-      const newDomain = formState.domain.domain_name;
-      setCurrentDomainId(formState.domain.id);
-      setDomain(newDomain);
-      
-      const newCode = generateVerificationCode();
-      setVerificationCode(newCode);
-      
-      updateDomainVerificationCode(formState.domain.id, newCode);
-      handleGenerateDkim(true, formState.domain.id);
-      
-      setVerificationStatus('pending');
-      setCurrentStep(2);
-    }
   }, [formState]);
+  
+  const handleSubmitForm = (formData: FormData) => {
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
 
   const txtRecordValue = verificationCode;
 
@@ -480,7 +490,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   className="flex flex-col h-full"
               >
                   {currentStep === 1 && (
-                      <form action={formAction} id="domain-form" className="flex flex-col h-full">
+                      <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
                           <div className="flex-grow">
                             <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                             <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
@@ -629,7 +639,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const renderRightPanelContent = () => {
-    const { pending } = useFormStatus();
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     
     const propagationSuccessMessage = (
@@ -662,24 +671,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
-        <StatusIndicator pending={pending}/>
+        <StatusIndicator isPending={isPending}/>
         <div className="w-full flex-grow flex flex-col justify-center">
             <AnimatePresence mode="wait">
               <motion.div
-                  key={`step-content-${currentStep}-${healthCheckStep}-${pending}`}
+                  key={`step-content-${currentStep}-${healthCheckStep}-${isPending}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="w-full flex flex-col justify-between flex-grow"
                 >
-                {currentStep === 1 && !pending && (
+                {currentStep === 1 && !isPending && (
                   <div className="text-center flex-grow flex flex-col justify-center">
                     <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                   </div>
                 )}
-                 {currentStep === 1 && pending && (
+                 {currentStep === 1 && isPending && (
                   <div className="text-center flex-grow flex flex-col justify-center">
                       <div className="relative w-24 h-24 mx-auto mb-4">
                           <div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full animate-spin-slow" />
@@ -869,8 +878,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 )}
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 1 && (
-                      <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]" disabled={!domain || pending}>
-                        <SubmitButtonContent />
+                      <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]" disabled={!domain || isPending}>
+                        <SubmitButtonContent isPending={isPending} />
                       </Button>
                     )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
@@ -942,11 +951,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     )
   };
   
-  const StatusIndicator = ({pending}: {pending: boolean}) => {
+  const StatusIndicator = ({isPending}: {isPending: boolean}) => {
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
     
-    if (pending) {
+    if (isPending) {
         status = 'processing';
         text = 'VERIFICANDO DOMINIO';
     } else if (currentStep === 2) {
@@ -980,7 +989,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     return (
       <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
         <div className="relative flex items-center justify-center w-4 h-4">
-          <div className={cn('absolute w-full h-full rounded-full', ledColor, status === 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
           {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
         </div>
         <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
@@ -1522,50 +1531,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-
-function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-10">
-                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-                </div>
-                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
-
-                <DialogHeader className="z-10 flex flex-row justify-between items-center">
-                    <DialogTitle className="flex items-center gap-3 text-xl">
-                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
-                           <BrainCircuit className="text-red-400" />
-                        </div>
-                        Análisis de Error SMTP
-                        <div className="flex items-end gap-0.5 h-6">
-                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
-                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
-                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
-                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
-                        </div>
-                    </DialogTitle>
-                     <div className="flex items-center gap-2 text-sm text-green-300">
-                        EN LÍNEA
-                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
-                    </div>
-                </DialogHeader>
-                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
-                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
-                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
-                    </div>
-                </ScrollArea>
-                <DialogFooter className="z-10">
-                    <Button 
-                        onClick={() => onOpenChange(false)} 
-                        className="text-white bg-green-800 hover:bg-[#00CB07]"
-                    >
-                        Entendido
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-    
