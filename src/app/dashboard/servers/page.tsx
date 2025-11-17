@@ -128,8 +128,7 @@ export default function ServersPage() {
   const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successModalData, setSuccessModalData] = useState<{domain: string} | null>(null);
-  const [dnsStatusForSuccessModal, setDnsStatusForSuccessModal] = useState<DnsStatus>({});
+  const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
 
 
   const handleSubdomainClick = (hasVerified: boolean) => {
@@ -171,8 +170,7 @@ export default function ServersPage() {
   
   const handleVerificationComplete = (domain: string, dnsStatus: DnsStatus) => {
     setIsSmtpModalOpen(false);
-    setSuccessModalData({ domain });
-    setDnsStatusForSuccessModal(dnsStatus);
+    setSuccessModalData({ domain, dnsStatus });
     setTimeout(() => {
       setIsSuccessModalOpen(true);
     }, 300); // Small delay for smoother transition
@@ -196,9 +194,14 @@ export default function ServersPage() {
     {successModalData && (
         <DomainVerificationSuccessModal 
             isOpen={isSuccessModalOpen}
-            onOpenChange={setIsSuccessModalOpen}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setSuccessModalData(null);
+              }
+              setIsSuccessModalOpen(isOpen);
+            }}
             domain={successModalData.domain}
-            dnsStatus={dnsStatusForSuccessModal}
+            dnsStatus={successModalData.dnsStatus}
         />
     )}
 

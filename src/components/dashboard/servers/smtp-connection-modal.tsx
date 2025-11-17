@@ -35,7 +35,6 @@ import {
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
-  saveSmtpCredentials,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -48,9 +47,7 @@ interface SmtpConnectionModalProps {
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
-type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
-type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const initialState: {
   success: boolean;
@@ -86,6 +83,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
   const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
+  const [finalDnsStatus, setFinalDnsStatus] = useState<any>({});
 
   const [optionalRecordStatus, setOptionalRecordStatus] = useState({
       mx: 'idle' as HealthCheckStatus,
@@ -93,13 +91,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       vmc: 'idle' as HealthCheckStatus
   });
 
-  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
-  const [testError, setTestError] = useState('');
-  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
   
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
@@ -108,27 +103,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
-  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); 
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); 
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   
   const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
-
-  const smtpFormSchema = z.object({
-    host: z.string().min(1, "El host es requerido."),
-    port: z.coerce.number().min(1, "El puerto es requerido."),
-    encryption: z.enum(['tls', 'ssl', 'none']),
-    username: z.string().email("Debe ser un correo válido."),
-    password: z.string().min(1, "La contraseña es requerida."),
-    testEmail: z.string().email("El correo de prueba debe ser válido.")
-  }).refine(data => !domain || data.username.endsWith(`@${domain}`), {
-    message: `El correo debe pertenecer al dominio verificado (${domain})`,
-    path: ["username"],
-  });
 
   const form = useForm<z.infer<typeof smtpFormSchema>>({
     resolver: zodResolver(smtpFormSchema),
@@ -140,6 +122,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       password: '',
       testEmail: '',
     },
+  });
+  const smtpFormSchema = z.object({
+    host: z.string().min(1, "El host es requerido."),
+    port: z.coerce.number().min(1, "El puerto es requerido."),
+    encryption: z.enum(['tls', 'ssl', 'none']),
+    username: z.string().email("Debe ser un correo válido."),
+    password: z.string().min(1, "La contraseña es requerida."),
+    testEmail: z.string().email("El correo de prueba debe ser válido.")
+  }).refine(data => !domain || data.username.endsWith(`@${domain}`), {
+    message: `El correo debe pertenecer al dominio verificado (${domain})`,
+    path: ["username"],
   });
 
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
@@ -255,12 +248,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
+        const dnsStatus = {
+            spf: result.data.spfStatus === 'verified',
+            dkim: result.data.dkimStatus === 'verified',
+            dmarc: result.data.dmarcStatus === 'verified',
+        };
+        setFinalDnsStatus(prev => ({...prev, ...dnsStatus}));
         await saveDnsChecks(state.domain.id, {
-            spf_verified: result.data.spfStatus === 'verified',
-            dkim_verified: result.data.dkimStatus === 'verified',
-            dmarc_verified: result.data.dmarcStatus === 'verified',
+            spf_verified: dnsStatus.spf,
+            dkim_verified: dnsStatus.dkim,
+            dmarc_verified: dnsStatus.dmarc,
         });
-        const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
+        const allVerified = dnsStatus.spf && dnsStatus.dkim && dnsStatus.dmarc;
         if (!allVerified) {
           setShowNotification(true);
         }
@@ -296,19 +295,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       const typedData = result.data as VmcAnalysisOutput;
       setDnsAnalysis(typedData);
       
-      const checksToSave = {
-          mx_verified: typedData.mx_is_valid,
-          bimi_verified: typedData.bimi_is_valid,
-          vmc_verified: typedData.vmc_is_authentic,
+      const dnsStatus = {
+          mx: typedData.mx_is_valid,
+          bimi: typedData.bimi_is_valid,
+          vmc: typedData.vmc_is_authentic,
       };
-      await saveDnsChecks(state.domain.id, checksToSave);
+      setFinalDnsStatus(prev => ({...prev, ...dnsStatus}));
+
+      await saveDnsChecks(state.domain.id, {
+          mx_verified: dnsStatus.mx,
+          bimi_verified: dnsStatus.bimi,
+          vmc_verified: dnsStatus.vmc,
+      });
       
       setOptionalRecordStatus({
-        mx: typedData.mx_is_valid ? 'verified' : 'failed',
-        bimi: typedData.bimi_is_valid ? 'verified' : 'failed',
-        vmc: typedData.vmc_is_authentic ? 'verified' : 'failed',
+        mx: dnsStatus.mx ? 'verified' : 'failed',
+        bimi: dnsStatus.bimi ? 'verified' : 'failed',
+        vmc: dnsStatus.vmc ? 'verified' : 'failed',
       });
-      if (!typedData.mx_is_valid || !typedData.bimi_is_valid || !typedData.vmc_is_authentic) {
+      if (!dnsStatus.mx || !dnsStatus.bimi || !dnsStatus.vmc) {
         setShowNotification(true);
       }
     } else {
@@ -341,6 +346,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setHealthCheckStep('mandatory');
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
     setAcceptedKey(null);
+    setFinalDnsStatus({});
   }
 
   const handleClose = () => {
@@ -362,36 +368,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setIsPauseModalOpen(false);
     setIsCancelConfirmOpen(true);
   }
-  
+
   const handleFinish = () => {
     if (!state.domain) return;
-    const dnsStatus = {
-        spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
-        dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
-        dmarc: dnsAnalysis && 'dmarcStatus' in dnsAnalysis ? dnsAnalysis.dmarcStatus === 'verified' : false,
-        mx: optionalRecordStatus.mx === 'verified',
-        bimi: optionalRecordStatus.bimi === 'verified',
-        vmc: optionalRecordStatus.vmc === 'verified',
-    };
-    if (!dnsStatus.mx) {
+    
+    if (!finalDnsStatus.mx) {
       setIsMxWarningModalOpen(true);
     } else {
-      onVerificationComplete(state.domain.domain_name, dnsStatus);
+      onVerificationComplete(state.domain.domain_name, finalDnsStatus);
       handleClose();
     }
   };
-
+  
   const handleContinueAnyway = () => {
      if (!state.domain) return;
-     const dnsStatus = {
-        spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
-        dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
-        dmarc: dnsAnalysis && 'dmarcStatus' in dnsAnalysis ? dnsAnalysis.dmarcStatus === 'verified' : false,
-        mx: false,
-        bimi: optionalRecordStatus.bimi === 'verified',
-        vmc: optionalRecordStatus.vmc === 'verified',
-    };
-    onVerificationComplete(state.domain.domain_name, dnsStatus);
+    onVerificationComplete(state.domain.domain_name, finalDnsStatus);
     setIsMxWarningModalOpen(false);
     handleClose();
   }
@@ -491,8 +482,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       )
   }
 
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
-
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -530,7 +519,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
               >
                   {currentStep === 1 && (
                       <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
-                          <div className="flex-grow">
+                          <div className="flex-grow flex flex-col justify-center">
                             <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                             <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
                             <div className="space-y-2 pt-4">
@@ -606,9 +595,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
+                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus ? 'verified' : 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus ? 'verified' : 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus ? 'verified' : 'idle', 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                                 <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -1678,3 +1667,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: any, 
         </div>
     )
 }
+
+    
