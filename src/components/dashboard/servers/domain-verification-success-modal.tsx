@@ -110,40 +110,29 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                    <div className="relative w-48 h-48 mb-4">
-                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                           <defs>
-                            <filter id="glow">
-                                <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur" />
-                                    <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                            </filter>
-                           </defs>
-                            {/* Orbiting rings */}
-                            <motion.path
-                                d="M 30,15 A 35,35 0 1,1 70,85"
-                                fill="none"
-                                stroke="rgba(0, 203, 7, 0.4)"
-                                strokeWidth="2"
-                                initial={{ rotate: 0 }}
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                            />
-                             <motion.path
-                                d="M 15,70 A 35,35 0 1,1 85,30"
-                                fill="none"
-                                stroke="rgba(0, 203, 7, 0.4)"
-                                strokeWidth="2"
-                                initial={{ rotate: 0 }}
-                                animate={{ rotate: -360 }}
-                                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                            />
-                            {/* Pulsating particles */}
-                             <motion.circle cx="30" cy="15" r="2" fill="#00CB07" initial={{scale:0, opacity:0}} animate={{scale:[0,1,0], opacity:[0,1,0]}} transition={{duration: 4, repeat: Infinity, delay: 1}}/>
-                             <motion.circle cx="85" cy="30" r="2" fill="#00CB07" initial={{scale:0, opacity:0}} animate={{scale:[0,1,0], opacity:[0,1,0]}} transition={{duration: 4, repeat: Infinity, delay: 3}}/>
-                        </svg>
+                    <div className="relative w-48 h-48 mb-4 group">
+                        <motion.svg 
+                            className="absolute inset-0 w-full h-full" 
+                            viewBox="0 0 100 100"
+                            initial={{ rotate: 0 }}
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                        >
+                            <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="rgba(0, 203, 7, 0.2)" strokeWidth="0.5" fill="none" />
+                        </motion.svg>
+                        <motion.svg 
+                            className="absolute inset-0 w-full h-full"
+                            viewBox="0 0 100 100"
+                            initial={{ rotate: 360 }}
+                            animate={{ rotate: 0 }}
+                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                        >
+                            <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="rgba(0, 203, 7, 0.2)" strokeWidth="0.5" fill="none" strokeDasharray="3 6"/>
+                        </motion.svg>
+                        
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-40 h-40 rounded-full bg-green-900/20 blur-2xl group-hover:blur-3xl transition-all duration-500"/>
+                        </div>
 
                          <motion.div 
                             className="absolute inset-0 flex items-center justify-center"
@@ -152,6 +141,17 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                          >
                             <ShieldCheck className="text-green-400" style={{ fontSize: '128px', filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
                          </motion.div>
+                         <motion.div
+                            className="absolute inset-0 z-0"
+                            style={{
+                                backgroundImage: `radial-gradient(circle, transparent 60%, #00ff6a44)`,
+                            }}
+                            animate={{
+                                transform: ['scale(0.8)', 'scale(1.2)', 'scale(0.8)'],
+                                opacity: [0.5, 0.8, 0.5]
+                            }}
+                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                        />
                     </div>
                     
                     <DialogHeader className="text-center">
@@ -169,7 +169,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  <div className="w-full mt-6">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-md h-11 hover:opacity-90"
+                        className="w-full bg-[#00CB07] text-white font-bold text-md h-11 hover:bg-white hover:text-black"
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
