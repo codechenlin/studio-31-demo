@@ -158,7 +158,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
-  }, [state, isPending]);
+  }, [state, isPending, toast]);
 
   const txtRecordValue = verificationCode;
 
@@ -744,21 +744,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           {verificationStatus === 'verifying' ? (
-                             <div className="relative w-32 h-32 flex items-center justify-center">
-                                <motion.div
-                                    className="absolute inset-0 border-2 border-dashed rounded-full"
-                                    style={{ borderColor: '#00CE07' }}
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                                />
-                                <motion.div
-                                    className="absolute inset-2 border-2 border-dashed rounded-full"
-                                    style={{ borderColor: '#A6EE00' }}
-                                    animate={{ rotate: -360 }}
-                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                                />
-                                <Dna className="size-16 text-[#00ADEC]"/>
-                             </div>
+                            <div className="relative w-32 h-32 flex items-center justify-center">
+                                <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#00CE07' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
+                                <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#A6EE00' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
+                                <Dna className="size-16 text-[#00ADEC]" />
+                            </div>
                           ) : null}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
@@ -1177,8 +1167,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   );
 }
 
-// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
-// The copy of these modals is omitted for brevity but they are part of the file
 type InfoMapEntry = {
     title: string;
     description: string;
@@ -1595,3 +1583,50 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+    
