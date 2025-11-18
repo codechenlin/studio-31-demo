@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -135,7 +134,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-64 h-64 mb-4 group">
-                         <motion.div
+                        <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
                           style={{ borderColor: '#1700E6' }}
                           animate={{ rotate: 360 }}
@@ -145,9 +144,9 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                           className="absolute inset-4 rounded-full border-2 border-dashed"
                           style={{ borderColor: '#009AFF' }}
                           animate={{ rotate: -360 }}
-                          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                         />
-                        <motion.div
+                         <motion.div
                             className="absolute inset-0 z-0 rounded-full"
                             style={{
                                 boxShadow: `0 0 0px #E18700`,

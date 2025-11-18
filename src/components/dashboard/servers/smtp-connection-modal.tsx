@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition, useActionState } from 'react';
@@ -90,7 +89,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       vmc: 'idle' as HealthCheckStatus
   });
 
-  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
@@ -103,7 +101,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
-  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
@@ -746,19 +743,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           {verificationStatus === 'verifying' && (
-                             <div className="absolute w-full h-full flex items-center justify-center">
+                             <div className="absolute w-40 h-40 flex items-center justify-center">
                                 <motion.div
-                                    className="absolute w-24 h-24 rounded-full border-2 border-dashed"
+                                    className="absolute inset-0 border-2 border-dashed rounded-full"
                                     style={{ borderColor: '#00CE07' }}
                                     animate={{ rotate: 360 }}
                                     transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
                                 />
                                 <motion.div
-                                    className="absolute w-28 h-28 rounded-full border-2 border-dashed"
+                                    className="absolute inset-2 border-2 border-dashed rounded-full"
                                     style={{ borderColor: '#A6EE00' }}
                                     animate={{ rotate: -360 }}
                                     transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                                 />
+                                <Search className="size-16 text-cyan-300"/>
                              </div>
                           )}
                           <div className="z-10 flex flex-col items-center gap-3">
@@ -771,7 +769,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                               )}
                               {verificationStatus === 'verifying' && (
                                   <>
-                                      <Search className="size-16" style={{color: '#E18700'}}/>
                                       <h4 className="font-bold text-lg">Verificando...</h4>
                                       <p className="text-sm text-muted-foreground">Buscando el registro DNS.</p>
                                   </>
@@ -1597,4 +1594,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-
