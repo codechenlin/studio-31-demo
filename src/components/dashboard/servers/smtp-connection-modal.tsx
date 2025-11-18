@@ -745,8 +745,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           {verificationStatus === 'verifying' ? (
                             <div className="relative w-32 h-32 flex items-center justify-center">
-                                <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#00CE07' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
-                                <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#A6EE00' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
+                                <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#AD00EC' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
+                                <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#1700E6' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
                                 <Dna className="size-16 text-[#00ADEC]" />
                             </div>
                           ) : null}
@@ -1013,7 +1013,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         status = 'processing';
         text = 'VERIFICANDO DOMINIO';
     } else if (currentStep === 2) {
-      if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
+      if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICando DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
       } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
@@ -1167,11 +1167,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   );
 }
 
-type InfoMapEntry = {
-    title: string;
-    description: string;
-};
-
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1200,7 +1197,7 @@ function DnsInfoModal({
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
     
-    const infoMap: Record<InfoViewRecord, InfoMapEntry> = {
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
       spf: {
         title: "Registro SPF",
         description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
@@ -1629,4 +1626,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
-    

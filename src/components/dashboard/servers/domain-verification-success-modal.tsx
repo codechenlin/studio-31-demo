@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -133,16 +134,16 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                    <div className="relative w-64 h-64 mb-4 group">
+                     <div className="relative w-64 h-64 mb-4 group">
                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
-                          style={{ borderColor: '#1700E6' }}
+                          style={{ borderColor: '#AD00EC' }}
                           animate={{ rotate: 360 }}
                           transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
                         />
                          <motion.div
                           className="absolute inset-4 rounded-full border-2 border-dashed"
-                          style={{ borderColor: '#009AFF' }}
+                          style={{ borderColor: '#1700E6' }}
                           animate={{ rotate: -360 }}
                           transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                         />
@@ -154,7 +155,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                                 background: `#E18700`
                             }}
                             animate={{
-                                transform: ['scale(0.3)', 'scale(0.5)', 'scale(0.3)'],
+                                transform: ['scale(0.3)', 'scale(0.4)', 'scale(0.3)'],
                                 opacity: [0, 0.4, 0]
                             }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -179,13 +180,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  <div className="w-full mt-6">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full h-11 font-bold text-base text-white transition-all duration-300"
-                        style={{
-                           backgroundColor: '#B96F00',
-                           border: '2px solid #E18700'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'black'; e.currentTarget.style.borderColor = '#E5E5E5'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#B96F00'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#E18700'; }}
+                        className="w-full h-11 font-bold text-base text-white transition-all duration-300 bg-[#B96F00] border-2 border-[#E18700] hover:bg-white hover:text-black hover:border-white"
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
