@@ -148,7 +148,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
             setInfoModalDomain(state.domain);
-            setIsDomainInfoModalOpen(true);
         } else if (state.success && state.domain) {
             setDomain(state.domain.domain_name);
             setVerificationCode(state.domain.verification_code || '');
@@ -489,8 +488,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
-
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -1141,6 +1138,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             onOpenChange={setIsAnalysisModalOpen}
             analysis={(dnsAnalysis as any)?.detailed_analysis || (dnsAnalysis as any)?.analysis || null}
         />
+        <SmtpErrorAnalysisModal
+            isOpen={isSmtpErrorAnalysisModalOpen}
+            onOpenChange={setIsSmtpErrorAnalysisModalOpen}
+            analysis={smtpErrorAnalysis}
+        />
         {showKeyAcceptedToast && (
             <div className="fixed top-4 right-4 z-[101] w-80">
                 <motion.div
@@ -1626,3 +1628,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
+    
