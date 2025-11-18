@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAIAction } from '@/app/dashboard/servers/actions';
-import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
@@ -96,8 +95,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
-  const [testError, setTestError] = useState('');
-  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
   
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
@@ -163,7 +160,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
-  }, [state, isPending]);
+  }, [state, isPending, toast]);
 
   const txtRecordValue = verificationCode;
 
@@ -534,7 +531,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
               >
                   {currentStep === 1 && (
                       <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
-                          <div className="flex flex-col justify-start">
+                          <div className="flex-grow flex flex-col justify-start">
                             <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                             <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
                             <div className="space-y-2 pt-4">
@@ -746,31 +743,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   </div>
                 )}
                 {currentStep === 2 && (
-                  <div className="text-center flex-grow flex flex-col justify-center">
+                  <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           {verificationStatus === 'verifying' && (
                              <div className="absolute w-full h-full flex items-center justify-center">
-                               <motion.div className="absolute w-32 h-32 rounded-full" 
-                                  style={{
-                                    boxShadow: `0 0 20px #A6EE00`,
-                                    filter: `blur(10px)`,
-                                    background: `#A6EE00`,
-                                  }}
-                                  animate={{
-                                    transform: ['scale(0.3)', 'scale(0.6)', 'scale(0.3)'],
-                                    opacity: [0, 0.5, 0]
-                                  }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                                />
-                               <motion.div
-                                    className="absolute inset-0 border-2 border-dashed rounded-full"
-                                    style={{ borderColor: '#1700E6' }}
+                                <motion.div
+                                    className="absolute w-24 h-24 rounded-full border-2 border-dashed"
+                                    style={{ borderColor: '#00CE07' }}
                                     animate={{ rotate: 360 }}
                                     transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
                                 />
                                 <motion.div
-                                    className="absolute inset-4 rounded-full border-2 border-dashed"
-                                    style={{ borderColor: '#009AFF' }}
+                                    className="absolute w-28 h-28 rounded-full border-2 border-dashed"
+                                    style={{ borderColor: '#A6EE00' }}
                                     animate={{ rotate: -360 }}
                                     transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                                 />
@@ -1612,3 +1597,4 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
