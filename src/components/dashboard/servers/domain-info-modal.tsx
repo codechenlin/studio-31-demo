@@ -4,11 +4,11 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna, Copy } from 'lucide-react';
+import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna, Copy, Clock } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { type Domain } from './types';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +17,19 @@ interface DomainInfoModalProps {
   onOpenChange: (isOpen: boolean) => void;
   domain: Domain | null;
 }
+
+const StatusHeader = ({ title, lastUpdated }: { title: string, lastUpdated?: string | null }) => (
+    <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-bold text-cyan-300/80">{title}</h4>
+        {lastUpdated && (
+             <div className="flex items-center gap-1.5 text-xs text-white/50">
+                <Clock className="size-3"/>
+                <span>Últ. comprobación: {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true, locale: es })}</span>
+             </div>
+        )}
+    </div>
+);
+
 
 const RecordRow = ({ label, icon: Icon }: { label: string, icon: React.ElementType }) => (
     <div className="flex items-center justify-between p-3 rounded-lg bg-black/30 border border-cyan-400/20">
@@ -52,6 +65,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
         });
     }
 
+    const lastCheckDate = domain.dns_checks?.updated_at;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -132,15 +146,14 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                     </div>
                     {/* Right Column */}
                     <div className="p-8 flex flex-col z-10">
-                        <h3 className="font-semibold mb-4">Registros DNS Configurados</h3>
                         <div className="space-y-3">
-                            <h4 className="text-sm font-bold text-cyan-300/80">Obligatorios</h4>
+                           <StatusHeader title="Obligatorios" lastUpdated={lastCheckDate} />
                             <RecordRow label="SPF" icon={Dna} />
                             <RecordRow label="DKIM" icon={Dna} />
                             <RecordRow label="DMARC" icon={Dna} />
                         </div>
                         <div className="space-y-3 mt-6">
-                            <h4 className="text-sm font-bold text-cyan-300/80">Opcionales</h4>
+                           <StatusHeader title="Opcionales" lastUpdated={lastCheckDate} />
                             <RecordRow label="MX" icon={Mail} />
                             <RecordRow label="BIMI" icon={GitBranch} />
                             <RecordRow label="VMC" icon={GitBranch} />

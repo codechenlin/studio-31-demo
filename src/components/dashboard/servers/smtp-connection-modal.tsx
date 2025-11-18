@@ -33,6 +33,7 @@ import {
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
+  updateDomainVerificationCode,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -148,6 +149,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
             setInfoModalDomain(state.domain);
+            setIsDomainInfoModalOpen(true);
         } else if (state.success && state.domain) {
             setDomain(state.domain.domain_name);
             setVerificationCode(state.domain.verification_code || '');
@@ -553,10 +555,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                         <Button 
                                           className="mt-3 h-8 text-xs text-white hover:opacity-90"
                                            style={{background: 'linear-gradient(to right, #AD00EC, #1700E6)'}}
-                                          onClick={() => {
-                                            setInfoModalDomain(state.domain);
-                                            setIsDomainInfoModalOpen(true);
-                                          }}
+                                          onClick={() => setIsDomainInfoModalOpen(true)}
                                         >
                                           Mostrar Detalles
                                         </Button>
@@ -740,13 +739,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 {currentStep === 2 && (
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
-                          {verificationStatus === 'verifying' ? (
+                          {verificationStatus === 'verifying' && (
                             <div className="relative w-32 h-32 flex items-center justify-center">
                                 <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#AD00EC' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
                                 <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#1700E6' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
                                 <Dna className="size-16 text-[#00ADEC]" />
                             </div>
-                          ) : null}
+                          )}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
                                   <>
@@ -1627,5 +1626,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-    
