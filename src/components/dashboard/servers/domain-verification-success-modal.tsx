@@ -68,7 +68,7 @@ const RecordStatus = ({ label, icon: Icon, verified, description }: { label: str
 
 export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, dnsStatus }: DomainVerificationSuccessModalProps) {
 
-  const truncateDomain = (name: string, maxLength: number = 20): string => {
+  const truncateDomain = (name: string, maxLength: number = 21): string => {
     if (name.length <= maxLength) {
         return name;
     }
@@ -126,7 +126,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
             </div>
 
             {/* Column 2: Success Message */}
-             <div className="p-6 flex flex-col items-center text-center z-10 gap-8">
+             <div className="p-6 flex flex-col items-center text-center z-10 justify-between">
                 <div/>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -134,7 +134,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                     <div className="relative w-64 h-64 mb-4 group">
+                     <div className="relative w-48 h-48 mb-4 group">
                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
                           style={{ borderColor: '#1700E6' }}
@@ -180,7 +180,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  <div className="w-full mt-6">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full h-11 font-bold text-base text-white transition-all duration-300 bg-[#B96F00] border-2 border-[#E18700] hover:bg-white hover:text-black hover:border-white"
+                        className="w-full h-11 font-bold text-base transition-all duration-300 bg-[#B96F00] border-2 border-[#E18700] text-white hover:bg-white hover:text-black hover:border-white"
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
