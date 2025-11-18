@@ -126,8 +126,8 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
             </div>
 
             {/* Column 2: Success Message */}
-             <div className="p-6 flex flex-col items-center text-center z-10 justify-between">
-                <div></div>
+             <div className="p-6 flex flex-col items-center text-center z-10 gap-8">
+                <div/>
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -137,13 +137,13 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                      <div className="relative w-64 h-64 mb-4 group">
                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
-                          style={{ borderColor: '#AD00EC' }}
+                          style={{ borderColor: '#1700E6' }}
                           animate={{ rotate: 360 }}
                           transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
                         />
                          <motion.div
                           className="absolute inset-4 rounded-full border-2 border-dashed"
-                          style={{ borderColor: '#1700E6' }}
+                          style={{ borderColor: '#009AFF' }}
                           animate={{ rotate: -360 }}
                           transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                         />
@@ -211,7 +211,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." enabled={false} />
                          <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." enabled={false} />
                          <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Recepción de correos desactivada." enabled={false} />
-                        <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Bloquea rastreadores ocultos y protégete de la analíticas de terceros." enabled={false} />
+                        <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Recepción de correos desactivada." enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo en tu buzón de entrada.
                         </p>
