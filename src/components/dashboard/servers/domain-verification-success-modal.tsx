@@ -135,7 +135,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-64 h-64 mb-4 group">
-                         <motion.div
+                        <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
                           style={{ borderColor: '#1700E6' }}
                           animate={{ rotate: 360 }}
@@ -211,7 +211,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  ) : (
                     <div className="space-y-3">
                         <p className="text-xs text-amber-200/80">
-                           Has encendido los motores de red, ya puedes enviar correos. Sin embargo, tu (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
+                           <strong className="text-white font-bold">Has encendido los motores de red</strong>, ya puedes enviar correos. Sin embargo, tu (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
                          <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." enabled={false} />
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." enabled={false} />
@@ -219,7 +219,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                          <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Recepción de correos desactivada." enabled={false} />
                         <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Recepción de correos desactivada." enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                            <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de daybuu.
+                            <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación entrante.
                         </p>
                     </div>
                  )}
