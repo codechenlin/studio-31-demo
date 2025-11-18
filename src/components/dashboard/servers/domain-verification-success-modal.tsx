@@ -79,7 +79,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
         <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20 h-full">
             {/* Column 1: DNS Status */}
             <div className="p-6 flex flex-col z-10">
-                <h3 className="text-base font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
+                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#1700E6'}}><Dna style={{color: '#1700E6'}}/>Resumen de Verificación DNS</h3>
                 <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-white mb-2 text-sm">Registros Obligatorios</h4>
@@ -110,41 +110,35 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                    <div className="relative w-48 h-48 mb-4 group">
+                    <div className="relative w-64 h-64 mb-4 group">
+                        {/* Rotating Dashed Circles */}
                         <motion.svg 
                             className="absolute inset-0 w-full h-full" 
                             viewBox="0 0 100 100"
                             initial={{ rotate: 0 }}
                             animate={{ rotate: 360 }}
-                            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                         >
-                            <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="rgba(0, 203, 7, 0.2)" strokeWidth="0.5" fill="none" />
+                            <circle cx="50" cy="50" r="48" stroke="#1700E6" strokeWidth="0.75" fill="none" strokeDasharray="4 8"/>
                         </motion.svg>
                         <motion.svg 
                             className="absolute inset-0 w-full h-full"
                             viewBox="0 0 100 100"
                             initial={{ rotate: 360 }}
                             animate={{ rotate: 0 }}
-                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
                         >
-                            <path d="M 50,5 L 95,27.5 L 95,72.5 L 50,95 L 5,72.5 L 5,27.5 Z" stroke="rgba(0, 203, 7, 0.2)" strokeWidth="0.5" fill="none" strokeDasharray="3 6"/>
+                            <circle cx="50" cy="50" r="40" stroke="#009AFF" strokeWidth="0.75" fill="none" strokeDasharray="3 6"/>
                         </motion.svg>
                         
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-40 h-40 rounded-full bg-green-900/20 blur-2xl group-hover:blur-3xl transition-all duration-500"/>
+                          <div className="w-48 h-48 rounded-full bg-amber-500/10 blur-3xl group-hover:blur-2xl transition-all duration-500"/>
                         </div>
-
-                         <motion.div 
-                            className="absolute inset-0 flex items-center justify-center"
-                            animate={{ scale: [1, 1.05, 1] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                         >
-                            <ShieldCheck className="text-green-400" style={{ fontSize: '128px', filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
-                         </motion.div>
+                        
                          <motion.div
-                            className="absolute inset-0 z-0"
+                             className="absolute inset-0 z-0"
                             style={{
-                                backgroundImage: `radial-gradient(circle, transparent 60%, #00ff6a44)`,
+                                backgroundImage: `radial-gradient(circle, transparent 60%, #E1870066)`,
                             }}
                             animate={{
                                 transform: ['scale(0.8)', 'scale(1.2)', 'scale(0.8)'],
@@ -152,6 +146,10 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                             }}
                             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                         />
+
+                         <div className="absolute inset-0 flex items-center justify-center">
+                            <ShieldCheck className="size-32 text-green-400" style={{ filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
+                         </div>
                     </div>
                     
                     <DialogHeader className="text-center">
@@ -169,7 +167,13 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  <div className="w-full mt-6">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full bg-[#00CB07] text-white font-bold text-md h-11 hover:bg-white hover:text-black"
+                        className="w-full h-11 font-bold text-base transition-all duration-300"
+                        style={{
+                           backgroundColor: '#00CB07',
+                           color: 'white',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'black'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#00CB07'; e.currentTarget.style.color = 'white';}}
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
@@ -179,11 +183,11 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
 
             {/* Column 3: Unlocked Features */}
             <div className="p-6 flex flex-col z-10 bg-black/20">
-                <h3 className="text-base font-bold text-cyan-300 mb-4 flex items-center gap-2"><Bot />Capacidades Desbloqueadas</h3>
+                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#1700E6'}}><Bot style={{color: '#1700E6'}}/>Capacidades Desbloqueadas</h3>
                  {dnsStatus.mx ? (
                     <div className="space-y-3">
                        <p className="text-xs text-green-200/80">
-                         ¡Atención, piloto! Con tu registro MX apuntando a nuestra constelación de servidores, tu dominio no solo enviará correos a la velocidad de la luz, sino que también se ha convertido en una fortaleza digital. Tu buzón de entrada ahora está protegido por nuestro <strong className="text-white">Escudo Neuronal Activo</strong>.
+                         ¡Correcto! Con tu registro MX apuntando a nuestro servidores, tu dominio no solo enviará correos, sino que también tu buzón de entrada ahora está protegido por nuestro Escudo Neuronal Predictivo.
                        </p>
                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." color="#00CB07" delay={0.9} enabled={true} />
