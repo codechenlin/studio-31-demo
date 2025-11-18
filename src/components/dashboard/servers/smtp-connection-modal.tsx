@@ -1008,7 +1008,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         status = 'processing';
         text = 'VERIFICANDO DOMINIO';
     } else if (currentStep === 2) {
-      if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICando DNS';
+      if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
       } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
@@ -1625,3 +1625,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
