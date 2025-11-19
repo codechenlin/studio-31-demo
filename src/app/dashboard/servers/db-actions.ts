@@ -128,7 +128,7 @@ export async function createOrGetDomainAction(
   }
 }
 
-export async function getDomainsWithChecks(): Promise<{ success: boolean; data?: Domain[]; error?: string; }> {
+export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -138,15 +138,16 @@ export async function getDomainsWithChecks(): Promise<{ success: boolean; data?:
   
   try {
     const { data, error } = await supabase
-      .from('domains')
-      .select('*, dns_checks(*)')
-      .eq('user_id', user.id);
+      .from('profiles')
+      .select('verified_domains_count')
+      .eq('id', user.id)
+      .single();
       
     if (error) throw error;
     
-    return { success: true, data: data };
+    return { success: true, count: data.verified_domains_count || 0 };
   } catch (error: any) {
-    console.error('Error fetching domains with checks:', error);
+    console.error('Error fetching verified domains count:', error);
     return { success: false, error: error.message };
   }
 }
@@ -196,7 +197,7 @@ export async function updateDkimKey(domainId: string, publicKey: string) {
     return { success: true, data };
 }
 
-export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_verified: boolean; dkim_verified: boolean; dmarc_verified: boolean; mx_verified: boolean; bimi_verified: boolean; vmc_verified: boolean }>) {
+export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_verified: boolean; dkim_verified: boolean; dmarc_verified: boolean; mx_verified: boolean; bimi_verified: boolean; vmc_verified: boolean; is_fully_verified: boolean }>) {
     const supabase = createClient();
     const { data, error } = await supabase
         .from('dns_checks')
@@ -209,6 +210,14 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         throw error;
     }
 
+    // Trigger a re-calculation on the profiles table
+    // We can do this by "updating" the related domain, which fires our trigger
+    const { data: domainData } = await supabase.from('domains').select('user_id').eq('id', domainId).single();
+    if (domainData) {
+        await supabase.rpc('update_user_verified_domains_count_manual', { user_id_param: domainData.user_id });
+    }
+
+    revalidatePath('/dashboard/servers');
     return { success: true, data };
 }
 
@@ -228,5 +237,3 @@ export async function saveSmtpCredentials(domainId: string, credentials: { host:
 
     return { success: true, data };
 }
-
-    

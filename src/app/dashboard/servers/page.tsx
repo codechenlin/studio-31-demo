@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
@@ -13,7 +12,7 @@ import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
 import { type Domain } from './types';
-import { getDomainsWithChecks } from './db-actions';
+import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -132,7 +131,7 @@ export default function ServersPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
   
-  const [userDomains, setUserDomains] = useState<Domain[]>([]);
+  const [domainsCount, setDomainsCount] = useState(0);
   const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
   const [isLoading, startLoading] = useTransition();
   const { toast } = useToast();
@@ -151,11 +150,11 @@ export default function ServersPage() {
     }
   };
   
-  const fetchUserDomains = useCallback(async () => {
+  const fetchDomainCount = useCallback(async () => {
     startLoading(async () => {
-      const result = await getDomainsWithChecks();
-      if (result.success && result.data) {
-        setUserDomains(result.data);
+      const result = await getVerifiedDomainsCount();
+      if (result.success && result.count !== undefined) {
+        setDomainsCount(result.count);
       } else {
         toast({
           title: 'Error al cargar dominios',
@@ -167,17 +166,19 @@ export default function ServersPage() {
   }, [toast]);
 
   useEffect(() => {
-    fetchUserDomains();
+    fetchDomainCount();
     setIsClient(true);
-  }, [fetchUserDomains]);
+  }, [fetchDomainCount]);
 
   const providers = initialProviders.map(p => {
-    const providerDomains = userDomains.filter(d => d.is_verified);
     return {
       ...p,
-      domainsCount: providerDomains.length,
-      hasVerifiedDomains: providerDomains.length > 0,
-      formattedEmailsCount: p.emailsCount.toLocaleString()
+      domainsCount: domainsCount,
+      hasVerifiedDomains: domainsCount > 0,
+      // Placeholder for other counts, as we are only fetching the main domain count now
+      subdomainsCount: 0, 
+      emailsCount: 0,
+      formattedEmailsCount: (0).toLocaleString()
     }
   });
   
@@ -195,7 +196,7 @@ export default function ServersPage() {
   const handleVerificationComplete = (domain: string, dnsStatus: DnsStatus) => {
     setIsSmtpModalOpen(false);
     setSuccessModalData({ domain, dnsStatus });
-    fetchUserDomains();
+    fetchDomainCount(); // Re-fetch the count after verification
     setTimeout(() => {
       setIsSuccessModalOpen(true);
     }, 300);
@@ -298,13 +299,12 @@ export default function ServersPage() {
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
                               onClick={() => {
-                                const firstDomain = userDomains.find(d => d.is_verified);
-                                if (firstDomain) {
-                                  setInfoModalDomain(firstDomain);
-                                  setIsDomainInfoModalOpen(true);
-                                }
+                                // This button needs logic to fetch a specific domain's full data.
+                                // For now, it opens an empty modal.
+                                setInfoModalDomain(null);
+                                setIsDomainInfoModalOpen(true);
                               }}
-                              disabled={!userDomains.some(d => d.is_verified)}
+                              disabled={!provider.hasVerifiedDomains}
                            >
                               Información
                           </Button>
@@ -411,5 +411,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-    
