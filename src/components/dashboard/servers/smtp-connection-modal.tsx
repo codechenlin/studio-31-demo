@@ -30,12 +30,13 @@ import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
-import { 
+import {
   createOrGetDomainAction,
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
   updateDomainVerificationCode,
+  getVerifiedDomainsCount,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -151,6 +152,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
             setInfoModalDomain(state.domain);
+            setIsDomainInfoModalOpen(true);
         } else if (state.success && state.domain) {
             setDomain(state.domain.domain_name);
             setVerificationCode(state.domain.verification_code || '');
@@ -395,8 +397,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     onVerificationComplete(state.domain.domain_name, finalDnsStatus);
     setIsMxWarningModalOpen(false);
     handleClose();
-  }
-
+  };
 
   const cardAnimation = {
       initial: { opacity: 0, y: 20 },
@@ -1172,8 +1173,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   );
 }
 
-// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
-// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1631,163 +1630,44 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
-```
-- src/components/ui/skeleton.tsx:
-```tsx
-import { cn } from "@/lib/utils"
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const steps = [
+        { name: 'Despachado', status: deliveryStatus !== 'idle' },
+        { name: 'Entregado', status: deliveryStatus === 'delivered' },
+        { name: 'Rebotado', status: deliveryStatus === 'bounced' }
+    ];
 
-function Skeleton({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("animate-pulse rounded-md bg-muted/50", className)}
-      {...props}
-    />
-  )
+    return (
+        <div className="mt-4 w-full text-center">
+            <div className="flex justify-between items-center px-4">
+                {steps.map((step, index) => (
+                    <React.Fragment key={step.name}>
+                        <div className="flex flex-col items-center">
+                            <div className={cn(
+                                "size-6 rounded-full flex items-center justify-center border-2 transition-all",
+                                step.status && deliveryStatus !== 'bounced' && "bg-green-500 border-green-400",
+                                step.status && deliveryStatus === 'bounced' && index < 2 && "bg-green-500 border-green-400",
+                                deliveryStatus === 'bounced' && index === 2 && "bg-red-500 border-red-400 animate-pulse"
+                            )}>
+                                {step.status ? (
+                                    <Check className="size-4 text-white" />
+                                ) : (
+                                    <div className="size-2 rounded-full bg-muted-foreground/50" />
+                                )}
+                            </div>
+                            <p className="text-xs mt-1">{step.name}</p>
+                        </div>
+                        {index < steps.length - 1 && (
+                            <div className={cn(
+                                "flex-1 h-0.5 mx-2",
+                                step.status ? (deliveryStatus === 'bounced' ? 'bg-green-500' : 'bg-green-500') : 'bg-muted-foreground/30'
+                            )} />
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    )
 }
 
-export { Skeleton }
-
-```
-- tailwind.config.ts:
-```ts
-import type {Config} from 'tailwindcss';
-
-export default {
-  darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
-    extend: {
-      fontFamily: {
-        body: ['"Space Grotesk"', 'sans-serif'],
-        headline: ['"Space Grotesk"', 'sans-serif'],
-        code: ['monospace'],
-      },
-      colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
-        sidebar: {
-          DEFAULT: 'hsl(var(--sidebar-background))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent))',
-          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border))',
-          ring: 'hsl(var(--sidebar-ring))',
-        },
-         settings: {
-          'normal-start': '#1700E6',
-          'normal-end': '#009AFF',
-          'hover-start': '#00CE07',
-          'hover-end': '#A6EE00',
-        },
-        led: {
-            'start': '#00EF10',
-            'end': '#00CE07',
-        },
-        'active-led-start': '#AD00EC',
-        'active-led-end': '#1700E6',
-        success: {
-          start: '#00C006',
-          end: '#00F508',
-        },
-        'success-login': '#00CB07',
-        'ai-track': 'hsl(var(--ai-track))',
-        'ai-glow-start': 'hsl(var(--ai-glow-start))',
-        'ai-glow-mid': 'hsl(var(--ai-glow-mid))',
-        'ai-glow-end': 'hsl(var(--ai-glow-end))',
-        'publish-normal-start': '#AD00EC',
-        'publish-normal-end': '#1700E6',
-        'publish-hover-start': '#00CE07',
-        'publish-hover-end': '#A6EE00',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-      keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
-        },
-         'spin-slow': {
-          to: {
-            transform: 'rotate(360deg)',
-          },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'spin-slow': 'spin-slow 3s linear infinite',
-      },
-    },
-  },
-  plugins: [require('tailwindcss-animate')],
-} satisfies Config;
-```
+    
