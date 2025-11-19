@@ -2,9 +2,9 @@
 "use client";
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, CheckCircle, Copy } from 'lucide-react';
+import { Globe, CheckCircle, Copy, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 import { format } from 'date-fns';
@@ -40,7 +40,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[600px] flex p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
                  <style>{`
                     .info-grid {
                         background-image:
@@ -62,15 +62,24 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         100% { transform: translateY(100vh); }
                     }
                 `}</style>
-                <DialogHeader className="sr-only">
-                    <DialogTitle>Información del Dominio</DialogTitle>
-                    <DialogDescription>Detalles y estado de verificación del dominio {domain.domain_name}.</DialogDescription>
-                </DialogHeader>
 
+                <DialogHeader className="p-4 border-b border-cyan-400/20 bg-black/30 text-left z-10">
+                    <DialogTitle className="flex items-center gap-3">
+                         <div className="p-2 rounded-full bg-cyan-500/10 border-2 border-cyan-400/20">
+                           <Globe className="text-cyan-300"/>
+                        </div>
+                        Información del Dominio
+                    </DialogTitle>
+                    <DialogDescription className="text-cyan-200/70">
+                        Detalles y estado de verificación del dominio {domain.domain_name}.
+                    </DialogDescription>
+                </DialogHeader>
+                
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
                     {/* Left Column */}
-                    <div className="p-8 flex flex-col items-center justify-center text-center border-r border-cyan-400/20 relative overflow-hidden info-grid">
+                    <div className="p-8 flex flex-col items-center justify-between text-center border-r border-cyan-400/20 relative overflow-hidden info-grid">
                         <div className="scan-line-info" />
+                        <div/>
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -104,6 +113,14 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                                 </div>
                             )}
                         </motion.div>
+                         <Button
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            className="w-full mt-8 bg-transparent border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/20 hover:text-white z-10"
+                        >
+                            <X className="mr-2"/>
+                            Cerrar
+                        </Button>
                     </div>
                     {/* Right Column */}
                     <div className="p-8 flex flex-col z-10 items-center justify-center bg-black/20">
