@@ -43,12 +43,15 @@ export async function createOrGetDomainAction(
   }
 
   try {
-    // Check if the domain exists at all.
+    // Check if the domain exists at all, and join dns_checks
     const { data: existingDomain, error: fetchError } = await supabase
       .from('domains')
-      .select('*')
+      .select(`
+        *,
+        dns_checks ( * )
+      `)
       .eq('domain_name', domainName)
-      .single();
+      .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine.
       throw fetchError;
@@ -125,6 +128,29 @@ export async function createOrGetDomainAction(
   }
 }
 
+export async function getDomainsWithChecks(): Promise<{ success: boolean; data?: Domain[]; error?: string; }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('domains')
+      .select('*, dns_checks(*)')
+      .eq('user_id', user.id);
+      
+    if (error) throw error;
+    
+    return { success: true, data: data };
+  } catch (error: any) {
+    console.error('Error fetching domains with checks:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function setDomainAsVerified(domainId: string) {
   const supabase = createClient();
   const { error } = await supabase
@@ -137,6 +163,20 @@ export async function setDomainAsVerified(domainId: string) {
     return { success: false, error: error.message };
   }
   revalidatePath('/dashboard/servers');
+  return { success: true };
+}
+
+export async function updateDomainVerificationCode(domainId: string, code: string) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('domains')
+    .update({ verification_code: code, updated_at: new Date().toISOString() })
+    .eq('id', domainId);
+
+  if (error) {
+    console.error('Error updating verification code:', error);
+    return { success: false, error: error.message };
+  }
   return { success: true };
 }
 
@@ -188,3 +228,5 @@ export async function saveSmtpCredentials(domainId: string, credentials: { host:
 
     return { success: true, data };
 }
+
+    

@@ -151,25 +151,26 @@ export default function ServersPage() {
     }
   };
   
+  const fetchUserDomains = useCallback(async () => {
+    startLoading(async () => {
+      const result = await getDomainsWithChecks();
+      if (result.success && result.data) {
+        setUserDomains(result.data);
+      } else {
+        toast({
+          title: 'Error al cargar dominios',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    });
+  }, [toast]);
+
   useEffect(() => {
-    const fetchUserDomains = async () => {
-      startLoading(async () => {
-        const result = await getDomainsWithChecks();
-        if (result.success && result.data) {
-          setUserDomains(result.data);
-        } else {
-          toast({
-            title: 'Error al cargar dominios',
-            description: result.error,
-            variant: 'destructive',
-          });
-        }
-      });
-    };
     fetchUserDomains();
     setIsClient(true);
-  }, [toast]);
-  
+  }, [fetchUserDomains]);
+
   const providers = initialProviders.map(p => {
     const providerDomains = userDomains.filter(d => d.is_verified);
     return {
@@ -194,6 +195,7 @@ export default function ServersPage() {
   const handleVerificationComplete = (domain: string, dnsStatus: DnsStatus) => {
     setIsSmtpModalOpen(false);
     setSuccessModalData({ domain, dnsStatus });
+    fetchUserDomains();
     setTimeout(() => {
       setIsSuccessModalOpen(true);
     }, 300);
@@ -296,7 +298,6 @@ export default function ServersPage() {
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
                               onClick={() => {
-                                // For now, let's just pick the first verified domain as an example
                                 const firstDomain = userDomains.find(d => d.is_verified);
                                 if (firstDomain) {
                                   setInfoModalDomain(firstDomain);
@@ -410,3 +411,5 @@ export default function ServersPage() {
     </>
   );
 }
+
+    

@@ -1,6 +1,22 @@
 
 import { z } from 'zod';
 
+export const dnsChecksSchema = z.object({
+  id: z.string().uuid(),
+  domain_id: z.string().uuid(),
+  spf_verified: z.boolean(),
+  dkim_verified: z.boolean(),
+  dmarc_verified: z.boolean(),
+  mx_verified: z.boolean(),
+  bimi_verified: z.boolean(),
+  vmc_verified: z.boolean(),
+  dkim_public_key: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type DnsChecks = z.infer<typeof dnsChecksSchema>;
+
 export const domainSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
@@ -9,23 +25,11 @@ export const domainSchema = z.object({
   is_verified: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
+  dns_checks: dnsChecksSchema.optional().nullable(),
 });
 
 export type Domain = z.infer<typeof domainSchema>;
 
-export interface DnsChecks {
-    id: string;
-    domain_id: string;
-    spf_verified: boolean;
-    dkim_verified: boolean;
-    dmarc_verified: boolean;
-    mx_verified: boolean;
-    bimi_verified: boolean;
-    vmc_verified: boolean;
-    dkim_public_key: string | null;
-    created_at: string;
-    updated_at: string;
-}
 
 export interface SmtpCredentials {
     id: string;
@@ -39,3 +43,5 @@ export interface SmtpCredentials {
     created_at: string;
     updated_at: string;
 }
+
+    
