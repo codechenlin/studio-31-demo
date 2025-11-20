@@ -4,21 +4,22 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal } from 'lucide-react';
+import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Mock Data
 const domains = [
-    { name: 'mailflow.ai', verified: true, emails: ['ventas@mailflow.ai', 'soporte@mailflow.ai'] },
-    { name: 'daybuu.com', verified: true, emails: ['contacto@daybuu.com'] },
-    { name: 'my-super-long-domain-name-that-needs-truncation.com', verified: true, emails: ['test@my-super-long-domain-name-that-needs-truncation.com'] },
+    { name: 'mailflow.ai', verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}] },
+    { name: 'daybuu.com', verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}] },
+    { name: 'my-super-long-domain-name-that-needs-truncation.com', verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}] },
+    { name: 'another-domain.dev', verified: false, emails: [] },
 ];
 const subdomains = [
-    { name: 'marketing.mailflow.ai', verified: true, emails: ['newsletter@marketing.mailflow.ai'] },
+    { name: 'marketing.mailflow.ai', verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
     { name: 'app.daybuu.com', verified: false, emails: [] },
-    { name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: ['info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai'] },
+    { name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
 ];
 
 interface DomainManagerModalProps {
@@ -41,11 +42,10 @@ const RightPanelPlaceholder = () => (
             <motion.div 
                 className="absolute h-2 w-2 rounded-full bg-cyan-300"
                 style={{ boxShadow: '0 0 10px #00ADEC, 0 0 15px #00ADEC' }}
-                animate={{ left: ['10%', '90%'] }}
+                animate={{ left: ['10%', '90%', '10%'] }}
                 transition={{
                     duration: 4,
                     repeat: Infinity,
-                    repeatType: 'reverse',
                     ease: 'easeInOut'
                 }}
             />
@@ -62,13 +62,14 @@ const RightPanelPlaceholder = () => (
                 </div>
             </div>
         </div>
-        <p className="mt-8 text-sm">Selecciona un dominio o subdominio de la izquierda para ver los correos electrónicos verificados.</p>
+        <p className="mt-8 text-sm">Selecciona un dominio o sub dominio para observar las direcciones de correos electrónicos conectados.</p>
     </div>
 );
 
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
+    const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
     
     const truncateName = (name: string, maxLength: number): string => {
         if (name.length <= maxLength) {
@@ -79,7 +80,15 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
 
     const getEmailsForDomain = () => {
         const domainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
-        return domainData ? domainData.emails : [];
+        if (!domainData) return [];
+
+        if (emailFilter === 'connected') {
+            return domainData.emails.filter(e => e.connected);
+        }
+        if (emailFilter === 'disconnected') {
+            return domainData.emails.filter(e => !e.connected);
+        }
+        return domainData.emails;
     }
     
     const emails = getEmailsForDomain();
@@ -108,16 +117,16 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         background-size: 2rem 2rem;
                     }
                     @keyframes pulse-wave {
-                      0% { transform: scale(1); opacity: 0.5; }
-                      50% { transform: scale(2.5); opacity: 0; }
-                      100% { transform: scale(1); opacity: 0; }
+                      0% { transform: scale(0.8); opacity: 0; }
+                      70% { transform: scale(2.5); opacity: 0.7; }
+                      100% { transform: scale(3.5); opacity: 0; }
                     }
                     .animate-pulse-wave {
                       position: absolute;
                       inset: 0;
                       border-radius: 50%;
-                      border: 1px solid var(--wave-color);
-                      animation: pulse-wave 1s infinite;
+                      border: 2px solid var(--wave-color);
+                      animation: pulse-wave 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     @keyframes illumination-pulse {
                         0%, 100% {
@@ -185,18 +194,31 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     {/* Right Column: Email List */}
                     <div className="flex flex-col p-6 bg-black/10 info-grid relative">
                          <div className="z-10 flex flex-col h-full">
-                           <h3 className="font-semibold text-cyan-300 text-sm mb-2 flex items-center gap-2 shrink-0">
-                             <Mail className="size-4"/>
-                             Correos para: <span className="font-mono text-white truncate">{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span>
-                           </h3>
+                           <div className="flex justify-between items-center shrink-0">
+                               <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
+                                 <Mail className="size-4"/>
+                                 Correos para: <span className="font-mono text-white truncate">{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span>
+                               </h3>
+                               <div className="flex items-center gap-1">
+                                    <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('connected')}>
+                                        <CheckCircle className="text-green-400"/>
+                                    </Button>
+                                    <Button variant={emailFilter === 'disconnected' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('disconnected')}>
+                                        <XCircle className="text-red-500"/>
+                                    </Button>
+                                     <Button variant={emailFilter === 'all' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('all')}>
+                                        <Layers/>
+                                    </Button>
+                               </div>
+                           </div>
                            <ScrollArea className="flex-1 -m-6 p-6 mt-4 custom-scrollbar">
                                 <div className="space-y-2">
                                     {selectedDomain ? (
                                         emails.length > 0 ? emails.map(email => (
-                                            <div key={email} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
+                                            <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                   <LedIndicator verified={true}/>
-                                                   <span className="font-mono text-sm text-white/80 truncate" title={email}>{truncateName(email, 19)}</span>
+                                                   <LedIndicator verified={email.connected}/>
+                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateName(email.address, 19)}</span>
                                                 </div>
                                                 <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                                   <Signal className="mr-2 size-3"/>
