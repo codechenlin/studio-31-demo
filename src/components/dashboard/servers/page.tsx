@@ -1,19 +1,21 @@
 
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
 import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-modal';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
 import { type Domain } from './types';
+import { getVerifiedDomainsCount } from './db-actions';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -35,12 +37,12 @@ const initialProviders = [
     connected: false,
     colors: 'from-cyan-500/10 to-blue-500/10',
     borderColor: 'hover:border-cyan-400',
-    domainsCount: 102,
-    subdomainsCount: 50,
-    emailsCount: 5234,
-    lastDnsCheck: 'hace 4h',
+    domainsCount: 0,
+    subdomainsCount: 0,
+    emailsCount: 0,
+    lastDnsCheck: 'Nunca',
     status: 'ok' as ProviderStatus,
-    hasVerifiedDomains: true,
+    hasVerifiedDomains: false,
   },
   {
     id: 'blastengine',
@@ -50,12 +52,12 @@ const initialProviders = [
     connected: false,
     colors: 'from-purple-500/10 to-indigo-500/10',
     borderColor: 'hover:border-purple-400',
-    domainsCount: 58,
-    subdomainsCount: 12,
-    emailsCount: 8912,
-    lastDnsCheck: 'hace 2h',
+    domainsCount: 0,
+    subdomainsCount: 0,
+    emailsCount: 0,
+    lastDnsCheck: 'Nunca',
     status: 'error' as ProviderStatus,
-    hasVerifiedDomains: false, // Simulate disabled state
+    hasVerifiedDomains: false,
   },
   {
     id: 'sparkpost',
@@ -65,12 +67,12 @@ const initialProviders = [
     connected: false,
     colors: 'from-orange-500/10 to-amber-500/10',
     borderColor: 'hover:border-orange-400',
-    domainsCount: 23,
-    subdomainsCount: 5,
-    emailsCount: 3489,
-    lastDnsCheck: 'hace 8h',
+    domainsCount: 0,
+    subdomainsCount: 0,
+    emailsCount: 0,
+    lastDnsCheck: 'Nunca',
      status: 'ok' as ProviderStatus,
-     hasVerifiedDomains: true,
+     hasVerifiedDomains: false,
   },
   {
     id: 'elasticemail',
@@ -80,12 +82,12 @@ const initialProviders = [
     connected: false,
     colors: 'from-green-500/10 to-emerald-500/10',
     borderColor: 'hover:border-green-400',
-    domainsCount: 76,
-    subdomainsCount: 20,
-    emailsCount: 9102,
-    lastDnsCheck: 'hace 1h',
+    domainsCount: 0,
+    subdomainsCount: 0,
+    emailsCount: 0,
+    lastDnsCheck: 'Nunca',
     status: 'error' as ProviderStatus,
-    hasVerifiedDomains: true,
+    hasVerifiedDomains: false,
   },
 ];
 
@@ -122,7 +124,6 @@ export default function ServersPage() {
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
   const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
-  const [providers, setProviders] = useState(initialProviders.map(p => ({ ...p, formattedEmailsCount: '...' })));
   
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
@@ -130,14 +131,17 @@ export default function ServersPage() {
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
-
+  
+  const [domainsCount, setDomainsCount] = useState(0);
+  const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
+  const [isLoading, startLoading] = useTransition();
+  const { toast } = useToast();
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
     if (!hasVerified) {
       setIsSubdomainModalOpen(true);
     }
-    // TODO: Add logic for when domains are verified
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
@@ -145,23 +149,44 @@ export default function ServersPage() {
     if (!hasVerified) {
       setIsAddEmailModalOpen(true);
     }
-    // TODO: Add logic for when domains are verified
   };
-
+  
+  const fetchDomainCount = useCallback(async () => {
+    startLoading(async () => {
+      const result = await getVerifiedDomainsCount();
+      if (result.success && result.count !== undefined) {
+        setDomainsCount(result.count);
+      } else {
+        toast({
+          title: 'Error al cargar dominios',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    });
+  }, [toast]);
 
   useEffect(() => {
+    fetchDomainCount();
     setIsClient(true);
-    setProviders(initialProviders.map(p => ({
+  }, [fetchDomainCount]);
+
+  const providers = initialProviders.map(p => {
+    return {
       ...p,
-      formattedEmailsCount: p.emailsCount.toLocaleString()
-    })));
-  }, []);
+      domainsCount: domainsCount,
+      hasVerifiedDomains: domainsCount > 0,
+      // Placeholder for other counts, as we are only fetching the main domain count now
+      subdomainsCount: 0, 
+      emailsCount: 0,
+      formattedEmailsCount: (0).toLocaleString()
+    }
+  });
   
   const handleConnectClick = (providerId: string) => {
     if (providerId === 'smtp') {
       setIsSmtpModalOpen(true);
     }
-    // Handle other providers later
   };
   
   const handleStatusClick = (status: ProviderStatus) => {
@@ -172,10 +197,20 @@ export default function ServersPage() {
   const handleVerificationComplete = (domain: string, dnsStatus: DnsStatus) => {
     setIsSmtpModalOpen(false);
     setSuccessModalData({ domain, dnsStatus });
+    fetchDomainCount(); // Re-fetch the count after verification
     setTimeout(() => {
       setIsSuccessModalOpen(true);
-    }, 300); // Small delay for smoother transition
+    }, 300);
   };
+  
+  const handleInfoClick = (providerId: string) => {
+    // This is where we'd fetch the specific domains for the provider.
+    // For now, we'll just open the modal. A more complete implementation
+    // would fetch data and pass it to the DomainInfoModal.
+    if (providerId === 'smtp') {
+        setIsDomainInfoModalOpen(true);
+    }
+  }
 
   return (
     <>
@@ -189,7 +224,7 @@ export default function ServersPage() {
       onOpenChange={setIsDnsModalOpen}
       status={selectedStatus}
     />
-    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} domain={null} />
+    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} domain={infoModalDomain} />
     <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
@@ -269,18 +304,15 @@ export default function ServersPage() {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                           <Button 
+                          <Button 
                               size="sm" 
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
-                              onClick={() => {
-                                // This is a placeholder. You'd fetch and pass the specific domain info here.
-                                // setInfoModalDomain(SOME_DOMAIN_DATA_FROM_PROVIDER);
-                                setIsDomainInfoModalOpen(true);
-                              }}
+                              onClick={() => handleInfoClick(provider.id)}
+                              disabled={!provider.hasVerifiedDomains}
                            >
                               Información
-                            </Button>
+                          </Button>
 
                            <Button 
                               size="icon" 
@@ -306,17 +338,17 @@ export default function ServersPage() {
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
-                            <span className="font-semibold text-foreground">{provider.domainsCount}</span>
+                            {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <GitBranch className="size-4"/>
-                            <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>
+                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>}
                             <span>Subdominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Send className="size-4"/>
-                            <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>
+                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>}
                             <span>Correos</span>
                           </div>
                       </div>
@@ -384,3 +416,5 @@ export default function ServersPage() {
     </>
   );
 }
+
+    
