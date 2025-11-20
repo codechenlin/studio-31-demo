@@ -27,49 +27,28 @@ const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: Re
         whileHover={{ scale: 1.02 }}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
     >
-        <div className={cn(
-            "absolute -top-1 -left-1 size-16 opacity-30 rounded-full",
-            verified ? "bg-green-500" : "bg-red-500"
-        )} style={{ filter: 'blur(30px)'}} />
-
         <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
                 <Icon className={cn("size-5", verified ? "text-green-400" : "text-red-400")} />
                 <span className="font-semibold text-sm text-white/90">{label}</span>
             </div>
-            {verified ? 
-                <div className="relative">
-                    <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                        className="absolute inset-0"
-                    >
-                         <CheckCircle className="size-6 text-green-400 opacity-50" style={{ filter: 'drop-shadow(0 0 5px #00CB07)'}}/>
-                    </motion.div>
-                    <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                        <CheckCircle className="size-6 text-green-400" style={{ filter: 'drop-shadow(0 0 5px #00CB07)'}}/>
-                    </motion.div>
-                </div>
-                 : 
-                 <div className="relative">
-                     <motion.div
-                        animate={{ y: [0, -1, 1, -1, 0] }}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                        className="absolute inset-0"
-                     >
-                        <AlertTriangle className="size-6 text-red-400 opacity-50" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
-                     </motion.div>
-                     <motion.div
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                     >
-                        <AlertTriangle className="size-6 text-red-400" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
-                    </motion.div>
-                </div>
-            }
+            <div className="relative flex items-center justify-center size-6">
+                <div 
+                    className={cn(
+                        "absolute inset-0 rounded-full",
+                        verified ? "bg-green-500/50" : "bg-red-500/50"
+                    )} 
+                    style={{ animation: `icon-pulse-glow 2s infinite ease-in-out` }}
+                />
+                 <div 
+                    className={cn(
+                        "absolute inset-0 rounded-full border-2",
+                        verified ? "border-green-500/70" : "border-red-500/70"
+                    )} 
+                    style={{ animation: `icon-pulse-wave 2s infinite ease-out` }}
+                />
+                <Icon className={cn("relative size-6", verified ? "text-green-300" : "text-red-300")} />
+            </div>
         </div>
     </motion.div>
 );
@@ -131,6 +110,14 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         0% { transform: translateY(-10px); }
                         100% { transform: translateY(100vh); }
                     }
+                    @keyframes icon-pulse-glow {
+                        0%, 100% { filter: blur(4px); opacity: 0.7; }
+                        50% { filter: blur(8px); opacity: 1; }
+                    }
+                    @keyframes icon-pulse-wave {
+                        0% { transform: scale(0.5); opacity: 0.7; }
+                        100% { transform: scale(1.5); opacity: 0; }
+                    }
                 `}</style>
 
                  <DialogHeader className="p-4 border-b border-cyan-400/20 bg-black/30 text-left z-10">
@@ -183,7 +170,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                          <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="w-full mt-8 bg-transparent text-cyan-300 hover:text-white z-10 border-[#00ADEC] hover:bg-[#00ADEC]"
+                            className="w-full mt-8 bg-white text-[#00ADEC] hover:text-white z-10 border-2 border-[#00ADEC] hover:bg-[#00ADEC]"
                         >
                             <X className="mr-2"/>
                             Cerrar
