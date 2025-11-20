@@ -177,9 +177,9 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                 </motion.div>
                 
                  <div className="w-full">
-                    <Button
+                      <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full h-11 font-bold text-base transition-all duration-300 border-2 text-black hover:text-black hover:border-white"
+                        className="w-full h-11 font-bold text-base transition-all duration-300 border-2 text-white hover:text-black hover:border-white"
                         style={{
                             borderColor: '#E18700',
                             backgroundColor: '#B96F00'

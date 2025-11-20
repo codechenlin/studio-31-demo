@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
@@ -333,17 +334,17 @@ export default function ServersPage() {
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
-                            {isLoading ? <Skeleton className="h-4 w-6"/> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
+                            {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <GitBranch className="size-4"/>
-                             {isLoading ? <Skeleton className="h-4 w-6"/> : <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>}
+                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>}
                             <span>Subdominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Send className="size-4"/>
-                             {isLoading ? <Skeleton className="h-4 w-10"/> : <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>}
+                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>}
                             <span>Correos</span>
                           </div>
                       </div>
