@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna } from 'lucide-react';
@@ -77,6 +77,18 @@ const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: Re
 
 export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModalProps) {
     const { toast } = useToast();
+    const [lastCheckedDate, setLastCheckedDate] = useState('Nunca');
+    
+    const dnsChecks = Array.isArray(domain?.dns_checks) ? domain?.dns_checks[0] : domain?.dns_checks;
+
+    useEffect(() => {
+        if (dnsChecks?.updated_at) {
+          setLastCheckedDate(formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }));
+        } else {
+          setLastCheckedDate('Nunca');
+        }
+    }, [dnsChecks?.updated_at]);
+
 
     if (!domain) return null;
 
@@ -95,10 +107,6 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
             className: 'bg-success-login border-none text-white'
         });
     }
-    
-    const dnsChecks = Array.isArray(domain.dns_checks) ? domain.dns_checks[0] : domain.dns_checks;
-    const lastCheckedDate = dnsChecks?.updated_at ? formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }) : 'Nunca';
-
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
