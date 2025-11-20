@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code } from 'lucide-react';
+import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,8 +41,7 @@ const RightPanelPlaceholder = () => (
             <motion.div 
                 className="absolute h-2 w-2 rounded-full bg-cyan-300"
                 style={{ boxShadow: '0 0 10px #00ADEC, 0 0 15px #00ADEC' }}
-                initial={{ left: '10%' }}
-                animate={{ left: '90%' }}
+                animate={{ left: ['10%', '90%'] }}
                 transition={{
                     duration: 4,
                     repeat: Infinity,
@@ -51,19 +50,19 @@ const RightPanelPlaceholder = () => (
                 }}
             />
             <div className="absolute left-0 top-1/2 -translate-y-1/2 group">
-                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20">
-                    <motion.div className="absolute inset-0 rounded-full bg-cyan-500/10" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}/>
+                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
+                    <div className="illumination-pulse"/>
                     <Globe className="relative size-8 text-cyan-300"/>
                 </div>
             </div>
              <div className="absolute right-0 top-1/2 -translate-y-1/2 group">
-                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20">
-                    <motion.div className="absolute inset-0 rounded-full bg-cyan-500/10" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}/>
+                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
+                    <div className="illumination-pulse" style={{animationDelay: '0.5s'}}/>
                     <MailOpen className="relative size-8 text-cyan-300"/>
                 </div>
             </div>
         </div>
-        <p className="mt-8 text-sm">Selecciona un dominio o subdominio de la izquierda para ver los correos electrónicos asociados.</p>
+        <p className="mt-8 text-sm">Selecciona un dominio o subdominio de la izquierda para ver los correos electrónicos verificados.</p>
     </div>
 );
 
@@ -71,7 +70,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
     
-    const truncateName = (name: string, maxLength: number = 21): string => {
+    const truncateName = (name: string, maxLength: number): string => {
         if (name.length <= maxLength) {
             return name;
         }
@@ -118,7 +117,24 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                       inset: 0;
                       border-radius: 50%;
                       border: 1px solid var(--wave-color);
-                      animation: pulse-wave 2s infinite;
+                      animation: pulse-wave 1s infinite;
+                    }
+                    @keyframes illumination-pulse {
+                        0%, 100% {
+                            transform: scale(0.5);
+                            opacity: 0;
+                        }
+                        50% {
+                            transform: scale(1.2);
+                            opacity: 1;
+                        }
+                    }
+                    .icon-illuminated .illumination-pulse {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 50%;
+                        background: radial-gradient(circle, hsl(190 100% 50% / 0.4), transparent 70%);
+                        animation: illumination-pulse 3s infinite ease-out;
                     }
                 `}</style>
 
@@ -152,7 +168,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.verified}/>
-                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name)}</span>
+                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
                                             </div>
                                             <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                                 <Code className="mr-2 size-3"/>
@@ -171,7 +187,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                          <div className="z-10 flex flex-col h-full">
                            <h3 className="font-semibold text-cyan-300 text-sm mb-2 flex items-center gap-2 shrink-0">
                              <Mail className="size-4"/>
-                             Correos para: <span className="font-mono text-white truncate">{selectedDomain ? truncateName(selectedDomain, 25) : '...'}</span>
+                             Correos para: <span className="font-mono text-white truncate">{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span>
                            </h3>
                            <ScrollArea className="flex-1 -m-6 p-6 mt-4 custom-scrollbar">
                                 <div className="space-y-2">
@@ -180,10 +196,10 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             <div key={email} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={true}/>
-                                                   <span className="font-mono text-sm text-white/80 truncate">{email}</span>
+                                                   <span className="font-mono text-sm text-white/80 truncate" title={email}>{truncateName(email, 19)}</span>
                                                 </div>
                                                 <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
-                                                  <GitBranch className="mr-2 size-3"/>
+                                                  <Signal className="mr-2 size-3"/>
                                                   Informe
                                                 </Button>
                                             </div>
