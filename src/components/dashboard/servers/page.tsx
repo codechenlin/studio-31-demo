@@ -201,12 +201,12 @@ export default function ServersPage() {
       setIsSuccessModalOpen(true);
     }, 300);
   };
-  
+
   const handleInfoClick = (providerId: string) => {
     if (providerId === 'smtp') {
-      setIsDomainManagerModalOpen(true);
+        setIsDomainManagerModalOpen(true);
     }
-  }
+  };
 
   return (
     <>
@@ -412,3 +412,6 @@ export default function ServersPage() {
     </>
   );
 }
+
+
+    
