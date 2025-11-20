@@ -299,12 +299,7 @@ export default function ServersPage() {
                               size="sm" 
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
-                              onClick={() => {
-                                // This button needs logic to fetch a specific domain's full data.
-                                // For now, it opens an empty modal.
-                                setInfoModalDomain(null);
-                                setIsDomainInfoModalOpen(true);
-                              }}
+                              onClick={() => handleStatusClick(provider.status)}
                               disabled={!provider.hasVerifiedDomains}
                            >
                               Información
