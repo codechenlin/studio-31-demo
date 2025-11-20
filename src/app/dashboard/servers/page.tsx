@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
-import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-modal';
+import { DomainManagerModal } from '@/components/dashboard/servers/domain-manager-modal';
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
@@ -122,7 +122,7 @@ export default function ServersPage() {
   const [isClient, setIsClient] = useState(false);
   const [isSmtpModalOpen, setIsSmtpModalOpen] = useState(false);
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
-  const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
+  const [isDomainManagerModalOpen, setIsDomainManagerModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
@@ -133,7 +133,6 @@ export default function ServersPage() {
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
   
   const [domainsCount, setDomainsCount] = useState(0);
-  const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
   const [isLoading, startLoading] = useTransition();
   const { toast } = useToast();
 
@@ -215,7 +214,7 @@ export default function ServersPage() {
       onOpenChange={setIsDnsModalOpen}
       status={selectedStatus}
     />
-    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} domain={infoModalDomain} />
+    <DomainManagerModal isOpen={isDomainManagerModalOpen} onOpenChange={setIsDomainManagerModalOpen} />
     <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
@@ -299,7 +298,7 @@ export default function ServersPage() {
                               size="sm" 
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
-                              onClick={() => handleStatusClick(provider.status)}
+                              onClick={() => setIsDomainManagerModalOpen(true)}
                               disabled={!provider.hasVerifiedDomains}
                            >
                               Información
