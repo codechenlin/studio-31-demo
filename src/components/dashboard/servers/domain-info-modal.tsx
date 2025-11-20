@@ -34,10 +34,13 @@ const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: Re
                  <Button
                     variant="outline"
                     size="sm"
-                    className="h-6 px-2 text-xs bg-black/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-900/40 hover:text-cyan-200"
+                    className="group/button relative h-6 px-2 text-xs bg-black/20 border-cyan-400/30 text-cyan-300 overflow-hidden"
                 >
-                    <Bot className="size-3 mr-1" />
-                    Detalles
+                    <div className="absolute inset-0 w-0 bg-cyan-400/20 transition-all duration-300 ease-out group-hover/button:w-full"></div>
+                    <div className="relative flex items-center gap-1">
+                        <Bot className="size-3" />
+                        Detalles
+                    </div>
                 </Button>
             </div>
             <div className="relative flex items-center justify-center size-6">
@@ -123,8 +126,8 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         50% { filter: blur(8px); opacity: 1; }
                     }
                     @keyframes icon-pulse-wave {
-                        0% { transform: scale(0.5); opacity: 0.7; }
-                        100% { transform: scale(1.5); opacity: 0; }
+                        0% { transform: scale(0.5); opacity: 1; }
+                        100% { transform: scale(2.5); opacity: 0; }
                     }
                 `}</style>
 
@@ -178,7 +181,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                          <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="w-full mt-8 bg-[#00ADEC] text-white hover:text-black z-10 border-2 border-white hover:bg-white"
+                            className="w-full mt-8 bg-background/80 text-foreground hover:text-black z-10 border-2 border-white hover:bg-white"
                         >
                             <X className="mr-2"/>
                             Cerrar
