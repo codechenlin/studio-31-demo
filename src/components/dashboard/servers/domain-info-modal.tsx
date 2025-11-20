@@ -19,18 +19,59 @@ interface DomainInfoModalProps {
 }
 
 const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: React.ElementType, verified: boolean }) => (
-    <div className="relative p-2 pl-3 border-l-2" style={{ borderColor: verified ? '#00CB07' : '#F00000' }}>
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                <Icon className={cn("size-4", verified ? "text-green-400" : "text-red-400")} />
-                <span className="font-semibold text-sm">{label}</span>
+    <motion.div 
+        className={cn(
+            "relative p-3 border rounded-lg bg-black/30 overflow-hidden",
+            verified ? "border-green-500/30" : "border-red-500/30"
+        )}
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+    >
+        <div className={cn(
+            "absolute -top-1 -left-1 size-16 opacity-30 rounded-full",
+            verified ? "bg-green-500" : "bg-red-500"
+        )} style={{ filter: 'blur(30px)'}} />
+
+        <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-3">
+                <Icon className={cn("size-5", verified ? "text-green-400" : "text-red-400")} />
+                <span className="font-semibold text-sm text-white/90">{label}</span>
             </div>
             {verified ? 
-                <CheckCircle className="size-5 text-green-400" style={{ filter: 'drop-shadow(0 0 4px #00CB07)'}}/> : 
-                <AlertTriangle className="size-5 text-red-400" style={{ filter: 'drop-shadow(0 0 4px #F00000)'}}/>
+                <div className="relative">
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                        className="absolute inset-0"
+                    >
+                         <CheckCircle className="size-6 text-green-400 opacity-50" style={{ filter: 'drop-shadow(0 0 5px #00CB07)'}}/>
+                    </motion.div>
+                    <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <CheckCircle className="size-6 text-green-400" style={{ filter: 'drop-shadow(0 0 5px #00CB07)'}}/>
+                    </motion.div>
+                </div>
+                 : 
+                 <div className="relative">
+                     <motion.div
+                        animate={{ y: [0, -1, 1, -1, 0] }}
+                        transition={{ duration: 0.5, repeat: Infinity }}
+                        className="absolute inset-0"
+                     >
+                        <AlertTriangle className="size-6 text-red-400 opacity-50" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
+                     </motion.div>
+                     <motion.div
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                     >
+                        <AlertTriangle className="size-6 text-red-400" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
+                    </motion.div>
+                </div>
             }
         </div>
-    </div>
+    </motion.div>
 );
 
 
@@ -148,7 +189,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                                   <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Obligatorios</h4>
                                   <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
                                 </div>
-                                <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
+                                <div className="space-y-2">
                                    <RecordStatus label="Registro SPF" icon={Shield} verified={dnsChecks?.spf_verified ?? false} />
                                    <RecordStatus label="Registro DKIM" icon={Shield} verified={dnsChecks?.dkim_verified ?? false} />
                                    <RecordStatus label="Registro DMARC" icon={Shield} verified={dnsChecks?.dmarc_verified ?? false} />
@@ -159,7 +200,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                                   <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Opcionales</h4>
                                   <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
                                 </div>
-                                 <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
+                                 <div className="space-y-2">
                                    <RecordStatus label="Registro MX" icon={MailWarning} verified={dnsChecks?.mx_verified ?? false}/>
                                    <RecordStatus label="Registro BIMI" icon={GitBranch} verified={dnsChecks?.bimi_verified ?? false}/>
                                    <RecordStatus label="Certificado VMC" icon={GitBranch} verified={dnsChecks?.vmc_verified ?? false}/>
