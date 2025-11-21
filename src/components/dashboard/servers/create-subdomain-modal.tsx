@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, ArrowRight, Dna, DatabaseZap, Check, X, GitBranch, Loader2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Globe, ArrowRight, Dna, DatabaseZap, Check, X, GitBranch, Loader2, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
