@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers, Plug, Hourglass } from 'lucide-react';
@@ -117,6 +117,29 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         <div className="absolute inset-0 rounded-full animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000'} as React.CSSProperties} />
       </div>
     );
+    
+    const ConnectionSignal = () => (
+        <div className="relative flex items-center justify-center w-8 h-8">
+            <div className="absolute w-full h-full border-2 border-dashed border-cyan-400/30 rounded-full animate-spin-slow" />
+            <div className="flex items-end gap-0.5 h-3/5">
+                <motion.div
+                    className="w-1 bg-cyan-300 rounded-full"
+                    animate={{ height: ['20%', '80%', '20%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                 <motion.div
+                    className="w-1 bg-cyan-300 rounded-full"
+                    animate={{ height: ['60%', '30%', '60%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                />
+                 <motion.div
+                    className="w-1 bg-cyan-300 rounded-full"
+                    animate={{ height: ['40%', '100%', '40%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                />
+            </div>
+        </div>
+    );
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -189,12 +212,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.verified}/>
+                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => {e.stopPropagation(); /* Future action */}}>
+                                                  <Code className="mr-2 size-3"/>
+                                                  Detalles
+                                                </Button>
                                                 <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name)}</span>
                                             </div>
-                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => {e.stopPropagation(); /* Future action */}}>
-                                                <Code className="mr-2 size-3"/>
-                                                Detalles
-                                            </Button>
+                                            <MoreHorizontal className="text-cyan-300/50"/>
                                         </div>
                                     )) : (
                                         <EmptyState type={activeTab === 'domains' ? 'Dominios' : 'Subdominios'} />
@@ -230,12 +254,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={email.connected}/>
+                                                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
+                                                      <Signal className="mr-2 size-3"/>
+                                                      Informe
+                                                    </Button>
                                                    <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateEmail(email.address)}</span>
                                                 </div>
-                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
-                                                  <Signal className="mr-2 size-3"/>
-                                                  Informe
-                                                </Button>
+                                                <MoreHorizontal className="text-cyan-300/50" />
                                             </div>
                                         )) : (
                                              <div className="text-center text-cyan-200/50 pt-16">
@@ -250,42 +275,46 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         </div>
                     </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between">
-                     <div className="flex items-center gap-3">
-                         <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black">
-                           <Plug className="mr-2"/>
-                           Comprobar Conexión
-                         </Button>
-                         {selectedDomain ? (
-                           <div className="flex items-center gap-4 text-xs font-mono p-2 rounded-md bg-black/30 border border-cyan-400/20">
-                               <div className="flex items-center gap-1.5" title="Conectados">
-                                   <div className="relative size-3 rounded-full bg-[#00CB07] shadow-[0_0_4px_#00CB07]">
-                                     <div className="absolute inset-0 rounded-full bg-[#00CB07] animate-ping opacity-75"/>
-                                   </div>
-                                   <span>{currentDomainData?.emails.filter(e => e.connected).length || 0}</span>
-                               </div>
-                                <div className="flex items-center gap-1.5" title="Desconectados">
-                                    <div className="relative size-3 rounded-full bg-[#F00000] shadow-[0_0_4px_#F00000]">
-                                      <div className="absolute inset-0 rounded-full bg-[#F00000] animate-ping opacity-75"/>
-                                    </div>
-                                    <span>{currentDomainData?.emails.filter(e => !e.connected).length || 0}</span>
-                                </div>
-                           </div>
-                         ) : (
-                           <div className="flex items-center gap-2 text-xs text-muted-foreground p-2">
-                                <Hourglass className="size-4 animate-spin-slow" />
-                                <span>Selecciona un dominio para ver el estado.</span>
-                           </div>
-                         )}
-                     </div>
+                 <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center">
+                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
+                       <X className="mr-2"/>
+                       Cerrar
+                     </Button>
+
                      <Button
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                        className="w-40 bg-[#00ADEC] text-white border-white hover:bg-white hover:text-black"
-                    >
-                        <X className="mr-2"/>
-                        Cerrar
-                    </Button>
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#00CB07'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#E18700'; }}
+                        style={{backgroundColor: '#E18700'}}
+                        className="text-white font-bold"
+                     >
+                       <Plug className="mr-2"/>
+                       Comprobar Conexión
+                     </Button>
+                    
+                     <div className="w-1 h-8 bg-cyan-400/20 rounded-full"/>
+
+                     {selectedDomain && currentDomainData ? (
+                        <div className="flex items-center gap-3 text-xs">
+                           <div className="flex items-center gap-2">
+                               <p className="font-semibold text-green-300">Conexión Establecida</p>
+                               <LedIndicator verified={true}/>
+                               <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
+                               <div className="px-2 py-1 bg-black/40 text-white/80 rounded-md text-xs font-semibold border border-white/20">Correos</div>
+                           </div>
+                           <div className="flex items-center gap-2">
+                               <p className="font-semibold text-red-400">Error de Conexión</p>
+                               <LedIndicator verified={false}/>
+                               <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
+                               <div className="px-2 py-1 bg-black/40 text-white/80 rounded-md text-xs font-semibold border border-white/20">Correos</div>
+                           </div>
+                           <ConnectionSignal />
+                        </div>
+                     ) : (
+                        <div className="flex items-center gap-3 text-sm text-cyan-200/60">
+                            <Hourglass className="size-5 animate-spin-slow" />
+                            <span>Selecciona un dominio para ver el estado de conexión.</span>
+                        </div>
+                     )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
