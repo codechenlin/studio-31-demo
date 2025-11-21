@@ -4,10 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers, Plug, Hourglass } from 'lucide-react';
+import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers, Plug, Hourglass, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Separator } from '@/components/ui/separator';
 
 // Mock Data
 const domains = [
@@ -44,7 +45,6 @@ const RightPanelPlaceholder = () => (
                 style={{ boxShadow: '0 0 10px #00ADEC, 0 0 15px #00ADEC' }}
                 animate={{ 
                     left: ['10%', '90%', '10%'],
-                    right: ['90%', '10%', '90%']
                 }}
                 transition={{
                     duration: 4,
@@ -106,7 +106,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
           boxShadow: `0 0 6px ${verified ? '#00CB07' : '#F00000'}`,
         }}
       >
-        <div className="absolute inset-0 rounded-full animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000'} as React.CSSProperties} />
+        <div className="absolute inset-0 rounded-full animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
       </div>
     );
     
@@ -145,8 +145,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     }
                     @keyframes pulse-wave {
                       0% { transform: scale(0.8); opacity: 0; }
-                      70% { transform: scale(2.5); opacity: 0.7; }
-                      100% { transform: scale(3.5); opacity: 0; }
+                      50% { opacity: 0.7; }
+                      100% { transform: scale(2.5); opacity: 0; }
                     }
                     .animate-pulse-wave {
                       position: absolute;
@@ -204,7 +204,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.verified}/>
-                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => {e.stopPropagation(); /* Future action */}}>
+                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => {e.stopPropagation(); /* Future action */}}>
                                                   <Code className="mr-2 size-3"/>
                                                   Detalles
                                                 </Button>
@@ -234,11 +234,11 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                     <Button variant={emailFilter === 'disconnected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white" onClick={() => setEmailFilter('disconnected')}>
                                         <XCircle className="text-red-500"/>
                                     </Button>
-                                     <Button variant={emailFilter === 'all' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white" onClick={() => setEmailFilter('all')}>
+                                     <Button variant={emailFilter === 'all' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('all')}>
                                          <Layers/>
                                      </Button>
                                 </div>
-                           </div>
+                            </div>
                            <ScrollArea className="flex-1 -m-6 p-6 mt-0 custom-scrollbar">
                                 <div className="space-y-2">
                                     {selectedDomain ? (
@@ -246,7 +246,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={email.connected}/>
-                                                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
+                                                   <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
                                                       <Signal className="mr-2 size-3"/>
                                                       Informe
                                                     </Button>
@@ -272,31 +272,32 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        <X className="mr-2"/>
                        Cerrar
                      </Button>
-                     <Button
-                        style={{backgroundColor: '#E18700'}}
-                        className="text-white font-bold transition-colors duration-300"
-                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#00CB07'; }}
-                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#E18700'; }}
-                     >
-                       <Plug className="mr-2"/>
-                       Comprobar Conexión
-                     </Button>
-                    
-                     <div className="w-1 h-8 bg-cyan-400/20 rounded-full"/>
+                     <div className="flex items-center gap-2">
+                        <Button
+                            className="text-white font-bold transition-opacity"
+                            style={{ background: 'linear-gradient(to right, #1700E6, #009AFF)'}}
+                            onMouseOver={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #00CE07, #A6EE00)'}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)'}
+                        >
+                           <Plug className="mr-2"/>
+                           Comprobar Conexión
+                        </Button>
+                        <Separator orientation="vertical" className="h-8 bg-cyan-400/20 rounded-full"/>
+                     </div>
 
                      {selectedDomain && currentDomainData ? (
                         <div className="flex items-center gap-3 text-xs">
                            <div className="flex items-center gap-2">
+                               <div className="size-2.5 rounded-sm" style={{backgroundColor: '#00CB07'}}/>
                                <p className="font-semibold text-green-300">Conexión Establecida</p>
-                               <LedIndicator verified={true}/>
                                <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
-                               <div className="px-2 py-1 bg-black/40 text-white/80 rounded-md text-xs font-semibold border border-white/20">Correos</div>
+                               <div className="px-2 py-1 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
                            </div>
                            <div className="flex items-center gap-2">
+                               <div className="size-2.5 rounded-sm" style={{backgroundColor: '#F00000'}}/>
                                <p className="font-semibold text-red-400">Error de Conexión</p>
-                               <LedIndicator verified={false}/>
                                <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
-                               <div className="px-2 py-1 bg-black/40 text-white/80 rounded-md text-xs font-semibold border border-white/20">Correos</div>
+                               <div className="px-2 py-1 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
                            </div>
                            <ConnectionSignal />
                         </div>
