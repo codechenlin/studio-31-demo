@@ -137,14 +137,39 @@ export async function getVerifiedDomains(): Promise<{ success: boolean; data?: D
   }
   
   try {
+    // Call the RPC function with the user's ID
     const { data, error } = await supabase
       .rpc('get_user_verified_domains', { p_user_id: user.id });
       
     if (error) throw error;
     
-    return { success: true, data: data || [] };
+    return { success: true, data: data as Domain[] || [] };
   } catch (error: any) {
     console.error('Error fetching verified domains:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Usuario no autenticado.' };
+  }
+  
+  try {
+    const { count, error } = await supabase
+      .from('domains')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_verified', true);
+      
+    if (error) throw error;
+    
+    return { success: true, count: count || 0 };
+  } catch (error: any) {
+    console.error('Error fetching verified domains count:', error);
     return { success: false, error: error.message };
   }
 }
@@ -200,15 +225,21 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         .from('dns_checks')
         .update({ ...checks, updated_at: new Date().toISOString() })
         .eq('domain_id', domainId)
-        .select();
+        .select()
+        .single();
     
     if (error) {
         console.error('Error saving DNS checks:', error);
         throw error;
     }
+    
+    // The trigger will now handle updating the count automatically
+    // when 'is_fully_verified' changes.
+
     revalidatePath('/dashboard/servers');
     return { success: true, data };
 }
+
 
 export async function saveSmtpCredentials(domainId: string, credentials: { host: string, port: number, encryption: string, username: string, password?: string, is_validated: boolean }) {
     const supabase = createClient();
