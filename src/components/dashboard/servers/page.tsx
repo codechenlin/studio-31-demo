@@ -127,7 +127,6 @@ export default function ServersPage() {
   
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
-  const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
@@ -137,16 +136,26 @@ export default function ServersPage() {
   const { toast } = useToast();
 
   const handleSubdomainClick = (hasVerified: boolean) => {
-    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    if (!hasVerified) {
+    if (hasVerified) {
       setIsSubdomainModalOpen(true);
+    } else {
+      toast({
+        title: "Acción Requerida",
+        description: "Debes verificar al menos un dominio principal para poder añadir subdominios.",
+        variant: "destructive"
+      })
     }
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
-    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    if (!hasVerified) {
-      setIsAddEmailModalOpen(true);
+    if (hasVerified) {
+       setIsAddEmailModalOpen(true);
+    } else {
+       toast({
+        title: "Acción Requerida",
+        description: "Debes verificar al menos un dominio principal para poder añadir correos.",
+        variant: "destructive"
+      })
     }
   };
   
