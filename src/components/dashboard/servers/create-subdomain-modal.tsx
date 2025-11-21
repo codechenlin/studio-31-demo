@@ -108,6 +108,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       <DnsStatusModal isOpen={isDnsModalOpen} onOpenChange={setIsDnsModalOpen} status="ok" />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]">
+           <DialogHeader className="sr-only">
+            <DialogTitle>Crear Subdominio</DialogTitle>
+            <DialogDescription>
+              Un asistente para guiarte en la creación y configuración de un nuevo subdominio.
+            </DialogDescription>
+          </DialogHeader>
           {/* Left Panel: Steps */}
           <div className="hidden md:block col-span-1 bg-muted/30 p-8">
             <h2 className="text-lg font-bold flex items-center gap-2"><GitBranch /> Crear Subdominio</h2>
