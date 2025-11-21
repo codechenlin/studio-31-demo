@@ -225,7 +225,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                            <div className="flex justify-between items-center shrink-0 mb-4">
                                <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2 min-w-0">
                                  <Mail className="size-4"/>
-                                 <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateName(selectedDomain, 15) : '...'}</span></span>
+                                 <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span></span>
                                </h3>
                                <div className="flex items-center gap-1 p-1 rounded-md bg-black/30 border border-cyan-400/20">
                                     <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white/20" onClick={() => setEmailFilter('connected')}>
@@ -245,7 +245,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         emails.length > 0 ? emails.map(email => (
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                   <div className={cn("size-3 rounded-full shrink-0", email.connected ? "bg-[#00CB07]" : "bg-[#F00000]")}/>
+                                                   <LedIndicator verified={email.connected}/>
                                                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
                                                       <Signal className="mr-2 size-3"/>
                                                       Informe
@@ -272,44 +272,48 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        <X className="mr-2"/>
                        Cerrar
                      </Button>
-                     <div className="flex items-center gap-2">
+                    <div className="flex-grow flex items-center justify-center gap-4">
                         <Button
                             className="text-white font-bold transition-opacity hover:opacity-95"
-                             style={{ background: 'linear-gradient(to right, #E18700, #FFAB00)'}}
+                             style={{ background: 'linear-gradient(to right, #1700E6, #009AFF)' }}
                              onMouseOver={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #00CE07, #A6EE00)'}
-                             onMouseOut={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #E18700, #FFAB00)'}
+                             onMouseOut={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)'}
                         >
                            <Plug className="mr-2"/>
                            Comprobar Conexión
                         </Button>
-                     </div>
-                     <Separator orientation="vertical" className="h-8 bg-cyan-400/20 rounded-full"/>
-                     <div className="relative flex items-center gap-4 p-2 rounded-lg bg-amber-500/20 border border-white/20">
-                        {selectedDomain && currentDomainData ? (
-                            <div className="flex items-center gap-3 text-xs">
-                               <div className="flex items-center gap-2">
-                                   <div className="size-2.5 rounded-sm bg-green-500"/>
-                                   <p className="font-semibold text-green-300">Conexión Establecida</p>
-                                   <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
-                                   <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
-                               </div>
-                               <div className="flex items-center gap-2">
-                                   <div className="size-2.5 rounded-sm bg-red-500"/>
-                                   <p className="font-semibold text-red-400">Error de Conexión</p>
-                                   <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
-                                   <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
-                               </div>
-                               <ConnectionSignal />
-                            </div>
-                         ) : (
-                            <div className="flex items-center gap-3 text-sm text-white">
-                                <Hourglass className="size-5 animate-spin-slow" />
-                                <span>Selecciona un dominio para ver el estado de conexión.</span>
-                            </div>
-                         )}
+                        <Separator orientation="vertical" className="h-10 bg-cyan-400/20 rounded-full"/>
+                         <div className="flex-1 p-2 rounded-lg bg-amber-500/20 border border-white/20 min-w-[360px]">
+                            {selectedDomain && currentDomainData ? (
+                                <div className="flex items-center justify-around gap-4">
+                                    {/* Connected */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <div className="size-3 rounded-sm bg-[#00CB07]"/>
+                                        <span className="font-semibold text-green-300">Conexión Establecida</span>
+                                        <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
+                                        <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
+                                    </div>
+                                    {/* Disconnected */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <div className="size-3 rounded-sm bg-[#F00000]"/>
+                                        <span className="font-semibold text-red-400">Error de Conexión</span>
+                                        <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
+                                        <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
+                                    </div>
+                                    <ConnectionSignal />
+                                </div>
+                             ) : (
+                                <div className="flex items-center justify-center gap-3 text-sm text-white">
+                                    <Hourglass className="size-5 animate-spin-slow" />
+                                    <span>Selecciona un dominio para ver el estado de conexión.</span>
+                                </div>
+                             )}
+                         </div>
                      </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 }
+
+    
