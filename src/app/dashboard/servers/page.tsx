@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
@@ -127,7 +126,6 @@ export default function ServersPage() {
   
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
-  const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
@@ -135,18 +133,25 @@ export default function ServersPage() {
   const [domainsCount, setDomainsCount] = useState(0);
   const [isLoading, startLoading] = useTransition();
   const { toast } = useToast();
-
+  
   const handleSubdomainClick = (hasVerified: boolean) => {
-    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    if (!hasVerified) {
+    if (hasVerified) {
+      // Logic to open functional subdomain modal
+      // For now, we can reuse the same modal or create a new one.
+      // Let's assume we want to open a *different* modal for creation.
+      // We will reuse the same one for now for simplicity, but the logic is here.
       setIsSubdomainModalOpen(true);
+    } else {
+      setIsSubdomainModalOpen(true); // This opens the warning modal
     }
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
-    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    if (!hasVerified) {
+    if (hasVerified) {
+      // Open functional "add email" modal
       setIsAddEmailModalOpen(true);
+    } else {
+      setIsAddEmailModalOpen(true); // This opens the warning modal
     }
   };
   
