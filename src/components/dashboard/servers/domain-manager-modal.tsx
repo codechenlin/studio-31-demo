@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,15 +26,9 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   MoreHorizontal,
   FileIcon,
-  Image as ImageIcon,
+  ImageIcon,
   Film,
   FileText,
   Music,
@@ -159,55 +153,6 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     
-    const ConnectionSignal = () => {
-      return (
-        <div className="relative flex items-center justify-center w-8 h-8">
-            <div className="absolute w-full h-full border-2 border-dashed border-[#E18700]/30 rounded-full animate-spin-slow" />
-            <div className="flex items-end gap-0.5 h-3/5">
-                <motion.div
-                    className="w-1 bg-[#E18700] rounded-full"
-                    animate={{ height: ['20%', '80%', '20%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                 <motion.div
-                    className="w-1 bg-[#E18700] rounded-full"
-                    animate={{ height: ['60%', '30%', '60%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                />
-                 <motion.div
-                    className="w-1 bg-[#E18700] rounded-full"
-                    animate={{ height: ['40%', '100%', '40%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                />
-            </div>
-        </div>
-      );
-    };
-
-    const truncateName = (name: string, maxLength: number): string => {
-        if (name.length <= maxLength) {
-            return name;
-        }
-        return `${name.substring(0, maxLength)}...`;
-    };
-
-    const getEmailsForDomain = () => {
-        const domainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
-        if (!domainData) return [];
-
-        if (emailFilter === 'connected') {
-            return domainData.emails.filter(e => e.connected);
-        }
-        if (emailFilter === 'disconnected') {
-            return domainData.emails.filter(e => !e.connected);
-        }
-        return domainData.emails;
-    }
-    
-    const emails = getEmailsForDomain();
-    const currentList = activeTab === 'domains' ? domains : subdomains;
-    const currentDomainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
-    
     const DeleteConfirmationModal = () => (
          <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
             <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-900/90 backdrop-blur-xl border border-red-500/20 text-white overflow-hidden p-0">
@@ -248,6 +193,30 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </Dialog>
     );
 
+    const truncateName = (name: string, maxLength: number): string => {
+        if (name.length <= maxLength) {
+            return name;
+        }
+        return `${name.substring(0, maxLength)}...`;
+    };
+
+    const getEmailsForDomain = () => {
+        const domainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
+        if (!domainData) return [];
+
+        if (emailFilter === 'connected') {
+            return domainData.emails.filter(e => e.connected);
+        }
+        if (emailFilter === 'disconnected') {
+            return domainData.emails.filter(e => !e.connected);
+        }
+        return domainData.emails;
+    }
+    
+    const emails = getEmailsForDomain();
+    const currentList = activeTab === 'domains' ? domains : subdomains;
+    const currentDomainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
+    
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-5xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
@@ -289,13 +258,20 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     }
                 `}</style>
 
-                 <DialogHeader className="p-4 border-b border-cyan-400/20 bg-black/30 text-left z-10">
+                 <DialogHeader className="p-4 border-b border-cyan-400/20 bg-black/30 text-left z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-3">
                          <div className="p-2 rounded-full bg-cyan-500/10 border-2 border-cyan-400/20">
                            <Globe className="text-cyan-300"/>
                         </div>
                         Gestor de Dominios y Correos
                     </DialogTitle>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
+                         <div className="relative flex items-center justify-center w-4 h-4">
+                            <div className="absolute w-full h-full rounded-full bg-[#00CB07] animate-ping" style={{filter: `blur(4px)`}}/>
+                            <div className="w-2 h-2 rounded-full bg-[#00CB07]" />
+                        </div>
+                        SISTEMA EN LÍNEA
+                    </div>
                 </DialogHeader>
                 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 min-h-0">
@@ -322,11 +298,11 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <p className="font-mono text-sm text-white/90 truncate" title={d.name}>{truncateName(d.name, 25)}</p>
                                             </div>
                                              {activeTab === 'domains' ? (
-                                                <Button variant="ghost" size="icon" className="group h-8 w-8 bg-white/10 hover:bg-white" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
+                                                <Button variant="ghost" size="icon" className="group h-8 w-8 bg-white/5 hover:bg-white" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
                                                     <Trash2 className="size-4 text-[#F00000] transition-colors group-hover:text-[#F00000]" />
                                                 </Button>
                                             ) : (
-                                                <MoreHorizontal className="text-[#F00000]" />
+                                                <MoreHorizontal className="text-cyan-300/50" />
                                             )}
                                         </div>
                                     )) : (
@@ -381,7 +357,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     </div>
                 </div>
                  <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center">
-                     <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
+                     <div className="flex-1 p-2 rounded-lg bg-transparent min-w-[360px]"> 
                         {selectedDomain && currentDomainData ? (
                             <div className="flex items-center justify-around gap-4">
                                 <div className="flex items-center gap-2 text-xs">
@@ -396,7 +372,6 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                     <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
                                     <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
                                 </div>
-                                <ConnectionSignal />
                             </div>
                          ) : (
                             <div className="flex items-center justify-center gap-3 text-sm text-white">
