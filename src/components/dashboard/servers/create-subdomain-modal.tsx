@@ -68,7 +68,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
-import { Separator } from '@/components/ui/separator';
 import { DnsStatusModal } from './dns-status-modal';
 
 // Mock Data
@@ -134,6 +133,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
 
     useEffect(() => {
         setIsLoading(true);
+        // Simulate fetching data
         setTimeout(() => {
             setDomains(mockDomains);
             setIsLoading(false);
@@ -152,7 +152,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1 -mx-4">
+        <ScrollArea className="flex-1 -mx-4 custom-scrollbar">
             <div className="space-y-2 px-4">
                 {domains.map((domain) => (
                     <motion.div
@@ -166,7 +166,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
                         onClick={() => domain.is_verified && onSelect(domain)}
                     >
                         <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                             {domain.is_verified ? 
                                 <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
                                 <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
@@ -187,7 +187,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
         </ScrollArea>
     );
 }
-
+  
 const StatusIndicator = () => {
     return (
         <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
@@ -329,22 +329,26 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between gap-4">
-                <div className="flex-1">
-                    <h3 className="font-semibold text-left">Seleccionar Dominio</h3>
-                    <p className="text-sm text-left text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
-                </div>
-                <StatusIndicator />
-            </div>
+              <div className="p-4 border-b flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                      <h3 className="font-semibold text-left">Seleccionar Dominio</h3>
+                      <p className="text-sm text-left text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
+                  </div>
+                  <StatusIndicator />
+              </div>
+              <div className="relative w-full h-px" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
+                  <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
+              </div>
+
             <div className="flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
                 {renderStepContent()}
               </AnimatePresence>
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
-                <Button 
-                    variant="outline" 
-                    className="border-[#F00000] text-[#F00000] bg-transparent hover:bg-[#F00000] hover:text-white" 
+                 <Button
+                    variant="outline"
+                    className="border-[#F00000] text-[#F00000] bg-transparent hover:bg-[#F00000] hover:text-white"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
