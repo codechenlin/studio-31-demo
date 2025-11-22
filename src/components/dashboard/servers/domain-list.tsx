@@ -7,8 +7,21 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { type Domain, getVerifiedDomains } from './db-actions'; // Import getVerifiedDomains
+import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Mock Data
+const mockDomains: Domain[] = [
+    // @ts-ignore
+    { id: '1', domain_name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}]},
+    // @ts-ignore
+    { id: '2', domain_name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}]},
+    // @ts-ignore
+    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}]},
+    // @ts-ignore
+    { id: '4', domain_name: 'another-domain.dev', is_verified: false, emails: []},
+];
+
 
 interface DomainListProps {
     onSelect: (domain: Domain) => void;
@@ -17,21 +30,15 @@ interface DomainListProps {
 
 export function DomainList({ onSelect, renderLoading }: DomainListProps) {
     const [domains, setDomains] = useState<Domain[]>([]);
-    const [isLoading, startLoading] = useTransition();
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        startLoading(async () => {
-            try {
-                const result = await getVerifiedDomains();
-                if(result.success && result.data){
-                    setDomains(result.data);
-                } else {
-                    console.error("Failed to load domains", result.error);
-                }
-            } catch (error) {
-                console.error("Failed to load domains", error);
-            }
-        });
+        setIsLoading(true);
+        // Simulate fetching data
+        setTimeout(() => {
+            setDomains(mockDomains);
+            setIsLoading(false);
+        }, 1500);
     }, []);
     
     const truncateName = (name: string, maxLength: number = 25): string => {

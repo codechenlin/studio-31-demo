@@ -55,13 +55,18 @@ const LoadingPlaceholder = () => (
 
 const StatusIndicator = () => {
     return (
-      <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5 w-full">
-        <div className="relative flex items-center justify-center w-4 h-4">
-          <div className="absolute w-full h-full rounded-full bg-blue-500 animate-pulse" style={{filter: `blur(4px)`}}/>
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
+        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center justify-center gap-3">
+             <div className="relative flex items-center justify-center w-4 h-4">
+                 <motion.div
+                    className="absolute inset-0 border rounded-full"
+                    style={{ borderColor: '#009AFF' }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                />
+                <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
+            </div>
+            <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
         </div>
-        <p className="text-xs font-semibold tracking-wider text-white/80">ESTADO DEL SISTEMA</p>
-      </div>
     );
 };
 
@@ -195,8 +200,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                <div className="mt-4">
                  <StatusIndicator />
               </div>
-              <div className="relative w-full h-px my-4 bg-gradient-to-r from-transparent via-primary/30 to-transparent">
-                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]"/>
+              <div className="relative w-full h-px my-4" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
+                  <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -205,10 +210,19 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               </AnimatePresence>
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
-              <Button variant="outline" onClick={handleClose}><X className="mr-2" />Cancelar</Button>
-              {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}><ArrowLeft className="mr-2" />Anterior</Button>}
-              {currentStep < 3 && <Button onClick={handleNextStep} disabled={(currentStep === 1 && !selectedDomain) || (currentStep === 2 && !subdomainName.trim())}><ArrowRight className="mr-2" />Siguiente</Button>}
-              {currentStep === 3 && <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>}
+                <Button 
+                  variant="outline" 
+                  onClick={handleClose} 
+                  className="bg-transparent border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white"
+                >
+                  <X className="mr-2" />
+                  Cancelar
+                </Button>
+              <div className="flex gap-2">
+                {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}><ArrowLeft className="mr-2" />Anterior</Button>}
+                {currentStep < 3 && <Button onClick={handleNextStep} disabled={(currentStep === 1 && !selectedDomain) || (currentStep === 2 && !subdomainName.trim())}><ArrowRight className="mr-2" />Siguiente</Button>}
+                {currentStep === 3 && <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>}
+              </div>
             </DialogFooter>
           </div>
         </DialogContent>
@@ -216,3 +230,4 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     </>
   );
 }
+
