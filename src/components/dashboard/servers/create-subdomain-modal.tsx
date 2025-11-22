@@ -156,17 +156,17 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     return (
         <div className="h-full flex flex-col">
-            <div className="relative mb-4 shrink-0">
+             <div className="relative mb-4 shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar por nombre..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-             <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
+            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
                 <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
                 <div>
                     <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
                 </div>
             </div>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 -mr-4 pr-4">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -202,6 +202,18 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         </div>
     );
 }
+
+const StatusIndicator = () => {
+    return (
+        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
+            <div className="relative flex items-center justify-center w-4 h-4">
+                <div className={cn('absolute w-full h-full rounded-full bg-amber-500 animate-pulse')} style={{filter: `blur(4px)`}}/>
+                <div className={cn('w-2 h-2 rounded-full bg-amber-500')} />
+            </div>
+            <p className="text-xs font-semibold tracking-wider text-white/80">MODO DE ESPERA</p>
+        </div>
+    );
+};
 
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
   const { toast } = useToast();
@@ -292,24 +304,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       { title: "Análisis DNS", icon: Dna },
     ];
   
-  const StatusIndicator = () => {
-    let text = 'ESTADO DEL SISTEMA';
-    switch(currentStep) {
-        case 1: text = 'BUSCANDO DOMINIOS'; break;
-        case 2: text = 'ASIGNANDO SUBDOMINIO'; break;
-        case 3: text = 'LISTO PARA ANÁLISIS'; break;
-    }
-
-    return (
-        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
-             <div className="relative flex items-center justify-center w-4 h-4">
-                <div className="absolute w-full h-full rounded-full bg-amber-500 animate-pulse" style={{filter: `blur(4px)`}}/>
-                <div className="w-2 h-2 rounded-full bg-amber-500" />
-             </div>
-            <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
-        </div>
-    );
-  };
 
   return (
     <>
@@ -361,9 +355,9 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </div>
                  <div className="mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                     <AlertTriangle className="size-8 text-amber-400 shrink-0 mt-1" />
-                    <p>
+                    <div>
                         <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                    </p>
+                    </div>
                 </div>
             </div>
           </div>
@@ -376,6 +370,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         {stepInfo[currentStep - 1].title}
                     </h3>
                 </div>
+                <StatusIndicator />
               </div>
               
             <div className="flex-1 overflow-y-auto">
@@ -386,7 +381,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                  <Button
                     variant="outline"
-                    className="border-white text-white hover:bg-[#F00000] hover:border-[#F00000]"
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -394,7 +389,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </Button>
               <div className="flex gap-2">
                 {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}><ArrowLeft className="mr-2" />Anterior</Button>}
-                {currentStep < 3 && 
+                {currentStep < 3 ? (
                     <Button 
                         onClick={handleNextStep}
                         className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
@@ -402,8 +397,9 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         <RefreshCw className="mr-2" />
                         Actualizar
                     </Button>
-                }
-                {currentStep === 3 && <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>}
+                ) : (
+                    <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>
+                )}
               </div>
             </DialogFooter>
           </div>
@@ -412,5 +408,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
-
-    
