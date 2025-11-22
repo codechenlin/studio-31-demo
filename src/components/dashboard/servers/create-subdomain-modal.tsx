@@ -154,7 +154,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1 custom-scrollbar">
+        <ScrollArea className="flex-1">
             <div className="space-y-2">
                 {domains.map((domain) => (
                     <motion.div
@@ -192,17 +192,18 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
 
 const SystemStatusIndicator = () => {
     return (
-        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
-             <div className="relative flex items-center justify-center w-6 h-6">
+        <div className="p-2 rounded-lg bg-black/10 border border-white/5 flex items-center gap-2">
+            <div className="relative flex items-center justify-center w-4 h-4">
+                 <div className="absolute w-full h-full rounded-full" style={{backgroundColor: '#1700E6', filter: 'blur(4px)'}} />
                  <motion.div
                     className="absolute inset-0 border-2 border-dashed rounded-full"
                     style={{ borderColor: '#009AFF' }}
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                    transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
                 />
-                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
+                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6'}}/>
             </div>
-            <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
+            <p className="text-xs font-semibold tracking-wider text-white/80">ESTADO DEL SISTEMA</p>
         </div>
     );
 };
@@ -332,17 +333,15 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex items-center gap-2">
                     <h3 className="font-semibold text-left truncate">
                       {stepTitles[currentStep - 1]}
                     </h3>
+                    {currentStep === 1 && <Eye className="size-4 text-muted-foreground"/>}
                 </div>
-                <SystemStatusIndicator />
+                 <SystemStatusIndicator />
               </div>
-              <div className="relative w-full h-px" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
-                  <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
-              </div>
-
+              
             <div className="flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
                 {renderStepContent()}
@@ -351,7 +350,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                 <Button
                     variant="outline"
-                    className="border-[#F00000] text-[#F00000] bg-transparent hover:bg-[#F00000] hover:text-white"
+                    className="border-[#F00000] text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -369,4 +368,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     </>
   );
 }
-
