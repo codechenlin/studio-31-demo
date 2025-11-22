@@ -73,7 +73,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { DnsStatusModal } from './dns-status-modal';
 import { Separator } from '@/components/ui/separator';
-// import { createOrGetDomainAction } from './db-actions';
+import { createOrGetDomainAction } from './db-actions';
 
 // Mock Data
 const mockDomains: Domain[] = [
@@ -155,7 +155,11 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     return (
         <div className="h-full flex flex-col">
-            <ScrollArea className="flex-1">
+            <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input placeholder="Buscar dominio..." className="pl-10 bg-black/20 border-primary/30" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            <ScrollArea className="flex-1 -mx-4 px-4">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -188,6 +192,15 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                     ))}
                 </div>
             </ScrollArea>
+             <div className="relative w-full h-px my-4" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
+                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
+            </div>
+            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
+                <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+                <div>
+                    <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                </div>
+            </div>
         </div>
     );
 }
@@ -198,6 +211,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [subdomainName, setSubdomainName] = useState('');
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleDomainSelect = (domain: Domain) => {
     if (domain.is_verified) {
@@ -264,17 +278,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               )
           })}
         </ul>
-        <div className="mt-auto space-y-4">
-             <div className="relative w-full h-px my-2" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
-                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
-            </div>
-            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
-                <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
-                <div>
-                    <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                </div>
-            </div>
-        </div>
       </div>
     );
   };
@@ -329,7 +332,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     <>
       <DnsStatusModal isOpen={isDnsModalOpen} onOpenChange={setIsDnsModalOpen} status="ok" />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent showCloseButton={false} className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]">
+        <DialogContent showCloseButton={false} className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-2 gap-0 h-[98vh]">
            <DialogHeader className="sr-only">
             <DialogTitle>Crear Subdominio</DialogTitle>
             <DialogDescription>
@@ -340,7 +343,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             {renderLeftPanelContent()}
           </div>
           
-          <div className="md:col-span-2 flex flex-col">
+          <div className="md:col-span-1 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-left truncate flex items-center gap-2">
@@ -395,3 +398,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
+
+    
