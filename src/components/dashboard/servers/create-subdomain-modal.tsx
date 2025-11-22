@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -157,7 +158,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                                     <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
                                 }
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name)}</p>
+                                  <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 23)}</p>
                                 </div>
                             </div>
                             {!domain.is_verified && (
@@ -231,18 +232,37 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 );
             case 2:
+                const isSubdomainValid = subdomainName.length > 2 && !subdomainName.includes(' ');
+                const isSubdomainTaken = subdomainName === 'blog'; // mock taken
                 return (
-                    <div className="flex flex-col h-full justify-center">
+                    <div className="flex flex-col h-full justify-start pt-1">
                         <h3 className="text-lg font-semibold mb-1">Añadir Subdominio</h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Introduce el nombre para tu subdominio (ej: "marketing"). Se creará como:
-                            <span className="font-mono text-primary p-1 bg-primary/10 rounded-md ml-1">{subdomainName || '...'}.{selectedDomain?.domain_name}</span>
+                            Introduce el nombre para tu subdominio.
                         </p>
-                        <Input 
-                            value={subdomainName}
-                            onChange={(e) => setSubdomainName(e.target.value)}
-                            placeholder="ej: marketing"
-                        />
+                        <div className="space-y-4">
+                            <Input 
+                                value={subdomainName}
+                                onChange={(e) => setSubdomainName(e.target.value)}
+                                placeholder="ej: marketing"
+                            />
+                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
+                                <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
+                                <p className="font-mono text-lg font-bold text-white">
+                                    <span className="text-primary">{subdomainName || '...'}</span>.{selectedDomain?.domain_name}
+                                </p>
+                            </div>
+                            {subdomainName && (
+                                <div className={cn("p-2 text-xs rounded-md flex items-center gap-2", 
+                                    isSubdomainTaken ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"
+                                )}>
+                                    {isSubdomainTaken ? <XCircle className="size-4" /> : <CheckCircle className="size-4"/>}
+                                    <span>
+                                        {isSubdomainTaken ? `El subdominio "${subdomainName}" ya está en uso.` : `El subdominio "${subdomainName}" está disponible.`}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
             case 3:
@@ -312,8 +332,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           </li>
                       ))}
                     </ul>
-                    <Separator className="my-6" />
-                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <Separator className="my-6" />
+                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
                             <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
@@ -323,6 +343,57 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
         )
     }
+
+    const renderRightPanelContent = () => {
+        return (
+            <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
+                <StatusIndicator />
+                <div className="w-full flex-grow flex flex-col justify-center">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`step-content-${currentStep}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="w-full flex flex-col justify-between flex-grow"
+                        >
+                            {currentStep === 1 && (
+                                <div className="text-center flex-grow flex flex-col justify-center">
+                                    <div className="flex justify-center mb-4">
+                                        <Info className="size-16 text-primary/80" />
+                                    </div>
+                                    <h4 className="font-bold text-lg">Selecciona un Dominio Raíz</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Para comenzar, elige uno de tus dominios principales ya verificados de la lista de la izquierda. Este será el dominio base para tu nuevo subdominio.
+                                    </p>
+                                </div>
+                            )}
+                            {currentStep >= 2 && (
+                                <p className="text-sm text-muted-foreground">Estado del Proceso</p>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+                 <div className="w-full mt-auto pt-4 space-y-2">
+                    {currentStep === 2 && (
+                        <Button
+                            onClick={handleNextStep}
+                            disabled={isPending || !subdomainName}
+                            className="text-white hover:opacity-90 w-full h-12 text-base"
+                             style={{
+                              background: 'linear-gradient(to right, #1700E6, #009AFF)'
+                            }}
+                        >
+                            {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+                        </Button>
+                    )}
+                    <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
+                        <X className="mr-2"/>Cancelar
+                    </Button>
+                </div>
+            </div>
+        )
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -342,45 +413,10 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </div>
 
                 {/* Right Panel */}
-                <div className="md:col-span-1 h-full p-8 border-l bg-muted/20 flex flex-col items-center text-center">
-                    <StatusIndicator />
-                    <div className="w-full flex-grow flex flex-col justify-center">
-                        {currentStep === 1 ? (
-                             <motion.div
-                                key="step1-info"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="text-center flex flex-col items-center gap-4"
-                            >
-                                <Info className="size-16 text-primary/80" />
-                                <h4 className="font-bold text-lg">Selecciona un Dominio Raíz</h4>
-                                <p className="text-sm text-muted-foreground">
-                                    Para comenzar, elige uno de tus dominios principales ya verificados de la lista de la izquierda. Este será el dominio base para tu nuevo subdominio.
-                                </p>
-                            </motion.div>
-                        ) : (
-                             <p className="text-sm text-muted-foreground">Estado del Proceso</p>
-                        )}
-                    </div>
-                     <div className="w-full mt-auto pt-4 space-y-2">
-                        {currentStep === 2 && (
-                            <Button
-                                onClick={handleNextStep}
-                                disabled={isPending || !subdomainName}
-                                className="text-white hover:opacity-90 w-full h-12 text-base"
-                                 style={{
-                                  background: 'linear-gradient(to right, #1700E6, #009AFF)'
-                                }}
-                            >
-                                {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
-                            </Button>
-                        )}
-                        <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
-                            <X className="mr-2"/>Cancelar
-                        </Button>
-                    </div>
+                <div className="md:col-span-1 h-full">
+                  {renderRightPanelContent()}
                 </div>
             </DialogContent>
         </Dialog>
     );
-
+}
