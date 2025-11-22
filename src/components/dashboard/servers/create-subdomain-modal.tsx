@@ -58,6 +58,7 @@ import {
   Shield,
   ArrowRight,
   Dna,
+  Info,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -304,7 +305,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                       ))}
                     </ul>
                     <Separator className="my-6" />
-                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
                             <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
@@ -314,7 +315,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
         )
     }
-    
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
@@ -363,7 +364,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                   background: 'linear-gradient(to right, #1700E6, #009AFF)'
                                 }}
                             >
-                                Siguiente
+                                {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
                             </Button>
                         )}
                         <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
@@ -375,7 +376,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
-
-    
-
-    
