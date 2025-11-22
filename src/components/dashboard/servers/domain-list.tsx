@@ -42,8 +42,8 @@ export function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }, []);
     
     const truncateName = (name: string, maxLength: number = 25): string => {
-        if (name.length <= maxLength) {
-            return name;
+        if (!name || name.length <= maxLength) {
+            return name || '';
         }
         return `${name.substring(0, maxLength)}...`;
     };
@@ -53,8 +53,8 @@ export function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1 -mx-4">
-            <div className="space-y-2 px-4">
+        <ScrollArea className="flex-1">
+            <div className="space-y-2 pr-4">
                 {domains.map((domain) => (
                     <motion.div
                         key={domain.id}
@@ -67,7 +67,7 @@ export function DomainList({ onSelect, renderLoading }: DomainListProps) {
                         onClick={() => domain.is_verified && onSelect(domain)}
                     >
                         <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                             {domain.is_verified ? 
                                 <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
                                 <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
