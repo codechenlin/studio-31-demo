@@ -69,6 +69,8 @@ import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { DnsStatusModal } from './dns-status-modal';
+import { Separator } from '@/components/ui/separator';
+
 
 // Mock Data
 const mockDomains: Domain[] = [
@@ -141,8 +143,8 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }, []);
     
     const truncateName = (name: string, maxLength: number = 25): string => {
-        if (name.length <= maxLength) {
-            return name;
+        if (!name || name.length <= maxLength) {
+            return name || '';
         }
         return `${name.substring(0, maxLength)}...`;
     };
@@ -152,8 +154,8 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1 -mx-4 custom-scrollbar">
-            <div className="space-y-2 px-4">
+        <ScrollArea className="flex-1 custom-scrollbar">
+            <div className="space-y-2">
                 {domains.map((domain) => (
                     <motion.div
                         key={domain.id}
@@ -187,8 +189,8 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
         </ScrollArea>
     );
 }
-  
-const StatusIndicator = () => {
+
+const SystemStatusIndicator = () => {
     return (
         <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
              <div className="relative flex items-center justify-center w-6 h-6">
@@ -330,11 +332,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                      <h3 className="font-semibold text-left">Seleccionar Dominio</h3>
-                      <p className="text-sm text-left text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
-                  </div>
-                  <StatusIndicator />
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-left truncate">
+                      {stepTitles[currentStep - 1]}
+                    </h3>
+                </div>
+                <SystemStatusIndicator />
               </div>
               <div className="relative w-full h-px" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
                   <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
@@ -346,7 +349,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               </AnimatePresence>
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
-                 <Button
+                <Button
                     variant="outline"
                     className="border-[#F00000] text-[#F00000] bg-transparent hover:bg-[#F00000] hover:text-white"
                     onClick={handleClose}
@@ -367,4 +370,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
   );
 }
 
-    
