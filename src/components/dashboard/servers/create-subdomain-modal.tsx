@@ -1,21 +1,96 @@
 
 "use client";
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, ArrowRight, Dna, DatabaseZap, Check, X, GitBranch, Loader2, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  MoreHorizontal,
+  FileIcon,
+  ImageIcon,
+  Film,
+  FileText,
+  Music,
+  Archive,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  UploadCloud,
+  Loader2,
+  Search,
+  XCircle,
+  AlertTriangle,
+  FolderOpen,
+  Check,
+  Globe,
+  GitBranch,
+  Mail,
+  X,
+  MailOpen,
+  Code,
+  Signal,
+  CheckCircle,
+  Layers,
+  Plug,
+  Hourglass,
+  KeyRound,
+  Shield,
+  ArrowRight,
+  ArrowLeft
+} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { DomainList } from './domain-list';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MediaPreview } from '@/components/admin/media-preview';
+import { Separator } from '@/components/ui/separator';
 import { DnsStatusModal } from './dns-status-modal';
+
+// Mock Data
+const mockDomains: Domain[] = [
+    // @ts-ignore
+    { id: '1', domain_name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}]},
+    // @ts-ignore
+    { id: '2', domain_name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}]},
+    // @ts-ignore
+    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}]},
+    // @ts-ignore
+    { id: '4', domain_name: 'another-domain.dev', is_verified: false, emails: []},
+];
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+}
+
+interface DomainListProps {
+    onSelect: (domain: Domain) => void;
+    renderLoading: () => React.ReactNode;
 }
 
 const LoadingPlaceholder = () => (
@@ -53,17 +128,77 @@ const LoadingPlaceholder = () => (
     </div>
 );
 
+function DomainList({ onSelect, renderLoading }: DomainListProps) {
+    const [domains, setDomains] = useState<Domain[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setIsLoading(true);
+        setTimeout(() => {
+            setDomains(mockDomains);
+            setIsLoading(false);
+        }, 1500);
+    }, []);
+    
+    const truncateName = (name: string, maxLength: number = 25): string => {
+        if (name.length <= maxLength) {
+            return name;
+        }
+        return `${name.substring(0, maxLength)}...`;
+    };
+
+    if (isLoading) {
+        return <>{renderLoading()}</>;
+    }
+
+    return (
+        <ScrollArea className="flex-1 -mx-4">
+            <div className="space-y-2 px-4">
+                {domains.map((domain) => (
+                    <motion.div
+                        key={domain.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={cn(
+                            "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
+                            domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-muted text-muted-foreground"
+                        )}
+                        onClick={() => domain.is_verified && onSelect(domain)}
+                    >
+                        <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
+                        <div className="flex items-center gap-3">
+                            {domain.is_verified ? 
+                                <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
+                                <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
+                            }
+                            <div className="min-w-0">
+                              <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 25)}</p>
+                              <p className="text-xs text-muted-foreground">{domain.is_verified ? 'Verificado' : 'Verificación pendiente'}</p>
+                            </div>
+                        </div>
+                        {domain.is_verified && (
+                            <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                Seleccionar
+                            </Button>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+        </ScrollArea>
+    );
+}
+
 const StatusIndicator = () => {
     return (
-        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center justify-center gap-3">
-             <div className="relative flex items-center justify-center w-4 h-4">
+        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
+             <div className="relative flex items-center justify-center w-6 h-6">
                  <motion.div
-                    className="absolute inset-0 border rounded-full"
+                    className="absolute inset-0 border-2 border-dashed rounded-full"
                     style={{ borderColor: '#009AFF' }}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
                 />
-                <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
+                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
             </div>
             <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
         </div>
@@ -194,15 +329,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-center">Seleccionar Dominio</h3>
-              <p className="text-sm text-center text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
-               <div className="mt-4">
-                 <StatusIndicator />
-              </div>
-              <div className="relative w-full h-px my-4" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
-                  <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
-              </div>
+            <div className="p-4 border-b flex items-center justify-between gap-4">
+                <div className="flex-1">
+                    <h3 className="font-semibold text-left">Seleccionar Dominio</h3>
+                    <p className="text-sm text-left text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
+                </div>
+                <StatusIndicator />
             </div>
             <div className="flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
@@ -211,9 +343,9 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
                 <Button 
-                  variant="outline" 
-                  onClick={handleClose} 
-                  className="bg-transparent border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white"
+                    variant="outline" 
+                    className="border-[#F00000] text-[#F00000] bg-transparent hover:bg-[#F00000] hover:text-white" 
+                    onClick={handleClose}
                 >
                   <X className="mr-2" />
                   Cancelar
@@ -231,3 +363,4 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
   );
 }
 
+    
