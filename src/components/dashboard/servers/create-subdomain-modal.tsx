@@ -58,7 +58,9 @@ import {
   KeyRound,
   Shield,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Dna,
+  RefreshCw
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -70,7 +72,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { DnsStatusModal } from './dns-status-modal';
 import { Separator } from '@/components/ui/separator';
-import { Dna } from 'lucide-react';
 
 // Mock Data
 const mockDomains: Domain[] = [
@@ -154,7 +155,7 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 pr-2">
             <div className="space-y-2">
                 {domains.map((domain) => (
                     <motion.div
@@ -189,29 +190,6 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
         </ScrollArea>
     );
 }
-
-const SystemStatusIndicator = () => {
-    return (
-        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-6 h-6">
-                 <motion.div
-                    className="absolute inset-0 border-2 border-dashed rounded-full"
-                    style={{ borderColor: '#009AFF' }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                />
-                 <motion.div
-                    className="absolute inset-2 border-2 border-dashed rounded-full"
-                    style={{ borderColor: '#1700E6' }}
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
-                />
-                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
-            </div>
-            <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
-        </div>
-    );
-};
 
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
   const { toast } = useToast();
@@ -364,7 +342,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         {stepTitles[currentStep - 1]}
                     </h3>
                 </div>
-                <SystemStatusIndicator />
               </div>
               
             <div className="flex-1 overflow-y-auto">
@@ -375,7 +352,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                 <Button
                     variant="outline"
-                    className="border-[#F00000] text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white"
+                    className="border-[#F00000] text-[#F00000] hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -383,7 +360,14 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </Button>
               <div className="flex gap-2">
                 {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}><ArrowLeft className="mr-2" />Anterior</Button>}
-                {currentStep < 3 && <Button onClick={handleNextStep} disabled={(currentStep === 1 && !selectedDomain) || (currentStep === 2 && !subdomainName.trim())}><ArrowRight className="mr-2" />Siguiente</Button>}
+                {currentStep < 3 && 
+                    <Button 
+                        onClick={handleNextStep}
+                        className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:from-[#00CE07] hover:to-[#A6EE00]"
+                    >
+                        <RefreshCw className="mr-2" /> Actualizar
+                    </Button>
+                }
                 {currentStep === 3 && <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>}
               </div>
             </DialogFooter>
