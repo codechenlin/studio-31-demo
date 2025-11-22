@@ -70,7 +70,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { DnsStatusModal } from './dns-status-modal';
 import { Separator } from '@/components/ui/separator';
-
+import { Dna } from 'lucide-react';
 
 // Mock Data
 const mockDomains: Domain[] = [
@@ -192,18 +192,23 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
 
 const SystemStatusIndicator = () => {
     return (
-        <div className="p-2 rounded-lg bg-black/10 border border-white/5 flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-4 h-4">
-                 <div className="absolute w-full h-full rounded-full" style={{backgroundColor: '#1700E6', filter: 'blur(4px)'}} />
+        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
+            <div className="relative flex items-center justify-center w-6 h-6">
                  <motion.div
                     className="absolute inset-0 border-2 border-dashed rounded-full"
                     style={{ borderColor: '#009AFF' }}
                     animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                />
+                 <motion.div
+                    className="absolute inset-2 border-2 border-dashed rounded-full"
+                    style={{ borderColor: '#1700E6' }}
+                    animate={{ rotate: -360 }}
                     transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
                 />
-                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6'}}/>
+                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
             </div>
-            <p className="text-xs font-semibold tracking-wider text-white/80">ESTADO DEL SISTEMA</p>
+            <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
         </div>
     );
 };
@@ -290,14 +295,19 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         return null;
     }
   };
-
+  
+    const stepInfo = [
+      { title: "Seleccionar Dominio Principal", icon: Globe },
+      { title: "Asignar Subdominio", icon: GitBranch },
+      { title: "Análisis DNS", icon: Dna },
+    ];
   const stepTitles = ["Seleccionar Dominio Principal", "Asignar Subdominio", "Análisis DNS"];
 
   return (
     <>
       <DnsStatusModal isOpen={isDnsModalOpen} onOpenChange={setIsDnsModalOpen} status="ok" />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent showCloseButton={false} className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]">
+        <DialogContent showCloseButton={false} className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]">
            <DialogHeader className="sr-only">
             <DialogTitle>Crear Subdominio</DialogTitle>
             <DialogDescription>
@@ -309,37 +319,52 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <h2 className="text-lg font-bold flex items-center gap-2"><GitBranch /> Crear Subdominio</h2>
             <p className="text-sm text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</p>
             <ul className="space-y-6 mt-8">
-              {stepTitles.map((title, index) => (
-                <li key={index} className="flex items-center gap-4">
-                  <div className={cn(
-                    "size-10 rounded-full flex items-center justify-center border-2 transition-all",
-                    currentStep > index + 1 ? "bg-green-500/20 border-green-500 text-green-400" :
-                    currentStep === index + 1 ? "bg-primary/10 border-primary text-primary animate-pulse" :
-                    "bg-muted/50 border-border"
-                  )}>
-                    {currentStep > index + 1 ? <Check /> : <span>{index + 1}</span>}
-                  </div>
-                  <span className={cn(
-                    "font-semibold",
-                    currentStep > index + 1 && "text-green-400",
-                    currentStep === index + 1 && "text-primary",
-                    currentStep < index + 1 && "text-muted-foreground"
-                  )}>{title}</span>
-                </li>
-              ))}
+              {stepInfo.map((step, index) => {
+                  const stepNumber = index + 1;
+                  const isActive = currentStep === stepNumber;
+                  const isCompleted = currentStep > stepNumber;
+                  return (
+                    <li key={index} className="flex items-center gap-4">
+                      <div className={cn(
+                        "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                        isCompleted ? "bg-green-500/20 border-green-500 text-green-400" :
+                        isActive ? "bg-primary/10 border-primary text-primary animate-pulse" :
+                        "bg-muted/50 border-border"
+                      )}>
+                        {isCompleted ? <Check /> : <step.icon className="size-5" />}
+                      </div>
+                      <span className={cn(
+                        "font-semibold",
+                        isCompleted && "text-green-400",
+                        isActive && "text-primary",
+                        !isActive && !isCompleted && "text-muted-foreground"
+                      )}>{step.title}</span>
+                    </li>
+                  )
+              })}
             </ul>
+             <div className="relative w-full h-px my-8" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
+                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
+            </div>
+             <div className="mt-8 space-y-3">
+                <Label>Búsqueda Rápida de Dominio</Label>
+                <div className="flex gap-2">
+                    <Input placeholder="Buscar por nombre..." />
+                    <Button variant="outline">Buscar</Button>
+                </div>
+            </div>
           </div>
           
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <h3 className="font-semibold text-left truncate">
-                      {stepTitles[currentStep - 1]}
+                    <h3 className="font-semibold text-left truncate flex items-center gap-2">
+                        {currentStep === 1 && <Eye className="size-4 text-muted-foreground"/>}
+                        {stepTitles[currentStep - 1]}
                     </h3>
-                    {currentStep === 1 && <Eye className="size-4 text-muted-foreground"/>}
                 </div>
-                 <SystemStatusIndicator />
+                <SystemStatusIndicator />
               </div>
               
             <div className="flex-1 overflow-y-auto">
