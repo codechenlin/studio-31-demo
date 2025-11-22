@@ -60,8 +60,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Dna,
-  RefreshCw,
-  BrainCircuit
+  RefreshCw
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -166,7 +165,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                     <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
                 </div>
             </div>
-            <ScrollArea className="flex-1 -mr-4 pr-4">
+            <ScrollArea className="flex-1">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -381,7 +380,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                  <Button
                     variant="outline"
-                    className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    className="border-destructive/50 text-white hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -392,7 +391,16 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 {currentStep < 3 ? (
                     <Button 
                         onClick={handleNextStep}
-                        className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
+                        className="text-white hover:opacity-90"
+                         style={{
+                          background: 'linear-gradient(to right, #1700E6, #009AFF)'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(to right, #00CE07, #A6EE00)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)';
+                        }}
                     >
                         <RefreshCw className="mr-2" />
                         Actualizar
@@ -408,3 +416,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
+
+    
