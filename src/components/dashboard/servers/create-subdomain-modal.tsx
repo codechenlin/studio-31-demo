@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -36,11 +36,12 @@ import {
   RefreshCw,
   Search,
   Eye,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
-import { getVerifiedDomains, createOrGetDomainAction } from './db-actions';
+import { getVerifiedDomains } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
@@ -73,8 +74,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
             if (result.success && result.data) {
                 setDomains(result.data);
             } else {
-                // For demonstration, using mock data if fetch fails or returns empty.
-                // In a real scenario, you'd handle the error.
                 toast({ title: "Modo de Demostración", description: "Cargando dominios de ejemplo." });
                 const mockDomains: Domain[] = [
                     // @ts-ignore
@@ -114,7 +113,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <ScrollArea className="flex-1 pr-1">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -195,15 +194,15 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const renderLeftPanel = () => {
         const stepInfo = [
             { title: "Seleccionar Dominio", icon: Globe },
-            { title: "Crear Subdominio", icon: GitBranch },
+            { title: "Añadir Subdominio", icon: GitBranch },
             { title: "Análisis DNS", icon: Dna },
         ];
         
         return (
             <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
                 <div>
-                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Crear Subdominio</DialogTitle>
-                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</DialogDescription>
+                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Asociar Subdominio</DialogTitle>
+                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para verificar tu nuevo subdominio.</DialogDescription>
                     
                     <ul className="space-y-4 mt-8">
                       {stepInfo.map((step, index) => (
@@ -250,7 +249,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             case 2:
                 return (
                     <div className="flex flex-col h-full justify-center">
-                        <h3 className="text-lg font-semibold mb-1">Crear Subdominio</h3>
+                        <h3 className="text-lg font-semibold mb-1">Añadir Subdominio</h3>
                         <p className="text-sm text-muted-foreground mb-4">
                             Introduce el nombre para tu subdominio (ej: "marketing"). Se creará como:
                             <span className="font-mono text-primary p-1 bg-primary/10 rounded-md ml-1">{subdomainName || '...'}.{selectedDomain?.domain_name}</span>
@@ -317,12 +316,27 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 <div className="md:col-span-1 h-full p-8 border-l bg-muted/20 flex flex-col items-center text-center">
                     <StatusIndicator />
                     <div className="w-full flex-grow flex flex-col justify-center">
-                        <p className="text-sm text-muted-foreground">Estado del Proceso</p>
+                        {currentStep === 1 ? (
+                             <motion.div
+                                key="step1-info"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center flex flex-col items-center gap-4"
+                            >
+                                <Info className="size-16 text-primary/80" />
+                                <h4 className="font-bold text-lg">Selecciona un Dominio Raíz</h4>
+                                <p className="text-sm text-muted-foreground">
+                                    Para comenzar, elige uno de tus dominios principales ya verificados de la lista de la izquierda. Este será el dominio base para tu nuevo subdominio.
+                                </p>
+                            </motion.div>
+                        ) : (
+                             <p className="text-sm text-muted-foreground">Estado del Proceso</p>
+                        )}
                     </div>
                      <div className="w-full mt-auto pt-4 space-y-2">
                          <Button
                             onClick={handleNextStep}
-                            disabled={isPending}
+                            disabled={currentStep !== 2 || !subdomainName}
                             className="w-full h-12 text-base text-white hover:opacity-90"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
