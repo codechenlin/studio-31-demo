@@ -25,18 +25,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  MoreHorizontal,
+  FileIcon,
+  ImageIcon,
+  Film,
+  FileText,
+  Music,
+  Archive,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  UploadCloud,
+  Loader2,
+  Search,
+  XCircle,
+  AlertTriangle,
+  FolderOpen,
   Check,
   Globe,
   GitBranch,
   Mail,
   X,
-  AlertTriangle,
-  FolderOpen,
-  Loader2,
-  Search,
-  XCircle,
-  Eye,
-  Dna
+  MailOpen,
+  Code,
+  Signal,
+  CheckCircle,
+  Layers,
+  Plug,
+  Hourglass,
+  KeyRound,
+  Shield,
+  Dna,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
@@ -45,6 +65,7 @@ import { getVerifiedDomains } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -198,7 +219,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, status }: {
                     <div className="relative z-10 p-4 rounded-xl bg-black/50 border border-white/10">
                         <p className="text-sm text-muted-foreground">Nombre completo del subdominio:</p>
                         <p className="text-2xl font-mono truncate text-cyan-300" title={fullSubdomain}>
-                            {fullSubdomain.length > 60 ? fullSubdomain.substring(0, 60) + '...' : fullSubdomain}
+                             {fullSubdomain.length > 60 ? fullSubdomain.substring(0, 60) + '...' : fullSubdomain}
                         </p>
                         <p className="text-right text-xs text-muted-foreground mt-2">
                            Total de caracteres: {fullSubdomain.length}
@@ -294,7 +315,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Solo se permiten 21 caracteres como máximo.</span>
                                 </div>
                             )}
-                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
+                           <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
                                 <TooltipProvider>
                                     <Tooltip>
@@ -316,7 +337,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             </Button>
 
                             {subdomainName && (
-                                <div className={cn("p-2 text-xs rounded-md flex items-start gap-2 text-left", 
+                                 <div className={cn("p-2 text-xs rounded-md flex items-start gap-2 text-left", 
                                     isSubdomainTaken ? "bg-red-500/10 text-red-400" : (isInvalid ? "bg-amber-500/10 text-amber-400" : "bg-green-500/10 text-green-400")
                                 )}>
                                     {isSubdomainTaken ? <XCircle className="size-4 shrink-0 mt-0.5" /> : (isInvalid ? <AlertTriangle className="size-4 shrink-0 mt-0.5" /> : <CheckCircle className="size-4 shrink-0 mt-0.5"/>)}
@@ -499,5 +520,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
-
-    
