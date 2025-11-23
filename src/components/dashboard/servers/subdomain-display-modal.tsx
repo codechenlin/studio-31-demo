@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Fingerprint, BrainCircuit, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { motion } from 'framer-motion';
 
 interface SubdomainDisplayModalProps {
   isOpen: boolean;
@@ -65,16 +66,14 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain }: S
                     }
                 `}</style>
                 
-                 <div className="sr-only">
-                    <DialogHeader>
-                        <DialogTitle>Detalles del Subdominio</DialogTitle>
-                        <DialogDescription>Información y recomendaciones para el subdominio.</DialogDescription>
-                    </DialogHeader>
-                </div>
+                 <DialogHeader className="sr-only">
+                    <DialogTitle>Detalles del Subdominio</DialogTitle>
+                    <DialogDescription>Información y recomendaciones para el subdominio.</DialogDescription>
+                </DialogHeader>
 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
                     {/* Left Column: Recommendation */}
-                    <div className="p-8 flex flex-col items-center justify-between text-center border-r border-cyan-400/20 bg-black/30 relative overflow-hidden animated-grid">
+                    <div className="p-8 flex flex-col items-center justify-between text-center border-r border-cyan-400/20 bg-black/30 relative overflow-hidden info-grid">
                        <div className="scan-line-info" />
                        <div className="z-10 flex-grow flex flex-col items-center justify-center">
                             <BrainCircuit className="mx-auto size-16 mb-4" style={{color: recommendationColor, filter: `drop-shadow(0 0 10px ${recommendationColor})`}}/>
