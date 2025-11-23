@@ -54,17 +54,31 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isA
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: statusConfig.color+'4D'}}>
                  <style>{`
-                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-                    .animated-grid { background-image: linear-gradient(to right, hsl(190 100% 50% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(190 100% 50% / 0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
-                    
-                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    
-                    .character-cell {
-                        background: radial-gradient(circle, ${statusConfig.color}33, transparent 70%);
-                        border: 1px solid ${statusConfig.color}4D;
-                        box-shadow: inset 0 0 10px ${statusConfig.color}1A;
+                    .animated-grid {
+                        background-image:
+                            linear-gradient(to right, hsl(190 100% 50% / 0.1) 1px, transparent 1px),
+                            linear-gradient(to bottom, hsl(190 100% 50% / 0.1) 1px, transparent 1px);
+                        background-size: 3rem 3rem;
+                    }
+                    .scan-line-info {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 3px;
+                        background: radial-gradient(ellipse 50% 100% at 50% 0%, ${statusConfig.color}80, transparent 80%);
+                        animation: scan-info 5s infinite linear;
+                    }
+                    @keyframes scan-info {
+                        0% { transform: translateY(-10px); }
+                        100% { transform: translateY(100vh); }
                     }
                 `}</style>
+                
+                <DialogHeader className="sr-only">
+                    <DialogTitle>{statusConfig.title}</DialogTitle>
+                    <DialogDescription>{statusConfig.description}</DialogDescription>
+                </DialogHeader>
 
                 <div className="absolute inset-0 z-0 opacity-20 animated-grid"/>
                 <div className="p-8 space-y-8 z-10">
