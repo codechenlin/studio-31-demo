@@ -43,9 +43,9 @@ import {
   Hourglass,
   KeyRound,
   Shield,
-  Info,
-  ArrowRight,
   Dna,
+  Info,
+  ArrowRight
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -279,29 +279,16 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 </div>
                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
-
-                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
+                            
+                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
                                 <CheckCircle className="size-4 shrink-0 mt-0.5" />
-                                <span>Permitido: letras minúsculas (a-z), números (0-9) y guiones (-).</span>
+                                <span><span className="font-bold">Permitido:</span> letras minúsculas (a-z), números (0-9) y guiones (-).</span>
                             </div>
                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
                                 <XCircle className="size-4 shrink-0 mt-0.5" />
-                                <span>Prohibido: espacios, mayúsculas, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
+                                <span><span className="font-bold">Prohibido:</span> espacios, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
                             </div>
 
-                            {processStatus === 'success' && (
-                              <div
-                                className={cn(
-                                  "p-2 text-xs rounded-md flex items-center gap-2",
-                                  isSubdomainAvailable === false ? "bg-red-500/10 text-red-400" : (isSubdomainAvailable === true ? "bg-green-500/10 text-green-400" : "")
-                                )}
-                              >
-                                {isSubdomainAvailable === false && <XCircle className="size-4 shrink-0" />}
-                                {isSubdomainAvailable === true && <CheckCircle className="size-4 shrink-0" />}
-                                {isSubdomainAvailable === false && <span>Este subdominio ya está en uso.</span>}
-                                {isSubdomainAvailable === true && <span>¡El subdominio está disponible!</span>}
-                              </div>
-                            )}
                         </div>
                     </div>
                 );
@@ -406,15 +393,34 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     </p>
                                 </div>
                             )}
-                            {currentStep === 2 && (
+                             {currentStep === 2 && (
                                 <div className="text-center flex-grow flex flex-col justify-center">
+                                  {processStatus === 'processing' ? (
+                                    <div className="relative w-24 h-24 mx-auto mb-4">
+                                      <motion.div
+                                        className="absolute inset-0 border-2 border-dashed rounded-full"
+                                        style={{ borderColor: '#1700E6' }}
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                      />
+                                      <motion.div
+                                        className="absolute inset-2 border-2 border-dashed rounded-full"
+                                        style={{ borderColor: '#009AFF' }}
+                                        animate={{ rotate: -360 }}
+                                        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                                      />
+                                      <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" style={{filter: 'blur(10px)'}} />
+                                      <Search className="size-12 text-primary/80 absolute inset-0 m-auto" />
+                                    </div>
+                                  ) : (
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
-                                    <h4 className="font-bold text-lg">Define tu Subdominio</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                       Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal.
-                                    </p>
+                                  )}
+                                  <h4 className="font-bold text-lg">{processStatus === 'processing' ? 'Verificando Disponibilidad...' : 'Define tu Subdominio'}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {processStatus === 'processing' ? 'La IA está comprobando si el subdominio está disponible en la red.' : 'Introduce el prefijo del subdominio que deseas verificar.'}
+                                  </p>
                                 </div>
-                            )}
+                              )}
                              {currentStep === 3 && (
                                 <div className="text-center flex-grow flex flex-col justify-center">
                                     <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/80" /></div>
