@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -70,7 +71,7 @@ import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analy
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
-import { type DnsHealthOutput } from '@/ai/flows/dns_verification-flow';
+import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -272,6 +273,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     };
     
     const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
+
+    const truncateName = (name: string, maxLength: number): string => {
+        if (!name || name.length <= maxLength) {
+            return name || '';
+        }
+        return `${name.substring(0, maxLength)}...`;
+    };
 
     const renderLeftPanel = () => {
         const stepInfo = [
@@ -635,3 +643,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
+
+    
