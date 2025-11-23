@@ -45,7 +45,8 @@ import {
   Shield,
   Dna,
   Info,
-  ArrowRight
+  ArrowRight,
+  Workflow
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -276,25 +277,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     
     const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
 
-     const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
-        <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-            <span className='font-semibold'>{name}</span>
-            <div className="flex items-center gap-2">
-              {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
-              <div className="relative">
-                <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
-                {recordKey === 'dkim' && showDkimAcceptWarning && (
-                   <div className="absolute -top-1 -right-1">
-                      <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
-                          <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
-                      </div>
-                  </div>
-                )}
-              </div>
-            </div>
-        </div>
-      );
-
     const renderLeftPanel = () => {
         const stepInfo = [
             { title: "Seleccionar Dominio", icon: Globe },
@@ -318,7 +300,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         return (
             <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
                 <div>
-                    <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
+                     <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
                     <DialogDescription className="text-muted-foreground mt-1">{currentStepDesc}</DialogDescription>
                     
                     <ul className="space-y-4 mt-8">
@@ -362,6 +344,25 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         )
     };
 
+     const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
+        <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+            <span className='font-semibold'>{name}</span>
+            <div className="flex items-center gap-2">
+              {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+              <div className="relative">
+                <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+                {recordKey === 'dkim' && showDkimAcceptWarning && (
+                   <div className="absolute -top-1 -right-1">
+                      <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                          <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                      </div>
+                  </div>
+                )}
+              </div>
+            </div>
+        </div>
+      );
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -404,12 +405,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 </div>
                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
-                             {processStatus === 'success' && isSubdomainAvailable === false && (
-                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
-                                    <XCircle className="size-4 shrink-0" />
-                                    <span>Este subdominio ya está en uso. Por favor, elige otro.</span>
-                                </div>
-                             )}
                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
                                 <CheckCircle className="size-4 shrink-0 mt-0.5" />
                                 <span><strong className="font-bold">Permitido:</strong> todas las letras (a-z), números del (0-9) y guiones (-).</span>
@@ -454,7 +449,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                         }}
                                     >
                                         <div className="ai-core-border-animation group-hover/hidden"></div>
-                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="ai-core group-hover/scale-125"></div>
                                         <div className="relative z-10 flex items-center justify-center gap-2 text-white">
                                             <div className="flex gap-1 items-end h-4">
                                                 <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
@@ -592,28 +587,28 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
         )
     };
-    
+
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
-                    <div className="hidden md:block md:col-span-1 h-full">
-                      {renderLeftPanel()}
-                    </div>
-                    <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
-                        <AnimatePresence mode="wait">
-                            <motion.div key={currentStep} {...cardAnimation} className="flex flex-col h-full">
-                               {renderStepContent()}
-                            </motion.div>
-                        </AnimatePresence>
-                    </div>
-                    <div className="md:col-span-1 h-full">
-                      {renderRightPanelContent()}
-                    </div>
-                </DialogContent>
-            </Dialog>
-            <SubdomainDetailModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
-            <DeleteConfirmationModal />
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
+                <div className="hidden md:block md:col-span-1 h-full">
+                  {renderLeftPanel()}
+                </div>
+                <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
+                    <AnimatePresence mode="wait">
+                        <motion.div key={currentStep} {...cardAnimation} className="flex flex-col h-full">
+                           {renderStepContent()}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+                <div className="md:col-span-1 h-full">
+                  {renderRightPanelContent()}
+                </div>
+            </DialogContent>
+        </Dialog>
+        <SubdomainDetailModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
+        <DeleteConfirmationModal />
         </>
     );
 }
@@ -678,5 +673,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
 const DeleteConfirmationModal = () => (
     <div/>
 )
+
+    
 
     
