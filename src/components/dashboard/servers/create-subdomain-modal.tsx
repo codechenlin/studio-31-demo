@@ -295,6 +295,73 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </div>
       );
 
+    const renderLeftPanel = () => {
+        const stepInfo = [
+            { title: "Seleccionar Dominio", icon: Globe },
+            { title: "Añadir Subdominio", icon: GitBranch },
+            { title: "Análisis DNS", icon: Dna },
+        ];
+        
+        const currentStepTitle = {
+            1: 'Paso 1: Elige un Dominio',
+            2: 'Paso 2: Define tu Subdominio',
+            3: 'Paso 3: Análisis de Dominio'
+        }[currentStep] || 'Crear Subdominio';
+        
+        const currentStepDesc = {
+            1: 'Selecciona el dominio principal verificado.',
+            2: 'Crea el prefijo para tu nuevo subdominio.',
+            3: 'Verifica la salud DNS del dominio principal.'
+        }[currentStep] || 'Sigue los pasos para la configuración.';
+
+
+        return (
+            <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
+                <div>
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground mt-1">{currentStepDesc}</DialogDescription>
+                    
+                    <ul className="space-y-4 mt-8">
+                        {stepInfo.map((step, index) => {
+                            const stepNumber = index + 1;
+                            const isCompleted = currentStep > stepNumber;
+                            const isActive = currentStep === stepNumber;
+                            return (
+                                <li key={index} className="flex items-center gap-4">
+                                   <div className={cn(
+                                        "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                                        isActive && "bg-primary/10 border-primary text-primary animate-pulse",
+                                        isCompleted && "bg-green-500/20 border-green-500 text-green-400",
+                                        !isActive && !isCompleted && "bg-muted/50 border-border"
+                                   )}>
+                                       <step.icon className="size-5" />
+                                   </div>
+                                   <span className={cn(
+                                       "font-semibold transition-colors",
+                                       isActive && "text-primary",
+                                       isCompleted && "text-green-400",
+                                       !isActive && !isCompleted && "text-muted-foreground"
+                                   )}>{step.title}</span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                    {currentStep > 1 && (
+                         <div className="mt-8 space-y-4">
+                             <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
+                                <p className="text-xs text-muted-foreground">Dominio Seleccionado</p>
+                                <div className="flex items-center justify-center gap-2 mt-1">
+                                    <Globe className="size-5 text-primary"/>
+                                    <span className="font-semibold text-base text-white/90">{truncateName(selectedDomain?.domain_name || '', 20)}</span>
+                                </div>
+                            </div>
+                         </div>
+                    )}
+                </div>
+            </div>
+        )
+    };
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -343,12 +410,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Este subdominio ya está en uso. Por favor, elige otro.</span>
                                 </div>
                              )}
-                            
-                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
+                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
                                 <CheckCircle className="size-4 shrink-0 mt-0.5" />
                                 <span><strong className="font-bold">Permitido:</strong> todas las letras (a-z), números del (0-9) y guiones (-).</span>
                             </div>
-                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
+                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
                                 <XCircle className="size-4 shrink-0 mt-0.5" />
                                 <span><strong className="font-bold">Prohibido:</strong> espacios, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
                             </div>
@@ -418,7 +484,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         }
     };
 
-    const StatusIndicator = () => {
+    const StatusIndicator = ({isPending}: {isPending: boolean}) => {
         let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
         let text = 'ESTADO DEL SISTEMA';
         
@@ -444,9 +510,10 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       };
 
     const renderRightPanelContent = () => {
+        
         return (
             <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
-                <StatusIndicator />
+                <StatusIndicator isPending={false}/>
                 <div className="w-full flex-grow flex flex-col justify-center">
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -583,7 +650,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: currentStatus.color+'4D'}}>
-                <DialogHeader className="sr-only">
+                 <DialogHeader className="sr-only">
                     <DialogTitle>Detalles del Subdominio</DialogTitle>
                     <DialogDescription>Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
                 </DialogHeader>
@@ -611,3 +678,5 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
 const DeleteConfirmationModal = () => (
     <div/>
 )
+
+    
