@@ -235,6 +235,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
     const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
 
+    const truncateName = (name: string, maxLength: number = 20): string => {
+        if (!name || name.length <= maxLength) return name || '';
+        return `${name.substring(0, maxLength)}...`;
+    };
+    
+
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
         setCurrentStep(2);
@@ -673,7 +679,3 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
 const DeleteConfirmationModal = () => (
     <div/>
 )
-
-    
-
-    
