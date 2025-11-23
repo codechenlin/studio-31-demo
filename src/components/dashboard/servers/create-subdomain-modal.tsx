@@ -23,57 +23,28 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
-  MoreHorizontal,
-  FileIcon,
-  ImageIcon,
-  Film,
-  FileText,
-  Music,
-  Archive,
-  Edit,
-  Trash2,
-  Download,
-  Eye,
-  UploadCloud,
-  Loader2,
-  Search,
-  XCircle,
-  AlertTriangle,
-  FolderOpen,
   Check,
   Globe,
   GitBranch,
   Mail,
   X,
-  MailOpen,
-  Code,
-  Signal,
-  CheckCircle,
-  Layers,
-  Plug,
-  Hourglass,
-  KeyRound,
-  Shield,
-  Dna,
-  Info,
-  MailWarning,
-  PlusCircle,
-  ArrowRight,
-  Pause,
+  AlertTriangle,
+  FolderOpen,
+  Loader2,
+  Search,
+  XCircle,
+  Eye,
+  Info
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MediaPreview } from '@/components/admin/media-preview';
 import { getVerifiedDomains } from './db-actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -164,9 +135,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                                   <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 23)}</p>
                                    {!domain.is_verified && (
                                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                        <span>
-                                            Última act: {format(new Date(domain.updated_at), "dd/MM/yy", { locale: es })}
-                                        </span>
                                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20">Análisis</Button>
                                     </div>
                                    )}
@@ -180,12 +148,77 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
     );
 }
 
+const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, status }: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  fullSubdomain: string;
+  status: 'available' | 'taken' | 'invalid';
+}) => {
+    
+    const statusConfig = {
+      available: {
+        icon: CheckCircle,
+        title: "Subdominio Disponible",
+        gradient: "from-green-500/30 to-cyan-500/30",
+        borderColor: "border-green-400/50",
+      },
+      taken: {
+        icon: XCircle,
+        title: "Subdominio en Uso",
+        gradient: "from-red-500/30 to-orange-500/30",
+        borderColor: "border-red-400/50",
+      },
+      invalid: {
+        icon: AlertTriangle,
+        title: "Subdominio Inválido",
+        gradient: "from-amber-500/30 to-yellow-500/30",
+        borderColor: "border-amber-400/50",
+      }
+    };
+
+    const currentStatus = statusConfig[status];
+    const Icon = currentStatus.icon;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-3xl bg-black/80 backdrop-blur-2xl border-2 border-cyan-400/20 text-white overflow-hidden p-0">
+                <style>{`
+                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+                    .animated-grid { background-image: linear-gradient(to right, hsl(190 100% 50% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(190 100% 50% / 0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
+                `}</style>
+                <div className="p-8 space-y-6 relative">
+                     <div className={cn("absolute inset-0 z-0 animated-grid", currentStatus.gradient)} />
+                     <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/50 to-black/80"/>
+
+                    <div className={cn("relative z-10 p-4 rounded-xl flex items-center gap-4 border-2 bg-black/50", currentStatus.borderColor)}>
+                       <Icon className="size-10 shrink-0" />
+                       <h2 className="text-2xl font-bold">{currentStatus.title}</h2>
+                    </div>
+
+                    <div className="relative z-10 p-4 rounded-xl bg-black/50 border border-white/10">
+                        <p className="text-sm text-muted-foreground">Nombre completo del subdominio:</p>
+                        <p className="text-2xl font-mono truncate text-cyan-300" title={fullSubdomain}>
+                            {fullSubdomain}
+                        </p>
+                        <p className="text-right text-xs text-muted-foreground mt-2">
+                           Total de caracteres: {fullSubdomain.length}
+                        </p>
+                    </div>
+
+                    <Button onClick={() => onOpenChange(false)} className="w-full relative z-10">Cerrar</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
     const [subdomainName, setSubdomainName] = useState('');
     const [isPending, startTransition] = useTransition();
     const [processStatus, setProcessStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
@@ -225,7 +258,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     };
     
     const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
+    const isSubdomainTaken = subdomainName === 'blog';
+    const isMaxLength = subdomainName.length === 21;
+    const isInvalid = subdomainName.length < 3 || subdomainName.includes(' ');
     
+    const subdomainStatus = isSubdomainTaken ? 'taken' : (isInvalid ? 'invalid' : 'available');
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -237,9 +275,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 );
             case 2:
-                const isSubdomainTaken = subdomainName === 'blog'; // mock taken
-                const isMaxLength = subdomainName.length === 21;
-
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
                         <div className="text-left mb-4">
@@ -259,12 +294,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Solo se permiten 21 caracteres como máximo.</span>
                                 </div>
                             )}
-                           <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
+                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <div className="font-mono text-lg truncate">
+                                             <div className="font-mono text-lg truncate">
                                                 <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
                                                 <span className="text-white">.{selectedDomain?.domain_name}</span>
                                             </div>
@@ -275,13 +310,18 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
+
+                            <Button variant="outline" className="w-full" onClick={() => setIsDetailModalOpen(true)}>
+                                <Eye className="mr-2"/> Mostrar Subdominio
+                            </Button>
+
                             {subdomainName && (
                                 <div className={cn("p-2 text-xs rounded-md flex items-start gap-2 text-left", 
-                                    isSubdomainTaken ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"
+                                    isSubdomainTaken ? "bg-red-500/10 text-red-400" : (isInvalid ? "bg-amber-500/10 text-amber-400" : "bg-green-500/10 text-green-400")
                                 )}>
-                                    {isSubdomainTaken ? <XCircle className="size-4 shrink-0 mt-0.5" /> : <CheckCircle className="size-4 shrink-0 mt-0.5"/>}
+                                    {isSubdomainTaken ? <XCircle className="size-4 shrink-0 mt-0.5" /> : (isInvalid ? <AlertTriangle className="size-4 shrink-0 mt-0.5" /> : <CheckCircle className="size-4 shrink-0 mt-0.5"/>)}
                                     <span className="flex-1">
-                                        {isSubdomainTaken ? `El subdominio "${subdomainName}" ya está en uso.` : `El subdominio "${subdomainName}" está disponible.`}
+                                        {isSubdomainTaken ? `El subdominio "${subdomainName}" ya está en uso.` : (isInvalid ? "El subdominio es inválido (muy corto o contiene espacios)." : `El subdominio "${subdomainName}" está disponible.`)}
                                     </span>
                                 </div>
                             )}
@@ -414,13 +454,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     {currentStep === 2 && (
                         <Button
                             onClick={handleNextStep}
-                            disabled={isPending || !subdomainName || subdomainName.length <= 2 || subdomainName.includes(' ') || subdomainName === 'blog'}
+                            disabled={isPending || !subdomainName || isInvalid || isSubdomainTaken}
                             className="text-white hover:opacity-90 w-full h-12 text-base"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
                         >
-                            {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+                            {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente</>}
                         </Button>
                     )}
                     <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
@@ -432,29 +472,30 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
-                {/* Left Panel */}
-                <div className="hidden md:block md:col-span-1 h-full">
-                  {renderLeftPanel()}
-                </div>
-
-                {/* Center Panel */}
-                <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
-                    <AnimatePresence mode="wait">
-                        <motion.div key={currentStep} {...cardAnimation} className="flex flex-col h-full">
-                           {renderStepContent()}
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-
-                {/* Right Panel */}
-                <div className="md:col-span-1 h-full">
-                  {renderRightPanelContent()}
-                </div>
-            </DialogContent>
-        </Dialog>
+        <>
+            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
+                    <div className="hidden md:block md:col-span-1 h-full">
+                      {renderLeftPanel()}
+                    </div>
+                    <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
+                        <AnimatePresence mode="wait">
+                            <motion.div key={currentStep} {...cardAnimation} className="flex flex-col h-full">
+                               {renderStepContent()}
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+                    <div className="md:col-span-1 h-full">
+                      {renderRightPanelContent()}
+                    </div>
+                </DialogContent>
+            </Dialog>
+            <SubdomainDetailModal 
+                isOpen={isDetailModalOpen}
+                onOpenChange={setIsDetailModalOpen}
+                fullSubdomain={fullSubdomain}
+                status={subdomainStatus}
+            />
+        </>
     );
 }
-
-    
