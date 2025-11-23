@@ -306,7 +306,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         return (
             <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
                 <div>
-                     <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> {currentStepTitle}</DialogTitle>
                     <DialogDescription className="text-muted-foreground mt-1">{currentStepDesc}</DialogDescription>
                     
                     <ul className="space-y-4 mt-8">
@@ -334,16 +334,16 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             );
                         })}
                     </ul>
-                    {currentStep > 1 && (
-                         <div className="mt-8 space-y-4">
-                             <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
-                                <p className="text-xs text-muted-foreground">Dominio Seleccionado</p>
-                                <div className="flex items-center justify-center gap-2 mt-1">
-                                    <Globe className="size-5 text-primary"/>
-                                    <span className="font-semibold text-base text-white/90">{truncateName(selectedDomain?.domain_name || '', 20)}</span>
-                                </div>
-                            </div>
-                         </div>
+                </div>
+                 <div className="mt-8 space-y-4">
+                    <Separator />
+                     {currentStep === 1 && (
+                        <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                            <AlertTriangle className="size-10 text-amber-400 shrink-0" />
+                            <p>
+                                <strong className="font-bold text-amber-300">Importante:</strong> Antes de poder asociar correos electrónicos SMTP a un subdominio, es fundamental verificarlo correctamente.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
@@ -356,7 +356,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <div className="flex items-center gap-2">
               {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
               <div className="relative">
-                <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+                <Button size="sm" variant="outline" className="h-7" onClick={() => {}}>Instrucciones</Button>
                 {recordKey === 'dkim' && showDkimAcceptWarning && (
                    <div className="absolute -top-1 -right-1">
                       <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
@@ -614,7 +614,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </DialogContent>
         </Dialog>
         <SubdomainDetailModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
-        <DeleteConfirmationModal />
         </>
     );
 }
@@ -675,7 +674,3 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
         </Dialog>
     );
 };
-
-const DeleteConfirmationModal = () => (
-    <div/>
-)
