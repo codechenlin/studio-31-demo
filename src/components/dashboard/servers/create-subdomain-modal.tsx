@@ -346,6 +346,16 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             </p>
                         </div>
                     )}
+
+                    {(currentStep === 2 || currentStep === 3) && selectedDomain && (
+                      <div className="p-3 rounded-lg border border-white/10 bg-black/20 text-center">
+                          <p className="text-xs text-muted-foreground">Dominio Seleccionado</p>
+                          <div className="flex items-center justify-center gap-2 mt-1">
+                              <Workflow className="size-5 text-primary animate-spin-slow" />
+                              <span className="font-semibold text-base text-white/90">{truncateName(selectedDomain.domain_name || '', 20)}</span>
+                          </div>
+                      </div>
+                    )}
                 </div>
             </div>
         )
@@ -675,3 +685,5 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
         </Dialog>
     );
 };
+
+    
