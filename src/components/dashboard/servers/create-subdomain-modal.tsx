@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -67,9 +66,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MediaPreview } from '@/components/admin/media-preview';
-import { Separator } from '@/components/ui/separator';
-import { getVerifiedDomains, createOrGetDomainAction } from './db-actions';
+import { getVerifiedDomains } from './db-actions';
 
 
 interface CreateSubdomainModalProps {
@@ -116,7 +113,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         });
     }, [toast]);
     
-    const truncateName = (name: string, maxLength: number = 23): string => {
+    const truncateName = (name: string, maxLength: number = 19): string => {
         if (!name || name.length <= maxLength) return name || '';
         return `${name.substring(0, maxLength)}...`;
     };
@@ -221,6 +218,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         transition: { duration: 0.3 }
     };
     
+    const truncateName = (name: string, maxLength: number): string => {
+        if (!name || name.length <= maxLength) return name || '';
+        return `${name.substring(0, maxLength)}...`;
+    };
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -234,6 +236,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             case 2:
                 const isSubdomainValid = subdomainName.length > 2 && !subdomainName.includes(' ');
                 const isSubdomainTaken = subdomainName === 'blog'; // mock taken
+                const fullSubdomain = `${subdomainName}.${selectedDomain?.domain_name}`;
+
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
                         <h3 className="text-lg font-semibold mb-1">Añadir Subdominio</h3>
@@ -245,11 +249,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 value={subdomainName}
                                 onChange={(e) => setSubdomainName(e.target.value)}
                                 placeholder="ej: marketing"
+                                maxLength={21}
                             />
                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                <p className="font-mono text-lg font-bold text-white">
-                                    <span className="text-primary">{subdomainName || '...'}</span>.{selectedDomain?.domain_name}
+                                <p className="font-mono text-lg font-bold text-white" title={fullSubdomain}>
+                                    {truncateName(fullSubdomain, 21)}
                                 </p>
                             </div>
                             {subdomainName && (
@@ -258,7 +263,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 )}>
                                     {isSubdomainTaken ? <XCircle className="size-4" /> : <CheckCircle className="size-4"/>}
                                     <span>
-                                        {isSubdomainTaken ? `El subdominio "${subdomainName}" ya está en uso.` : `El subdominio "${subdomainName}" está disponible.`}
+                                        {isSubdomainTaken ? `El subdominio "${truncateName(subdomainName, 21)}" ya está en uso.` : `El subdominio "${truncateName(subdomainName, 21)}" está disponible.`}
                                     </span>
                                 </div>
                             )}
@@ -332,8 +337,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           </li>
                       ))}
                     </ul>
-                     <Separator className="my-6" />
-                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                    <Separator className="my-6" />
+                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
                             <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
@@ -359,17 +364,30 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         >
                             {currentStep === 1 && (
                                 <div className="text-center flex-grow flex flex-col justify-center">
-                                    <div className="flex justify-center mb-4">
-                                        <Info className="size-16 text-primary/80" />
-                                    </div>
+                                    <div className="flex justify-center mb-4"><Info className="size-16 text-primary/80" /></div>
                                     <h4 className="font-bold text-lg">Selecciona un Dominio Raíz</h4>
                                     <p className="text-sm text-muted-foreground">
                                         Para comenzar, elige uno de tus dominios principales ya verificados de la lista de la izquierda. Este será el dominio base para tu nuevo subdominio.
                                     </p>
                                 </div>
                             )}
-                            {currentStep >= 2 && (
-                                <p className="text-sm text-muted-foreground">Estado del Proceso</p>
+                            {currentStep === 2 && (
+                                <div className="text-center flex-grow flex flex-col justify-center">
+                                    <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
+                                    <h4 className="font-bold text-lg">Define tu Subdominio</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al dominio principal seleccionado.
+                                    </p>
+                                </div>
+                            )}
+                             {currentStep === 3 && (
+                                <div className="text-center flex-grow flex flex-col justify-center">
+                                    <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/80" /></div>
+                                    <h4 className="font-bold text-lg">Análisis de Dominio Principal</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Realizaremos un análisis de los registros DNS del dominio principal para asegurar que esté en óptimas condiciones para la creación de subdominios.
+                                    </p>
+                                </div>
                             )}
                         </motion.div>
                     </AnimatePresence>
@@ -378,7 +396,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     {currentStep === 2 && (
                         <Button
                             onClick={handleNextStep}
-                            disabled={isPending || !subdomainName}
+                            disabled={isPending || !subdomainName || subdomainName.length <= 2 || subdomainName.includes(' ') || subdomainName === 'blog'}
                             className="text-white hover:opacity-90 w-full h-12 text-base"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
