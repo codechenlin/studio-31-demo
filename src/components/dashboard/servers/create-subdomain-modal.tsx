@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   MoreHorizontal,
   FileIcon,
@@ -240,10 +242,10 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
 
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
-                        <h3 className="text-lg font-semibold mb-1">Añadir Subdominio</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Introduce el nombre para tu subdominio.
-                        </p>
+                        <div className="text-left mb-4">
+                            <h3 className="text-lg font-semibold">Añadir Subdominio</h3>
+                            <p className="text-sm text-muted-foreground">Introduce el nombre para tu subdominio.</p>
+                        </div>
                         <div className="space-y-4">
                             <Input 
                                 value={subdomainName}
@@ -376,7 +378,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
                                     <h4 className="font-bold text-lg">Define tu Subdominio</h4>
                                     <p className="text-sm text-muted-foreground">
-                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al dominio principal seleccionado.
+                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal
                                     </p>
                                 </div>
                             )}
