@@ -431,7 +431,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente</>}
                         </Button>
                     )}
-                    <Button variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:bg-[#F00000] hover:text-white" onClick={handleClose}>
+                    <Button variant="outline" className="w-full h-12 text-base border-[#F00000] text-white hover:bg-[#F00000] hover:text-white" onClick={handleClose}>
                         <X className="mr-2"/>Cancelar
                     </Button>
                 </div>
@@ -495,7 +495,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: currentStatus.color+'4D'}}>
-                <DialogHeader className="sr-only">
+                 <DialogHeader className="sr-only">
                     <DialogTitle>Detalles del Subdominio</DialogTitle>
                     <DialogDescription>Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
                 </DialogHeader>
@@ -519,5 +519,3 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
         </Dialog>
     );
 };
-
-    
