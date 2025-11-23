@@ -58,7 +58,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
 import {
-  createOrGetDomainAction
+  createOrGetDomainAction,
+  getVerifiedDomains,
 } from './db-actions';
 import { DomainInfoModal } from './domain-info-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
@@ -115,7 +116,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
             // @ts-ignore
             { id: '2', domain_name: 'daybuu.com', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
             // @ts-ignore
-            { id: '3', domain_name: 'marketing-super-largo-para-probar.com', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation_plus_10_ch.com', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
             // @ts-ignore
             { id: '4', domain_name: 'analytics.data.info', is_verified: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
             // @ts-ignore
@@ -158,7 +159,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
                                 "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
-                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground cursor-not-allowed"
+                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground"
                             )}
                             onClick={() => domain.is_verified && onSelect(domain)}
                         >
@@ -273,7 +274,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     };
     
     const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
-
+    
     const truncateName = (name: string, maxLength: number): string => {
         if (!name || name.length <= maxLength) {
             return name || '';
@@ -643,5 +644,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
-
-    
