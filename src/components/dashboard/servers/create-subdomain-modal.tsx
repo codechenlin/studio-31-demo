@@ -204,6 +204,10 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, status }: {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl bg-black/80 backdrop-blur-2xl border-2 border-cyan-400/20 text-white overflow-hidden p-0">
+                 <DialogHeader className="sr-only">
+                    <DialogTitle>{currentStatus.title}</DialogTitle>
+                    <DialogDescription>Detalles sobre el subdominio: {fullSubdomain}</DialogDescription>
+                </DialogHeader>
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(to right, hsl(190 100% 50% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(190 100% 50% / 0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
@@ -321,7 +325,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <div className="font-mono text-lg truncate">
+                                            <div className="font-mono text-lg truncate text-cyan-300">
                                                 <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
                                                 <span className="text-white">.{selectedDomain?.domain_name}</span>
                                             </div>
@@ -521,5 +525,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
-
-    
