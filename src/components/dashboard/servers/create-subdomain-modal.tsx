@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -61,15 +61,15 @@ import {
   Dna,
   Info,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getVerifiedDomains } from './db-actions';
-
+import { MediaPreview } from '@/components/admin/media-preview';
+import { createOrGetDomainAction, getVerifiedDomains } from './db-actions';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -145,29 +145,29 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
-                                "group relative p-3 rounded-lg border-2 transition-all duration-300 flex flex-col items-start",
+                                "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
                                 domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground"
                             )}
                             onClick={() => domain.is_verified && onSelect(domain)}
                         >
                             <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
-                            <div className="flex items-center gap-3 min-w-0 w-full">
+                            <div className="flex items-center gap-3 min-w-0">
                                 {domain.is_verified ? 
                                     <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
                                     <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
                                 }
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 23)}</p>
+                                   {!domain.is_verified && (
+                                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                        <span>
+                                            Última act: {format(new Date(domain.updated_at), "dd/MM/yy", { locale: es })}
+                                        </span>
+                                         <Button variant="outline" size="sm" className="h-6 px-2 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20">Análisis</Button>
+                                    </div>
+                                   )}
                                 </div>
                             </div>
-                            {!domain.is_verified && (
-                                <div className="pl-9 pt-2 w-full flex justify-between items-center">
-                                    <p className="text-xs text-muted-foreground">
-                                        Última act: {format(new Date(domain.updated_at), "dd/MM/yy", { locale: es })}
-                                    </p>
-                                    <Button variant="outline" size="sm" className="h-7 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20">Análisis</Button>
-                                </div>
-                            )}
                         </motion.div>
                     ))}
                 </div>
@@ -239,12 +239,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 const isSubdomainValid = subdomainName.length > 2 && !subdomainName.includes(' ');
                 const isSubdomainTaken = subdomainName === 'blog'; // mock taken
                 const fullSubdomain = `${subdomainName}.${selectedDomain?.domain_name}`;
+                const isMaxLength = subdomainName.length === 21;
 
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
                         <div className="text-left mb-4">
                             <h3 className="text-lg font-semibold">Añadir Subdominio</h3>
-                            <p className="text-sm text-muted-foreground">Introduce el nombre para tu subdominio.</p>
+                            <p className="text-sm text-muted-foreground">Introduce el prefijo del nombre para el subdominio.</p>
                         </div>
                         <div className="space-y-4">
                             <Input 
@@ -253,10 +254,17 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 placeholder="ej: marketing"
                                 maxLength={21}
                             />
+                            {isMaxLength && (
+                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400">
+                                    <AlertTriangle className="size-4 shrink-0" />
+                                    <span>Solo se permiten 21 caracteres como máximo.</span>
+                                </div>
+                            )}
                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                <p className="font-mono text-lg font-bold text-white" title={fullSubdomain}>
-                                    {truncateName(fullSubdomain, 21)}
+                                 <p className="font-mono text-lg" title={fullSubdomain}>
+                                    <span className="font-bold" style={{color: '#E18700'}}>{truncateName(subdomainName, 21)}</span>
+                                    <span className="text-white">.{truncateName(selectedDomain?.domain_name || '', 21)}</span>
                                 </p>
                             </div>
                             {subdomainName && (
@@ -378,7 +386,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
                                     <h4 className="font-bold text-lg">Define tu Subdominio</h4>
                                     <p className="text-sm text-muted-foreground">
-                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal
+                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal.
                                     </p>
                                 </div>
                             )}
@@ -440,3 +448,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
+
+    
