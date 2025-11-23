@@ -279,16 +279,22 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 </div>
                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
+
+                             {isSubdomainAvailable === false && (
+                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
+                                    <XCircle className="size-4 shrink-0" />
+                                    <span>Este subdominio ya está en uso. Por favor, elige otro.</span>
+                                </div>
+                             )}
                             
                              <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
                                 <CheckCircle className="size-4 shrink-0 mt-0.5" />
-                                <span><span className="font-bold">Permitido:</span> letras minúsculas (a-z), números (0-9) y guiones (-).</span>
+                                <span><strong className="font-bold">Permitido:</strong> todas las letras (a-z), números del (0-9) y guiones (-).</span>
                             </div>
                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
                                 <XCircle className="size-4 shrink-0 mt-0.5" />
-                                <span><span className="font-bold">Prohibido:</span> espacios, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
+                                <span><strong className="font-bold">Prohibido:</strong> espacios, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
                             </div>
-
                         </div>
                     </div>
                 );
@@ -410,7 +416,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                         transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                                       />
                                       <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" style={{filter: 'blur(10px)'}} />
-                                      <Search className="size-12 text-primary/80 absolute inset-0 m-auto" />
+                                      <Code className="size-12 text-primary/80 absolute inset-0 m-auto" />
                                     </div>
                                   ) : (
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
