@@ -38,6 +38,7 @@ import {
   updateDomainVerificationCode,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
+import { Separator } from '@/components/ui/separator';
 
 
 interface SmtpConnectionModalProps {
@@ -475,6 +476,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                         );
                     })}
                   </ul>
+
+                  <Separator className="my-6" />
+
+                  {currentStep === 1 && (
+                      <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                          <AlertTriangle className="size-10 text-amber-400 shrink-0" />
+                          <p>
+                              <strong className="font-bold text-amber-300">¡Importante!</strong> Es obligatorio verificar la propiedad del dominio y la salud de sus registros DNS para asegurar una alta calidad en la entrega de correos electrónicos.
+                          </p>
+                      </div>
+                  )}
+
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
@@ -517,163 +530,163 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
   const renderContent = () => {
     return (
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
-            <div className="hidden md:block md:col-span-1 h-full">
-              {renderLeftPanel()}
-            </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
-              <AnimatePresence mode="wait">
-              <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col h-full"
-              >
-                  {currentStep === 1 && (
-                      <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
-                          <div className="flex-grow flex flex-col justify-start">
-                            <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-                            <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                            <div className="space-y-2 pt-4">
-                                <Label htmlFor="domain">Tu Dominio</Label>
-                                <div className="relative">
-                                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                    <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
-                                </div>
-                                {!state.success && (state.status === 'DOMAIN_TAKEN' || state.status === 'DOMAIN_FOUND') && !isPending && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={cn(
-                                      "relative mt-2 p-3 rounded-lg border text-sm flex items-start gap-3 overflow-hidden",
-                                      state.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
-                                      state.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
+          <div className="hidden md:block md:col-span-1 h-full">
+            {renderLeftPanel()}
+          </div>
+          <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
+            <AnimatePresence mode="wait">
+            <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col h-full"
+            >
+                {currentStep === 1 && (
+                    <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
+                        <div className="flex-grow flex flex-col justify-start">
+                          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+                          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                          <div className="space-y-2 pt-4">
+                              <Label htmlFor="domain">Tu Dominio</Label>
+                              <div className="relative">
+                                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                  <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
+                              </div>
+                              {!state.success && (state.status === 'DOMAIN_TAKEN' || state.status === 'DOMAIN_FOUND') && !isPending && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className={cn(
+                                    "relative mt-2 p-3 rounded-lg border text-sm flex items-start gap-3 overflow-hidden",
+                                    state.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
+                                    state.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
+                                  )}
+                                >
+                                  <div className="absolute top-0 left-0 w-full h-1" style={{background: `linear-gradient(to right, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'}, ${state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'})`, animation: 'scanner-line 2s infinite linear'}} />
+                                  <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
+                                  <div className="flex-1">
+                                    <p>{state.message}</p>
+                                    {state.status === 'DOMAIN_FOUND' && state.domain && (
+                                      <Button 
+                                        className="mt-3 h-8 text-xs text-white hover:opacity-90"
+                                         style={{background: 'linear-gradient(to right, #AD00EC, #1700E6)'}}
+                                        onClick={() => setIsDomainInfoModalOpen(true)}
+                                      >
+                                        Mostrar Detalles
+                                      </Button>
                                     )}
+                                  </div>
+                                </motion.div>
+                              )}
+                          </div>
+                        </div>
+                    </form>
+                )}
+                {currentStep === 2 && (
+                <div className="flex-grow flex flex-col">
+                    <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
+                    <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
+                    <div className="space-y-3 pt-4 flex-grow">
+                        <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                            <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                            <div className="flex justify-between items-center">
+                                <span>@</span>
+                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
+                                    <Copy className="size-4"/>
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                            <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
+                            <div className="flex justify-between items-center">
+                                <p className="break-all pr-2">{txtRecordValue}</p>
+                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
+                                    <Copy className="size-4"/>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                )}
+                {currentStep === 3 && (
+                    <div className="flex flex-col h-full">
+                    <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
+                    <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
+                    <div className="space-y-3 mt-4 flex-grow">
+                        {healthCheckStep === 'mandatory' ? (
+                        <>
+                          <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
+                          {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : 'idle', 'spf')}
+                          {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : 'idle', 'dkim')}
+                          {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : 'idle', 'dmarc')}
+                          <div className="pt-2 text-xs text-muted-foreground">
+                              <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                              <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
+                              <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
+                              <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                           </div>
+                        </>
+                        ) : (
+                        <>
+                           <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
+                           {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
+                           {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
+                           {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
+                           <div className="pt-2 text-xs text-muted-foreground">
+                              <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
+                              <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
+                              <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
+                              <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
+                          </div>
+                        </>
+                        )}
+                         
+                         {dnsAnalysis && (
+                             <div className="pt-4 flex justify-center">
+                              <div className="relative">
+                                  <button
+                                      className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                      onClick={() => {
+                                          setIsAnalysisModalOpen(true);
+                                          setShowNotification(false);
+                                      }}
                                   >
-                                    <div className="absolute top-0 left-0 w-full h-1" style={{background: `linear-gradient(to right, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'}, ${state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${state.status === 'DOMAIN_TAKEN' ? '#F0000000' : '#E1870000'})`, animation: 'scanner-line 2s infinite linear'}} />
-                                    <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: state.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
-                                    <div className="flex-1">
-                                      <p>{state.message}</p>
-                                      {state.status === 'DOMAIN_FOUND' && state.domain && (
-                                        <Button 
-                                          className="mt-3 h-8 text-xs text-white hover:opacity-90"
-                                           style={{background: 'linear-gradient(to right, #AD00EC, #1700E6)'}}
-                                          onClick={() => setIsDomainInfoModalOpen(true)}
-                                        >
-                                          Mostrar Detalles
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                )}
-                            </div>
-                          </div>
-                      </form>
-                  )}
-                  {currentStep === 2 && (
-                  <div className="flex-grow flex flex-col">
-                      <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
-                      <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
-                      <div className="space-y-3 pt-4 flex-grow">
-                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                              <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                              <div className="flex justify-between items-center">
-                                  <span>@</span>
-                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
-                                      <Copy className="size-4"/>
-                                  </Button>
+                                      <div className="ai-core-border-animation group-hover/hidden"></div>
+                                      <div className="ai-core group-hover/scale-125"></div>
+                                      <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                          <div className="flex gap-1 items-end h-4">
+                                              <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                              <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                              <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                          </div>
+                                          <span className="text-sm font-semibold">Análisis de la IA</span>
+                                      </div>
+                                  </button>
+                                   {showNotification && (
+                                      <div 
+                                          className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                          style={{ backgroundColor: '#F00000' }}
+                                      >
+                                          !
+                                      </div>
+                                  )}
                               </div>
-                          </div>
-                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                              <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                              <div className="flex justify-between items-center">
-                                  <p className="break-all pr-2">{txtRecordValue}</p>
-                                  <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
-                                      <Copy className="size-4"/>
-                                  </Button>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-                  )}
-                  {currentStep === 3 && (
-                      <div className="flex flex-col h-full">
-                      <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
-                      <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
-                      <div className="space-y-3 mt-4 flex-grow">
-                          {healthCheckStep === 'mandatory' ? (
-                          <>
-                            <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : 'idle', 'dmarc')}
-                            <div className="pt-2 text-xs text-muted-foreground">
-                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
-                                <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
-                                <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                              </div>
-                          </>
-                          ) : (
-                          <>
-                             <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
-                             {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
-                             {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
-                             {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
-                             <div className="pt-2 text-xs text-muted-foreground">
-                                <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
-                                <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
-                                <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
-                            </div>
-                          </>
-                          )}
-                           
-                           {dnsAnalysis && (
-                               <div className="pt-4 flex justify-center">
-                                <div className="relative">
-                                    <button
-                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
-                                        onClick={() => {
-                                            setIsAnalysisModalOpen(true);
-                                            setShowNotification(false);
-                                        }}
-                                    >
-                                        <div className="ai-core-border-animation group-hover/hidden"></div>
-                                        <div className="ai-core group-hover:scale-125"></div>
-                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                            <div className="flex gap-1 items-end h-4">
-                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
-                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
-                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
-                                            </div>
-                                            <span className="text-sm font-semibold">Análisis de la IA</span>
-                                        </div>
-                                    </button>
-                                     {showNotification && (
-                                        <div 
-                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                            style={{ backgroundColor: '#F00000' }}
-                                        >
-                                            !
-                                        </div>
-                                    )}
-                                </div>
-                               </div>
-                           )}
+                         )}
 
-                      </div>
-                      </div>
-                  )}
-              </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="md:col-span-1 h-full">
-              {renderRightPanelContent()}
-            </div>
-        </DialogContent>
+                    </div>
+                    </div>
+                )}
+            </motion.div>
+            </AnimatePresence>
+          </div>
+          <div className="md:col-span-1 h-full">
+            {renderRightPanelContent()}
+          </div>
+      </DialogContent>
     );
   };
   
@@ -1003,7 +1016,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </AnimatePresence>
         </div>
       </div>
-    )
+    );
   };
   
   const StatusIndicator = ({isPending}: {isPending: boolean}) => {
@@ -1173,6 +1186,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1669,3 +1684,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
