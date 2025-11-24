@@ -36,7 +36,7 @@ import {
   updateDkimKey,
   saveDnsChecks,
   updateDomainVerificationCode,
-} from '@/app/dashboard/servers/db-actions';
+} from './db-actions';
 import { type Domain } from './types';
 import { Separator } from '@/components/ui/separator';
 
@@ -488,18 +488,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                       </div>
                   )}
 
-                  {currentStep > 2 && (
+                  {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                          <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
-                              <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
-                              <Button
-                                  onClick={() => setIsPauseModalOpen(true)}
-                                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                              >
-                                  <Pause className="mr-2"/> Pausar Proceso
-                              </Button>
-                          </div>
+                          {currentStep > 2 && (
+                             <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                                <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
+                                <Button
+                                    onClick={() => setIsPauseModalOpen(true)}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                                >
+                                    <Pause className="mr-2"/> Pausar Proceso
+                                </Button>
+                             </div>
+                          )}
                       </div>
                   )}
               </div>
@@ -1684,5 +1686,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
