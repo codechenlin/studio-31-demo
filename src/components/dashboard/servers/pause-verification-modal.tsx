@@ -6,25 +6,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Hourglass, Pause, Play, AlertTriangle, X, PowerOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { type Domain } from './types';
 
 interface PauseVerificationModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onPause: () => void;
   onCancelProcess: () => void;
+  domain: Domain | null;
 }
 
-export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancelProcess }: PauseVerificationModalProps) {
-  const [timeLeft, setTimeLeft] = useState(48 * 60 * 60);
+export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancelProcess, domain }: PauseVerificationModalProps) {
+  const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
-    if (isOpen) {
-      const timer = setInterval(() => {
-        setTimeLeft(prevTime => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
-      return () => clearInterval(timer);
+    let timer: NodeJS.Timeout;
+    if (isOpen && domain) {
+      const calculateTimeLeft = () => {
+        const createdAt = new Date(domain.created_at);
+        const expiresAt = createdAt.getTime() + 48 * 60 * 60 * 1000;
+        const now = new Date().getTime();
+        const remaining = Math.max(0, expiresAt - now);
+        setTimeLeft(Math.floor(remaining / 1000));
+      };
+
+      calculateTimeLeft(); // Initial calculation
+      timer = setInterval(calculateTimeLeft, 1000);
     }
-  }, [isOpen]);
+    return () => clearInterval(timer);
+  }, [isOpen, domain]);
   
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');

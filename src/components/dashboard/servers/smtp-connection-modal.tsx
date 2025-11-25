@@ -1082,6 +1082,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           onOpenChange={setIsPauseModalOpen}
           onPause={handlePauseProcess}
           onCancelProcess={handleCancelProcess}
+          domain={state.domain}
         />
         <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
             <AlertDialogContent>
