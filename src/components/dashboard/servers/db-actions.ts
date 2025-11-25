@@ -117,6 +117,29 @@ export async function createOrGetDomainAction(
   }
 }
 
+export async function deleteDomainAction(domainId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Usuario no autenticado.' };
+    }
+    
+    try {
+        const { error } = await supabase.rpc('delete_user_domain', {
+            domain_id_to_delete: domainId
+        });
+
+        if (error) throw error;
+        
+        revalidatePath('/dashboard/servers');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error deleting domain:', error);
+        return { success: false, error: 'No se pudo eliminar el dominio: ' + error.message };
+    }
+}
+
 export async function getVerifiedDomains(): Promise<{ success: boolean; data?: Domain[]; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();

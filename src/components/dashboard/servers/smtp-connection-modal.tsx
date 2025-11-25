@@ -32,10 +32,10 @@ import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
 import {
   createOrGetDomainAction,
+  deleteDomainAction,
   setDomainAsVerified,
-  updateDkimKey,
   saveDnsChecks,
-  updateDomainVerificationCode,
+  updateDkimKey,
 } from './db-actions';
 import { type Domain } from './types';
 import { Separator } from '@/components/ui/separator';
@@ -358,10 +358,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setFinalDnsStatus({});
   }
 
-  const handleClose = () => {
+  const handleClose = async (shouldDelete: boolean = false) => {
+    if (shouldDelete && state.domain) {
+        await deleteDomainAction(state.domain.id);
+        toast({
+            title: "Proceso Cancelado",
+            description: "El registro del dominio ha sido eliminado."
+        });
+    }
     onOpenChange(false);
     setTimeout(resetState, 300);
-  }
+  };
   
   const handlePauseProcess = () => {
     toast({
@@ -1094,8 +1101,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setIsCancelConfirmOpen(false)}>No, continuar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Sí, salir
+                    <AlertDialogAction onClick={() => handleClose(true)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Sí, salir y eliminar
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
