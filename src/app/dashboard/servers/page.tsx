@@ -15,6 +15,7 @@ import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/d
 import { CreateSubdomainModal } from '@/components/dashboard/servers/create-subdomain-modal';
 import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
+import { ProcessSelectorModal } from '@/components/dashboard/servers/process-selector-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -125,7 +126,7 @@ export default function ServersPage() {
   const [isDomainManagerModalOpen, setIsDomainManagerModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   
-  const [isSubdomainWarningModalOpen, setIsSubdomainWarningModalOpen] = useState(false);
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isCreateSubdomainModalOpen, setIsCreateSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   
@@ -135,12 +136,13 @@ export default function ServersPage() {
   const [domainsCount, setDomainsCount] = useState(0);
   const [isLoading, startLoading] = useTransition();
   const { toast } = useToast();
-  
+  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
+
   const handleSubdomainClick = (hasVerified: boolean) => {
     if (hasVerified) {
       setIsCreateSubdomainModalOpen(true);
     } else {
-      setIsSubdomainWarningModalOpen(true);
+      setIsSubdomainModalOpen(true);
     }
   };
   
@@ -186,7 +188,7 @@ export default function ServersPage() {
   
   const handleConnectClick = (providerId: string) => {
     if (providerId === 'smtp') {
-      setIsSmtpModalOpen(true);
+      setIsSelectorModalOpen(true);
     }
   };
   
@@ -206,6 +208,19 @@ export default function ServersPage() {
 
   return (
     <>
+    <ProcessSelectorModal
+        isOpen={isSelectorModalOpen}
+        onOpenChange={setIsSelectorModalOpen}
+        onSelectNew={() => {
+            setIsSelectorModalOpen(false);
+            setIsSmtpModalOpen(true);
+        }}
+        onSelectContinue={() => {
+            setIsSelectorModalOpen(false);
+            // Future logic to load paused state
+            setIsSmtpModalOpen(true);
+        }}
+    />
     <SmtpConnectionModal 
       isOpen={isSmtpModalOpen} 
       onOpenChange={setIsSmtpModalOpen} 
@@ -217,7 +232,7 @@ export default function ServersPage() {
       status={selectedStatus}
     />
     <DomainManagerModal isOpen={isDomainManagerModalOpen} onOpenChange={setIsDomainManagerModalOpen} />
-    <SubdomainModal isOpen={isSubdomainWarningModalOpen} onOpenChange={setIsSubdomainWarningModalOpen} />
+    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
     <CreateSubdomainModal isOpen={isCreateSubdomainModalOpen} onOpenChange={setIsCreateSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
@@ -409,3 +424,5 @@ export default function ServersPage() {
     </>
   );
 }
+
+    

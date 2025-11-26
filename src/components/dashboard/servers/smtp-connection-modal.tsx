@@ -376,13 +376,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handlePauseProcess = () => {
-    toast({
-        title: "Proceso Pausado",
-        description: "Tu progreso ha sido guardado. Tienes 48 horas para continuar.",
-        className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
-    });
+    // Logic inside PauseVerificationModal now handles closing both modals
     setIsPauseModalOpen(false);
-    handleClose();
   }
 
   const handleCancelProcess = () => {
@@ -503,7 +498,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                           {currentStep > 2 && currentStep < 4 && (
+                           {currentStep > 2 && (
                              <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
                                 <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
                                 <Button
@@ -1095,7 +1090,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
           onOpenChange={setIsPauseModalOpen}
-          onPause={handlePauseProcess}
           onCancelProcess={handleCancelProcess}
           domain={state.domain}
         />
