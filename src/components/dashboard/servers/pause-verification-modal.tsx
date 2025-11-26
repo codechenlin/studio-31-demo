@@ -71,7 +71,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
              <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                 <AlertTriangle className="size-8 text-amber-400 shrink-0 mt-1" />
                 <p>
-                    Si no retomas el proceso en las próximas 48 horas, tu progreso se perderá y deberás iniciar una nueva verificación con nuevos códigos y claves.
+                    Si no retomas el proceso antes de que finalice el contador, tu progreso se perderá y deberás iniciar una nueva verificación con nuevos códigos y claves.
                 </p>
             </div>
         </div>

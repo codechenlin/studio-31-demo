@@ -631,9 +631,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                         {healthCheckStep === 'mandatory' ? (
                         <>
                           <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                          {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus ? ((dnsAnalysis as DnsHealthOutput).spfStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'spf')}
-                          {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus ? ((dnsAnalysis as DnsHealthOutput).dkimStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'dkim')}
-                          {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus ? ((dnsAnalysis as DnsHealthOutput).dmarcStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'dmarc')}
+                          {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' ? 'verified' : (dnsAnalysis ? 'failed' : 'idle'), 'spf')}
+                          {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' ? 'verified' : (dnsAnalysis ? 'failed' : 'idle'), 'dkim')}
+                          {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified' ? 'verified' : (dnsAnalysis ? 'failed' : 'idle'), 'dmarc')}
                           <div className="pt-2 text-xs text-muted-foreground">
                               <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                               <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -1702,5 +1702,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
