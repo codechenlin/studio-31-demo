@@ -36,6 +36,7 @@ import {
   setDomainAsVerified,
   saveDnsChecks,
   updateDkimKey,
+  updateDomainVerificationCode,
 } from './db-actions';
 import { type Domain } from './types';
 import { Separator } from '@/components/ui/separator';
@@ -94,10 +95,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       vmc: 'idle' as HealthCheckStatus
   });
 
+  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [testError, setTestError] = useState('');
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
   
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
@@ -106,6 +110,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
@@ -1009,6 +1014,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                          )}
                         </div>
                     )}
+                    {currentStep > 1 && (
                      <Button 
                         variant="outline"
                         className={cn(
@@ -1018,6 +1024,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                      >
                         Cancelar
                     </Button>
+                    )}
                 </div>
               </motion.div>
           </AnimatePresence>
@@ -1692,5 +1699,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
