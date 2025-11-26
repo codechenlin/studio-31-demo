@@ -503,7 +503,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                          {currentStep > 1 && currentStep < 4 && (
+                           {currentStep > 2 && currentStep < 4 && (
                              <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
                                 <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
                                 <Button
@@ -1083,8 +1083,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     <>
       <ToastProvider>
         <Dialog open={isOpen} onOpenChange={(open) => {
-            if (!open) {
+            if (!open && state.status !== 'DOMAIN_CREATED' && state.status !== 'idle') {
                 setIsCancelConfirmOpen(true);
+            } else if (!open) {
+                onOpenChange(false);
+                resetState();
             }
         }}>
             {renderContent()}
@@ -1101,7 +1104,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Si cancelas ahora, perderás todo el progreso de la configuración y deberás comenzar de nuevo.
+                        Si cancelas ahora, perderás todo el progreso de la configuración. Si el dominio ya fue creado, será eliminado.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -1699,3 +1702,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
