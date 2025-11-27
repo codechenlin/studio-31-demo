@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -50,6 +49,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, 
       });
       // This will close both modals as requested by the user flow.
       onPause();
+      onOpenChange(false); // Make sure this modal also closes
     } else {
        toast({
           title: "Error al Pausar",
@@ -114,5 +114,3 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, 
     </Dialog>
   );
 }
-
-    
