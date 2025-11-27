@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle } from 'lucide-react';
+import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getPausedProcess } from './db-actions';
@@ -44,11 +44,27 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="sm:max-w-2xl bg-zinc-900/80 backdrop-blur-xl border border-primary/20 text-white overflow-hidden p-0">
-                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-primary/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-primary/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+                 <style>{`
+                    @keyframes icon-ai-pulse {
+                        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px hsl(var(--primary)/0.5)); }
+                        50% { transform: scale(1.1); filter: drop-shadow(0 0 12px hsl(var(--primary))); }
+                    }
+                    .icon-ai-animation {
+                        animation: icon-ai-pulse 3s infinite ease-in-out;
+                    }
+                `}</style>
+                <div className="absolute inset-0 z-0 opacity-10 bg-grid-primary/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-primary/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
                 <DialogHeader className="p-6 text-center z-10">
-                    <DialogTitle className="text-2xl font-bold">Selecciona una Acción</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold flex items-center justify-center gap-3">
+                         <div className="relative w-8 h-8">
+                           <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-full animate-spin" style={{ animationDuration: '6s' }}/>
+                           <div className="absolute inset-1 border-2 border-dashed border-accent/50 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
+                           <BrainCircuit className="absolute inset-0 m-auto text-primary size-5 icon-ai-animation"/>
+                        </div>
+                        Selecciona una Acción
+                    </DialogTitle>
                     <DialogDescription className="text-primary-foreground/70">
                         Puedes iniciar una nueva verificación de dominio o continuar con un proceso que hayas pausado anteriormente.
                     </DialogDescription>
@@ -87,11 +103,12 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                             </div>
                          ) : !pausedProcess ? (
                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                <div className="relative w-10 h-10 mb-2">
-                                     <div className="absolute inset-0 border-2 border-dashed border-red-500 rounded-full animate-spin-slow"/>
-                                     <AlertTriangle className="absolute inset-0 m-auto text-red-500 size-6"/>
+                                <div className="relative flex flex-col items-center justify-center gap-2 rounded-lg p-3 bg-zinc-800/50 border border-zinc-700 backdrop-blur-sm">
+                                    <div className="flex items-center gap-2 text-red-400">
+                                       <AlertTriangle className="size-5"/>
+                                       <span className="text-sm font-semibold">No hay procesos pausados</span>
+                                    </div>
                                 </div>
-                                <p className="text-xs font-semibold text-red-400">No hay procesos pausados</p>
                              </div>
                          ) : null}
 
