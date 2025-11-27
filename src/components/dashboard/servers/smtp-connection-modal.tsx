@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition, useActionState } from 'react';
@@ -375,11 +374,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setTimeout(resetState, 300);
   };
   
-  const handlePauseProcess = () => {
-    // Logic inside PauseVerificationModal now handles closing both modals
-    setIsPauseModalOpen(false);
-  }
-
   const handleCancelProcess = () => {
     setIsPauseModalOpen(false);
     setIsCancelConfirmOpen(true);
@@ -516,6 +510,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       )
   }
 
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
+
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -535,7 +531,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     </div>
   );
 
-  const renderContent = () => {
+  const renderStepContent = () => {
     return (
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
@@ -1009,16 +1005,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                          )}
                         </div>
                     )}
-                    {currentStep > 1 && (
-                     <Button 
-                        variant="outline"
-                        className={cn(
-                          "w-full h-12 text-base bg-transparent transition-colors border-[#F00000] text-white hover:text-white hover:bg-[#F00000]"
-                        )}
-                        onClick={() => setIsCancelConfirmOpen(true)}
-                     >
-                        Cancelar
-                    </Button>
+                    {currentStep === 1 ? (
+                        <Button variant="outline" className="w-full h-12 text-base border-white text-white hover:bg-[#F00000] hover:border-[#F00000]" onClick={() => onOpenChange(false)}>
+                            Cerrar
+                        </Button>
+                    ) : (
+                        <Button variant="outline" className={cn("w-full h-12 text-base bg-transparent transition-colors border-[#F00000] text-white hover:text-white hover:bg-[#F00000]")} onClick={() => setIsCancelConfirmOpen(true)}>
+                            Cancelar
+                        </Button>
                     )}
                 </div>
               </motion.div>
@@ -1078,7 +1072,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     <>
       <ToastProvider>
         <Dialog open={isOpen} onOpenChange={(open) => {
-            if (!open && state.status !== 'DOMAIN_CREATED' && state.status !== 'idle') {
+            if (!open && state.status !== 'DOMAIN_CREATED' && state.status !== 'idle' && currentStep > 1) {
                 setIsCancelConfirmOpen(true);
             } else if (!open) {
                 onOpenChange(false);
@@ -1089,7 +1083,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         </Dialog>
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
-          onOpenChange={setIsPauseModalOpen}
+          onOpenChange={(open) => {
+            setIsPauseModalOpen(open);
+            if (!open) {
+              handleClose();
+            }
+          }}
           onCancelProcess={handleCancelProcess}
           domain={state.domain}
         />

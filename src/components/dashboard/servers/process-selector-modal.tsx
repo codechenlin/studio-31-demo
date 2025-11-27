@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -57,11 +56,11 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-primary/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
                 <DialogHeader className="p-6 text-center z-10">
-                    <DialogTitle className="text-2xl font-bold flex items-center justify-center gap-3">
-                         <div className="relative w-8 h-8">
+                    <DialogTitle className="flex items-center justify-center gap-4 text-3xl font-bold">
+                        <div className="relative w-12 h-12">
                            <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-full animate-spin" style={{ animationDuration: '6s' }}/>
                            <div className="absolute inset-1 border-2 border-dashed border-accent/50 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
-                           <BrainCircuit className="absolute inset-0 m-auto text-primary size-5 icon-ai-animation"/>
+                           <BrainCircuit className="absolute inset-0 m-auto text-primary size-8 icon-ai-animation"/>
                         </div>
                         Selecciona una Acción
                     </DialogTitle>
@@ -76,7 +75,10 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                         initial="initial"
                         animate="animate"
                         whileHover="animate"
-                        onClick={onSelectNew}
+                        onClick={() => {
+                          onSelectNew();
+                          onOpenChange(false);
+                        }}
                         className="relative group p-6 rounded-2xl border-2 border-green-500/30 bg-green-900/20 text-center transition-all duration-300 overflow-hidden hover:shadow-2xl hover:shadow-green-500/20 hover:border-green-400"
                     >
                         <div className="absolute inset-0 bg-grid-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -90,11 +92,16 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                         initial="initial"
                         animate="animate"
                         whileHover={!pausedProcess && !isLoading ? "animate" : undefined}
-                        onClick={onSelectContinue}
+                        onClick={() => {
+                          if (pausedProcess) {
+                            onSelectContinue();
+                            onOpenChange(false);
+                          }
+                        }}
                         disabled={!pausedProcess || isLoading}
                         className={cn(
                             "relative group p-6 rounded-2xl border-2 text-center transition-all duration-300 overflow-hidden",
-                            !pausedProcess || isLoading ? "border-amber-500/30 bg-amber-900/20 cursor-not-allowed" : "border-amber-500/30 bg-amber-900/20 hover:shadow-2xl hover:shadow-amber-500/20 hover:border-amber-400"
+                            !pausedProcess || isLoading ? "border-amber-500/30 bg-amber-900/20 cursor-not-allowed" : "border-amber-500/30 bg-amber-900/20 hover:shadow-2xl hover:shadow-amber-500/20 hover:border-amber-400 cursor-pointer"
                         )}
                     >
                          {isLoading ? (
