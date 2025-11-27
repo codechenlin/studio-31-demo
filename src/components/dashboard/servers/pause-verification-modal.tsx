@@ -14,10 +14,11 @@ interface PauseVerificationModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onCancelProcess: () => void;
+  onPause: () => void;
   domain: Domain | null;
 }
 
-export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, domain }: PauseVerificationModalProps) {
+export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, onPause, domain }: PauseVerificationModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const { toast } = useToast();
 
@@ -48,7 +49,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, 
           className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
       });
       // This will close both modals as requested by the user flow.
-      onOpenChange(false);
+      onPause();
     } else {
        toast({
           title: "Error al Pausar",
@@ -113,3 +114,5 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, 
     </Dialog>
   );
 }
+
+    

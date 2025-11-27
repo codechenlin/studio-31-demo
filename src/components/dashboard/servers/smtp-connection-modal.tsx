@@ -317,6 +317,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       await saveDnsChecks(state.domain.id, {
           mx_verified: dnsStatus.mx,
           bimi_verified: dnsStatus.bimi,
+          vmc_verified: dnsStatus.bimi,
           vmc_verified: dnsStatus.vmc,
       });
       
@@ -1015,6 +1016,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                             Cancelar
                         </Button>
                     )}
+                    {currentStep === 1 && (
+                        <Button variant="outline" className={cn("w-full h-12 text-base bg-transparent transition-colors border-[#F00000] text-white hover:text-white hover:bg-[#F00000]")} onClick={() => handleClose(false)}>
+                            Cerrar
+                        </Button>
+                    )}
                 </div>
               </motion.div>
           </AnimatePresence>
@@ -1093,11 +1099,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
           onOpenChange={(open) => {
-              if(!open) {
-                  setIsPauseModalOpen(false);
-              }
+              if(!open) setIsPauseModalOpen(false);
           }}
           onCancelProcess={handleCancelProcess}
+          onPause={() => {
+            handleClose();
+            setIsPauseModalOpen(false);
+          }}
           domain={state.domain}
         />
         <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
@@ -1703,3 +1711,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
