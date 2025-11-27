@@ -15,8 +15,9 @@ import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/d
 import { CreateSubdomainModal } from '@/components/dashboard/servers/create-subdomain-modal';
 import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
-import { ProcessSelectorModal } from './process-selector-modal';
+import { ProcessSelectorModal } from '@/components/dashboard/servers/process-selector-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { type Domain } from './types';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -206,16 +207,19 @@ export default function ServersPage() {
     }, 300);
   };
 
+  const handleSelectContinue = (domain: Domain) => {
+    // For now, this just opens the main SMTP modal.
+    // In the future, it would load the state from the paused `domain` object.
+    setIsSmtpModalOpen(true);
+  };
+
   return (
     <>
     <ProcessSelectorModal
         isOpen={isSelectorModalOpen}
         onOpenChange={setIsSelectorModalOpen}
         onSelectNew={() => setIsSmtpModalOpen(true)}
-        onSelectContinue={() => {
-            // Future logic to load paused state
-            setIsSmtpModalOpen(true);
-        }}
+        onSelectContinue={handleSelectContinue}
     />
     <SmtpConnectionModal 
       isOpen={isSmtpModalOpen} 

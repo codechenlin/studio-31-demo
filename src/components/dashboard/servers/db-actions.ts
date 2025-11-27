@@ -254,6 +254,7 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
     return { success: true, data };
 }
 
+
 export async function setProcessAsPaused(domainId: string) {
     const supabase = createClient();
     const { error } = await supabase
