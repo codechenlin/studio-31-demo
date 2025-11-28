@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Hourglass, Globe, X, ArrowLeft } from 'lucide-react';
+import { PlayCircle, Hourglass, Globe, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,10 +50,9 @@ interface PausedProcessListModalProps {
   onOpenChange: (isOpen: boolean) => void;
   pausedProcesses: Domain[];
   onSelectDomain: (domain: Domain) => void;
-  onGoBack: () => void;
 }
 
-export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain, onGoBack }: PausedProcessListModalProps) {
+export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain }: PausedProcessListModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -63,7 +62,7 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                 <DialogHeader className="z-10 p-6 text-center shrink-0">
                     <div className="flex justify-center mb-4">
                         <div className="relative p-3 rounded-full bg-primary/20 border-2 border-primary/30">
-                            <PlayCircle className="relative size-12 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
+                           <PlayCircle className="relative size-12 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
                         </div>
                     </div>
                     <DialogTitle className="text-2xl font-bold">Procesos Pausados</DialogTitle>
@@ -100,7 +99,7 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                                                         className="bg-primary/80 text-white hover:bg-primary"
                                                     >
                                                         <PlayCircle className="mr-2"/>
-                                                        Continuar Proceso
+                                                        Continuar
                                                     </Button>
                                                 </div>
                                             </motion.div>
@@ -111,10 +110,7 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                         </ScrollArea>
                     </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-between w-full">
-                    <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={onGoBack}>
-                        <ArrowLeft className="mr-2"/> Regresar
-                    </Button>
+                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-end w-full">
                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                         <X className="mr-2"/> Cerrar
                     </Button>

@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Hourglass, PlayCircle, X, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Hourglass, PlayCircle, X, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 
@@ -13,10 +13,9 @@ interface ContinueProcessModalProps {
   onOpenChange: (isOpen: boolean) => void;
   domain: Domain;
   onContinue: () => void;
-  onGoBack: () => void;
 }
 
-export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue, onGoBack }: ContinueProcessModalProps) {
+export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue }: ContinueProcessModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -76,10 +75,7 @@ export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue,
           </div>
         </div>
 
-        <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-            <Button variant="outline" className="text-white border-white/30 hover:bg-purple-500 hover:border-purple-400 hover:text-white" onClick={onGoBack}>
-                <ArrowLeft className="mr-2"/> Volver al listado
-            </Button>
+        <DialogFooter className="z-10 pt-4 flex justify-end w-full">
             <div className="flex gap-2">
               <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                 <X className="mr-2"/> Cerrar
