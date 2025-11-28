@@ -276,23 +276,28 @@ export async function getPausedProcess(): Promise<{ success: boolean; data?: Dom
 
     try {
         const { data, error } = await supabase
-            .from('domains')
+            .from('dns_checks')
             .select(`
-                *,
-                dns_checks!inner(*)
+                domains (
+                    *,
+                    dns_checks ( * )
+                )
             `)
-            .eq('user_id', user.id)
-            .eq('dns_checks.is_paused', true)
-            .eq('is_verified', false)
-            .order('updated_at', { foreignTable: 'dns_checks', ascending: false })
+            .eq('domains.user_id', user.id)
+            .eq('is_paused', true)
+            .eq('domains.is_verified', false)
+            .order('updated_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
         
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
              throw error;
         }
+        
+        // Extract the domain data from the nested structure
+        const domainData = data?.domains ?? null;
 
-        return { success: true, data: data as Domain | null };
+        return { success: true, data: domainData as Domain | null };
     } catch (error: any) {
         console.error("Error fetching paused process:", error);
         return { success: false, error: error.message };
