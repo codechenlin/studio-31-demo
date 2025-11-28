@@ -493,7 +493,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                           {currentStep > 1 && (
+                           {currentStep > 2 && (
                              <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
                                 <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
                                 <Button
@@ -534,7 +534,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 };
 
 
-  const renderStepContent = () => {
+  const renderContent = () => {
     return (
       <Form {...form}>
         <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
@@ -1009,14 +1009,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                          )}
                         </div>
                     )}
+                    {currentStep === 1 && (
+                        <Button variant="outline" className="w-full h-12 text-base border-[#F00000] text-white hover:bg-[#F00000] hover:text-white" onClick={() => handleClose(false)}>
+                            Cerrar
+                        </Button>
+                    )}
                     {currentStep > 1 && (
                         <Button variant="outline" className={cn("w-full h-12 text-base bg-transparent transition-colors border-[#F00000] text-white hover:text-white hover:bg-[#F00000]")} onClick={() => setIsCancelConfirmOpen(true)}>
                             Cancelar
-                        </Button>
-                    )}
-                    {currentStep === 1 && (
-                        <Button variant="outline" className={cn("w-full h-12 text-base bg-transparent transition-colors border-[#F00000] text-white hover:text-white hover:bg-[#F00000]")} onClick={() => handleClose(false)}>
-                            Cerrar
                         </Button>
                     )}
                 </div>
@@ -1704,3 +1704,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
