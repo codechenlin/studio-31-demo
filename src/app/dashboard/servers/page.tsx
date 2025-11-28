@@ -340,9 +340,9 @@ export default function ServersPage() {
                         </div>
                     </div>
 
-                    <p className="text-muted-foreground text-sm mb-4">{provider.description}</p>
+                    <p className="text-muted-foreground text-sm mb-4 px-6 z-10">{provider.description}</p>
                     
-                    <div className="mt-auto space-y-3">
+                    <div className="mt-auto space-y-3 px-6 z-10">
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
