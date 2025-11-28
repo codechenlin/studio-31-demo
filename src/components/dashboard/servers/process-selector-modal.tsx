@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit, Hourglass } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getPausedProcesses } from './db-actions';
 import { type Domain } from './types';
@@ -25,6 +26,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
     const [isListModalOpen, setIsListModalOpen] = useState(false);
     const [selectedDomainForContinue, setSelectedDomainForContinue] = useState<Domain | null>(null);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -52,15 +54,28 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     
     const handleContinueClick = () => {
         if (pausedProcesses.length > 0) {
-            setIsListModalOpen(true);
             onOpenChange(false);
+            setIsListModalOpen(true);
         }
     }
     
     const handleSelectDomainFromList = (domain: Domain) => {
         setSelectedDomainForContinue(domain);
         setIsListModalOpen(false);
-        setIsContinueModalOpen(true);
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setIsContinueModalOpen(true);
+            setIsTransitioning(false);
+        }, 150);
+    }
+    
+    const handleBackToList = () => {
+        setIsContinueModalOpen(false);
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setIsListModalOpen(true);
+            setIsTransitioning(false);
+        }, 150);
     }
 
     return (
@@ -160,24 +175,35 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                 </DialogContent>
             </Dialog>
 
-            <PausedProcessListModal
-                isOpen={isListModalOpen}
-                onOpenChange={setIsListModalOpen}
-                pausedProcesses={pausedProcesses}
-                onSelectDomain={handleSelectDomainFromList}
-            />
-
-            {selectedDomainForContinue && (
-                <ContinueProcessModal
-                    isOpen={isContinueModalOpen}
-                    onOpenChange={setIsContinueModalOpen}
-                    domain={selectedDomainForContinue}
-                    onContinue={() => {
-                        setIsContinueModalOpen(false);
-                        onSelectContinue(selectedDomainForContinue);
-                    }}
-                />
-            )}
+            <AnimatePresence>
+                {isListModalOpen && !isTransitioning && (
+                    <PausedProcessListModal
+                        isOpen={isListModalOpen}
+                        onOpenChange={setIsListModalOpen}
+                        pausedProcesses={pausedProcesses}
+                        onSelectDomain={handleSelectDomainFromList}
+                        onBack={() => {
+                            setIsListModalOpen(false);
+                            onOpenChange(true);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+            
+            <AnimatePresence>
+                {isContinueModalOpen && selectedDomainForContinue && !isTransitioning && (
+                    <ContinueProcessModal
+                        isOpen={isContinueModalOpen}
+                        onOpenChange={setIsContinueModalOpen}
+                        domain={selectedDomainForContinue}
+                        onContinue={() => {
+                            setIsContinueModalOpen(false);
+                            onSelectContinue(selectedDomainForContinue);
+                        }}
+                        onBack={handleBackToList}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 }

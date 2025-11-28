@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Hourglass, PlayCircle, X, AlertTriangle } from 'lucide-react';
+import { Hourglass, PlayCircle, X, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 
@@ -13,9 +13,10 @@ interface ContinueProcessModalProps {
   onOpenChange: (isOpen: boolean) => void;
   domain: Domain;
   onContinue: () => void;
+  onBack: () => void;
 }
 
-export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue }: ContinueProcessModalProps) {
+export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue, onBack }: ContinueProcessModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -75,12 +76,15 @@ export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue 
           </div>
         </div>
 
-        <DialogFooter className="z-10 pt-4 grid grid-cols-2 gap-4">
+        <DialogFooter className="z-10 pt-4 grid grid-cols-3 gap-2">
           <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
             <X className="mr-2"/> Cerrar
           </Button>
+          <Button variant="outline" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 border-purple-400/50" onClick={onBack}>
+            <ArrowLeft className="mr-2"/> Volver al listado
+          </Button>
           <Button className="bg-amber-600 text-white hover:bg-amber-500" onClick={onContinue}>
-            <PlayCircle className="mr-2"/> Continuar Proceso
+            <PlayCircle className="mr-2"/> Continuar
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Hourglass, Globe } from 'lucide-react';
+import { PlayCircle, Hourglass, Globe, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,20 +50,21 @@ interface PausedProcessListModalProps {
   onOpenChange: (isOpen: boolean) => void;
   pausedProcesses: Domain[];
   onSelectDomain: (domain: Domain) => void;
+  onBack: () => void;
 }
 
-export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain }: PausedProcessListModalProps) {
+export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain, onBack }: PausedProcessListModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-primary/20 text-white overflow-hidden" showCloseButton={false}>
+            <DialogContent className="max-w-3xl w-full h-[99vh] flex flex-col bg-zinc-900/90 backdrop-blur-xl border border-primary/20 text-white overflow-hidden p-0" showCloseButton={false}>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-primary/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                 
-                <DialogHeader className="z-10 p-6 text-center">
+                <DialogHeader className="z-10 p-6 text-center shrink-0">
                     <div className="flex justify-center mb-4">
                         <div className="relative p-3 rounded-full bg-primary/20 border-2 border-primary/30">
                             <motion.div
-                                className="absolute inset-0 rounded-full border-4 border-dashed border-accent/50"
+                                className="absolute inset-0 border-4 border-dashed border-accent/50 rounded-full"
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
                             />
@@ -75,7 +77,7 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="z-10 h-80 px-6 pb-6">
+                <div className="z-10 flex-1 px-6 pb-2 min-h-0">
                     <ScrollArea className="h-full custom-scrollbar pr-4 -mr-4">
                         <motion.div layout className="space-y-3">
                             <AnimatePresence>
@@ -112,6 +114,14 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                         </motion.div>
                     </ScrollArea>
                 </div>
+                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-between w-full">
+                     <Button variant="outline" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 border-purple-400/50" onClick={onBack}>
+                        <ArrowLeft className="mr-2"/> Volver al listado
+                    </Button>
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
+                        <X className="mr-2"/> Cerrar
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
