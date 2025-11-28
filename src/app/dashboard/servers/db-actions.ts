@@ -12,8 +12,6 @@ interface FormState {
   domain: Domain | null;
 }
 
-const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
-
 export async function createOrGetDomainAction(
   prevState: FormState,
   formData: FormData
@@ -74,13 +72,11 @@ export async function createOrGetDomainAction(
       }
     }
 
-    const verificationCode = generateVerificationCode();
     const { data: newDomain, error: insertError } = await supabase
       .from('domains')
       .insert({ 
           domain_name: domainName, 
-          user_id: user.id,
-          verification_code: verificationCode
+          user_id: user.id
       })
       .select()
       .single();
@@ -180,7 +176,6 @@ export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: b
       .single();
       
     if (error) {
-        // If the user's profile doesn't exist yet, it's not a critical error, just return 0.
         if (error.code === 'PGRST116') {
             console.warn("Profile not found for user. Returning domain count 0.");
             return { success: true, count: 0 };
@@ -254,11 +249,23 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         throw error;
     }
     
-    // The trigger will now handle updating the count automatically
-    // when 'is_fully_verified' changes.
-
     revalidatePath('/dashboard/servers');
     return { success: true, data };
+}
+
+export async function saveSmtpCredentials(domainId: string, credentials: any) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('smtp_credentials')
+    .upsert({ domain_id: domainId, ...credentials }, { onConflict: 'domain_id' })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving SMTP credentials:', error);
+    throw error;
+  }
+  return { success: true, data };
 }
 
 
@@ -287,7 +294,7 @@ export async function getPausedProcess(): Promise<{ success: boolean; data?: Dom
         if (error) throw error;
 
         // The RPC returns an array, we expect at most one result.
-        const domainData = data.length > 0 ? data[0] : null;
+        const domainData = data && data.length > 0 ? data[0] : null;
 
         return { success: true, data: domainData as Domain | null };
 

@@ -138,6 +138,7 @@ export default function ServersPage() {
   const [isCountLoading, setIsCountLoading] = useState(true);
   const { toast } = useToast();
   const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
+  const [isLoading, startLoading] = useTransition();
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     if (hasVerified) {
@@ -158,25 +159,18 @@ export default function ServersPage() {
   
   const fetchDomainCount = useCallback(async () => {
     setIsCountLoading(true);
-    try {
-        const result = await getVerifiedDomainsCountFromProfile();
-        if (result.success && result.count !== undefined) {
-            setDomainsCount(result.count);
-        } else {
-            toast({
-                title: 'Error al cargar dominios',
-                description: result.error,
-                variant: 'destructive',
-            });
-            setDomainsCount(0); // Fallback to 0 on error
-        }
-    } catch (error) {
-        console.error(error);
-        toast({ title: 'Error', description: 'No se pudo conectar con el servidor.', variant: 'destructive' });
-        setDomainsCount(0);
-    } finally {
-        setIsCountLoading(false);
+    const result = await getVerifiedDomainsCountFromProfile();
+    if (result.success && result.count !== undefined) {
+      setDomainsCount(result.count);
+    } else {
+      toast({
+        title: 'Error al cargar dominios',
+        description: result.error,
+        variant: 'destructive',
+      });
+      setDomainsCount(0); // Fallback
     }
+    setIsCountLoading(false);
   }, [toast]);
 
   useEffect(() => {
@@ -358,7 +352,7 @@ export default function ServersPage() {
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
-                            {isCountLoading && provider.id === 'smtp' ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
+                            {isCountLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.id === 'smtp' ? domainsCount : 0}</span>}
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">

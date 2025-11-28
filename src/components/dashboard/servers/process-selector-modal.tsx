@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit } from 'lucide-react';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { getPausedProcess } from './db-actions';
 import { type Domain } from './types';
 import { ContinueProcessModal } from './continue-process-modal';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProcessSelectorModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     const [pausedProcess, setPausedProcess] = useState<Domain | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (isOpen) {
@@ -30,13 +32,14 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                 if (result.success) {
                     setPausedProcess(result.data || null);
                 } else {
-                    console.error(result.error);
+                    toast({ title: "Error", description: result.error, variant: "destructive" });
+                    setPausedProcess(null);
                 }
                 setIsLoading(false);
             };
             fetchProcess();
         }
-    }, [isOpen]);
+    }, [isOpen, toast]);
 
     const cardVariants = {
         initial: { opacity: 0, scale: 0.9 },
@@ -100,7 +103,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                             variants={cardVariants}
                             initial="initial"
                             animate="animate"
-                            whileHover={!pausedProcess && !isLoading ? "animate" : undefined}
+                            whileHover={pausedProcess && !isLoading ? { scale: 1.03 } : undefined}
                             onClick={handleContinueClick}
                             disabled={!pausedProcess || isLoading}
                             className={cn(
@@ -123,7 +126,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                                  </div>
                              ) : null}
 
-                            <div className={cn("transition-opacity", isLoading || !pausedProcess ? "opacity-30" : "")}>
+                            <div className={cn("transition-opacity", isLoading ? "opacity-30" : "")}>
                                <PlayCircle className="mx-auto size-16 text-amber-400 mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_#f59e0b]"/>
                                 <h3 className="font-bold text-lg text-white">Continuar Proceso</h3>
                                 <p className="text-sm text-amber-200/70 mt-1">Retoma la verificación de un dominio que dejaste pendiente.</p>
