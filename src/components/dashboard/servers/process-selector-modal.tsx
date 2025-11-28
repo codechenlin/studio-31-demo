@@ -65,8 +65,8 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                     <DialogHeader className="p-6 text-center z-10">
                         <DialogTitle className="flex items-center justify-center gap-4 text-3xl font-bold">
                             <div className="relative w-20 h-20">
-                               <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-full animate-[spin_8s_linear_infinite]" />
-                               <div className="absolute inset-2 border-2 border-dashed border-accent/50 rounded-full animate-[spin_7s_linear_infinite_reverse]" />
+                               <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-full animate-[spin_10s_linear_infinite]" />
+                               <div className="absolute inset-2 border-2 border-dashed border-accent/50 rounded-full animate-[spin_8s_linear_infinite_reverse]" />
                                <BrainCircuit className="absolute inset-0 m-auto text-primary size-12"/>
                             </div>
                             Selecciona una Acción
@@ -111,7 +111,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                                     <Loader2 className="animate-spin text-amber-300"/>
                                 </div>
                              ) : !pausedProcess ? (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-black/50">
+                                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-black/50">
                                     <div className="relative flex flex-col items-center justify-center gap-2 rounded-lg p-3 bg-zinc-900/80 border border-zinc-700">
                                         <div className="flex items-center gap-2 text-red-400">
                                            <AlertTriangle className="size-5"/>

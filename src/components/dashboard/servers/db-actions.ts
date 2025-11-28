@@ -173,17 +173,17 @@ export async function getVerifiedDomainsCount(): Promise<{ success: boolean; cou
   }
   
   try {
-    const { count, error } = await supabase
-      .from('domains')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_verified', true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('verified_domains_count')
+      .eq('id', user.id)
+      .single();
       
     if (error) throw error;
     
-    return { success: true, count: count || 0 };
+    return { success: true, count: data?.verified_domains_count || 0 };
   } catch (error: any) {
-    console.error('Error fetching verified domains count:', error);
+    console.error('Error fetching verified domains count from profile:', error);
     return { success: false, error: error.message };
   }
 }
@@ -275,27 +275,36 @@ export async function getPausedProcess(): Promise<{ success: boolean; data?: Dom
     if (!user) return { success: false, error: 'Usuario no autenticado.' };
 
     try {
-        const { data, error } = await supabase
-            .from('domains')
-            .select(`
-                *,
-                dns_checks!inner(*)
-            `)
-            .eq('user_id', user.id)
-            .eq('is_verified', false)
-            .eq('dns_checks.is_paused', true)
-            .order('updated_at', { foreignTable: 'dns_checks', ascending: false })
+        // Query dns_checks first to find a paused process for the user
+        const { data: pausedCheck, error: pausedCheckError } = await supabase
+            .from('dns_checks')
+            .select('domain_id')
+            .eq('is_paused', true)
             .limit(1)
             .maybeSingle();
-        
-        if (error) {
-            console.error("Error fetching paused process:", error);
-            throw error;
+
+        if (pausedCheckError) throw pausedCheckError;
+
+        // If no paused check is found, return null
+        if (!pausedCheck) {
+            return { success: true, data: null };
         }
 
-        return { success: true, data: data as Domain | null };
+        // Now, fetch the corresponding domain ensuring it belongs to the user
+        const { data: domainData, error: domainError } = await supabase
+            .from('domains')
+            .select(`*, dns_checks ( * )`)
+            .eq('id', pausedCheck.domain_id)
+            .eq('user_id', user.id)
+            .eq('is_verified', false) // Ensure we only get unverified domains
+            .maybeSingle();
+            
+        if (domainError) throw domainError;
+
+        return { success: true, data: domainData as Domain | null };
+
     } catch (error: any) {
-        console.error("Error fetching paused process:", error);
+        console.error("Error fetching paused process:", error.message);
         return { success: false, error: error.message };
     }
 }
