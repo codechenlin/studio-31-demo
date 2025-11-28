@@ -164,7 +164,7 @@ export async function getVerifiedDomains(): Promise<{ success: boolean; data?: D
   }
 }
 
-export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
+export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: boolean; count?: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -179,7 +179,13 @@ export async function getVerifiedDomainsCount(): Promise<{ success: boolean; cou
       .eq('id', user.id)
       .single();
       
-    if (error) throw error;
+    if (error) {
+        if (error.code === 'PGRST116') {
+            console.warn("Profile not found for user. Returning domain count 0.");
+            return { success: true, count: 0 };
+        }
+      throw error;
+    }
     
     return { success: true, count: data?.verified_domains_count || 0 };
   } catch (error: any) {
@@ -247,13 +253,9 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         throw error;
     }
     
-    // The trigger will now handle updating the count automatically
-    // when 'is_fully_verified' changes.
-
     revalidatePath('/dashboard/servers');
     return { success: true, data };
 }
-
 
 export async function setProcessAsPaused(domainId: string) {
     const supabase = createClient();
