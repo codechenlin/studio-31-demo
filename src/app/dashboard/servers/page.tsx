@@ -159,7 +159,7 @@ export default function ServersPage() {
   const fetchDomainCount = useCallback(async () => {
     startLoading(async () => {
       const result = await getVerifiedDomainsCount();
-      if (result.success && typeof result.count === 'number') {
+      if (result.success && result.count !== undefined) {
         setDomainsCount(result.count);
       } else {
         toast({
@@ -206,7 +206,7 @@ export default function ServersPage() {
       setIsSuccessModalOpen(true);
     }, 300);
   };
-  
+
   const handleSelectContinue = (domain: Domain) => {
     // For now, this just opens the main SMTP modal.
     // In the future, it would load the state from the paused `domain` object.
