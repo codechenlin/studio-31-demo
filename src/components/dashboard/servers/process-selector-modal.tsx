@@ -182,10 +182,6 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                         onOpenChange={setIsListModalOpen}
                         pausedProcesses={pausedProcesses}
                         onSelectDomain={handleSelectDomainFromList}
-                        onBack={() => {
-                            setIsListModalOpen(false);
-                            onOpenChange(true);
-                        }}
                     />
                 )}
             </AnimatePresence>
@@ -200,7 +196,6 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                             setIsContinueModalOpen(false);
                             onSelectContinue(selectedDomainForContinue);
                         }}
-                        onBack={handleBackToList}
                     />
                 )}
             </AnimatePresence>

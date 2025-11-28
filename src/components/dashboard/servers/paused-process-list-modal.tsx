@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Hourglass, Globe, X, ArrowLeft } from 'lucide-react';
+import { PlayCircle, Hourglass, Globe, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,10 +50,9 @@ interface PausedProcessListModalProps {
   onOpenChange: (isOpen: boolean) => void;
   pausedProcesses: Domain[];
   onSelectDomain: (domain: Domain) => void;
-  onBack: () => void;
 }
 
-export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain, onBack }: PausedProcessListModalProps) {
+export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain }: PausedProcessListModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -78,46 +77,45 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                 </DialogHeader>
 
                 <div className="z-10 flex-1 px-6 pb-2 min-h-0">
-                    <ScrollArea className="h-full custom-scrollbar pr-4 -mr-4">
-                        <motion.div layout className="space-y-3">
-                            <AnimatePresence>
-                                {pausedProcesses.map((process, index) => {
-                                     const expiryDate = new Date(new Date(process.dns_checks?.updated_at || process.created_at).getTime() + 48 * 60 * 60 * 1000);
-                                    return (
-                                        <motion.div
-                                            key={process.id}
-                                            layout
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="group p-4 rounded-lg border border-primary/20 bg-black/30 flex items-center justify-between gap-4 transition-all hover:bg-primary/10 hover:border-primary/40"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Globe className="size-5 text-primary/80"/>
-                                                <span className="font-semibold text-base">{process.domain_name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <CountdownTimer expiryDate={expiryDate} />
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => onSelectDomain(process)}
-                                                    className="bg-primary/80 text-white hover:bg-primary"
-                                                >
-                                                    <PlayCircle className="mr-2"/>
-                                                    Continuar
-                                                </Button>
-                                            </div>
-                                        </motion.div>
-                                    )
-                                })}
-                            </AnimatePresence>
-                        </motion.div>
-                    </ScrollArea>
+                     <div className="relative h-full w-full bg-black/30 rounded-lg border border-primary/20 flex flex-col p-4">
+                        <ScrollArea className="flex-1 custom-scrollbar -mr-4 pr-4">
+                            <motion.div layout className="space-y-3">
+                                <AnimatePresence>
+                                    {pausedProcesses.map((process, index) => {
+                                         const expiryDate = new Date(new Date(process.dns_checks?.updated_at || process.created_at).getTime() + 48 * 60 * 60 * 1000);
+                                        return (
+                                            <motion.div
+                                                key={process.id}
+                                                layout
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="group p-4 rounded-lg border border-primary/20 bg-black/30 flex items-center justify-between gap-4 transition-all hover:bg-primary/10 hover:border-primary/40"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <Globe className="size-5 text-primary/80"/>
+                                                    <span className="font-semibold text-base">{process.domain_name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <CountdownTimer expiryDate={expiryDate} />
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => onSelectDomain(process)}
+                                                        className="bg-primary/80 text-white hover:bg-primary"
+                                                    >
+                                                        <PlayCircle className="mr-2"/>
+                                                        Continuar
+                                                    </Button>
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+                                </AnimatePresence>
+                            </motion.div>
+                        </ScrollArea>
+                    </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-between w-full">
-                     <Button variant="outline" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 border-purple-400/50" onClick={onBack}>
-                        <ArrowLeft className="mr-2"/> Volver al listado
-                    </Button>
+                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-end w-full">
                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                         <X className="mr-2"/> Cerrar
                     </Button>
