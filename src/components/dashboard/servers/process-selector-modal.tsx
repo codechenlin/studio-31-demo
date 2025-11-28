@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit } from 'lucide-react';
+import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit, Hourglass } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { getPausedProcess } from './db-actions';
+import { getPausedProcesses } from './db-actions';
 import { type Domain } from './types';
 import { ContinueProcessModal } from './continue-process-modal';
+import { PausedProcessListModal } from './paused-process-list-modal';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProcessSelectorModalProps {
@@ -19,25 +20,27 @@ interface ProcessSelectorModalProps {
 }
 
 export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSelectContinue }: ProcessSelectorModalProps) {
-    const [pausedProcess, setPausedProcess] = useState<Domain | null>(null);
+    const [pausedProcesses, setPausedProcesses] = useState<Domain[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
+    const [isListModalOpen, setIsListModalOpen] = useState(false);
+    const [selectedDomainForContinue, setSelectedDomainForContinue] = useState<Domain | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
         if (isOpen) {
             setIsLoading(true);
-            const fetchProcess = async () => {
-                const result = await getPausedProcess();
-                if (result.success) {
-                    setPausedProcess(result.data || null);
+            const fetchProcesses = async () => {
+                const result = await getPausedProcesses();
+                if (result.success && result.data) {
+                    setPausedProcesses(result.data);
                 } else {
                     toast({ title: "Error", description: result.error, variant: "destructive" });
-                    setPausedProcess(null);
+                    setPausedProcesses([]);
                 }
                 setIsLoading(false);
             };
-            fetchProcess();
+            fetchProcesses();
         }
     }, [isOpen, toast]);
 
@@ -48,10 +51,16 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     };
     
     const handleContinueClick = () => {
-        if (pausedProcess) {
-            setIsContinueModalOpen(true);
+        if (pausedProcesses.length > 0) {
+            setIsListModalOpen(true);
             onOpenChange(false);
         }
+    }
+    
+    const handleSelectDomainFromList = (domain: Domain) => {
+        setSelectedDomainForContinue(domain);
+        setIsListModalOpen(false);
+        setIsContinueModalOpen(true);
     }
 
     return (
@@ -103,19 +112,19 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                             variants={cardVariants}
                             initial="initial"
                             animate="animate"
-                            whileHover={pausedProcess && !isLoading ? { scale: 1.03 } : undefined}
+                            whileHover={pausedProcesses.length > 0 && !isLoading ? { scale: 1.03 } : undefined}
                             onClick={handleContinueClick}
-                            disabled={!pausedProcess || isLoading}
+                            disabled={pausedProcesses.length === 0 || isLoading}
                             className={cn(
                                 "relative group p-6 rounded-2xl border-2 text-center transition-all duration-300 overflow-hidden",
-                                !pausedProcess || isLoading ? "border-amber-500/30 bg-amber-900/20 cursor-not-allowed" : "border-amber-500/30 bg-amber-900/20 hover:shadow-2xl hover:shadow-amber-500/20 hover:border-amber-400 cursor-pointer"
+                                !pausedProcesses || pausedProcesses.length === 0 || isLoading ? "border-amber-500/30 bg-amber-900/20 cursor-not-allowed" : "border-amber-500/30 bg-amber-900/20 hover:shadow-2xl hover:shadow-amber-500/20 hover:border-amber-400 cursor-pointer"
                             )}
                         >
                              {isLoading ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <Loader2 className="animate-spin text-amber-300"/>
                                 </div>
-                             ) : !pausedProcess ? (
+                             ) : pausedProcesses.length === 0 ? (
                                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 backdrop-blur-sm bg-black/50">
                                     <div className="relative flex flex-col items-center justify-center gap-2 rounded-lg p-3 bg-zinc-900/80 border border-zinc-700">
                                         <div className="flex items-center gap-2 text-red-400">
@@ -130,9 +139,12 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                                <PlayCircle className="mx-auto size-16 text-amber-400 mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_#f59e0b]"/>
                                 <h3 className="font-bold text-lg text-white">Continuar Proceso</h3>
                                 <p className="text-sm text-amber-200/70 mt-1">Retoma la verificación de un dominio que dejaste pendiente.</p>
-                                {pausedProcess && (
-                                    <div className="mt-3 text-xs bg-black/30 border border-amber-500/20 rounded-md p-2 text-amber-200">
-                                        Pausado: <span className="font-mono">{pausedProcess.domain_name}</span>
+                                {pausedProcesses.length > 0 && (
+                                    <div className="mt-3 text-xs bg-black/30 border border-amber-500/20 rounded-md p-2 flex items-center justify-center gap-2">
+                                        <Hourglass className="size-4 text-amber-300"/>
+                                        <span className="text-amber-200">
+                                            <span className="font-mono text-base font-bold">{pausedProcesses.length}</span> Proceso(s) en Pausa
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -147,14 +159,22 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            {pausedProcess && (
+
+            <PausedProcessListModal
+                isOpen={isListModalOpen}
+                onOpenChange={setIsListModalOpen}
+                pausedProcesses={pausedProcesses}
+                onSelectDomain={handleSelectDomainFromList}
+            />
+
+            {selectedDomainForContinue && (
                 <ContinueProcessModal
                     isOpen={isContinueModalOpen}
                     onOpenChange={setIsContinueModalOpen}
-                    domain={pausedProcess}
+                    domain={selectedDomainForContinue}
                     onContinue={() => {
                         setIsContinueModalOpen(false);
-                        onSelectContinue(pausedProcess);
+                        onSelectContinue(selectedDomainForContinue);
                     }}
                 />
             )}

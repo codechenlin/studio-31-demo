@@ -1,5 +1,4 @@
-
-'use server';
+"use server";
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -140,7 +139,7 @@ export async function deleteDomainAction(domainId: string): Promise<{ success: b
     }
 }
 
-export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
+export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: boolean; count?: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -156,7 +155,8 @@ export async function getVerifiedDomainsCount(): Promise<{ success: boolean; cou
       .single();
       
     if (error) {
-        if (error.code === 'PGRST116') { // Row not found
+        if (error.code === 'PGRST116') {
+            console.warn("Profile not found for user. Returning domain count 0.");
             return { success: true, count: 0 };
         }
       throw error;
@@ -246,7 +246,7 @@ export async function setProcessAsPaused(domainId: string) {
     return { success: true };
 }
 
-export async function getPausedProcess(): Promise<{ success: boolean; data?: Domain | null; error?: string }> {
+export async function getPausedProcesses(): Promise<{ success: boolean; data?: Domain[]; error?: string }> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Usuario no autenticado.' };
@@ -256,28 +256,32 @@ export async function getPausedProcess(): Promise<{ success: boolean; data?: Dom
             .from('dns_checks')
             .select(`
                 domain_id,
-                domains (
+                is_paused,
+                updated_at,
+                domains!inner (
                     *
                 )
             `)
             .eq('is_paused', true)
-            .eq('domains.user_id', user.id)
-            .limit(1)
-            .maybeSingle();
+            .eq('domains.user_id', user.id);
 
         if (error) {
-            console.error("Error fetching paused process:", error.message);
+            console.error("Error fetching paused processes:", error.message);
             throw error;
         }
 
-        // The result will have the shape { domain_id: '...', domains: { ...domain_data } }
-        // We need to return just the domain data.
-        const domainData = data?.domains as Domain | null;
+        const domainData = data.map(item => ({
+            ...item.domains,
+            dns_checks: {
+                is_paused: item.is_paused,
+                updated_at: item.updated_at
+            }
+        }));
         
-        return { success: true, data: domainData };
+        return { success: true, data: domainData as unknown as Domain[] };
 
     } catch (error: any) {
-        console.error("Error in getPausedProcess:", error.message);
+        console.error("Error in getPausedProcesses:", error.message);
         return { success: false, error: error.message };
     }
 }
