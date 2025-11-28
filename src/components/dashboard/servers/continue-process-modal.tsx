@@ -13,9 +13,10 @@ interface ContinueProcessModalProps {
   onOpenChange: (isOpen: boolean) => void;
   domain: Domain;
   onContinue: () => void;
+  onGoBack: () => void;
 }
 
-export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue }: ContinueProcessModalProps) {
+export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue, onGoBack }: ContinueProcessModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue 
         setTimeLeft(Math.floor(remaining / 1000));
       };
 
-      calculateTimeLeft();
+      calculateTimeLeft(); // Initial calculation
       timer = setInterval(calculateTimeLeft, 1000);
     }
     return () => clearInterval(timer);
@@ -75,13 +76,16 @@ export function ContinueProcessModal({ isOpen, onOpenChange, domain, onContinue 
           </div>
         </div>
 
-        <DialogFooter className="z-10 pt-4 flex justify-end w-full">
+        <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={onGoBack}>
+                Volver al listado
+            </Button>
             <div className="flex gap-2">
               <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                 <X className="mr-2"/> Cerrar
               </Button>
               <Button className="bg-amber-600 text-white hover:bg-amber-500" onClick={onContinue}>
-                <PlayCircle className="mr-2"/> Continuar
+                <PlayCircle className="mr-2"/> Continuar Proceso
               </Button>
             </div>
         </DialogFooter>

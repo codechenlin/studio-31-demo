@@ -62,11 +62,12 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                 <DialogHeader className="z-10 p-6 text-center shrink-0">
                     <div className="flex justify-center mb-4">
                         <div className="relative p-3 rounded-full bg-primary/20 border-2 border-primary/30">
-                           <PlayCircle className="relative size-12 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
+                            <div className="absolute inset-0 rounded-full animate-ping border-2 border-primary/50" />
+                            <PlayCircle className="relative size-12 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
                         </div>
                     </div>
                     <DialogTitle className="text-2xl font-bold">Procesos Pausados</DialogTitle>
-                    <DialogDescription className="text-primary-foreground/70 pt-2">
+                    <DialogDescription className="text-primary-foreground/70">
                         Selecciona un dominio para continuar con el proceso de verificación donde lo dejaste.
                     </DialogDescription>
                 </DialogHeader>
