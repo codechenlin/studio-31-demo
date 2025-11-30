@@ -2,6 +2,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Fuerza este módulo a ejecutarse en Node.js runtime
+export const runtime = "nodejs";
+
 export function createClient() {
   const cookieStore = cookies()
 
