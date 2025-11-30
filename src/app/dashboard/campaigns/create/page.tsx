@@ -83,8 +83,13 @@ function CreateCampaignContent() {
     }
   };
 
-  // ... aquí sigue tu lógica y JSX original
-}
+  // 👇 aquí va todo tu JSX con return (...)
+  return (
+    <main>
+      {/* contenido */}
+    </main>
+  );
+} // 👈 cierre de CreateCampaignContent
 
 export default function CreateCampaignPage() {
   return (
