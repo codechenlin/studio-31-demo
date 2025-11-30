@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,49 +17,34 @@ import { ColorPicker } from '@/components/dashboard/color-picker';
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 const steps = [
-  {
-    title: "Información de Campaña",
-    description: "Nombra tu campaña para identificarla fácilmente.",
-  },
-  {
-    title: "Tipo de Campaña",
-    description: "Elige el tipo de contenido para tu correo.",
-  },
-  {
-    title: "Audiencia y Servidor",
-    description: "Selecciona los destinatarios y el proveedor de envío.",
-  },
-  {
-    title: "Contenido",
-    description: "Diseña tu correo y escribe tu mensaje.",
-  },
-  {
-    title: "Revisión y envío",
-    description: "Confirma los detalles y envía tu campaña.",
-  },
+  { title: "Información de Campaña", description: "Nombra tu campaña para identificarla fácilmente." },
+  { title: "Tipo de Campaña", description: "Elige el tipo de contenido para tu correo." },
+  { title: "Audiencia y Servidor", description: "Selecciona los destinatarios y el proveedor de envío." },
+  { title: "Contenido", description: "Diseña tu correo y escribe tu mensaje." },
+  { title: "Revisión y envío", description: "Confirma los detalles y envía tu campaña." },
 ];
 
 const servers = [
-    { id: 'aws', name: 'AWS', connected: false },
-    { id: 'mailgun', name: 'Mailgun', connected: false },
-    { id: 'sendgrid', name: 'SendGrid', connected: false },
-    { id: 'elasticemail', name: 'Elastic Email', connected: false },
-    { id: 'blastengine', name: 'Blastengine', connected: false },
-    { id: 'sparkpost', name: 'Sparkpost', connected: false },
-    { id: 'smtp', name: 'SMTP', connected: false },
+  { id: 'aws', name: 'AWS', connected: false },
+  { id: 'mailgun', name: 'Mailgun', connected: false },
+  { id: 'sendgrid', name: 'SendGrid', connected: false },
+  { id: 'elasticemail', name: 'Elastic Email', connected: false },
+  { id: 'blastengine', name: 'Blastengine', connected: false },
+  { id: 'sparkpost', name: 'Sparkpost', connected: false },
+  { id: 'smtp', name: 'SMTP', connected: false },
 ];
 
 const templates = [
-    { id: 1, name: 'Lanzamiento de Producto', category: 'Marketing', preview: 'https://placehold.co/400x500.png', hint: 'product launch' },
-    { id: 2, name: 'Newsletter Semanal', category: 'Noticias', preview: 'https://placehold.co/400x500.png', hint: 'modern newsletter' },
-    { id: 3, name: 'Promoción Especial', category: 'Ventas', preview: 'https://placehold.co/400x500.png', hint: 'special promotion' },
-    { id: 4, name: 'Confirmación de Cuenta', category: 'Transaccional', preview: 'https://placehold.co/400x500.png', hint: 'account confirmation' },
-    { id: 5, name: 'Carrito Abandonado', category: 'Ventas', preview: 'https://placehold.co/400x500.png', hint: 'shopping cart' },
-    { id: 6, name: 'Anuncio de Evento', category: 'Marketing', preview: 'https://placehold.co/400x500.png', hint: 'event announcement' },
-    { id: 7, name: 'Bienvenida a Nuevos Usuarios', category: 'Transaccional', preview: 'https://placehold.co/400x500.png', hint: 'welcome email' },
-    { id: 8, name: 'Artículo de Blog', category: 'Noticias', preview: 'https://placehold.co/400x500.png', hint: 'blog post' },
-    { id: 9, name: 'Encuesta de Satisfacción', category: 'Feedback', preview: 'https://placehold.co/400x500.png', hint: 'customer survey' },
-    { id: 10, name: 'Feliz Cumpleaños', category: 'Personalizado', preview: 'https://placehold.co/400x500.png', hint: 'birthday celebration' },
+  { id: 1, name: 'Lanzamiento de Producto', category: 'Marketing', preview: 'https://placehold.co/400x500.png', hint: 'product launch' },
+  { id: 2, name: 'Newsletter Semanal', category: 'Noticias', preview: 'https://placehold.co/400x500.png', hint: 'modern newsletter' },
+  { id: 3, name: 'Promoción Especial', category: 'Ventas', preview: 'https://placehold.co/400x500.png', hint: 'special promotion' },
+  { id: 4, name: 'Confirmación de Cuenta', category: 'Transaccional', preview: 'https://placehold.co/400x500.png', hint: 'account confirmation' },
+  { id: 5, name: 'Carrito Abandonado', category: 'Ventas', preview: 'https://placehold.co/400x500.png', hint: 'shopping cart' },
+  { id: 6, name: 'Anuncio de Evento', category: 'Marketing', preview: 'https://placehold.co/400x500.png', hint: 'event announcement' },
+  { id: 7, name: 'Bienvenida a Nuevos Usuarios', category: 'Transaccional', preview: 'https://placehold.co/400x500.png', hint: 'welcome email' },
+  { id: 8, name: 'Artículo de Blog', category: 'Noticias', preview: 'https://placehold.co/400x500.png', hint: 'blog post' },
+  { id: 9, name: 'Encuesta de Satisfacción', category: 'Feedback', preview: 'https://placehold.co/400x500.png', hint: 'customer survey' },
+  { id: 10, name: 'Feliz Cumpleaños', category: 'Personalizado', preview: 'https://placehold.co/400x500.png', hint: 'birthday celebration' },
 ];
 
 type CampaignTag = {
@@ -75,7 +59,7 @@ const existingTags: CampaignTag[] = [
   { id: 3, name: "Newsletter", color: "#f97316" },
 ];
 
-export default function CreateCampaignPage() {
+function CreateCampaignContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const [campaignName, setCampaignName] = useState('');
   const [selectedTags, setSelectedTags] = useState<CampaignTag[]>([]);
@@ -98,6 +82,17 @@ export default function CreateCampaignPage() {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  // ... aquí sigue tu lógica y JSX original
+}
+
+export default function CreateCampaignPage() {
+  return (
+    <Suspense fallback={<div>Cargando creación de campaña...</div>}>
+      <CreateCampaignContent />
+    </Suspense>
+  );
+}
 
   const isNextDisabled = () => {
     if (currentStep === 0) return campaignName.trim() === '';
