@@ -1,10 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Salida optimizada para despliegues en Docker
+  // Salida optimizada para Docker
   output: 'standalone',
 
-  // Configuración de compilación
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -12,7 +11,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // Configuración de imágenes externas
   images: {
     remotePatterns: [
       {
@@ -41,11 +39,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-
-  // Configuración de server actions
-  serverActions: {
-    bodySizeLimit: '10mb',
   },
 };
 
