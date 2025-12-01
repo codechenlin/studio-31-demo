@@ -334,22 +334,25 @@ export default function CreateCampaignPage() {
                                         selectedTemplate === template.id ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-transparent hover:shadow-primary/20 hover:border-primary'
                                     )}
                                 >
-                                    <CardContent className="p-0 relative">
+                                                                        <CardContent className="p-0 relative">
                                         <Image src={template.preview} alt={template.name} width={400} height={500} className="object-cover transition-transform group-hover:scale-105" data-ai-hint={template.hint} />
                                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity p-2">
-                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}><Eye className="mr-1"/>Visualizar</Button>
-                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}><Pencil className="mr-1"/>Editar</Button>
+                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}>
+                                              <Eye className="mr-1"/>Visualizar
+                                            </Button>
+                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}>
+                                              <Pencil className="mr-1"/>Editar
+                                            </Button>
                                         </div>
                                     </CardContent>
-                                                              </CardContent>
-                          <CardFooter className="p-3 flex-col items-start">
-                            <h4 className="font-semibold text-sm truncate w-full">{template.name}</h4>
-                            <Badge variant="outline" className="mt-1 text-xs">{template.category}</Badge>
-                          </CardFooter>
-                        </Card>
-                      ))}
+                                    <CardFooter className="p-3 flex-col items-start">
+                                        <h4 className="font-semibold text-sm truncate w-full">{template.name}</h4>
+                                        <Badge variant="outline" className="mt-1 text-xs">{template.category}</Badge>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                         </div>
                     </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -383,3 +386,4 @@ export default function CreateCampaignPage() {
     </Suspense>
   );
 }
+
