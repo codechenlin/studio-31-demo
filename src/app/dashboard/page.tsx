@@ -12,9 +12,9 @@ import { DeviceDistributionChart } from "@/components/dashboard/device-distribut
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingModal } from '@/components/dashboard/onboarding-modal';
 import { HelpButton } from '@/components/dashboard/help-button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area";
 
-// Subcomponente que usa useSearchParams
+// Subcomponente que usa useSearchParams y se envuelve en Suspense
 function DashboardParams({ setShowOnboarding, toast }: { setShowOnboarding: (v: boolean) => void, toast: any }) {
   const searchParams = useSearchParams();
 
