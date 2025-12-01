@@ -361,13 +361,23 @@ function CreateCampaignContent() {
               >
                   <ArrowLeft className="mr-2" /> Anterior 
               </Button>
-              <Button onClick={goToNextStep} disabled={isNextDisabled()} className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"> Siguiente <ArrowRight className="ml-2" /> </Button>
+              <Button 
+                  onClick={goToNextStep} 
+                  disabled={isNextDisabled()} 
+                  className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"
+              > 
+                  Siguiente <ArrowRight className="ml-2" /> 
+              </Button>
           </CardFooter>
         </Card>
       </main>
-    );
-  }
-  
-  export default function CreateCampaignPage() {
-    return <CreateCampaignContent />;
-  }
+  ); // 👈 este paréntesis cierra el return
+} // 👈 este cierra la función CreateCampaignContent
+
+export default function CreateCampaignPage() {
+  return (
+    <Suspense fallback={<div>Cargando creación de campaña...</div>}>
+      <CreateCampaignContent />
+    </Suspense>
+  );
+}
