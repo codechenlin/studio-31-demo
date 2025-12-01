@@ -341,34 +341,45 @@ export default function CreateCampaignPage() {
                                             <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}><Pencil className="mr-1"/>Editar</Button>
                                         </div>
                                     </CardContent>
-                                    <CardFooter className="p-3 flex-col items-start">
-                                        <h4 className="font-semibold text-sm truncate w-full">{template.name}</h4>
-                                        <Badge variant="outline" className="mt-1 text-xs">{template.category}</Badge>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                         </div>
+                                                              </CardContent>
+                          <CardFooter className="p-3 flex-col items-start">
+                            <h4 className="font-semibold text-sm truncate w-full">{template.name}</h4>
+                            <Badge variant="outline" className="mt-1 text-xs">{template.category}</Badge>
+                          </CardFooter>
+                        </Card>
+                      ))}
                     </div>
+                  </div>
                 </div>
               )}
             </div>
-        </CardContent>
-        <CardFooter className="flex justify-between p-6 border-t border-border/40">
+          </CardContent>
+          <CardFooter className="flex justify-between p-6 border-t border-border/40">
             <Button 
-                variant="outline" 
-                onClick={goToPrevStep} 
-                disabled={currentStep === 0}
-                className="text-foreground hover:bg-[#F00000] hover:text-white active:bg-[#D00000] transition-colors"
+              variant="outline" 
+              onClick={goToPrevStep} 
+              disabled={currentStep === 0}
+              className="text-foreground hover:bg-[#F00000] hover:text-white active:bg-[#D00000] transition-colors"
             >
-                <ArrowLeft className="mr-2" /> Anterior 
+              <ArrowLeft className="mr-2" /> Anterior 
             </Button>
-            <Button onClick={goToNextStep} disabled={isNextDisabled()} className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"> Siguiente <ArrowRight className="ml-2" /> </Button>
-        </CardFooter>
-      </Card>
-    </main>
+            <Button 
+              onClick={goToNextStep} 
+              disabled={isNextDisabled()} 
+              className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"
+            > 
+              Siguiente <ArrowRight className="ml-2" /> 
+            </Button>
+          </CardFooter>
+        </Card>
+      </main>
+    );
+} // 👈 cierre de CreateCampaignContent
+
+export default function CreateCampaignPage() {
+  return (
+    <Suspense fallback={<div>Cargando creación de campaña...</div>}>
+      <CreateCampaignContent />
+    </Suspense>
   );
 }
-
-    
-
-    
