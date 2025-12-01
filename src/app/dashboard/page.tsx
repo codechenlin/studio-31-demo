@@ -41,6 +41,7 @@ export default function DashboardPage() {
   return (
     <>
       <OnboardingModal isOpen={showOnboarding} onOpenChange={setShowOnboarding} />
+      {/* 👇 Aquí envolvemos el subcomponente en Suspense */}
       <Suspense fallback={null}>
         <DashboardParams setShowOnboarding={setShowOnboarding} toast={toast} />
       </Suspense>
