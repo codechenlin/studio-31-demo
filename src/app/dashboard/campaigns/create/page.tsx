@@ -373,10 +373,10 @@ export default function CreateCampaignPage() {
             > 
               Siguiente <ArrowRight className="ml-2" /> 
             </Button>
-          </CardFooter>
+</CardFooter>
         </Card>
       </main>
-    ); // 👈 este paréntesis cierra el return
+  ); // 👈 este paréntesis cierra el return
 } // 👈 este cierra la función CreateCampaignContent
 
 export default function CreateCampaignPage() {
@@ -386,4 +386,3 @@ export default function CreateCampaignPage() {
     </Suspense>
   );
 }
-
