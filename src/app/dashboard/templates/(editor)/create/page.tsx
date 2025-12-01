@@ -1,9 +1,7 @@
-
-
 "use client";
 
-import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useTransition, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,7 +157,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { saveTemplateAction, revalidatePath } from './actions';
 import { getTemplateById, getAllCategories } from '@/app/dashboard/templates/actions';
 import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
@@ -3076,7 +3073,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                         <div className="grid grid-cols-4 gap-2">
                                             {galleryFiles.map(file => (
                                                 <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState?.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
-                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
+                                                    <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover"/>
                                                     {internalState?.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
                                                 </Card>
                                             ))}
@@ -3493,488 +3490,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 };
 
-const ColorEditor = ({ subStyle, styles, updateFunc }: {
-    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow',
-    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number, position: ShadowPosition },
-    updateFunc: (mainKey: any, subKey: string, value: any) => void
-}) => {
-
-    if ('position' in styles) { // Shadow Editor
-        const shadowPositions: { name: ShadowPosition, icon: React.ElementType }[] = [
-            { name: 'around', icon: Square },
-            { name: 'bottom', icon: ArrowDown },
-            { name: 'top', icon: ArrowUp },
-            { name: 'right', icon: ArrowRight },
-            { name: 'left', icon: ArrowLeft },
-        ];
-        return (
-             <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label>Posición de la Sombra</Label>
-                     <div className="grid grid-cols-5 gap-1">
-                        {shadowPositions.map(({ name, icon: Icon }) => (
-                            <TooltipProvider key={name}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button 
-                                            size="icon" 
-                                            variant={styles.position === name ? 'secondary' : 'outline'}
-                                            onClick={() => updateFunc(subStyle, 'position', name)}
-                                        >
-                                            <Icon />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p className="capitalize">{name === 'around' ? 'Alrededor' : name}</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        ))}
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label>Color de Sombra</Label>
-                    <ColorPickerAdvanced color={styles.color} setColor={c => updateFunc(subStyle, 'color', c)} />
-                </div>
-                <div className="space-y-2">
-                    <Label>Opacidad de Sombra</Label>
-                    <Slider value={[styles.opacity]} max={100} onValueChange={v => updateFunc(subStyle, 'opacity', v[0])} />
-                </div>
-            </div>
-        )
-    }
-
-    const setDirection = (direction: GradientDirection) => {
-        updateFunc(subStyle, 'direction', direction);
-    };
-
-    return (
-        <div className="space-y-4">
-            <Tabs value={styles.type} onValueChange={(v) => updateFunc(subStyle, 'type', v)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="solid">Sólido</TabsTrigger>
-                    <TabsTrigger value="gradient">Degradado</TabsTrigger>
-                </TabsList>
-            </Tabs>
-            <div className="space-y-2">
-                <Label>Color 1</Label>
-                <ColorPickerAdvanced color={styles.color1} setColor={c => updateFunc(subStyle, 'color1', c)} />
-            </div>
-            {styles.type === 'gradient' && (
-                <>
-                    <div className="space-y-2">
-                        <Label>Color 2</Label>
-                        <ColorPickerAdvanced color={styles.color2 || '#ffffff'} setColor={c => updateFunc(subStyle, 'color2', c)} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Dirección</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Vertical</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Horizontal</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Radial</p></TooltipContent>
-                                 </Tooltip>
-                             </TooltipProvider>
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-};
-
-const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
-}) => {
-    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'rating') {
-        return null;
-    }
-
-    const getElement = (): RatingBlock | null => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'rating' ? block as RatingBlock : null;
-    }
-    const element = getElement();
-    if (!element) return null;
-    
-    const updatePayload = (key: keyof RatingBlock['payload'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
-            if (col.id !== selectedElement.columnId) return col;
-            return { ...col, blocks: col.blocks.map(block => {
-              if (block.id !== selectedElement.primitiveId || block.type !== 'rating') return block;
-              return { ...block, payload: { ...block.payload, [key]: value } };
-            })};
-          })}};
-        }), true);
-    };
-
-    const updateStyle = (key: keyof RatingBlock['payload']['styles'], value: any) => {
-        updatePayload('styles', { ...element.payload.styles, [key]: value });
-    };
-
-    const updateSubStyle = (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => {
-        updateStyle(mainKey, { ...element.payload.styles[mainKey], [subKey]: value });
-    };
-
-    return (
-        <div className="space-y-4">
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Star/>Editor de Estrellas</h3>
-            <div className="space-y-2">
-                <Label>Calificación ({element.payload.rating} / 5)</Label>
-                <Slider 
-                    value={[element.payload.rating]}
-                    min={0} max={5} step={0.5}
-                    onValueChange={v => updatePayload('rating', v[0])}
-                />
-            </div>
-             <div className="space-y-2">
-                <Label>Diseño de Estrella</Label>
-                <div className="grid grid-cols-2 gap-2">
-                    <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
-                    <Button variant={element.payload.styles.starStyle === 'universo' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'universo')}><StarHalf className="mr-2"/> Universo</Button>
-                    <Button variant={element.payload.styles.starStyle === 'moderno' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'moderno')}>
-                        <svg viewBox="0 0 19 18" className="mr-2 size-4 fill-current"><path d="M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z" /></svg>
-                        Moderno
-                    </Button>
-                 </div>
-            </div>
-            <div className="space-y-2">
-                <Label>Alineación</Label>
-                <div className="grid grid-cols-3 gap-2">
-                    <Button variant={element.payload.styles.alignment === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','left')}><AlignLeft/></Button>
-                    <Button variant={element.payload.styles.alignment === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','center')}><AlignCenter/></Button>
-                    <Button variant={element.payload.styles.alignment === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('alignment','right')}><AlignRight/></Button>
-                 </div>
-            </div>
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80">Estilos de Estrella</h3>
-            <div className="space-y-2">
-                <Label>Tamaño de Estrella</Label>
-                <Slider value={[element.payload.styles.starSize]} min={10} max={100} onValueChange={v => updateStyle('starSize', v[0])} />
-            </div>
-            <div className="space-y-2">
-                <Label>Espaciado entre Estrellas</Label>
-                <Slider value={[element.payload.styles.spacing]} min={0} max={20} step={1} onValueChange={v => updateStyle('spacing', v[0])} />
-            </div>
-            <div className="space-y-2">
-                <Label>Relleno Vertical (Arriba/Abajo)</Label>
-                <Slider value={[element.payload.styles.paddingY]} min={0} max={50} step={1} onValueChange={v => updateStyle('paddingY', v[0])} />
-            </div>
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Llenas</h3>
-            <ColorEditor subStyle="filled" styles={element.payload.styles.filled} updateFunc={updateSubStyle as any} />
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Vacías</h3>
-            <ColorEditor subStyle="unfilled" styles={element.payload.styles.unfilled} updateFunc={updateSubStyle as any} />
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80">Borde de Estrellas</h3>
-            <div className="space-y-2">
-                <Label>Ancho del Borde</Label>
-                <Slider value={[element.payload.styles.border.width]} min={0} max={10} onValueChange={v => updateSubStyle('border', 'width', v[0])}/>
-            </div>
-            <ColorEditor subStyle="border" styles={element.payload.styles.border} updateFunc={updateSubStyle as any} />
-        </div>
-    )
-}
-
-const RatingComponent = ({ block }: { block: RatingBlock }) => {
-    const { rating, styles } = block.payload;
-    const { starSize, alignment, paddingY, spacing, starStyle } = styles;
-    
-    const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const universoStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
-    const modernoStarPath = "M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z";
-
-    const getStarPath = () => {
-        switch(starStyle) {
-            case 'pointed': return pointedStarPath;
-            case 'universo': return universoStarPath;
-            case 'moderno': return modernoStarPath;
-            default: return pointedStarPath;
-        }
-    }
-    
-    const renderStar = (index: number) => {
-        const fillValue = Math.max(0, Math.min(1, rating - index));
-        const uniqueId = `${block.id}-${index}`;
-        
-        const getFill = (type: 'filled' | 'unfilled' | 'border') => {
-            const config = styles[type];
-            if (config.type === 'gradient') return `url(#${type}-${uniqueId})`;
-            return config.color1;
-        };
-        
-        const starPath = getStarPath();
-        const viewBox = starStyle === 'moderno' ? "0 0 19 18" : "0 0 24 24";
-
-        return (
-            <svg key={index} width={starSize} height={starSize} viewBox={viewBox} style={{ flexShrink: 0 }}>
-                 <defs>
-                    {(['filled', 'unfilled', 'border'] as const).map(type => {
-                        const config = styles[type];
-                        if (config.type === 'gradient') {
-                            if (config.direction === 'radial') {
-                                return <radialGradient key={type} id={`${type}-${uniqueId}`}><stop offset="0%" stopColor={config.color1} /><stop offset="100%" stopColor={config.color2} /></radialGradient>;
-                            }
-                            return <linearGradient key={type} id={`${type}-${uniqueId}`} gradientTransform={config.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}><stop offset="0%" stopColor={config.color1} /><stop offset="100%" stopColor={config.color2} /></linearGradient>;
-                        }
-                        return null;
-                    })}
-                    <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={starStyle === 'moderno' ? 19 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 18 : 24} />
-                    </clipPath>
-                 </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
-                <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" /> }
-            </svg>
-        );
-    };
-
-    const alignClass = {
-        left: 'justify-start',
-        center: 'justify-center',
-        right: 'justify-end'
-    };
-
-    return (
-        <div className={cn("w-full flex", alignClass[alignment])} style={{paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px`}}>
-            <div className="flex" style={{ gap: `${spacing}px`}}>
-                {Array.from({ length: 5 }).map((_, i) => renderStar(i))}
-            </div>
-        </div>
-    );
-}
-
-const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
-}) => {
-    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'switch') return null;
-
-    const getElement = (): SwitchBlock | null => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'switch' ? block as SwitchBlock : null;
-    }
-    const element = getElement();
-    if (!element) return null;
-    
-    const updatePayload = (key: keyof SwitchBlock['payload'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id !== selectedElement.columnId) return col;
-            return { ...col, blocks: col.blocks.map(block => {
-              if (block.id !== selectedElement.primitiveId || block.type !== 'switch') return block;
-              return { ...block, payload: { ...block.payload, [key]: value } };
-            })};
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns }};
-        }), true);
-    };
-    
-    const updateStyle = (key: keyof SwitchBlock['payload']['styles'], value: any) => {
-        const currentStyles = element.payload.styles;
-        const newStyles = { ...currentStyles, [key]: value };
-        updatePayload('styles', newStyles);
-    };
-    
-    const updateSubStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
-        const currentStyles = element.payload.styles;
-        const mainKeyStyles = currentStyles[mainKey];
-      
-        const newSubStyles = { ...mainKeyStyles, [subKey]: value };
-        const newStyles = { ...currentStyles, [mainKey]: newSubStyles };
-      
-        updatePayload('styles', newStyles);
-    };
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ToggleLeft/>Editor de Interruptor</h3>
-        
-        <div className="space-y-2">
-          <Label>Diseño del Interruptor</Label>
-          <Select value={element.payload.design} onValueChange={(v: SwitchDesign) => updatePayload('design', v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="classic">Clásico</SelectItem>
-              <SelectItem value="futuristic">Futurista</SelectItem>
-              <SelectItem value="minimalist">Minimalista</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-            <Label>Alineación</Label>
-            <div className="grid grid-cols-3 gap-2">
-                <Button variant={element.payload.alignment === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'left')}><AlignLeft/></Button>
-                <Button variant={element.payload.alignment === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'center')}><AlignCenter/></Button>
-                <Button variant={element.payload.alignment === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'right')}><AlignRight/></Button>
-            </div>
-        </div>
-
-        <div className="space-y-2">
-            <Label>Relleno Vertical (Arriba/Abajo)</Label>
-            <Slider 
-                value={[element.payload.paddingY]} min={0} max={50} step={1}
-                onValueChange={v => updatePayload('paddingY', v[0])}
-            />
-        </div>
-
-        <div className="space-y-2">
-            <Label>Tamaño Global</Label>
-            <Slider 
-                value={[element.payload.scale]} min={0.5} max={2} step={0.1}
-                onValueChange={v => updatePayload('scale', v[0])}
-            />
-        </div>
-        <Separator />
-        
-        <div className="space-y-2">
-          <Label>Texto de Gancho</Label>
-          <Input 
-            value={element.payload.hookText}
-            onChange={e => updatePayload('hookText', e.target.value)}
-            placeholder="Ej: Revela tu descuento..."
-          />
-        </div>
-        <div className="space-y-2">
-            <Label>Color del Texto</Label>
-            <ColorPickerAdvanced 
-                color={element.payload.styles.hookTextColor} 
-                setColor={c => updateStyle('hookTextColor', c)} 
-            />
-        </div>
-        
-        <Separator />
-        
-        <div className="flex items-center justify-between">
-            <Label>Estado Fijo</Label>
-            <div className="flex items-center gap-2">
-                <span className={cn("text-sm", !element.payload.isOn && "text-primary font-semibold")}>Apagado</span>
-                <Switch 
-                    checked={element.payload.isOn}
-                    onCheckedChange={(checked) => updatePayload('isOn', checked)}
-                />
-                <span className={cn("text-sm", element.payload.isOn && "text-primary font-semibold")}>Encendido</span>
-            </div>
-        </div>
-
-        <Separator />
-
-        <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
-        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateSubStyle as any} />
-        <Separator />
-        
-        <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
-        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateSubStyle as any} />
-      </div>
-    );
-}
-
-const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
-}) => {
-    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'shapes') return null;
-
-    const getElement = (): ShapesBlock | null => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'shapes' ? block as ShapesBlock : null;
-    }
-    const element = getElement();
-    if (!element) return null;
-    
-    const updateStyle = (key: keyof ShapesBlock['payload']['styles'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
-            if (col.id !== selectedElement.columnId) return col;
-            return { ...col, blocks: col.blocks.map(block => {
-              if (block.id !== selectedElement.primitiveId || block.type !== 'shapes') return block;
-              return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } } };
-            })};
-          })}};
-        }), true);
-    };
-
-    const updatePayload = (key: keyof ShapesBlock['payload'], value: any) => {
-        setCanvasContent(prev => prev.map(row => {
-          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
-            if (col.id !== selectedElement.columnId) return col;
-            return { ...col, blocks: col.blocks.map(block => {
-              if (block.id !== selectedElement.primitiveId || block.type !== 'shapes') return block;
-              return { ...block, payload: { ...block.payload, [key]: value } };
-            })};
-          })}};
-        }), true);
-    }
-    
-    const updateSubStyle = (mainKey: 'background' | 'shadow', subKey: string, value: any) => {
-        updateStyle(mainKey, { ...element.payload.styles[mainKey], [subKey]: value });
-    };
-
-    const shapeIcons = { square: Square, circle: Circle, triangle: Triangle, rhombus: Diamond, pentagon: Pentagon, hexagon: Hexagon, octagon: Octagon, heart: Heart, diamond: Diamond, star: Star };
-
-    return (
-        <div className="space-y-4">
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pentagon/>Editor de Formas</h3>
-            <div className="space-y-2">
-                <Label>Forma</Label>
-                <Select value={element.payload.shape} onValueChange={(v: ShapeType) => updatePayload('shape', v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {Object.entries(shapeIcons).map(([name, Icon]) => (
-                            <SelectItem key={name} value={name}><Icon className="inline-block mr-2" />{name.charAt(0).toUpperCase() + name.slice(1)}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-                <Label>Tamaño Global</Label>
-                <Slider value={[element.payload.styles.size]} min={10} max={100} onValueChange={v => updateStyle('size', v[0])} />
-            </div>
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80">Color de Fondo</h3>
-            <ColorEditor subStyle="background" styles={element.payload.styles.background} updateFunc={updateSubStyle as any} />
-            <Separator />
-            <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Wind/>Desenfoque</Label>
-                <div className="flex items-center gap-2">
-                    <Slider value={[element.payload.styles.blur]} max={50} onValueChange={v => updateStyle('blur', v[0])} />
-                    <span className="text-xs w-12 text-right">{element.payload.styles.blur}px</span>
-                </div>
-            </div>
-            <Separator />
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Layers/>Sombra</h3>
-            <ColorEditor subStyle="shadow" styles={element.payload.styles.shadow} updateFunc={updateSubStyle as any} />
-        </div>
-    );
-};
-
 const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -4017,8 +3532,7 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updateStyle('border', { ...element.payload.styles.border, [key]: value });
     };
 
-    const setBorderDirection = (direction: GradientDirection) => {
-        updateBorder('direction', direction);
+    const setBorderDirection = (direction: GradientDirection) => {        updateBorder('direction', direction);
     };
     
     const handleGallerySelect = (fileUrl: string) => {
@@ -4320,7 +3834,7 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
     )
 }
 
-export default function CreateTemplatePage() {
+function TemplateEditorClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewport, setViewport] = useState<Viewport>('desktop');
@@ -5465,109 +4979,20 @@ export default function CreateTemplatePage() {
                     const youtubeBlock = block as YouTubeBlock;
                     const { videoId, styles, link, title, showTitle, duration, showDuration } = youtubeBlock.payload;
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
-
-                    const playButtonSvg = {
-                      default: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>`,
-                      classic: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
-                    };
-                    
-                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
-                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9', xs: 'w-12 h-9' };
-
-                    const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-sm p-2', xs: 'text-xs px-2 pt-1 pb-0' };
-                    const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs', xs: 'text-xs' };
-
-                    const formatDuration = () => {
-                        const { hours, minutes, seconds } = duration;
-                        const h = parseInt(hours || '0', 10);
-                        const m = parseInt(minutes || '0', 10);
-                        const s = parseInt(seconds || '0', 10);
-
-                        if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
-
-                        const parts = [];
-                        if (h > 0) parts.push(h.toString());
-                        if(h > 0 || m > 0) {
-                           parts.push(m.toString().padStart(h > 0 ? 2 : 1, '0'));
-                        }
-                        if (s > 0 || m > 0 || h > 0) {
-                             parts.push(s.toString().padStart(2, '0'));
-                        }
-
-                        if (parts.length === 0) return null;
-                        if(parts.length === 1 && m > 0) return `0:${parts[0].padStart(2,'0')}`;
-                        if(parts.length === 1) return `0:0${parts[0]}`;
-                        
-                        return parts.join(':');
-                    };
-                    const displayDuration = showDuration ? formatDuration() : null;
-                    
-                    const { border } = styles;
-                    let borderStyle: React.CSSProperties = {};
-                    if(border.type === 'solid') {
-                        borderStyle.background = border.color1;
-                    } else if (border.type === 'gradient') {
-                         if (border.direction === 'radial') {
-                          borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
-                        } else {
-                          const angle = border.direction === 'horizontal' ? 'to right' : 'to bottom';
-                          borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
-                        }
-                    }
-
+                    const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
+                    const playButtonSize = { lg: '68px', md: '48px', sm: '36px' };
+                    const titleSize = { lg: '1.25rem', md: '1rem', sm: '0.875rem' };
+                    const durationSize = { lg: '0.875rem', md: '0.75rem', sm: '0.7rem' };
                     return (
-                        <div className="p-2 w-full h-full">
-                           <div 
-                            style={{
-                                ...borderStyle,
-                                borderRadius: `${styles.borderRadius}px`,
-                                padding: `${styles.borderWidth}px`
-                            }}
-                            className="w-full h-full"
-                           >
-                            <div
-                                className="w-full h-full relative aspect-video bg-black/5"
-                                style={{
-                                  borderRadius: `${styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0}px`,
-                                  overflow: 'hidden',
-                                }}
-                            >
-                                <img src={thumbnailUrl} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />
-                                
-                                {showTitle && title && (
-                                    <div className={cn("absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
-                                        <p className="font-semibold truncate">{title}</p>
-                                    </div>
-                                )}
-
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                     <a 
-                                        href={link.url && videoId ? link.url : undefined} 
-                                        target={link.url && videoId ? (link.openInNewTab ? '_blank' : '_self') : undefined} 
-                                        rel="noopener noreferrer"
-                                        className={cn(
-                                          "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110", 
-                                          playButtonSize[sizeVariant],
-                                          link.url && videoId ? "cursor-pointer" : "cursor-default"
-                                        )}
-                                        style={{ backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')` }}
-                                        onClick={(e) => {
-                                            if (!link.url || !videoId) e.preventDefault();
-                                            e.stopPropagation();
-                                        }}
-                                     >
-                                         <span className="sr-only">Play Video</span>
-                                     </a>
+                         <div style={{padding: '8px'}}>
+                            <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} style={{display: 'block', position: 'relative', borderRadius: `${styles.borderRadius}px`, overflow: 'hidden'}}>
+                                <img src={thumbnailUrl} alt={title} style={{width: '100%', display: 'block'}}/>
+                                <div style={{position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: playButtonSize[sizeVariant], height: 'auto'}}>
+                                    <svg viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>
                                 </div>
-                                {displayDuration && (
-                                    <div className={cn("absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none", durationSize[sizeVariant])}>
-                                        {displayDuration}
-                                    </div>
-                                )}
-                            </div>
-                           </div>
+                            </a>
                         </div>
-                    );
+                    )
                 }
               case 'timer': {
                  const timerBlock = block as TimerBlock;
@@ -5584,8 +5009,8 @@ export default function CreateTemplatePage() {
                 return <GifComponent block={block as GifBlock} />;
               default:
                 return (
-                  <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
-                    Block: {block.type}
+                  <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground flex items-center gap-2">
+                    <Type /> Bloque de tipo '{type}' no implementado para vista previa.
                   </div>
                 )
             }
@@ -5912,7 +5337,7 @@ export default function CreateTemplatePage() {
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
-                        style={{ ...getElementStyle(col), flexBasis: `${col.width}%` }}
+                        style={{ ...getElementStyle(col.styles), flexBasis: `${col.width}%` }}
                         className={cn(
                           "flex-grow p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-0 group/column",
                           selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
@@ -6024,8 +5449,7 @@ const LayerPanel = () => {
         }), true);
     };
 
-    const handleRename = (blockId: string, newName: string) => {
-        if (!selectedWrapper) return;
+    const handleRename = (blockId: string, newName: string) => {        if (!selectedWrapper) return;
         
         if (newName.length > 20) {
             toast({
@@ -6150,7 +5574,6 @@ const LayerPanel = () => {
                                                 className="group/button size-6 flex items-center justify-center rounded-md bg-zinc-700/50 hover:bg-green-400/80 border border-green-400/30 hover:border-green-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                             >
                                                 <ChevronDown className="size-4 text-green-300 group-hover/button:text-white transition-colors"/>
-                                            </button>
                                         </div>
                                      </div>
                                 </div>
@@ -6174,7 +5597,7 @@ const LayerPanel = () => {
   const handleAddNewCategory = () => {
     const trimmed = newCategory.trim();
     if (trimmed && !allCategories.includes(trimmed)) {
-        setAllCategories(prev => [...prev, trimmed]);
+        setAllCategories(prev => [...prev, trimmed].sort());
         setSelectedCategories(prev => [...prev, trimmed]);
         setNewCategory('');
     }
@@ -6296,483 +5719,232 @@ const LayerPanel = () => {
                   <Tooltip>
                       <TooltipTrigger asChild><Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button></TooltipTrigger>
                       <TooltipContent>
-                          <p>Comprueba la vista para <span className="font-bold">Móvil</span></p>
-                      </TooltipContent>
+                          <p>Comprueba la vista para <span className="font-bold">Móvil</span></p></TooltipContent>
                   </Tooltip>
               </div>
             </TooltipProvider>
+            <ThemeToggle />
+             <Button onClick={() => setIsFileManagerOpen(true)} className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white">
+                <UploadCloud className="mr-2" />
+                 Abrir la Galería
+            </Button>
           </div>
-           <div className="flex items-center gap-4">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setIsFileManagerOpen(true); }}>
-                                <FileIcon />
-                           </Button></TooltipTrigger>
-                        <TooltipContent>
-                            <p>Abrir Gestor de Archivos</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-                <ThemeToggle />
-                <Button 
-                    onClick={() => {
-                      if (!templateName || templateName === 'Mi Plantilla Increíble') {
-                        setIsEditNameModalOpen(true);
-                      } else {
-                        handlePublish();
-                      }
-                    }}
-                    disabled={isSaving}
-                    className="group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]"
-                >
-                    <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    {isSaving ? <RefreshCw className="mr-2 animate-spin"/> : <Rocket className="mr-2"/>}
-                    {isSaving ? 'Guardando...' : 'Guardar'}
-                </Button>
-            </div>
         </header>
 
-         <div id="editor-canvas" className="flex-1 overflow-auto custom-scrollbar relative">
-          <div className="p-8">
-            <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
-                 {canvasContent.length === 0 ? (
-                   <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
-                     <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
-                   </div>
-                 ) : (
-                  <div className="flex flex-col gap-4">
-                      {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
-                  </div>
-                 )}
-            </div>
+        <div className="flex-1 p-4 overflow-auto custom-scrollbar">
+          <div className={`mx-auto ${viewportClasses[viewport]} rounded-xl bg-background/70 border border-border/50 shadow-lg backdrop-blur-sm relative`}>
+            {canvasContent.map(renderCanvasBlock)}
           </div>
         </div>
       </main>
-
-      <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
-        <Tabs defaultValue="style" className="w-full flex flex-col h-full">
-            <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="style"><PaletteIcon className="mr-2"/>Estilo</TabsTrigger>
-                    <TabsTrigger value="layers"><Layers className="mr-2"/>Capas</TabsTrigger>
-                </TabsList>
-            </header>
-            <ScrollArea className="flex-1 custom-scrollbar">
-                <TabsContent value="style">
-                    <div className="p-4 space-y-6">
-                        <StyleEditorHeader />
-                        { (selectedElement?.type === 'column') && (
-                        <>
-                        <BackgroundEditor 
-                            selectedElement={selectedElement} 
-                            canvasContent={canvasContent} 
-                            setCanvasContent={setCanvasContent}
-                            onOpenImageModal={handleOpenBgImageModal}
-                        />
-                            <Separator className="bg-border/20" />
-                            <ColumnDistributionEditor 
-                                selectedElement={selectedElement}
-                                canvasContent={canvasContent}
-                                setCanvasContent={setCanvasContent}
-                            />
-                        </>
-                        )}
-                        { (selectedElement?.type === 'wrapper') && (
-                        <BackgroundEditor 
-                            selectedElement={selectedElement} 
-                            canvasContent={canvasContent} 
-                            setCanvasContent={setCanvasContent}
-                            onOpenImageModal={handleOpenBgImageModal}
-                        />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
-                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
-                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'image' && (
-                            <ImageEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
-                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
-                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
-                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading-interactive' && (
-                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
-                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
-                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
-                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'rating' && (
-                            <RatingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'switch' && (
-                            <SwitchEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'shapes' && (
-                            <ShapesEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'gif' && (
-                            <GifEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                        )}
-                        
-                        { !selectedElement && (
-                            <div className="text-center text-muted-foreground p-4 text-sm">
-                                Selecciona un elemento en el lienzo para ver sus opciones de estilo.
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
-                <TabsContent value="layers">
-                    <LayerPanel />
-                </TabsContent>
-            </ScrollArea>
-        </Tabs>
-      </aside>
-
-      <BackgroundManagerModal
-        open={isBgImageModalOpen}
-        onOpenChange={setIsBgImageModalOpen}
-        onApply={handleApplyBackgroundImage}
-        initialValue={
-            selectedElement?.type === 'wrapper'
-            ? (canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined)?.payload.styles.backgroundImage
-            : undefined
-        }
-       />
-
-       <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
-        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Columna</DialogTitle>
-            <DialogDescription>
-              Selecciona un bloque de contenido para añadirlo a la columna.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="grid grid-cols-3 gap-4 p-4">
-                {columnContentBlocks.map((block) => (
-                  <Card 
-                    key={block.id} 
-                    onClick={() => handleAddBlockToColumn(block.id as StaticPrimitiveBlockType)}
-                    className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-                  >
-                    <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                    <span className="text-sm font-medium text-center text-foreground/80 mt-2">{block.name}</span>
-                  </Card>
-                ))}
-              </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
-          if(!open) {
-            setClickPosition(null);
-            setActiveContainer(null);
-          }
-          setIsWrapperBlockSelectorOpen(open);
-      }}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Contenedor</DialogTitle>
-            <DialogDescription>
-              Selecciona un bloque de contenido para añadirlo al contenedor flexible.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="grid grid-cols-3 gap-4 p-4">
-                {wrapperContentBlocks.map((block) => (
-                  <Card 
-                    key={block.id} 
-                    onClick={() => handleAddBlockToWrapper(block.id as InteractiveBlockType)}
-                    className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-                  >
-                    <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                    <span className="text-sm font-medium text-center text-foreground/80 mt-2">{block.name}</span>
-                  </Card>
-                ))}
-              </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="text-destructive"/>
-              Confirmar Eliminación
-            </DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que deseas eliminar este elemento? Todos los contenidos dentro de él se perderán permanentemente. Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" variant="destructive" onClick={handleDeleteItem}>
-              Sí, eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-       <Dialog open={isEditNameModalOpen} onOpenChange={setIsEditNameModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle>Editar Nombre de la Plantilla</DialogTitle>
-            <DialogDescription>
-              Cambia el nombre de tu plantilla para identificar fácilmente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={tempTemplateName}
-              onChange={(e) => setTempTemplateName(e.target.value)}
-              placeholder="Mi increíble plantilla"
-              maxLength={20}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsEditNameModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={handleSaveTemplateName}>
-              Guardar Nombre
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
-      <Dialog open={isEmojiSelectorOpen} onOpenChange={setIsEmojiSelectorOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-            <DialogHeader>
-                <DialogTitle>Seleccionar Emoji</DialogTitle>
-                <DialogDescription>
-                    Elige un emoji para insertar en tu plantilla.
-                </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="max-h-60">
-                 <div className="grid grid-cols-6 gap-2 p-4">
-                    {popularEmojis.map((emoji) => (
+      <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5 overflow-hidden">
+        <div className="p-4 border-b border-border/20 shrink-0">
+            <StyleEditorHeader />
+             {selectedElement?.type === 'wrapper' && (
+                <Tabs defaultValue="background" className="w-full">
+                    <TabsList className="grid grid-cols-2">
+                        <TabsTrigger value="background" className="text-xs">Fondo</TabsTrigger>
+                        <TabsTrigger value="layers" className="text-xs">Capas</TabsTrigger>
+                    </TabsList>
+                     <TabsContent value="background" className="mt-4">
+                        <BackgroundEditor
+                            selectedElement={selectedElement}
+                            canvasContent={canvasContent}
+                            setCanvasContent={setCanvasContent}
+                            onOpenImageModal={handleOpenBgImageModal}
+                        />
+                     </TabsContent>
+                     <TabsContent value="layers" className="mt-4">
+                        <LayerPanel />
+                     </TabsContent>
+                </Tabs>
+            )}
+             {selectedElement?.type === 'primitive' && (() => {
+                const blockType = getSelectedBlockType(selectedElement, canvasContent);
+                switch (blockType) {
+                    case 'button':
+                        return <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'heading':
+                        return <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'text':
+                        return <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'emoji-static':
+                        return <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'separator':
+                        return <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'youtube':
+                        return <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'timer':
+                        return <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    case 'image':
+                        return <ImageEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                     case 'gif':
+                       return <GifEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />;
+                    default:
+                        return <div className="text-center text-muted-foreground">Editor no soportado para este bloque.</div>;
+                }
+            })()}
+            {selectedElement?.type === 'column' && (
+               <ColumnDistributionEditor 
+                    selectedElement={selectedElement} 
+                    canvasContent={canvasContent} 
+                    setCanvasContent={setCanvasContent} 
+                />
+            )}
+        </div>
+      </aside>
+        <Dialog open={isActionSelectorModalOpen} onOpenChange={setIsActionSelectorModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Añadir un bloque al lienzo:</DialogTitle>
+                    <DialogDescription>¿Qué te gustaría añadir a este punto del lienzo?</DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 gap-4 py-4">
+                   {wrapperContentBlocks.map(block => (
+                        <button
+                            key={block.id}
+                            onClick={() => handleAddBlockToWrapper(block.id as InteractiveBlockType)}
+                            className={cn(
+                            "w-full p-3 border-2 rounded-lg transition-all flex items-center gap-4 relative",
+                            "bg-card/50 hover:bg-primary/10 hover:border-primary/50"
+                            )}
+                        >
+                            <div className="flex items-center justify-center p-3 bg-muted rounded-md">
+                                <Box className="text-primary size-7" />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="font-semibold">{block.name}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro de que quieres salir?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Si sales sin guardar, perderás todos los cambios que hayas realizado.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setIsConfirmExitModalOpen(false)}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push('/dashboard/templates')}>Salir sin guardar</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </Dialog>
+
+         <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Dale un nombre a tu plantilla</DialogTitle>
+                    <DialogDescription>
+                        Por favor, elige un nombre memorable para tu plantilla.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                   <div className="space-y-2">
+                      <Label htmlFor="initial-template-name">Nombre de la plantilla</Label>
+                       <Input
+                            id="initial-template-name"
+                            placeholder="Ej: Plantilla de Marketing"
+                            value={tempTemplateName}
+                            onChange={(e) => setTempTemplateName(e.target.value)}
+                        />
+                   </div>
+                   <div className="space-y-1 mt-4">
+                       <Label htmlFor="category-checkboxes">Elige una o varias categorías</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                            {allCategories.map((category) => (
+                                <div key={category} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`category-${category}`}
+                                        checked={selectedCategories.includes(category)}
+                                        onCheckedChange={(checked) => handleCategoryToggle(category, !!checked)}
+                                    />
+                                    <Label htmlFor={`category-${category}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                        {category}
+                                    </Label>
+                                </div>
+                            ))}
+                            <div className="flex items-center space-x-2">
+                                <Input
+                                    type="text"
+                                    placeholder="Nueva categoría"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                />
+                                <Button variant="outline" size="sm" onClick={handleAddNewCategory}>Añadir</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSaveTemplateName}>Guardar y Publicar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+         <Dialog open={isEditNameModalOpen} onOpenChange={setIsEditNameModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar nombre de la plantilla</DialogTitle>
+                    <DialogDescription>
+                        Por favor, introduce el nuevo nombre de la plantilla.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                   <div className="space-y-2">
+                      <Label htmlFor="initial-template-name">Nombre de la plantilla</Label>
+                       <Input
+                            id="initial-template-name"
+                            placeholder="Ej: Plantilla de Marketing"
+                            value={tempTemplateName}
+                            onChange={(e) => setTempTemplateName(e.target.value)}
+                        />
+                   </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSaveTemplateName}>Guardar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+         <Dialog open={isEmojiSelectorOpen} onOpenChange={setIsEmojiSelectorOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Selecciona un Emoji</DialogTitle>
+                    <DialogDescription>
+                        Escoge el emoji que mejor se adapte al contenido.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 grid grid-cols-6 gap-2">
+                    {popularEmojis.map(emoji => (
                         <button 
                             key={emoji}
                             onClick={() => handleSelectEmojiForWrapper(emoji)}
-                            className="text-3xl p-2 rounded-lg hover:bg-accent transition-colors"
+                            className="text-3xl p-1 rounded-lg hover:bg-accent transition-colors aspect-square flex items-center justify-center"
                         >
                             {emoji}
                         </button>
                     ))}
-                 </div>
-            </ScrollArea>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={isCopySuccessModalOpen} onOpenChange={setIsCopySuccessModalOpen}>
-        <DialogContent className="sm:max-w-sm bg-card/90 backdrop-blur-xl">
-          <DialogHeader>
-            <DialogTitle className="flex flex-col items-center text-center gap-3">
-              <div className="p-3 bg-green-500/20 rounded-full border-4 border-green-500/30">
-                <ClipboardCheck className="size-8 text-green-500" />
-              </div>
-              ¡Símbolo Copiado!
-            </DialogTitle>
-            <DialogDescription className="text-center pt-2">
-              El emoji está listo para que lo pegues donde quieras.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button className="w-full" onClick={() => setIsCopySuccessModalOpen(false)}>
-              Entendido
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isActionSelectorModalOpen} onOpenChange={(open) => {
-          if(!open) {
-            setIsActionSelectorModalOpen(false);
-            setClickPosition(null);
-            setActiveContainer(null);
-          }
-      }}>
-          <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-              <DialogHeader>
-                  <DialogTitle>¿Qué deseas hacer?</DialogTitle>
-                  <DialogDescription>
-                      Selecciona una acción para el contenedor flexible.
-                  </DialogDescription>
-              </DialogHeader>
-              <div className="flex gap-4 py-4">
-                  <Button 
-                      variant="outline" 
-                      className="flex-1 h-24 flex-col gap-2"
-                      onClick={() => {
-                          if (actionTargetWrapperId) {
-                              setSelectedElement({ type: 'wrapper', wrapperId: actionTargetWrapperId });
-                          }
-                          setIsActionSelectorModalOpen(false);
-                      }}
-                  >
-                      <Edit className="size-6 text-primary"/>
-                      Editar Contenedor
-                  </Button>
-                  <Button 
-                      variant="outline" 
-                      className="flex-1 h-24 flex-col gap-2"
-                      onClick={() => {
-                           if (actionTargetWrapperId) {
-                              setActiveContainer({ id: actionTargetWrapperId, type: 'wrapper' });
-                              setIsWrapperBlockSelectorOpen(true);
-                           }
-                          setIsActionSelectorModalOpen(false);
-                      }}
-                  >
-                      <PlusCircle className="size-6 text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/>
-                      Añadir Bloque
-                  </Button>
-              </div>
-          </DialogContent>
-      </Dialog>
-      
-       {/* Initial Name Modal */}
-      <Dialog open={isInitialNameModalOpen} onOpenChange={(open) => { if (!open) router.push('/dashboard/templates'); }}>
-          <DialogContent className="max-w-3xl bg-card/80 backdrop-blur-sm border-border/20" showCloseButton={false}>
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="p-8 flex flex-col justify-center">
-                      <div className="flex justify-center md:justify-start pb-4">
-                          <div className="p-3 bg-primary/10 rounded-full border-2 border-primary/20">
-                            <FileSignature className="size-10 text-primary" />
-                          </div>
-                      </div>
-                      <DialogHeader>
-                          <DialogTitle className="text-2xl font-bold">¡Inicia tu Obra Maestra!</DialogTitle>
-                          <DialogDescription>
-                              Dale un nombre y asigna categorías a tu nueva plantilla para empezar a dar vida a tus ideas.
-                          </DialogDescription>
-                      </DialogHeader>
-                      <div className="py-4 space-y-4">
-                          <div>
-                              <Label>Nombre de la Plantilla</Label>
-                              <Input
-                                  value={tempTemplateName}
-                                  onChange={(e) => setTempTemplateName(e.target.value)}
-                                  placeholder="Ej: Newsletter de Bienvenida"
-                                  autoFocus
-                                  maxLength={20}
-                              />
-                          </div>
-                      </div>
-                  </div>
-                  <div className="p-8 bg-black/10 dark:bg-black/20 rounded-r-lg">
-                       <h3 className="font-semibold mb-4">Categorías</h3>
-                       <ScrollArea className="h-48">
-                          <div className="space-y-2">
-                              {allCategories.map((category) => (
-                                  <div key={category} className="flex items-center space-x-2">
-                                      <Checkbox
-                                          id={`initial-cat-${category}`}
-                                          checked={selectedCategories.includes(category)}
-                                          onCheckedChange={(checked) => handleCategoryToggle(category, !!checked)}
-                                      />
-                                      <label htmlFor={`initial-cat-${category}`} className="text-sm font-medium leading-none">
-                                          {category}
-                                      </label>
-                                  </div>
-                              ))}
-                          </div>
-                       </ScrollArea>
-                       <div className="flex gap-2 mt-4">
-                          <Input
-                              value={newCategory}
-                              onChange={(e) => setNewCategory(e.target.value)}
-                              placeholder="Crear nueva categoría"
-                              onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
-                          />
-                          <Button onClick={handleAddNewCategory} size="icon" variant="outline">
-                              <PlusCircle className="size-4" />
-                          </Button>
-                      </div>
-                  </div>
-              </div>
-              <DialogFooter className="px-8 pb-8 pt-4 flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                  <Button
-                      type="button"
-                      onClick={() => router.push('/dashboard/templates')}
-                      className="text-white bg-[#A11C00] hover:bg-[#F00000] w-full sm:w-auto"
-                  >
-                      Cancelar y Salir
-                  </Button>
-                  <Button
-                      type="button"
-                      onClick={handleSaveTemplateName}
-                      className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white w-full sm:w-auto"
-                  >
-                      Guardar y Empezar a Diseñar
-                  </Button>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
-
-
-      {/* Confirm Exit Modal */}
-       <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-             <div className="flex justify-center pb-4">
-                <AlertTriangle className="size-12 text-amber-400" />
-             </div>
-            <DialogTitle className="text-center text-xl">¿Estás seguro de que quieres abandonar el editor?</DialogTitle>
-            <DialogDescription className="text-center">
-                Los cambios no guardados se perderán en el vacío digital.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
-                <div className="flex items-center gap-2">
-                    <Cloud className="size-4 text-green-400"/>
-                    <span>Último guardado a las {lastSaved ? format(lastSaved, 'HH:mm') : 'No se ha guardado'}</span>
                 </div>
-                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                      handlePublish();
-                      toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
-                  }}
-                  className="text-white bg-gradient-to-r from-primary to-accent hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
-                >
-                  Guardar ahora
-                </Button>
-            </div>
-             <Button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="w-full text-lg py-6 bg-[#A11C00] text-white hover:bg-[#F00000]"
-            >
-              Si, salir
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <FileManagerModal
-        open={isFileManagerOpen}
-        onOpenChange={setIsFileManagerOpen}
-      />
+            </DialogContent>
+        </Dialog>
+         <FileManagerModal
+            open={isFileManagerOpen}
+            onOpenChange={setIsFileManagerOpen}
+            userId={userId || ''}
+        />
     </div>
   );
+}
+
+export default function TemplateEditorPage() {
+  return (
+    <Suspense fallback={<Preloader/>}>
+      <TemplateEditorClient />
+    </Suspense>
+  )
 }
