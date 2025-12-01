@@ -14,7 +14,7 @@ import { OnboardingModal } from '@/components/dashboard/onboarding-modal';
 import { HelpButton } from '@/components/dashboard/help-button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Subcomponente que usa useSearchParams y Suspense
+// Subcomponente que usa useSearchParams
 function DashboardParams({ setShowOnboarding, toast }: { setShowOnboarding: (v: boolean) => void, toast: any }) {
   const searchParams = useSearchParams();
 
@@ -41,9 +41,11 @@ export default function DashboardPage() {
   return (
     <>
       <OnboardingModal isOpen={showOnboarding} onOpenChange={setShowOnboarding} />
+      {/* 👇 Aquí envolvemos el uso de useSearchParams en Suspense */}
       <Suspense fallback={null}>
         <DashboardParams setShowOnboarding={setShowOnboarding} toast={toast} />
       </Suspense>
+
       <div className="p-4 md:gap-8 md:p-8 bg-background">
         <div className="flex items-center justify-between">
           <div>
