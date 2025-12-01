@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback, Suspense } from 'react';
@@ -2868,7 +2869,7 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
                 </svg>
                 {timeData.map((unit) => (
                     <div key={unit.label} className="relative flex flex-col items-center justify-center flex-shrink-0" style={{ width: '5em', height: '5em' }}>
-                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 120 120">
+                         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 120 120">
                             <path
                                 d="M 10,10 H 110 V 110 H 10 Z"
                                 fill="none"
@@ -4668,7 +4669,7 @@ function TemplateEditorClient() {
       </div>
     );
   }
-  SwitchComponent.displayName = 'SwitchComponent';
+SwitchComponent.displayName = 'SwitchComponent';
 
   const ShapesComponent = ({ block }: { block: ShapesBlock }) => {
     const { shape, styles } = block.payload;
@@ -5233,7 +5234,7 @@ function TemplateEditorClient() {
                   const commonStyles: React.CSSProperties = {
                        left: `${b.payload.x}%`,
                        top: `${b.payload.y}%`,
-                       transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
+                       transform: `translate(-50%, -50%) scale(${b.payload.scale || 1}) rotate(${b.payload.rotate || 0}deg)`,
                        zIndex: bIndex,
                   };
                   
@@ -5449,7 +5450,8 @@ const LayerPanel = () => {
         }), true);
     };
 
-    const handleRename = (blockId: string, newName: string) => {        if (!selectedWrapper) return;
+    const handleRename = (blockId: string, newName: string) => {
+        if (!selectedWrapper) return;
         
         if (newName.length > 20) {
             toast({
@@ -5478,80 +5480,58 @@ const LayerPanel = () => {
             return;
         }
 
-setCanvasContent(prev =>
-  prev.map(row => {
-    if (row.id === selectedWrapper.id && row.type === 'wrapper') {
-      const newBlocks = row.payload.blocks.map(block => {
-        if (block.id === blockId) {
-          return { ...block, payload: { ...block.payload, name: trimmedName } };
-        }
-        return block;
-      });
-      return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id === selectedWrapper.id && row.type === 'wrapper') {
+                const newBlocks = row.payload.blocks.map(block => {
+                    if (block.id === blockId) {
+                        return { ...block, payload: { ...block.payload, name: trimmedName } };
+                    }
+                    return block;
+                });
+                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+            }
+            return row;
+        }), true);
+        setEditingBlockId(null);
     }
-    return row;
-  }),
-  true
-);
-setEditingBlockId(null);
-} // 👈 cierre correcto de la función anterior
-
-if (!selectedWrapper) {
-  return (
-    <div className="text-center text-muted-foreground p-4 text-sm">
-      Selecciona un Contenedor Flexible en el lienzo para ver sus capas.
-    </div>
-  );
-}
-
-const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
-
-return (
-  <div className="p-2 space-y-2">
-    <div className="px-2 pb-2 text-center">
-      <h3 className="font-semibold flex items-center justify-center gap-2">
-        <Shapes className="text-primary" />
-        Contenedor Flexible
-      </h3>
-      <p className="text-xs text-muted-foreground mt-1">
-        Gestiona el posicionamiento de tus bloques de contenido, asigna niveles
-        de prioridad para definir qué bloques al frente y cuáles quedan atrás
-      </p>
-    </div>
-    <div className="space-y-1">
-      {blocksInVisualOrder.map((block, visualIndex) => {
-        const originalIndex =
-          selectedWrapper.payload.blocks.length - 1 - visualIndex;
-        const Icon =
-          wrapperContentBlocks.find(b => b.id === block.type)?.icon || Smile;
-        const isSelected =
-          selectedElement?.type === "wrapper-primitive" &&
-          selectedElement.primitiveId === block.id;
-
+    
+    if (!selectedWrapper) {
         return (
-          <div
-            key={block.id}
-            className={cn(
-              "group/layer-item relative overflow-hidden rounded-lg p-2 transition-colors cursor-pointer border border-transparent",
-              isSelected
-                ? "bg-primary/20 border-primary/50"
-                : "hover:bg-muted/50"
-            )}
-            onClick={() => {
-              if (isSelected) {
-                setSelectedElement({
-                  type: "wrapper",
-                  wrapperId: selectedWrapper.id,
-                });
-              } else {
-                setSelectedElement({
-                  type: "wrapper-primitive",
-                  primitiveId: block.id,
-                  wrapperId: selectedWrapper.id,
-                });
-              }
-            }}
-          >
+            <div className="text-center text-muted-foreground p-4 text-sm">
+                Selecciona un Contenedor Flexible en el lienzo para ver sus capas.
+            </div>
+        );
+    }
+    
+    const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
+
+    return (
+        <div className="p-2 space-y-2">
+             <div className="px-2 pb-2 text-center">
+                 <h3 className="font-semibold flex items-center justify-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
+                 <p className="text-xs text-muted-foreground mt-1">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de prioridad para definir qué bloques al frente y cuáles quedan atrás</p>
+             </div>
+             <div className="space-y-1">
+                {blocksInVisualOrder.map((block, visualIndex) => {
+                    const originalIndex = selectedWrapper.payload.blocks.length - 1 - visualIndex;
+                    const Icon = wrapperContentBlocks.find(b => b.id === block.type)?.icon || Smile;
+                    const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
+
+                    return (
+                        <div
+                            key={block.id}
+                            className={cn(
+                              "group/layer-item relative overflow-hidden rounded-lg p-2 transition-colors cursor-pointer border border-transparent",
+                              isSelected ? "bg-primary/20 border-primary/50" : "hover:bg-muted/50"
+                            )}
+                            onClick={() => {
+                                if (isSelected) {
+                                    setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
+                                } else {
+                                    setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
+                                }
+                            }}
+                        >
                              <div className="flex items-center gap-3">
                                 <div className="p-1.5 bg-muted rounded-md">
                                     <Icon className="size-4 text-primary" />
@@ -5963,7 +5943,7 @@ return (
   );
 }
 
-export default function TemplateEditorPage() {
+export default function CreateTemplatePage() {
   return (
     <Suspense fallback={<Preloader/>}>
       <TemplateEditorClient />
