@@ -3385,6 +3385,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     
     const handleCropSave = (newStyles: { zoom: number, positionX: number, positionY: number }) => {
         updatePayload('styles', { ...element.payload.styles, ...newStyles });
+        setIsCropModalOpen(false);
     };
 
     const setDirection = (direction: GradientDirection) => {
@@ -4003,10 +4004,12 @@ function TemplateEditorClient() {
         if (templateIdFromUrl) {
             loadTemplate(templateIdFromUrl);
         } else {
-            const timer = setTimeout(() => setIsLoading(false), 1500);
-             if (!isLoading) {
-                setIsInitialNameModalOpen(true);
-            }
+            const timer = setTimeout(() => {
+                setIsLoading(false);
+                 if (!isLoading) {
+                    setIsInitialNameModalOpen(true);
+                }
+            }, 1500);
             return () => clearTimeout(timer);
         }
     };
@@ -4954,6 +4957,7 @@ SwitchComponent.displayName = 'SwitchComponent';
                 case 'separator':
                     const separatorBlock = block as SeparatorBlock;
                     const { payload } = separatorBlock;
+                    const { dots } = payload;
                     return (
                         <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {payload.style === 'invisible' && <div style={{ height: `${payload.height}px` }} />}
@@ -5426,7 +5430,6 @@ SwitchComponent.displayName = 'SwitchComponent';
 const LayerPanel = () => {
     const { toast } = useToast();
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
-    const [tempName, setTempName] = useState('');
 
     const selectedWrapper = canvasContent.find(
       (block): block is WrapperBlock =>
@@ -5492,7 +5495,7 @@ const LayerPanel = () => {
             return row;
         }), true);
         setEditingBlockId(null);
-    }
+    };
     
     if (!selectedWrapper) {
         return (
@@ -5575,7 +5578,8 @@ const LayerPanel = () => {
                                                 className="group/button size-6 flex items-center justify-center rounded-md bg-zinc-700/50 hover:bg-green-400/80 border border-green-400/30 hover:border-green-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                             >
                                                 <ChevronDown className="size-4 text-green-300 group-hover/button:text-white transition-colors"/>
-                                        </div>
+                                            </button>
+                                         </div>
                                      </div>
                                 </div>
                             </div>
@@ -5597,8 +5601,8 @@ const LayerPanel = () => {
 
   const handleAddNewCategory = () => {
     const trimmed = newCategory.trim();
-    if (trimmed && !allUniqueCategories.includes(trimmed)) {
-        setAllUniqueCategories(prev => [...prev, trimmed].sort());
+    if (trimmed && !allCategories.includes(trimmed)) {
+        setAllCategories(prev => [...prev, trimmed].sort());
         setSelectedCategories(prev => [...prev, trimmed]);
         setNewCategory('');
     } else if (trimmed) {
@@ -5698,7 +5702,7 @@ const LayerPanel = () => {
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex === 0}><Undo/></Button>
-            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex < history.length - 1}><Redo/></Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1}><Redo/></Button>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
@@ -5716,8 +5720,7 @@ const LayerPanel = () => {
                   <Tooltip>
                       <TooltipTrigger asChild><Button variant={viewport === 'tablet' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('tablet')}><Tablet/></Button></TooltipTrigger>
                       <TooltipContent>
-                          <p>Comprueba la vista para <span className="font-bold">Tabletas</span></p>
-                      </TooltipContent>
+                          <p>Comprueba la vista para <span className="font-bold">Tabletas</span></p></TooltipContent>
                   </Tooltip>
                   <Tooltip>
                       <TooltipTrigger asChild><Button variant={viewport === 'mobile' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewport('mobile')}><Smartphone/></Button></TooltipTrigger>
