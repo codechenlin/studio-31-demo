@@ -5478,57 +5478,79 @@ const LayerPanel = () => {
             return;
         }
 
-        setCanvasContent(prev => prev.map(row => {
-            if (row.id === selectedWrapper.id && row.type === 'wrapper') {
-                const newBlocks = row.payload.blocks.map(block => {
-                    if (block.id === blockId) {
-                        return { ...block, payload: { ...block.payload, name: trimmedName } };
-                    }
-                    return block;
-                });
-                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
-            }
-            return row;
-        }), true);
-        setEditingBlockId(null);
+setCanvasContent(prev =>
+  prev.map(row => {
+    if (row.id === selectedWrapper.id && row.type === 'wrapper') {
+      const newBlocks = row.payload.blocks.map(block => {
+        if (block.id === blockId) {
+          return { ...block, payload: { ...block.payload, name: trimmedName } };
+        }
+        return block;
+      });
+      return { ...row, payload: { ...row.payload, blocks: newBlocks } };
     }
-    
-    if (!selectedWrapper) {
+    return row;
+  }),
+  true
+);
+setEditingBlockId(null);
+} // 👈 cierre correcto de la función anterior
+
+if (!selectedWrapper) {
+  return (
+    <div className="text-center text-muted-foreground p-4 text-sm">
+      Selecciona un Contenedor Flexible en el lienzo para ver sus capas.
+    </div>
+  );
+}
+
+const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
+
+return (
+  <div className="p-2 space-y-2">
+    <div className="px-2 pb-2 text-center">
+      <h3 className="font-semibold flex items-center justify-center gap-2">
+        <Shapes className="text-primary" />
+        Contenedor Flexible
+      </h3>
+      <p className="text-xs text-muted-foreground mt-1">
+        Gestiona el posicionamiento de tus bloques de contenido, asigna niveles
+        de prioridad para definir qué bloques al frente y cuáles quedan atrás
+      </p>
+    </div>
+    <div className="space-y-1">
+      {blocksInVisualOrder.map((block, visualIndex) => {
+        const originalIndex =
+          selectedWrapper.payload.blocks.length - 1 - visualIndex;
+        const Icon =
+          wrapperContentBlocks.find(b => b.id === block.type)?.icon || Smile;
+        const isSelected =
+          selectedElement?.type === "wrapper-primitive" &&
+          selectedElement.primitiveId === block.id;
+
         return (
-            <div className="text-center text-muted-foreground p-4 text-sm">
-                Selecciona un Contenedor Flexible en el lienzo para ver sus capas.
-            </div>
-        );
-    }
-    
-    const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
-
-    return (
-        <div className="p-2 space-y-2">
-             <div className="px-2 pb-2 text-center">
-                 <h3 className="font-semibold flex items-center justify-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
-                 <p className="text-xs text-muted-foreground mt-1">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de prioridad para definir qué bloques al frente y cuáles quedan atrás</p>
-             </div>
-             <div className="space-y-1">
-                {blocksInVisualOrder.map((block, visualIndex) => {
-                    const originalIndex = selectedWrapper.payload.blocks.length - 1 - visualIndex;
-                    const Icon = wrapperContentBlocks.find(b => b.id === block.type)?.icon || Smile;
-                    const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
-
-                    return (
-                        <div
-                            key={block.id}
-                            className={cn(
-                              "group/layer-item relative overflow-hidden rounded-lg p-2 transition-colors cursor-pointer border border-transparent",
-                              isSelected ? "bg-primary/20 border-primary/50" : "hover:bg-muted/50"
-                            )}
-                            onClick={() => {
-                                if (isSelected) {
-                                    setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
-                                } else {
-                                    setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
-                                }
-                            }}
+          <div
+            key={block.id}
+            className={cn(
+              "group/layer-item relative overflow-hidden rounded-lg p-2 transition-colors cursor-pointer border border-transparent",
+              isSelected
+                ? "bg-primary/20 border-primary/50"
+                : "hover:bg-muted/50"
+            )}
+            onClick={() => {
+              if (isSelected) {
+                setSelectedElement({
+                  type: "wrapper",
+                  wrapperId: selectedWrapper.id,
+                });
+              } else {
+                setSelectedElement({
+                  type: "wrapper-primitive",
+                  primitiveId: block.id,
+                  wrapperId: selectedWrapper.id,
+                });
+              }
+            }}
                         >
                              <div className="flex items-center gap-3">
                                 <div className="p-1.5 bg-muted rounded-md">
