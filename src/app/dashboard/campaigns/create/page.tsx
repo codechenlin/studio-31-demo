@@ -373,8 +373,8 @@ export default function CreateCampaignPage() {
           </CardFooter>
         </Card>
       </main>
-    );
-} // 👈 cierre de CreateCampaignContent
+    ); // 👈 este paréntesis cierra el return
+} // 👈 este cierra la función CreateCampaignContent
 
 export default function CreateCampaignPage() {
   return (
