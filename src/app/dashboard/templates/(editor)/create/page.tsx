@@ -5492,7 +5492,7 @@ const LayerPanel = () => {
             return row;
         }), true);
         setEditingBlockId(null);
-    };
+    }
     
     if (!selectedWrapper) {
         return (
