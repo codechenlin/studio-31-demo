@@ -4649,7 +4649,7 @@ function TemplateEditorClient() {
          return (
               <div style={wrapperStyle} className="inline-block">
                   <div className="w-24 h-10 flex items-center justify-center">
-                      <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
+                      <div className="relative w-16 h-2 rounded-full" style={{background: offBg}}>
                           <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
                           <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
                       </div>
@@ -4963,13 +4963,13 @@ SwitchComponent.displayName = 'SwitchComponent';
                             )}
                             {payload.style === 'dots' && (
                                 <div className="flex justify-around items-center w-full" style={{ height: `${payload.height}px` }}>
-                                    {Array.from({ length: payload.dots.count }).map((_, i) => (
+                                    {Array.from({ length: dots.count }).map((_, i) => (
                                         <div key={i} style={{
-                                            width: `${payload.dots.size}px`,
-                                            height: `${payload.dots.size}px`,
+                                            width: `${dots.size}px`,
+                                            height: `${dots.size}px`,
                                             borderRadius: '50%',
-                                            backgroundColor: payload.dots.color,
-                                            boxShadow: `0 0 8px ${payload.dots.color}`
+                                            backgroundColor: dots.color,
+                                            boxShadow: `0 0 8px ${dots.color}`
                                         }} />
                                     ))}
                                 </div>
@@ -5137,7 +5137,6 @@ SwitchComponent.displayName = 'SwitchComponent';
       }
     }
     
-    // Override with background image if it exists
     if (backgroundImage && backgroundImage.url) {
       style.backgroundImage = `url(${backgroundImage.url})`,
       style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit,
@@ -5493,7 +5492,7 @@ const LayerPanel = () => {
             return row;
         }), true);
         setEditingBlockId(null);
-    }
+    };
     
     if (!selectedWrapper) {
         return (
@@ -5598,10 +5597,12 @@ const LayerPanel = () => {
 
   const handleAddNewCategory = () => {
     const trimmed = newCategory.trim();
-    if (trimmed && !allCategories.includes(trimmed)) {
-        setAllCategories(prev => [...prev, trimmed].sort());
+    if (trimmed && !allUniqueCategories.includes(trimmed)) {
+        setAllUniqueCategories(prev => [...prev, trimmed].sort());
         setSelectedCategories(prev => [...prev, trimmed]);
         setNewCategory('');
+    } else if (trimmed) {
+        toast({ title: 'Categoría existente', description: 'Esta categoría ya existe.', variant: 'default' });
     }
   };
 
@@ -5937,7 +5938,6 @@ const LayerPanel = () => {
          <FileManagerModal
             open={isFileManagerOpen}
             onOpenChange={setIsFileManagerOpen}
-            userId={userId || ''}
         />
     </div>
   );
