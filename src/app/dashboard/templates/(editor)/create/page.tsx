@@ -5458,97 +5458,153 @@ const renderPrimitiveBlock = (
 };
                 
                 const imageContainerStyle: React.CSSProperties = {
-                    borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
-                    overflow: 'hidden',
-                    height: 0,
-                    paddingBottom: '75%', // Maintain 4:3 aspect ratio
-                    position: 'relative',
-                };
-                
-                const imageStyle: React.CSSProperties = {
-                    position: 'absolute',
-                    width: `${zoom}%`,
-                    height: 'auto',
-                    maxWidth: 'none',
-                    top: `${positionY}%`,
-                    left: `${positionX}%`,
-                    transform: `translate(-${positionX}%, -${positionY}%)`,
-                    objectFit: 'cover',
-                };
+  borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
+  overflow: "hidden",
+  height: 0,
+  paddingBottom: "75%", // Maintain 4:3 aspect ratio
+  position: "relative",
+};
 
-                const imageElement = (
-                    <div style={outerWrapperStyle}>
-                        <div style={borderWrapperStyle}>
-                           <div style={imageContainerStyle}>
-                               <img src={url} alt={alt} style={imageStyle} />
-                           </div>
-                        </div>
-                    </div>
-                );
-            
-                if (link && link.url && link.url !== '#') {
-                    return (
-                        <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
-                            {imageElement}
-                        </a>
-                    );
-                }
-                return imageElement;
-              }
-              case 'emoji-static':
-                return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
-              case 'button':
-                  const buttonBlock = block as ButtonBlock;
-                  const buttonElement = (
-                    <button style={getButtonStyle(buttonBlock)}>
-                        {buttonBlock.payload.text}
-                    </button>
-                  );
-                  return (
-                      <div style={getButtonContainerStyle(buttonBlock)}>
-                        {buttonBlock.payload.link.url && buttonBlock.payload.link.url !== '#' ? (
-                           <a href={buttonBlock.payload.link.url} target={buttonBlock.payload.link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                {buttonElement}
-                           </a>
-                        ) : (
-                           buttonElement
-                        )}
-                      </div>
-                  );
-                case 'separator':
-                    const separatorBlock = block as SeparatorBlock;
-                    const { payload } = separatorBlock;
-                    return (
-                        <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {payload.style === 'invisible' && <div style={{ height: `${payload.height}px` }} />}
-                            {payload.style === 'line' && <LineSeparator block={separatorBlock} />}
-                            {payload.style === 'shapes' && (
-                               <div className="w-full h-full" style={{ height: `${payload.height}px` }}><ShapesSeparator block={separatorBlock} /></div>
-                            )}
-                            {payload.style === 'dots' && (
-                                <div className="flex justify-around items-center w-full" style={{ height: `${payload.height}px` }}>
-                                    {Array.from({ length: payload.dots.count }).map((_, i) => (
-                                        <div key={i} style={{
-                                            width: `${payload.dots.size}px`,
-                                            height: `${payload.dots.size}px`,
-                                            borderRadius: '50%',
-                                            backgroundColor: payload.dots.color,
-                                            boxShadow: `0 0 8px ${payload.dots.color}`
-                                        }} />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                case 'youtube': {
-                    const youtubeBlock = block as YouTubeBlock;
-                    const { videoId, styles, link, title, showTitle, duration, showDuration } = youtubeBlock.payload;
-                    const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
+const imageStyle: React.CSSProperties = {
+  position: "absolute",
+  width: `${zoom}%`,
+  height: "auto",
+  maxWidth: "none",
+  top: `${positionY}%`,
+  left: `${positionX}%`,
+  transform: `translate(-${positionX}%, -${positionY}%)`,
+  objectFit: "cover",
+};
 
-                    const playButtonSvg = {
-                      default: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>`,
-                      classic: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
-                    };
+const imageElement = (
+  <div style={outerWrapperStyle}>
+    <div style={borderWrapperStyle}>
+      <div style={imageContainerStyle}>
+        <img src={url} alt={alt} style={imageStyle} />
+      </div>
+    </div>
+  </div>
+);
+
+if (link && link.url && link.url !== "#") {
+  return (
+    <a
+      href={link.url}
+      target={link.openInNewTab ? "_blank" : "_self"}
+      rel="noopener noreferrer"
+      style={{ textDecoration: "none", display: "block" }}
+    >
+      {imageElement}
+    </a>
+  );
+}
+return imageElement;
+
+case "emoji-static": {
+  const emojiBlock = block as StaticEmojiBlock;
+  return (
+    <div style={{ textAlign: emojiBlock.payload.styles.textAlign }}>
+      <p style={getStaticEmojiStyle(emojiBlock)}>
+        {emojiBlock.payload.emoji}
+      </p>
+    </div>
+  );
+}
+
+case "button": {
+  const buttonBlock = block as ButtonBlock;
+  const buttonElement = (
+    <button style={getButtonStyle(buttonBlock)}>
+      {buttonBlock.payload.text}
+    </button>
+  );
+  return (
+    <div style={getButtonContainerStyle(buttonBlock)}>
+      {buttonBlock.payload.link.url &&
+      buttonBlock.payload.link.url !== "#" ? (
+        <a
+          href={buttonBlock.payload.link.url}
+          target={
+            buttonBlock.payload.link.openInNewTab ? "_blank" : "_self"
+          }
+          rel="noopener noreferrer"
+          style={{ textDecoration: "none" }}
+        >
+          {buttonElement}
+        </a>
+      ) : (
+        buttonElement
+      )}
+    </div>
+  );
+}
+
+case "separator": {
+  const separatorBlock = block as SeparatorBlock;
+  const { payload } = separatorBlock;
+  return (
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {payload.style === "invisible" && (
+        <div style={{ height: `${payload.height}px` }} />
+      )}
+      {payload.style === "line" && <LineSeparator block={separatorBlock} />}
+      {payload.style === "shapes" && (
+        <div
+          className="w-full h-full"
+          style={{ height: `${payload.height}px` }}
+        >
+          <ShapesSeparator block={separatorBlock} />
+        </div>
+      )}
+      {payload.style === "dots" && (
+        <div
+          className="flex justify-around items-center w-full"
+          style={{ height: `${payload.height}px` }}
+        >
+          {Array.from({ length: payload.dots.count }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: `${payload.dots.size}px`,
+                height: `${payload.dots.size}px`,
+                borderRadius: "50%",
+                backgroundColor: payload.dots.color,
+                boxShadow: `0 0 8px ${payload.dots.color}`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+case "youtube": {
+  const youtubeBlock = block as YouTubeBlock;
+  const {
+    videoId,
+    styles,
+    link,
+    title,
+    showTitle,
+    duration,
+    showDuration,
+  } = youtubeBlock.payload;
+  const thumbnailUrl = videoId
+    ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    : "https://placehold.co/600x400.png?text=YouTube+Video";
+
+  const playButtonSvg = {
+    default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>`,
+    classic: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
+  };
                     
                      const sizeVariant =
   colCount === 1 ? "lg" : colCount === 2 ? "md" : colCount === 3 ? "sm" : "xs";
