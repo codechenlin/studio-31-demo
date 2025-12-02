@@ -6923,46 +6923,54 @@ const LayerPanel = () => {
       </Dialog>
 
 
-      {/* Confirm Exit Modal */}
-       <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
+            {/* Confirm Exit Modal */}
+      <Dialog open={isConfirmExitModalOpen} onOpenChange={setIsConfirmExitModalOpen}>
         <DialogContent className="sm:max-w-lg bg-card/80 backdrop-blur-sm">
           <DialogHeader>
-             <div className="flex justify-center pb-4">
-                <AlertTriangle className="size-12 text-amber-400" />
-             </div>
-            <DialogTitle className="text-center text-xl">¿Estás seguro de que quieres abandonar el editor?</DialogTitle>
+            <div className="flex justify-center pb-4">
+              <AlertTriangle className="size-12 text-amber-400" />
+            </div>
+            <DialogTitle className="text-center text-xl">
+              ¿Estás seguro de que quieres abandonar el editor?
+            </DialogTitle>
             <DialogDescription className="text-center">
-                Los cambios no guardados se perderán en el vacío digital.
+              Los cambios no guardados se perderán en el vacío digital.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
-             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
-                <div className="flex items-center gap-2">
-                    <Cloud className="size-4 text-green-400"/>
-                    <span>Último guardado a las {lastSaved ? format(lastSaved, 'HH:mm') : 'No se ha guardado'}</span>
-                </div>
-                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                      handlePublish();
-                      toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
-                  }}
-                  className="text-white bg-gradient-to-r from-primary to-accent hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
-                >
-                  Guardar ahora
-                </Button>
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
+              <div className="flex items-center gap-2">
+                <Cloud className="size-4 text-green-400" />
+                <span>
+                  Último guardado a las {lastSaved ? format(lastSaved, "HH:mm") : "No se ha guardado"}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  handlePublish();
+                  toast({
+                    title: "Progreso Guardado",
+                    description: "Tus últimos cambios están a salvo.",
+                  });
+                }}
+                className="text-white bg-gradient-to-r from-primary to-accent hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
+              >
+                Guardar ahora
+              </Button>
             </div>
-             <Button
+            <Button
               type="button"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push("/dashboard")}
               className="w-full text-lg py-6 bg-[#A11C00] text-white hover:bg-[#F00000]"
             >
-              Si, salir
+              Sí, salir
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
       <FileManagerModal
         open={isFileManagerOpen}
         onOpenChange={setIsFileManagerOpen}
