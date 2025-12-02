@@ -5630,145 +5630,145 @@ case "youtube": {
     default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"/><path d="M 45,24 27,14 27,34" fill="#fff"/></svg>`,
     classic: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
   };
-                    
-                     const sizeVariant =
-  colCount === 1 ? "lg" : colCount === 2 ? "md" : colCount === 3 ? "sm" : "xs";
-const playButtonSize = {
-  lg: "w-32 h-24",
-  md: "w-16 h-12",
-  sm: "w-12 h-9",
-  xs: "w-12 h-9",
-};
 
-const titleSize = {
-  lg: "text-2xl p-4",
-  md: "text-lg p-3",
-  sm: "text-sm p-2",
-  xs: "text-xs px-2 pt-1 pb-0",
-};
-const durationSize = {
-  lg: "text-base",
-  md: "text-sm",
-  sm: "text-xs",
-  xs: "text-xs",
-};
+  const sizeVariant =
+    colCount === 1 ? "lg" : colCount === 2 ? "md" : colCount === 3 ? "sm" : "xs";
+  const playButtonSize = {
+    lg: "w-32 h-24",
+    md: "w-16 h-12",
+    sm: "w-12 h-9",
+    xs: "w-12 h-9",
+  };
 
-const formatDuration = () => {
-  const { hours, minutes, seconds } = duration;
-  const h = parseInt(hours || "0", 10);
-  const m = parseInt(minutes || "0", 10);
-  const s = parseInt(seconds || "0", 10);
+  const titleSize = {
+    lg: "text-2xl p-4",
+    md: "text-lg p-3",
+    sm: "text-sm p-2",
+    xs: "text-xs px-2 pt-1 pb-0",
+  };
+  const durationSize = {
+    lg: "text-base",
+    md: "text-sm",
+    sm: "text-xs",
+    xs: "text-xs",
+  };
 
-  if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
+  const formatDuration = () => {
+    const { hours, minutes, seconds } = duration;
+    const h = parseInt(hours || "0", 10);
+    const m = parseInt(minutes || "0", 10);
+    const s = parseInt(seconds || "0", 10);
 
-  const parts = [];
-  if (h > 0) parts.push(h.toString());
-  if (h > 0 || m > 0) {
-    parts.push(m.toString().padStart(h > 0 ? 2 : 1, "0"));
+    if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
+
+    const parts = [];
+    if (h > 0) parts.push(h.toString());
+    if (h > 0 || m > 0) {
+      parts.push(m.toString().padStart(h > 0 ? 2 : 1, "0"));
+    }
+    if (s > 0 || m > 0 || h > 0) {
+      parts.push(s.toString().padStart(2, "0"));
+    }
+
+    if (parts.length === 0) return null;
+    if (parts.length === 1 && m > 0) return `0:${parts[0].padStart(2, "0")}`;
+    if (parts.length === 1) return `0:0${parts[0]}`;
+
+    return parts.join(":");
+  };
+  const displayDuration = showDuration ? formatDuration() : null;
+
+  const { border } = styles;
+  let borderStyle: React.CSSProperties = {};
+  if (border.type === "solid") {
+    borderStyle.background = border.color1;
+  } else if (border.type === "gradient") {
+    if (border.direction === "radial") {
+      borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
+    } else {
+      const angle = border.direction === "horizontal" ? "to right" : "to bottom";
+      borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+    }
   }
-  if (s > 0 || m > 0 || h > 0) {
-    parts.push(s.toString().padStart(2, "0"));
-  }
 
-  if (parts.length === 0) return null;
-  if (parts.length === 1 && m > 0) return `0:${parts[0].padStart(2, "0")}`;
-  if (parts.length === 1) return `0:0${parts[0]}`;
-
-  return parts.join(":");
-};
-const displayDuration = showDuration ? formatDuration() : null;
-
-const { border } = styles;
-let borderStyle: React.CSSProperties = {};
-if (border.type === "solid") {
-  borderStyle.background = border.color1;
-} else if (border.type === "gradient") {
-  if (border.direction === "radial") {
-    borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
-  } else {
-    const angle = border.direction === "horizontal" ? "to right" : "to bottom";
-    borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
-  }
-}
-
-return (
-  <div className="p-2 w-full h-full">
-    <div
-      style={{
-        ...borderStyle,
-        borderRadius: `${styles.borderRadius}px`,
-        padding: `${styles.borderWidth}px`,
-      }}
-      className="w-full h-full"
-    >
+  return (
+    <div className="p-2 w-full h-full">
       <div
-        className="w-full h-full relative aspect-video bg-black/5"
         style={{
-          borderRadius: `${
-            styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0
-          }px`,
-          overflow: "hidden",
+          ...borderStyle,
+          borderRadius: `${styles.borderRadius}px`,
+          padding: `${styles.borderWidth}px`,
         }}
+        className="w-full h-full"
       >
-        <img
-          src={thumbnailUrl}
-          alt="Video thumbnail"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <div
+          className="w-full h-full relative aspect-video bg-black/5"
+          style={{
+            borderRadius: `${
+              styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0
+            }px`,
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={thumbnailUrl}
+            alt="Video thumbnail"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
 
-        {showTitle && title && (
-          <div
-            className={cn(
-              "absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none",
-              titleSize[sizeVariant]
-            )}
-          >
-            <p className="font-semibold truncate">{title}</p>
+          {showTitle && title && (
+            <div
+              className={cn(
+                "absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none",
+                titleSize[sizeVariant]
+              )}
+            >
+              <p className="font-semibold truncate">{title}</p>
+            </div>
+          )}
+
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <a
+              href={link.url && videoId ? link.url : undefined}
+              target={
+                link.url && videoId ? (link.openInNewTab ? "_blank" : "_self") : undefined
+              }
+              rel="noopener noreferrer"
+              className={cn(
+                "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110",
+                playButtonSize[sizeVariant],
+                link.url && videoId ? "cursor-pointer" : "cursor-default"
+              )}
+              style={{
+                backgroundImage: `url('data:image/svg+xml;base64,${btoa(
+                  playButtonSvg[styles.playButtonType]
+                )}')`,
+              }}
+              onClick={e => {
+                if (!link.url || !videoId) e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <span className="sr-only">Play Video</span>
+            </a>
           </div>
-        )}
 
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <a
-            href={link.url && videoId ? link.url : undefined}
-            target={
-              link.url && videoId ? (link.openInNewTab ? "_blank" : "_self") : undefined
-            }
-            rel="noopener noreferrer"
-            className={cn(
-              "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110",
-              playButtonSize[sizeVariant],
-              link.url && videoId ? "cursor-pointer" : "cursor-default"
-            )}
-            style={{
-              backgroundImage: `url('data:image/svg+xml;base64,${btoa(
-                playButtonSvg[styles.playButtonType]
-              )}')`,
-            }}
-            onClick={e => {
-              if (!link.url || !videoId) e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <span className="sr-only">Play Video</span>
-          </a>
+          {displayDuration && (
+            <div
+              className={cn(
+                "absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none",
+                durationSize[sizeVariant]
+              )}
+            >
+              {displayDuration}
+            </div>
+          )}
         </div>
-
-        {displayDuration && (
-          <div
-            className={cn(
-              "absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none",
-              durationSize[sizeVariant]
-            )}
-          >
-            {displayDuration}
-          </div>
-        )}
       </div>
     </div>
-  </div>
-);
+  );
+} // 👈 aquí se cierra SOLO el case "youtube"
 
-// 👇 cierres de los otros casos del switch
 case "timer": {
   const timerBlock = block as TimerBlock;
   return <TimerComponent block={timerBlock} />;
