@@ -1,9 +1,8 @@
-
-"use client";
-
-import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Suspense } from "react";
+import React from "react";
+import {
+  Button
+} from '@/components/ui/button';
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -169,6 +168,35 @@ import { Preloader } from '@/components/common/preloader';
 import { LoadingModal } from '@/components/common/loading-modal';
 import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
 
+// 🔹 Componente principal (Server Component)
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <CreatePageContent />
+    </Suspense>
+  );
+}
+
+// 🔹 Client Component separado
+"use client";
+import { useSearchParams } from "next/navigation";
+
+function CreatePageContent() {
+  const params = useSearchParams();
+  const templateId = params.get("id");
+
+  // Aquí puedes seguir usando useState, useEffect, etc.
+  // y todo el resto de tu lógica que estaba en page.tsx
+
+  return (
+    <div>
+      {/* Ejemplo: */}
+      <h1>Editor de Template</h1>
+      <p>ID del template: {templateId}</p>
+      {/* Aquí va el resto de tu código */}
+    </div>
+  );
+}
 
 const mainContentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
