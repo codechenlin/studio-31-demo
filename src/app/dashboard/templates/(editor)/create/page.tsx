@@ -4906,26 +4906,35 @@ const handleDeleteItem = () => {
   const { rowId, colId, primId } = itemToDelete;
 
   setCanvasContent(prev => {
-    let newCanvasContent = [...prev];
+  let newCanvasContent = [...prev];
 
-    if (primId && colId) {
-      // Deleting a primitive from a column
-      newCanvasContent = newCanvasContent.map(row => {
-        if (row.id === rowId && row.type === "columns") {
-          const newCols = row.payload.columns.map(col => {
-            if (col.id === colId) {
-              return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newCols } };
-        }
-        return row;
-      });
-    }
-    return newCanvasContent;
-  });
-};
+  if (primId && colId) {
+    // borrar de columna
+    newCanvasContent = newCanvasContent.map(row => {
+      if (row.id === rowId && row.type === "columns") {
+        const newCols = row.payload.columns.map(col => {
+          if (col.id === colId) {
+            return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
+          }
+          return col;
+        });
+        return { ...row, payload: { ...row.payload, columns: newCols } };
+      }
+      return row;
+    });
+  } else if (primId && !colId) {
+    // borrar de wrapper
+    newCanvasContent = newCanvasContent.map(row => {
+      if (row.id === rowId && row.type === "wrapper") {
+        const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
+        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+      }
+      return row;
+    });
+  }
+
+  return newCanvasContent;
+});
         } else if (primId && !colId) { // Deleting a primitive from a wrapper
              newCanvasContent = newCanvasContent.map(row => {
                 if (row.id === rowId && row.type === 'wrapper') {
