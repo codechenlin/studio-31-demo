@@ -4906,56 +4906,46 @@ const handleDeleteItem = () => {
   const { rowId, colId, primId } = itemToDelete;
 
   setCanvasContent(prev => {
-  let newCanvasContent = [...prev];
+    let newCanvasContent = [...prev];
 
-  if (primId && colId) {
-    // borrar de columna
-    newCanvasContent = newCanvasContent.map(row => {
-      if (row.id === rowId && row.type === "columns") {
-        const newCols = row.payload.columns.map(col => {
-          if (col.id === colId) {
-            return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
-          }
-          return col;
-        });
-        return { ...row, payload: { ...row.payload, columns: newCols } };
-      }
-      return row;
-    });
-  } else if (primId && !colId) {
-    // borrar de wrapper
-    newCanvasContent = newCanvasContent.map(row => {
-      if (row.id === rowId && row.type === "wrapper") {
-        const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
-        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
-      }
-      return row;
-    });
-  }
-
-  return newCanvasContent;
-});
-        } else if (primId && !colId) { // Deleting a primitive from a wrapper
-             newCanvasContent = newCanvasContent.map(row => {
-                if (row.id === rowId && row.type === 'wrapper') {
-                    const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
-                    return { ...row, payload: { ...row.payload, blocks: newBlocks }};
-                }
-                return row;
-             });
-        } else if (colId) { // Deleting a column - not implemented, delete the whole row
-            newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
-        } else { // Deleting a row (ColumnsBlock or WrapperBlock)
-            newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+    if (primId && colId) {
+      // borrar de columna
+      newCanvasContent = newCanvasContent.map(row => {
+        if (row.id === rowId && row.type === "columns") {
+          const newCols = row.payload.columns.map(col => {
+            if (col.id === colId) {
+              return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newCols } };
         }
+        return row;
+      });
+    } else if (primId && !colId) {
+      // borrar de wrapper
+      newCanvasContent = newCanvasContent.map(row => {
+        if (row.id === rowId && row.type === "wrapper") {
+          const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
+          return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+        }
+        return row;
+      });
+    } else if (colId) {
+      // borrar columna completa (no implementado, elimina toda la fila)
+      newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+    } else {
+      // borrar fila completa (ColumnsBlock o WrapperBlock)
+      newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+    }
 
-        return newCanvasContent;
-    }, true);
+    return newCanvasContent;
+  }, true);
 
-    setSelectedElement(null);
-    setIsDeleteModalOpen(false);
-    setItemToDelete(null);
-  };
+  setSelectedElement(null);
+  setIsDeleteModalOpen(false);
+  setItemToDelete(null);
+};
   
   const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
     const style: React.CSSProperties = {};
