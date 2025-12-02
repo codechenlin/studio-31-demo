@@ -5292,104 +5292,170 @@ const handleDeleteItem = () => {
     };
 
     const imageStyle: React.CSSProperties = {
-        position: 'absolute',
-        width: `${scale * 100}%`,
-        height: 'auto',
-        maxWidth: 'none',
-        top: `${positionY}%`,
-        left: `${positionX}%`,
-        transform: `translate(-${positionX}%, -${positionY}%)`,
-    };
+  position: "absolute",
+  width: `${scale * 100}%`,
+  height: "auto",
+  maxWidth: "none",
+  top: `${positionY}%`,
+  left: `${positionX}%`,
+  transform: `translate(-${positionX}%, -${positionY}%)`,
+};
 
-    return (
-        <div style={outerWrapperStyle}>
-            <div style={borderWrapperStyle}>
-                <div style={innerWrapperStyle}>
-                    <img
-                        src={url}
-                        alt={alt}
-                        style={imageStyle}
-                    />
+return (
+  <div style={outerWrapperStyle}>
+    <div style={borderWrapperStyle}>
+      <div style={innerWrapperStyle}>
+        <img src={url} alt={alt} style={imageStyle} />
+      </div>
+    </div>
+  </div>
+);
+};
+GifComponent.displayName = "GifComponent";
+
+const renderPrimitiveBlock = (
+  block: PrimitiveBlock,
+  rowId: string,
+  colId: string,
+  colCount: number
+) => {
+  const isSelected =
+    selectedElement?.type === "primitive" &&
+    selectedElement.primitiveId === block.id;
+
+  return (
+    <div
+      key={block.id}
+      className={cn(
+        "group/primitive relative w-full overflow-hidden",
+        isSelected &&
+          "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
+      )}
+      onClick={e => {
+        e.stopPropagation();
+        setSelectedElement({
+          type: "primitive",
+          primitiveId: block.id,
+          columnId: colId,
+          rowId,
+        });
+      }}
+    >
+      {
+        (() => {
+          switch (block.type) {
+            case "heading": {
+              const headingBlock = block as HeadingBlock;
+              const { textAlign, ...textStyles } =
+                getHeadingStyle(headingBlock);
+              return (
+                <div style={{ textAlign: textAlign as TextAlign }}>
+                  <span style={textStyles}>
+                    {headingBlock.payload.text}
+                  </span>
                 </div>
-            </div>
-        </div>
-    );
-  };
-  GifComponent.displayName = 'GifComponent';
-  
-  const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string, colCount: number) => {
-     const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
-
-    return (
-       <div 
-        key={block.id}
-        className={cn(
-            "group/primitive relative w-full overflow-hidden",
-            isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
-        )}
-        onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
-       >
-        {
-          (() => {
-             switch(block.type) {
-              case 'heading':
-                const headingBlock = block as HeadingBlock;
-                const {textAlign, ...textStyles} = getHeadingStyle(headingBlock);
-                return (
-                  <div style={{ textAlign: textAlign as TextAlign }}>
-                    <span style={textStyles}>
-                      {headingBlock.payload.text}
-                    </span>
-                  </div>
-                );
-              case 'text':
-                const textBlock = block as TextBlock;
-                const safeGlobalStyles = textBlock.payload.globalStyles || { textAlign: 'left', fontSize: 16 };
-                return (
-                    <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: safeGlobalStyles.textAlign, fontSize: `${safeGlobalStyles.fontSize}px` }}>
-                        {textBlock.payload.fragments?.map(fragment => {
-                            const El = fragment.link ? 'a' : 'span';
-                             const props = fragment.link ? { 
-                                href: fragment.link.url, 
-                                target: fragment.link.openInNewTab ? '_blank' : '_self',
-                                rel: 'noopener noreferrer', 
-                                style: { color: 'hsl(var(--primary))', textDecoration: 'underline' } 
-                            } : {};
-                            return (
-                                <El key={fragment.id} {...props}>
-                                    <span style={getFragmentStyle(fragment)}>{fragment.text}</span>
-                                </El>
-                            );
-                        })}
-                    </p>
-                );
-              case 'image': {
-                const imageBlock = block as ImageBlock;
-                const { url, alt, styles, link } = imageBlock.payload;
-                const { size, borderRadius, zoom, positionX, positionY, border } = styles;
-
-                const outerWrapperStyle: React.CSSProperties = {
-                    width: `${size}%`,
-                    margin: 'auto',
-                    padding: '8px',
+              );
+            }
+            case "text": {
+              const textBlock = block as TextBlock;
+              const safeGlobalStyles =
+                textBlock.payload.globalStyles || {
+                  textAlign: "left",
+                  fontSize: 16,
                 };
-                
-                const borderWrapperStyle: React.CSSProperties = {
-                    padding: `${border.width}px`,
-                    borderRadius: `${borderRadius}px`,
-                };
-                
-                if (border.width > 0) {
-                    if (border.type === 'solid') {
-                        borderWrapperStyle.backgroundColor = border.color1;
-                    } else if (border.type === 'gradient') {
-                        const { direction, color1, color2 } = border;
-                        const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-                        borderWrapperStyle.background = direction === 'radial'
-                            ? `radial-gradient(circle, ${color1}, ${color2})`
-                            : `linear-gradient(${angle}, ${color1}, ${color2})`;
-                    }
+              return (
+                <p
+                  style={{
+                    padding: "8px",
+                    wordBreak: "break-word",
+                    whiteSpace: "pre-wrap",
+                    textAlign: safeGlobalStyles.textAlign,
+                    fontSize: `${safeGlobalStyles.fontSize}px`,
+                  }}
+                >
+                  {textBlock.payload.fragments?.map(fragment => {
+                    const El = fragment.link ? "a" : "span";
+                    const props = fragment.link
+                      ? {
+                          href: fragment.link.url,
+                          target: fragment.link.openInNewTab
+                            ? "_blank"
+                            : "_self",
+                          rel: "noopener noreferrer",
+                          style: {
+                            color: "hsl(var(--primary))",
+                            textDecoration: "underline",
+                          },
+                        }
+                      : {};
+                    return (
+                      <El key={fragment.id} {...props}>
+                        <span style={getFragmentStyle(fragment)}>
+                          {fragment.text}
+                        </span>
+                      </El>
+                    );
+                  })}
+                </p>
+              );
+            }
+            case "image": {
+              const imageBlock = block as ImageBlock;
+              const { url, alt, styles, link } = imageBlock.payload;
+              const {
+                size,
+                borderRadius,
+                zoom,
+                positionX,
+                positionY,
+                border,
+              } = styles;
+
+              const outerWrapperStyle: React.CSSProperties = {
+                width: `${size}%`,
+                margin: "auto",
+                padding: "8px",
+              };
+
+              const borderWrapperStyle: React.CSSProperties = {
+                padding: `${border.width}px`,
+                borderRadius: `${borderRadius}px`,
+              };
+
+              if (border.width > 0) {
+                if (border.type === "solid") {
+                  borderWrapperStyle.backgroundColor = border.color1;
+                } else if (border.type === "gradient") {
+                  const { direction, color1, color2 } = border;
+                  const angle =
+                    direction === "horizontal" ? "to right" : "to bottom";
+                  borderWrapperStyle.background =
+                    direction === "radial"
+                      ? `radial-gradient(circle, ${color1}, ${color2})`
+                      : `linear-gradient(${angle}, ${color1}, ${color2})`;
                 }
+              }
+
+              return (
+                <div style={outerWrapperStyle}>
+                  <div style={borderWrapperStyle}>
+                    <img src={url} alt={alt} />
+                  </div>
+                </div>
+              );
+            }
+            default:
+              return (
+                <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
+                  Block: {block.type}
+                </div>
+              );
+          }
+        })()
+      }
+    </div>
+  );
+};
                 
                 const imageContainerStyle: React.CSSProperties = {
                     borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
