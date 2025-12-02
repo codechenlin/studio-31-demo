@@ -5323,140 +5323,77 @@ const renderPrimitiveBlock = (
     selectedElement?.type === "primitive" &&
     selectedElement.primitiveId === block.id;
 
-  return (
-    <div
-      key={block.id}
-      className={cn(
-        "group/primitive relative w-full overflow-hidden",
-        isSelected &&
-          "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
-      )}
-      onClick={e => {
-        e.stopPropagation();
-        setSelectedElement({
-          type: "primitive",
-          primitiveId: block.id,
-          columnId: colId,
-          rowId,
-        });
-      }}
-    >
-      {
-        (() => {
-          switch (block.type) {
-            case "heading": {
-              const headingBlock = block as HeadingBlock;
-              const { textAlign, ...textStyles } =
-                getHeadingStyle(headingBlock);
-              return (
-                <div style={{ textAlign: textAlign as TextAlign }}>
-                  <span style={textStyles}>
-                    {headingBlock.payload.text}
-                  </span>
-                </div>
-              );
-            }
-            case "text": {
-              const textBlock = block as TextBlock;
-              const safeGlobalStyles =
-                textBlock.payload.globalStyles || {
-                  textAlign: "left",
-                  fontSize: 16,
-                };
-              return (
-                <p
-                  style={{
-                    padding: "8px",
-                    wordBreak: "break-word",
-                    whiteSpace: "pre-wrap",
-                    textAlign: safeGlobalStyles.textAlign,
-                    fontSize: `${safeGlobalStyles.fontSize}px`,
-                  }}
-                >
-                  {textBlock.payload.fragments?.map(fragment => {
-                    const El = fragment.link ? "a" : "span";
-                    const props = fragment.link
-                      ? {
-                          href: fragment.link.url,
-                          target: fragment.link.openInNewTab
-                            ? "_blank"
-                            : "_self",
-                          rel: "noopener noreferrer",
-                          style: {
-                            color: "hsl(var(--primary))",
-                            textDecoration: "underline",
-                          },
-                        }
-                      : {};
-                    return (
-                      <El key={fragment.id} {...props}>
-                        <span style={getFragmentStyle(fragment)}>
-                          {fragment.text}
-                        </span>
-                      </El>
-                    );
-                  })}
-                </p>
-              );
-            }
-            case "image": {
-              const imageBlock = block as ImageBlock;
-              const { url, alt, styles, link } = imageBlock.payload;
-              const {
-                size,
-                borderRadius,
-                zoom,
-                positionX,
-                positionY,
-                border,
-              } = styles;
+  const onSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedElement({
+      type: "primitive",
+      primitiveId: block.id,
+      columnId: colId,
+      rowId,
+    });
+  };
 
-              const outerWrapperStyle: React.CSSProperties = {
-                width: `${size}%`,
-                margin: "auto",
-                padding: "8px",
-              };
-
-              const borderWrapperStyle: React.CSSProperties = {
-                padding: `${border.width}px`,
-                borderRadius: `${borderRadius}px`,
-              };
-
-              if (border.width > 0) {
-                if (border.type === "solid") {
-                  borderWrapperStyle.backgroundColor = border.color1;
-                } else if (border.type === "gradient") {
-                  const { direction, color1, color2 } = border;
-                  const angle =
-                    direction === "horizontal" ? "to right" : "to bottom";
-                  borderWrapperStyle.background =
-                    direction === "radial"
-                      ? `radial-gradient(circle, ${color1}, ${color2})`
-                      : `linear-gradient(${angle}, ${color1}, ${color2})`;
-                }
-              }
-
-              return (
-                <div style={outerWrapperStyle}>
-                  <div style={borderWrapperStyle}>
-                    <img src={url} alt={alt} />
-                  </div>
-                </div>
-              );
-            }
-            default:
-              return (
-                <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
-                  Block: {block.type}
-                </div>
-              );
-          }
-        })()
-      }
+  let content: React.ReactNode = (
+    <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
+      Block: {block.type}
     </div>
   );
-};
-                
+
+  // heading
+  if (block.type === "heading") {
+    const headingBlock = block as HeadingBlock;
+    const { textAlign, ...textStyles } = getHeadingStyle(headingBlock);
+    content = (
+      <div style={{ textAlign: textAlign as TextAlign }}>
+        <span style={textStyles}>{headingBlock.payload.text}</span>
+      </div>
+    );
+  }
+
+  // text
+  else if (block.type === "text") {
+    const textBlock = block as TextBlock;
+    const safeGlobalStyles =
+      textBlock.payload.globalStyles || { textAlign: "left", fontSize: 16 };
+    content = (
+      <p
+        style={{
+          padding: "8px",
+          wordBreak: "break-word",
+          whiteSpace: "pre-wrap",
+          textAlign: safeGlobalStyles.textAlign,
+          fontSize: `${safeGlobalStyles.fontSize}px`,
+        }}
+      >
+        {textBlock.payload.fragments?.map(fragment => {
+          const El = fragment.link ? "a" : "span";
+          const props = fragment.link
+            ? {
+                href: fragment.link.url,
+                target: fragment.link.openInNewTab ? "_blank" : "_self",
+                rel: "noopener noreferrer",
+                style: {
+                  color: "hsl(var(--primary))",
+                  textDecoration: "underline",
+                },
+              }
+            : {};
+          return (
+            <El key={fragment.id} {...props}>
+              <span style={getFragmentStyle(fragment)}>{fragment.text}</span>
+            </El>
+          );
+        })}
+      </p>
+    );
+  }
+
+  // image
+  else if (block.type === "image") {
+    const imageBlock = block as ImageBlock;
+    const { url, alt, styles, link } = imageBlock.payload;
+    const { size, borderRadius, zoom, positionX, positionY, border } = styles;
+
     const outerWrapperStyle: React.CSSProperties = {
       width: `${size}%`,
       margin: "auto",
@@ -5485,7 +5422,7 @@ const renderPrimitiveBlock = (
       borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
       overflow: "hidden",
       height: 0,
-      paddingBottom: "75%",
+      paddingBottom: "75%", // 4:3
       position: "relative",
     };
 
@@ -5511,7 +5448,7 @@ const renderPrimitiveBlock = (
     );
 
     if (link && link.url && link.url !== "#") {
-      return (
+      content = (
         <a
           href={link.url}
           target={link.openInNewTab ? "_blank" : "_self"}
@@ -5521,13 +5458,15 @@ const renderPrimitiveBlock = (
           {imageElement}
         </a>
       );
+    } else {
+      content = imageElement;
     }
-    return imageElement;
   }
 
-  case "emoji-static": {
+  // emoji-static
+  else if (block.type === "emoji-static") {
     const emojiBlock = block as StaticEmojiBlock;
-    return (
+    content = (
       <div style={{ textAlign: emojiBlock.payload.styles.textAlign }}>
         <p style={getStaticEmojiStyle(emojiBlock)}>
           {emojiBlock.payload.emoji}
@@ -5536,14 +5475,15 @@ const renderPrimitiveBlock = (
     );
   }
 
-  case "button": {
+  // button
+  else if (block.type === "button") {
     const buttonBlock = block as ButtonBlock;
     const buttonElement = (
       <button style={getButtonStyle(buttonBlock)}>
         {buttonBlock.payload.text}
       </button>
     );
-    return (
+    content = (
       <div style={getButtonContainerStyle(buttonBlock)}>
         {buttonBlock.payload.link.url &&
         buttonBlock.payload.link.url !== "#" ? (
@@ -5564,54 +5504,55 @@ const renderPrimitiveBlock = (
     );
   }
 
-case "separator": {
-  const separatorBlock = block as SeparatorBlock;
-  const { payload } = separatorBlock;
-  return (
-    <div
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {payload.style === "invisible" && (
-        <div style={{ height: `${payload.height}px` }} />
-      )}
-      {payload.style === "line" && <LineSeparator block={separatorBlock} />}
-      {payload.style === "shapes" && (
-        <div
-          className="w-full h-full"
-          style={{ height: `${payload.height}px` }}
-        >
-          <ShapesSeparator block={separatorBlock} />
-        </div>
-      )}
-      {payload.style === "dots" && (
-        <div
-          className="flex justify-around items-center w-full"
-          style={{ height: `${payload.height}px` }}
-        >
-          {Array.from({ length: payload.dots.count }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: `${payload.dots.size}px`,
-                height: `${payload.dots.size}px`,
-                borderRadius: "50%",
-                backgroundColor: payload.dots.color,
-                boxShadow: `0 0 8px ${payload.dots.color}`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-case "youtube": {
+  // separator
+  else if (block.type === "separator") {
+    const separatorBlock = block as SeparatorBlock;
+    const { payload } = separatorBlock;
+    content = (
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {payload.style === "invisible" && (
+          <div style={{ height: `${payload.height}px` }} />
+        )}
+        {payload.style === "line" && <LineSeparator block={separatorBlock} />}
+        {payload.style === "shapes" && (
+          <div
+            className="w-full h-full"
+            style={{ height: `${payload.height}px` }}
+          >
+            <ShapesSeparator block={separatorBlock} />
+          </div>
+        )}
+        {payload.style === "dots" && (
+          <div
+            className="flex justify-around items-center w-full"
+            style={{ height: `${payload.height}px` }}
+          >
+            {Array.from({ length: payload.dots.count }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: `${payload.dots.size}px`,
+                  height: `${payload.dots.size}px`,
+                  borderRadius: "50%",
+                  backgroundColor: payload.dots.color,
+                  boxShadow: `0 0 8px ${payload.dots.color}`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+else if (block.type === "youtube") {
   const youtubeBlock = block as YouTubeBlock;
   const {
     videoId,
@@ -5769,27 +5710,47 @@ case "youtube": {
   );
 } // 👈 aquí se cierra SOLO el case "youtube"
 
-case "timer": {
-  const timerBlock = block as TimerBlock;
-  return <TimerComponent block={timerBlock} />;
-}
-case "rating": {
-  return <RatingComponent block={block as RatingBlock} />;
-}
-case "switch":
-  return <SwitchComponent block={block as SwitchBlock} />;
-case "shapes":
-  return <ShapesComponent block={block as ShapesBlock} />;
-case "gif":
-  return <GifComponent block={block as GifBlock} />;
-default:
-  return (
-    <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
-      Block: {block.type}
+// timer
+  else if (block.type === "timer") {
+    const timerBlock = block as TimerBlock;
+    content = <TimerComponent block={timerBlock} />;
+  }
+    
+// rating
+  else if (block.type === "rating") {
+    content = <RatingComponent block={block as RatingBlock} />;
+  }
+    
+// switch
+  else if (block.type === "switch") {
+    content = <SwitchComponent block={block as SwitchBlock} />;
+  }
+    
+// shapes
+  else if (block.type === "shapes") {
+    content = <ShapesComponent block={block as ShapesBlock} />;
+  }
+    
+// gif
+  else if (block.type === "gif") {
+    content = <GifComponent block={block as GifBlock} />;
+  }
+  
+return (
+    <div
+      key={block.id}
+      className={cn(
+        "group/primitive relative w-full overflow-hidden",
+        isSelected &&
+          "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
+      )}
+      onClick={onSelect}
+    >
+      {content}
     </div>
   );
-}
-
+};
+  
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
     setCanvasContent(prev => {
         const newCanvasContent = [...prev];
