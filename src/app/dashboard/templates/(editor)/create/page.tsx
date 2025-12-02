@@ -4791,126 +4791,142 @@ export default function CreateTemplatePage() {
             newBlock = { ...basePayload, type: 'text', payload: { fragments: [] } }; // Fallback
       }
 
-      setCanvasContent(prev => prev.map(row => {
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-              if (col.id === activeContainer?.id) {
-                  return { ...col, blocks: [...col.blocks, newBlock] };
-              }
-              return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-      })
-    );
-      setIsColumnBlockSelectorOpen(false);
-  };
-  
-  const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
-    if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
-    
-    setIsActionSelectorModalOpen(false);
-    setIsWrapperBlockSelectorOpen(false);
+      setCanvasContent(prev =>
+  prev.map(row => {
+    if (row.type !== "columns") return row;
+    const newColumns = row.payload.columns.map(col => {
+      if (col.id === activeContainer?.id) {
+        return { ...col, blocks: [...col.blocks, newBlock] };
+      }
+      return col;
+    });
+    return { ...row, payload: { ...row.payload, columns: newColumns } };
+  })
+);
+setIsColumnBlockSelectorOpen(false);
+};
 
-    if (type === 'emoji-interactive') {
-        setIsEmojiSelectorOpen(true);
-    } else if (type === 'heading-interactive') {
-         const wrapperElement = wrapperRefs.current[activeContainer.id];
-         if (!wrapperElement) return;
+const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
+  if (!activeContainer || activeContainer.type !== "wrapper" || !clickPosition) return;
 
-         const rect = wrapperElement.getBoundingClientRect();
-         const xPercent = (clickPosition.x / rect.width) * 100;
-         const yPercent = (clickPosition.y / rect.height) * 100;
+  setIsActionSelectorModalOpen(false);
+  setIsWrapperBlockSelectorOpen(false);
 
-         const newBlock: InteractiveHeadingBlock = {
-            id: `iheading_${Date.now()}`,
-            type: 'heading-interactive',
-            payload: {
-                name: `Titulo-${Math.floor(Math.random() * 1000)}`,
-                text: 'Título Interactivo',
-                x: xPercent, y: yPercent, scale: 1, rotate: 0,
-                styles: {
-                    color: isDarkMode ? '#FFFFFF' : '#000000',
-                    fontFamily: 'Roboto',
-                    fontWeight: 'bold',
-                    fontStyle: 'normal',
-                    textDecoration: 'none'
-                }
-            }
-         };
+  if (type === "emoji-interactive") {
+    setIsEmojiSelectorOpen(true);
+  } else if (type === "heading-interactive") {
+    const wrapperElement = wrapperRefs.current[activeContainer.id];
+    if (!wrapperElement) return;
 
-         setCanvasContent(prev => prev.map(row => {
-            if (row.id === activeContainer.id && row.type === 'wrapper') {
-                return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
-            }
-            return row;
-         }));
-         setClickPosition(null);
-         setActiveContainer(null);
-    }
-  };
+    const rect = wrapperElement.getBoundingClientRect();
+    const xPercent = (clickPosition.x / rect.width) * 100;
+    const yPercent = (clickPosition.y / rect.height) * 100;
 
-  const handleSelectEmojiForWrapper = (emoji: string) => {
-     if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
-     
-     const wrapperElement = wrapperRefs.current[activeContainer.id];
-     if (!wrapperElement) return;
+    const newBlock: InteractiveHeadingBlock = {
+      id: `iheading_${Date.now()}`,
+      type: "heading-interactive",
+      payload: {
+        name: `Titulo-${Math.floor(Math.random() * 1000)}`,
+        text: "Título Interactivo",
+        x: xPercent,
+        y: yPercent,
+        scale: 1,
+        rotate: 0,
+        styles: {
+          color: isDarkMode ? "#FFFFFF" : "#000000",
+          fontFamily: "Roboto",
+          fontWeight: "bold",
+          fontStyle: "normal",
+          textDecoration: "none",
+        },
+      },
+    };
 
-     const rect = wrapperElement.getBoundingClientRect();
-     const xPercent = (clickPosition.x / rect.width) * 100;
-     const yPercent = (clickPosition.y / rect.height) * 100;
-     
-     const newBlock: InteractiveEmojiBlock = {
-        id: `emoji_${Date.now()}`,
-        type: 'emoji-interactive',
-        payload: {
-            name: `Emoji-${Math.floor(Math.random() * 1000)}`,
-            emoji,
-            x: xPercent,
-            y: yPercent,
-            scale: 1,
-            rotate: 0,
-        }
-     };
-
-     setCanvasContent(prev => prev.map(row => {
-        if (row.id === activeContainer.id && row.type === 'wrapper') {
-            return {
-                ...row,
-                payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] }
-            }
+    setCanvasContent(prev =>
+      prev.map(row => {
+        if (row.id === activeContainer.id && row.type === "wrapper") {
+          return {
+            ...row,
+            payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] },
+          };
         }
         return row;
-     }));
-     setIsEmojiSelectorOpen(false);
-     setClickPosition(null);
-     setActiveContainer(null);
+      })
+    );
+    setClickPosition(null);
+    setActiveContainer(null);
   }
-  
-  const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
-      setItemToDelete({ rowId, colId, primId });
-      setIsDeleteModalOpen(true);
+};
+
+const handleSelectEmojiForWrapper = (emoji: string) => {
+  if (!activeContainer || activeContainer.type !== "wrapper" || !clickPosition) return;
+
+  const wrapperElement = wrapperRefs.current[activeContainer.id];
+  if (!wrapperElement) return;
+
+  const rect = wrapperElement.getBoundingClientRect();
+  const xPercent = (clickPosition.x / rect.width) * 100;
+  const yPercent = (clickPosition.y / rect.height) * 100;
+
+  const newBlock: InteractiveEmojiBlock = {
+    id: `emoji_${Date.now()}`,
+    type: "emoji-interactive",
+    payload: {
+      name: `Emoji-${Math.floor(Math.random() * 1000)}`,
+      emoji,
+      x: xPercent,
+      y: yPercent,
+      scale: 1,
+      rotate: 0,
+    },
   };
 
-  const handleDeleteItem = () => {
-    if (!itemToDelete) return;
-    const { rowId, colId, primId } = itemToDelete;
+  setCanvasContent(prev =>
+    prev.map(row => {
+      if (row.id === activeContainer.id && row.type === "wrapper") {
+        return {
+          ...row,
+          payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] },
+        };
+      }
+      return row;
+    })
+  );
+  setIsEmojiSelectorOpen(false);
+  setClickPosition(null);
+  setActiveContainer(null);
+};
 
-    setCanvasContent(prev => {
-        let newCanvasContent = [...prev];
+const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
+  setItemToDelete({ rowId, colId, primId });
+  setIsDeleteModalOpen(true);
+};
 
-        if (primId && colId) { // Deleting a primitive from a column
-            newCanvasContent = newCanvasContent.map(row => {
-                if (row.id === rowId && row.type === 'columns') {
-                    const newCols = row.payload.columns.map(col => {
-                        if (col.id === colId) {
-                            return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
-                        }
-                        return col;
-                    });
-                    return { ...row, payload: { ...row.payload, columns: newCols } };
-                }
-                return row;
-            });
+const handleDeleteItem = () => {
+  if (!itemToDelete) return;
+  const { rowId, colId, primId } = itemToDelete;
+
+  setCanvasContent(prev => {
+    let newCanvasContent = [...prev];
+
+    if (primId && colId) {
+      // Deleting a primitive from a column
+      newCanvasContent = newCanvasContent.map(row => {
+        if (row.id === rowId && row.type === "columns") {
+          const newCols = row.payload.columns.map(col => {
+            if (col.id === colId) {
+              return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newCols } };
+        }
+        return row;
+      });
+    }
+    return newCanvasContent;
+  });
+};
         } else if (primId && !colId) { // Deleting a primitive from a wrapper
              newCanvasContent = newCanvasContent.map(row => {
                 if (row.id === rowId && row.type === 'wrapper') {
@@ -5470,129 +5486,164 @@ export default function CreateTemplatePage() {
                       classic: `svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"/><path fill="#FFFFFF" d="M11 10v8l7-4z"/></svg>`,
                     };
                     
-                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
-                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9', xs: 'w-12 h-9' };
+                     const sizeVariant =
+  colCount === 1 ? "lg" : colCount === 2 ? "md" : colCount === 3 ? "sm" : "xs";
+const playButtonSize = {
+  lg: "w-32 h-24",
+  md: "w-16 h-12",
+  sm: "w-12 h-9",
+  xs: "w-12 h-9",
+};
 
-                    const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-sm p-2', xs: 'text-xs px-2 pt-1 pb-0' };
-                    const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs', xs: 'text-xs' };
+const titleSize = {
+  lg: "text-2xl p-4",
+  md: "text-lg p-3",
+  sm: "text-sm p-2",
+  xs: "text-xs px-2 pt-1 pb-0",
+};
+const durationSize = {
+  lg: "text-base",
+  md: "text-sm",
+  sm: "text-xs",
+  xs: "text-xs",
+};
 
-                    const formatDuration = () => {
-                        const { hours, minutes, seconds } = duration;
-                        const h = parseInt(hours || '0', 10);
-                        const m = parseInt(minutes || '0', 10);
-                        const s = parseInt(seconds || '0', 10);
+const formatDuration = () => {
+  const { hours, minutes, seconds } = duration;
+  const h = parseInt(hours || "0", 10);
+  const m = parseInt(minutes || "0", 10);
+  const s = parseInt(seconds || "0", 10);
 
-                        if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
+  if (isNaN(h) && isNaN(m) && isNaN(s)) return null;
 
-                        const parts = [];
-                        if (h > 0) parts.push(h.toString());
-                        if(h > 0 || m > 0) {
-                           parts.push(m.toString().padStart(h > 0 ? 2 : 1, '0'));
-                        }
-                        if (s > 0 || m > 0 || h > 0) {
-                             parts.push(s.toString().padStart(2, '0'));
-                        }
-
-                        if (parts.length === 0) return null;
-                        if(parts.length === 1 && m > 0) return `0:${parts[0].padStart(2,'0')}`;
-                        if(parts.length === 1) return `0:0${parts[0]}`;
-                        
-                        return parts.join(':');
-                    };
-                    const displayDuration = showDuration ? formatDuration() : null;
-                    
-                    const { border } = styles;
-                    let borderStyle: React.CSSProperties = {};
-                    if(border.type === 'solid') {
-                        borderStyle.background = border.color1;
-                    } else if (border.type === 'gradient') {
-                         if (border.direction === 'radial') {
-                          borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
-                        } else {
-                          const angle = border.direction === 'horizontal' ? 'to right' : 'to bottom';
-                          borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
-                        }
-                    }
-
-                    return (
-                        <div className="p-2 w-full h-full">
-                           <div 
-                            style={{
-                                ...borderStyle,
-                                borderRadius: `${styles.borderRadius}px`,
-                                padding: `${styles.borderWidth}px`
-                            }}
-                            className="w-full h-full"
-                           >
-                            <div
-                                className="w-full h-full relative aspect-video bg-black/5"
-                                style={{
-                                  borderRadius: `${styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0}px`,
-                                  overflow: 'hidden',
-                                }}
-                            >
-                                <img src={thumbnailUrl} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />
-                                
-                                {showTitle && title && (
-                                    <div className={cn("absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
-                                        <p className="font-semibold truncate">{title}</p>
-                                    </div>
-                                )}
-
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                     <a 
-                                        href={link.url && videoId ? link.url : undefined} 
-                                        target={link.url && videoId ? (link.openInNewTab ? '_blank' : '_self') : undefined} 
-                                        rel="noopener noreferrer"
-                                        className={cn(
-                                          "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110", 
-                                          playButtonSize[sizeVariant],
-                                          link.url && videoId ? "cursor-pointer" : "cursor-default"
-                                        )}
-                                        style={{ backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')` }}
-                                        onClick={(e) => {
-                                            if (!link.url || !videoId) e.preventDefault();
-                                            e.stopPropagation();
-                                        }}
-                                     >
-                                         <span className="sr-only">Play Video</span>
-                                     </a>
-                                </div>
-                                {displayDuration && (
-                                    <div className={cn("absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none", durationSize[sizeVariant])}>
-                                        {displayDuration}
-                                    </div>
-                                )}
-                            </div>
-                           </div>
-                        </div>
-                    );
-                }
-              case 'timer': {
-                 const timerBlock = block as TimerBlock;
-                 return <TimerComponent block={timerBlock} />;
-              }
-              case 'rating': {
-                return <RatingComponent block={block as RatingBlock} />;
-              }
-               case 'switch':
-                return <SwitchComponent block={block as SwitchBlock} />;
-              case 'shapes':
-                return <ShapesComponent block={block as ShapesBlock} />;
-              case 'gif':
-                return <GifComponent block={block as GifBlock} />;
-              default:
-                return (
-                  <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
-                    Block: {block.type}
-                  </div>
-                )
-            }
-          })()
-        }
-      </div>
-    )
+  const parts = [];
+  if (h > 0) parts.push(h.toString());
+  if (h > 0 || m > 0) {
+    parts.push(m.toString().padStart(h > 0 ? 2 : 1, "0"));
   }
+  if (s > 0 || m > 0 || h > 0) {
+    parts.push(s.toString().padStart(2, "0"));
+  }
+
+  if (parts.length === 0) return null;
+  if (parts.length === 1 && m > 0) return `0:${parts[0].padStart(2, "0")}`;
+  if (parts.length === 1) return `0:0${parts[0]}`;
+
+  return parts.join(":");
+};
+const displayDuration = showDuration ? formatDuration() : null;
+
+const { border } = styles;
+let borderStyle: React.CSSProperties = {};
+if (border.type === "solid") {
+  borderStyle.background = border.color1;
+} else if (border.type === "gradient") {
+  if (border.direction === "radial") {
+    borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
+  } else {
+    const angle = border.direction === "horizontal" ? "to right" : "to bottom";
+    borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+  }
+}
+
+return (
+  <div className="p-2 w-full h-full">
+    <div
+      style={{
+        ...borderStyle,
+        borderRadius: `${styles.borderRadius}px`,
+        padding: `${styles.borderWidth}px`,
+      }}
+      className="w-full h-full"
+    >
+      <div
+        className="w-full h-full relative aspect-video bg-black/5"
+        style={{
+          borderRadius: `${
+            styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0
+          }px`,
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={thumbnailUrl}
+          alt="Video thumbnail"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {showTitle && title && (
+          <div
+            className={cn(
+              "absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none",
+              titleSize[sizeVariant]
+            )}
+          >
+            <p className="font-semibold truncate">{title}</p>
+          </div>
+        )}
+
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <a
+            href={link.url && videoId ? link.url : undefined}
+            target={
+              link.url && videoId ? (link.openInNewTab ? "_blank" : "_self") : undefined
+            }
+            rel="noopener noreferrer"
+            className={cn(
+              "block bg-center bg-no-repeat bg-contain transition-transform hover:scale-110",
+              playButtonSize[sizeVariant],
+              link.url && videoId ? "cursor-pointer" : "cursor-default"
+            )}
+            style={{
+              backgroundImage: `url('data:image/svg+xml;base64,${btoa(
+                playButtonSvg[styles.playButtonType]
+              )}')`,
+            }}
+            onClick={e => {
+              if (!link.url || !videoId) e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <span className="sr-only">Play Video</span>
+          </a>
+        </div>
+
+        {displayDuration && (
+          <div
+            className={cn(
+              "absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none",
+              durationSize[sizeVariant]
+            )}
+          >
+            {displayDuration}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+// 👇 cierres de los otros casos del switch
+case "timer": {
+  const timerBlock = block as TimerBlock;
+  return <TimerComponent block={timerBlock} />;
+}
+case "rating": {
+  return <RatingComponent block={block as RatingBlock} />;
+}
+case "switch":
+  return <SwitchComponent block={block as SwitchBlock} />;
+case "shapes":
+  return <ShapesComponent block={block as ShapesBlock} />;
+case "gif":
+  return <GifComponent block={block as GifBlock} />;
+default:
+  return (
+    <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
+      Block: {block.type}
+    </div>
+  );
+}
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
     setCanvasContent(prev => {
