@@ -5457,87 +5457,112 @@ const renderPrimitiveBlock = (
   );
 };
                 
-                const imageContainerStyle: React.CSSProperties = {
-  borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
-  overflow: "hidden",
-  height: 0,
-  paddingBottom: "75%", // Maintain 4:3 aspect ratio
-  position: "relative",
-};
+    const outerWrapperStyle: React.CSSProperties = {
+      width: `${size}%`,
+      margin: "auto",
+      padding: "8px",
+    };
 
-const imageStyle: React.CSSProperties = {
-  position: "absolute",
-  width: `${zoom}%`,
-  height: "auto",
-  maxWidth: "none",
-  top: `${positionY}%`,
-  left: `${positionX}%`,
-  transform: `translate(-${positionX}%, -${positionY}%)`,
-  objectFit: "cover",
-};
+    const borderWrapperStyle: React.CSSProperties = {
+      padding: `${border.width}px`,
+      borderRadius: `${borderRadius}px`,
+    };
 
-const imageElement = (
-  <div style={outerWrapperStyle}>
-    <div style={borderWrapperStyle}>
-      <div style={imageContainerStyle}>
-        <img src={url} alt={alt} style={imageStyle} />
+    if (border.width > 0) {
+      if (border.type === "solid") {
+        borderWrapperStyle.backgroundColor = border.color1;
+      } else if (border.type === "gradient") {
+        const { direction, color1, color2 } = border;
+        const angle = direction === "horizontal" ? "to right" : "to bottom";
+        borderWrapperStyle.background =
+          direction === "radial"
+            ? `radial-gradient(circle, ${color1}, ${color2})`
+            : `linear-gradient(${angle}, ${color1}, ${color2})`;
+      }
+    }
+
+    const imageContainerStyle: React.CSSProperties = {
+      borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
+      overflow: "hidden",
+      height: 0,
+      paddingBottom: "75%",
+      position: "relative",
+    };
+
+    const imageStyle: React.CSSProperties = {
+      position: "absolute",
+      width: `${zoom}%`,
+      height: "auto",
+      maxWidth: "none",
+      top: `${positionY}%`,
+      left: `${positionX}%`,
+      transform: `translate(-${positionX}%, -${positionY}%)`,
+      objectFit: "cover",
+    };
+
+    const imageElement = (
+      <div style={outerWrapperStyle}>
+        <div style={borderWrapperStyle}>
+          <div style={imageContainerStyle}>
+            <img src={url} alt={alt} style={imageStyle} />
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-);
+    );
 
-if (link && link.url && link.url !== "#") {
-  return (
-    <a
-      href={link.url}
-      target={link.openInNewTab ? "_blank" : "_self"}
-      rel="noopener noreferrer"
-      style={{ textDecoration: "none", display: "block" }}
-    >
-      {imageElement}
-    </a>
-  );
-}
-return imageElement;
-
-case "emoji-static": {
-  const emojiBlock = block as StaticEmojiBlock;
-  return (
-    <div style={{ textAlign: emojiBlock.payload.styles.textAlign }}>
-      <p style={getStaticEmojiStyle(emojiBlock)}>
-        {emojiBlock.payload.emoji}
-      </p>
-    </div>
-  );
-}
-
-case "button": {
-  const buttonBlock = block as ButtonBlock;
-  const buttonElement = (
-    <button style={getButtonStyle(buttonBlock)}>
-      {buttonBlock.payload.text}
-    </button>
-  );
-  return (
-    <div style={getButtonContainerStyle(buttonBlock)}>
-      {buttonBlock.payload.link.url &&
-      buttonBlock.payload.link.url !== "#" ? (
+    if (link && link.url && link.url !== "#") {
+      return (
         <a
-          href={buttonBlock.payload.link.url}
-          target={
-            buttonBlock.payload.link.openInNewTab ? "_blank" : "_self"
-          }
+          href={link.url}
+          target={link.openInNewTab ? "_blank" : "_self"}
           rel="noopener noreferrer"
-          style={{ textDecoration: "none" }}
+          style={{ textDecoration: "none", display: "block" }}
         >
-          {buttonElement}
+          {imageElement}
         </a>
-      ) : (
-        buttonElement
-      )}
-    </div>
-  );
-}
+      );
+    }
+    return imageElement;
+  }
+
+  case "emoji-static": {
+    const emojiBlock = block as StaticEmojiBlock;
+    return (
+      <div style={{ textAlign: emojiBlock.payload.styles.textAlign }}>
+        <p style={getStaticEmojiStyle(emojiBlock)}>
+          {emojiBlock.payload.emoji}
+        </p>
+      </div>
+    );
+  }
+
+  case "button": {
+    const buttonBlock = block as ButtonBlock;
+    const buttonElement = (
+      <button style={getButtonStyle(buttonBlock)}>
+        {buttonBlock.payload.text}
+      </button>
+    );
+    return (
+      <div style={getButtonContainerStyle(buttonBlock)}>
+        {buttonBlock.payload.link.url &&
+        buttonBlock.payload.link.url !== "#" ? (
+          <a
+            href={buttonBlock.payload.link.url}
+            target={
+              buttonBlock.payload.link.openInNewTab ? "_blank" : "_self"
+            }
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+          >
+            {buttonElement}
+          </a>
+        ) : (
+          buttonElement
+        )}
+      </div>
+    );
+  }
 
 case "separator": {
   const separatorBlock = block as SeparatorBlock;
