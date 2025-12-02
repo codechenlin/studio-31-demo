@@ -233,12 +233,42 @@ const wrapperContentBlocks = [
   { name: "Emoji Interactivo", icon: Smile, id: "emoji-interactive" },
 ];
 
-
 const columnOptions = [
-    { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
-    { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+  {
+    num: 1,
+    icon: () => (
+      <div className="w-full h-8 bg-muted rounded-sm border border-border"></div>
+    ),
+  },
+  {
+    num: 2,
+    icon: () => (
+      <div className="flex w-full h-8 gap-1">
+        <div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div>
+        <div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div>
+      </div>
+    ),
+  },
+  {
+    num: 3,
+    icon: () => (
+      <div className="flex w-full h-8 gap-1">
+        <div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div>
+        <div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div>
+        <div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div>
+      </div>
+    ),
+  },
+  {
+    num: 4,
+    icon: () => (
+      <div className="flex w-full h-8 gap-1">
+        <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
+        <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
+        <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
+      </div>
+    ),
+  },
 ];
 
 const popularEmojis = Array.from(new Set([
