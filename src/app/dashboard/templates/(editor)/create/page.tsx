@@ -1,18 +1,43 @@
-import { Suspense } from "react";
-import React from "react";
+"use client";
+
+import React, {
+  useState,
+  useTransition,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import {
-  Button
-} from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +47,7 @@ import {
   DialogTitle,
   DialogClose,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,8 +57,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Toggle } from '@/components/ui/toggle';
+} from "@/components/ui/alert-dialog";
+import { Toggle } from "@/components/ui/toggle";
+
 import {
   Square,
   Type,
@@ -145,82 +171,66 @@ import {
   Crop,
   Gift,
   Tags,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
-import { useToast } from '@/hooks/use-toast';
-import { HexColorPicker } from 'react-colorful';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { saveTemplateAction, revalidatePath } from './actions';
-import { getTemplateById, getAllCategories } from '@/app/dashboard/templates/actions';
-import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from './gallery-actions';
-import { createClient } from '@/lib/supabase/client';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Preloader } from '@/components/common/preloader';
-import { LoadingModal } from '@/components/common/loading-modal';
-import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
+} from "lucide-react";
 
-// 🔹 Componente principal (Server Component)
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <CreatePageContent />
-    </Suspense>
-  );
-}
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { ColorPickerAdvanced } from "@/components/dashboard/color-picker-advanced";
+import { useToast } from "@/hooks/use-toast";
+import { HexColorPicker } from "react-colorful";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import Link from "next/link";
+import { saveTemplateAction, revalidatePath } from "./actions";
+import {
+  getTemplateById,
+  getAllCategories,
+} from "@/app/dashboard/templates/actions";
+import {
+  listFiles,
+  renameFile,
+  deleteFiles,
+  uploadFile,
+  type StorageFile,
+} from "./gallery-actions";
+import { createClient } from "@/lib/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Preloader } from "@/components/common/preloader";
+import { LoadingModal } from "@/components/common/loading-modal";
+import { FileManagerModal } from "@/components/dashboard/file-manager-modal";
 
-// 🔹 Client Component separado
-"use client";
-import { useSearchParams } from "next/navigation";
-
-function CreatePageContent() {
-  const params = useSearchParams();
-  const templateId = params.get("id");
-
-  // Aquí puedes seguir usando useState, useEffect, etc.
-  // y todo el resto de tu lógica que estaba en page.tsx
-
-  return (
-    <div>
-      {/* Ejemplo: */}
-      <h1>Editor de Template</h1>
-      <p>ID del template: {templateId}</p>
-      {/* Aquí va el resto de tu código */}
-    </div>
-  );
-}
-
+// 🔹 Constantes de bloques
 const mainContentBlocks = [
-  { name: "Columns", icon: Columns, id: 'columns' },
-  { name: "Contenedor Flexible", icon: Shapes, id: 'wrapper' },
+  { name: "Columns", icon: Columns, id: "columns" },
+  { name: "Contenedor Flexible", icon: Shapes, id: "wrapper" },
 ];
 
 const columnContentBlocks = [
-  { name: "Titulo", icon: Heading1, id: 'heading' },
-  { name: "Texto", icon: Type, id: 'text' },
-  { name: "Imagen", icon: ImageIconType, id: 'image' },
-  { name: "Botón", icon: Square, id: 'button' },
-  { name: "Separador", icon: Minus, id: 'separator' },
-  { name: "Video Youtube", icon: Youtube, id: 'youtube' },
-  { name: "Contador", icon: Timer, id: 'timer' },
-  { name: "Emoji", icon: Smile, id: 'emoji-static' },
-  { name: "Estrellas", icon: Star, id: 'rating' },
-  { name: "Interruptor", icon: ToggleLeft, id: 'switch' },
-  { name: "Formas", icon: Pentagon, id: 'shapes' },
-  { name: "GIF", icon: Film, id: 'gif' },
+  { name: "Titulo", icon: Heading1, id: "heading" },
+  { name: "Texto", icon: Type, id: "text" },
+  { name: "Imagen", icon: ImageIconType, id: "image" },
+  { name: "Botón", icon: Square, id: "button" },
+  { name: "Separador", icon: Minus, id: "separator" },
+  { name: "Video Youtube", icon: Youtube, id: "youtube" },
+  { name: "Contador", icon: Timer, id: "timer" },
+  { name: "Emoji", icon: Smile, id: "emoji-static" },
+  { name: "Estrellas", icon: Star, id: "rating" },
+  { name: "Interruptor", icon: ToggleLeft, id: "switch" },
+  { name: "Formas", icon: Pentagon, id: "shapes" },
+  { name: "GIF", icon: Film, id: "gif" },
 ];
 
 const wrapperContentBlocks = [
-   { name: "Titulo", icon: Heading1, id: 'heading-interactive' },
-   { name: "Emoji Interactivo", icon: Smile, id: 'emoji-interactive' },
+  { name: "Titulo", icon: Heading1, id: "heading-interactive" },
+  { name: "Emoji Interactivo", icon: Smile, id: "emoji-interactive" },
 ];
 
 
