@@ -208,6 +208,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Preloader } from "@/components/common/preloader";
 import { LoadingModal } from "@/components/common/loading-modal";
 import { FileManagerModal } from "@/components/dashboard/file-manager-modal";
+import { BackgroundManagerModal } from "./background-manager-modal";
 
 // 🔹 Constantes de bloques
 const mainContentBlocks = [
@@ -794,7 +795,7 @@ const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]):
     }
 
     return null;
-}
+};
 
 function CreatePageContent() {
   const router = useRouter();
@@ -2011,15 +2012,15 @@ const handleDeleteItem = () => {
               className="flex justify-around items-center w-full"
               style={{ height: `${payload.height}px` }}
             >
-              {Array.from({ length: payload.dots.count }).map((_, i) => (
+              {Array.from({ length: dots.count }).map((_, i) => (
                 <div
                   key={i}
                   style={{
-                    width: `${payload.dots.size}px`,
-                    height: `${payload.dots.size}px`,
+                    width: `${dots.size}px`,
+                    height: `${dots.size}px`,
                     borderRadius: "50%",
-                    backgroundColor: payload.dots.color,
-                    boxShadow: `0 0 8px ${payload.dots.color}`,
+                    backgroundColor: dots.color,
+                    boxShadow: `0 0 8px ${dots.color}`,
                   }}
                 />
               ))}
@@ -2187,30 +2188,47 @@ const handleDeleteItem = () => {
     );
   }
 
-  // timer
+    // timer
     else if (block.type === "timer") {
       const timerBlock = block as TimerBlock;
-      content = <TimerComponent block={timerBlock} />;
+      return <TimerComponent payload={timerBlock.payload} />;
     }
       
   // rating
     else if (block.type === "rating") {
-      content = <RatingComponent block={block as RatingBlock} />;
+      const ratingBlock = block as RatingBlock;
+      const { styles } = ratingBlock.payload;
+      const StarComponent = {
+          pointed: PointedStar,
+          universo: UniversoStar,
+          moderno: ModernoStar,
+      }[styles.starStyle] || PointedStar;
+
+      const fullStars = Math.floor(ratingBlock.payload.rating);
+      const halfStar = ratingBlock.payload.rating % 1 !== 0;
+
+      return (
+          <div style={{ display: 'flex', justifyContent: styles.alignment, gap: `${styles.spacing}px`, padding: `${styles.paddingY}px 8px` }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                  <StarComponent key={i} size={styles.starSize} fill={i < fullStars ? styles.filled.color1 : styles.unfilled.color1} stroke={styles.border.color1} strokeWidth={styles.border.width} />
+              ))}
+          </div>
+      )
     }
       
   // switch
     else if (block.type === "switch") {
-      content = <SwitchComponent block={block as SwitchBlock} />;
+      return <SwitchComponent block={block as SwitchBlock} />;
     }
       
   // shapes
     else if (block.type === "shapes") {
-      content = <ShapesComponent block={block as ShapesBlock} />;
+      return <ShapesComponent block={block as ShapesBlock} />;
     }
       
   // gif
     else if (block.type === "gif") {
-      content = <GifComponent block={block as GifBlock} />;
+      return <GifComponent block={block as GifBlock} />;
     }
     
   return (
@@ -2430,7 +2448,7 @@ const handleDeleteItem = () => {
               id={block.id}
               ref={wrapperRef}
               className="group/wrapper relative border-2 border-dashed border-purple-500 overflow-hidden" 
-              style={{ height: `${block.payload.height}px`, ...getElementStyle(block.payload) }}
+              style={{ height: `${block.payload.height}px`, ...getElementStyle(block.payload.styles) }}
               onClick={handleWrapperClick}
             >
               <div className="w-full h-full relative">
@@ -2633,7 +2651,6 @@ const handleDeleteItem = () => {
   const LayerPanel = () => {
       const { toast } = useToast();
       const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
-      const [tempName, setTempName] = useState('');
   
       const selectedWrapper = canvasContent.find(
         (block): block is WrapperBlock =>
@@ -2699,7 +2716,7 @@ const handleDeleteItem = () => {
               return row;
           }), true);
           setEditingBlockId(null);
-      };
+      }
       
       if (!selectedWrapper) {
           return (
@@ -2806,7 +2823,7 @@ const handleDeleteItem = () => {
   const handleAddNewCategory = () => {
     const trimmed = newCategory.trim();
     if (trimmed && !allCategories.includes(trimmed)) {
-        setAllUniqueCategories(prev => [...prev, trimmed].sort());
+        setAllCategories(prev => [...prev, trimmed].sort());
         setSelectedCategories(prev => [...prev, trimmed]);
         setNewCategory('');
     } else if (trimmed) {
