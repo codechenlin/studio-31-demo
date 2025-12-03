@@ -8,6 +8,7 @@ import React, {
   useRef,
   useCallback,
   Suspense,
+  useActionState,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -266,6 +267,7 @@ const columnOptions = [
     num: 4,
     icon: () => (
       <div className="flex w-full h-8 gap-1">
+        <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
         <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
         <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
         <div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div>
@@ -707,7 +709,7 @@ interface InteractiveHeadingBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock | RatingBlock | SwitchBlock | ShapesBlock | GifBlock;
+type PrimitiveBlock = HeadingBlock | TextBlock | ButtonBlock | SeparatorBlock | StaticEmojiBlock | YouTubeBlock | TimerBlock | ImageBlock | RatingBlock | SwitchBlock | ShapesBlock | GifBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock | InteractiveHeadingBlock;
 
 
@@ -783,7 +785,7 @@ const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]):
     if (element.type === 'primitive') {
         const row = content.find(r => r.id === element.rowId);
         if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === element.columnId);
+        const col = row.payload.columns?.find(c => c.id === element.columnId);
         const block = col?.blocks.find(b => b.id === element.primitiveId);
         return block?.type || null;
     }
@@ -1271,7 +1273,7 @@ function CreatePageContent() {
       setCanvasContent(prev =>
   prev.map(row => {
     if (row.type !== "columns") return row;
-    const newColumns = row.payload.columns.map(col => {
+    const newColumns = row.payload.columns?.map(col => {
       if (col.id === activeContainer?.id) {
         return { ...col, blocks: [...col.blocks, newBlock] };
       }
@@ -1390,7 +1392,7 @@ const handleDeleteItem = () => {
       // borrar de columna
       newCanvasContent = newCanvasContent.map(row => {
         if (row.id === rowId && row.type === "columns") {
-          const newCols = row.payload.columns.map(col => {
+          const newCols = row.payload.columns?.map(col => {
             if (col.id === colId) {
               return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
             }
@@ -1843,7 +1845,7 @@ const handleDeleteItem = () => {
             fontSize: `${safeGlobalStyles.fontSize}px`,
           }}
         >
-          {textBlock.payload.fragments?.map(fragment => {
+          {textBlock.payload.fragments?.map((fragment: TextFragment) => {
             const El = fragment.link ? "a" : "span";
             const props = fragment.link
               ? {
@@ -2012,15 +2014,15 @@ const handleDeleteItem = () => {
               className="flex justify-around items-center w-full"
               style={{ height: `${payload.height}px` }}
             >
-              {Array.from({ length: dots.count }).map((_, i) => (
+              {Array.from({ length: payload.dots.count }).map((_, i) => (
                 <div
                   key={i}
                   style={{
-                    width: `${dots.size}px`,
-                    height: `${dots.size}px`,
+                    width: `${payload.dots.size}px`,
+                    height: `${payload.dots.size}px`,
                     borderRadius: "50%",
-                    backgroundColor: dots.color,
-                    boxShadow: `0 0 8px ${dots.color}`,
+                    backgroundColor: payload.dots.color,
+                    boxShadow: `0 0 8px ${payload.dots.color}`,
                   }}
                 />
               ))}
@@ -2204,13 +2206,10 @@ const handleDeleteItem = () => {
           moderno: ModernoStar,
       }[styles.starStyle] || PointedStar;
 
-      const fullStars = Math.floor(ratingBlock.payload.rating);
-      const halfStar = ratingBlock.payload.rating % 1 !== 0;
-
       return (
           <div style={{ display: 'flex', justifyContent: styles.alignment, gap: `${styles.spacing}px`, padding: `${styles.paddingY}px 8px` }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                  <StarComponent key={i} size={styles.starSize} fill={i < fullStars ? styles.filled.color1 : styles.unfilled.color1} stroke={styles.border.color1} strokeWidth={styles.border.width} />
+                  <StarComponent key={i} size={styles.starSize} fill={i < ratingBlock.payload.rating ? styles.filled.color1 : styles.unfilled.color1} stroke={styles.border.color1} strokeWidth={styles.border.width} />
               ))}
           </div>
       )
@@ -2337,11 +2336,9 @@ const handleDeleteItem = () => {
       mobile: 'max-w-sm', 
     };
     
-    const getElementStyle = (element: ColumnsBlock | WrapperBlock | Column) => {
-      const styles = 'payload' in element && 'styles' in element.payload ? element.payload.styles : 'styles' in element ? element.styles : {};
-      const { background, borderRadius, backgroundImage } = styles || {};
-  
+    const getElementStyle = (styles: any = {}) => {
       const style: React.CSSProperties = {};
+      const { background, borderRadius, backgroundImage } = styles;
   
       if (borderRadius !== undefined) {
         style.borderRadius = `${borderRadius}px`;
@@ -2374,20 +2371,34 @@ const handleDeleteItem = () => {
     };
     
     const handleOpenBgImageModal = useCallback(() => {
-      if (selectedElement?.type === 'wrapper') {
+      if (selectedElement?.type === 'wrapper' || selectedElement?.type === 'column') {
         setIsBgImageModalOpen(true);
       }
     }, [selectedElement]);
   
     const handleApplyBackgroundImage = useCallback((newState?: WrapperStyles['backgroundImage']) => {
-        if (selectedElement?.type !== 'wrapper') return;
-        const wrapperId = selectedElement.wrapperId;
-  
+        if (selectedElement?.type !== 'wrapper' && selectedElement?.type !== 'column') return;
+        
+        const isWrapper = selectedElement.type === 'wrapper';
+        const id = isWrapper ? selectedElement.wrapperId : selectedElement.rowId;
+        const colId = isWrapper ? undefined : selectedElement.columnId;
+
         setCanvasContent(prev => prev.map(row => {
-            if (row.id === wrapperId && row.type === 'wrapper') {
-                const currentStyles = row.payload.styles || {};
-                const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: newState } };
-                return { ...row, payload: newPayload };
+            if (row.id === id) {
+                if (row.type === 'wrapper' && isWrapper) {
+                    const currentStyles = row.payload.styles || {};
+                    const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: newState } };
+                    return { ...row, payload: newPayload };
+                } else if (row.type === 'columns' && colId) {
+                    const newColumns = row.payload.columns?.map(col => {
+                        if (col.id === colId) {
+                             const currentStyles = col.styles || {};
+                             return { ...col, styles: { ...currentStyles, backgroundImage: newState } };
+                        }
+                        return col;
+                    });
+                    return { ...row, payload: { ...row.payload, columns: newColumns } };
+                }
             }
             return row;
         }), true);
@@ -2559,10 +2570,10 @@ const handleDeleteItem = () => {
           
           {block.type === 'columns' && (
               <div className="flex w-full relative">
-                {block.payload.columns.map((col) => (
+                {block.payload.columns?.map((col) => (
                   <React.Fragment key={col.id}>
                       <div 
-                          style={{ ...getElementStyle(col), flexBasis: `${col.width}%` }}
+                          style={{ ...getElementStyle(col.styles), flexBasis: `${col.width}%` }}
                           className={cn(
                             "flex-grow p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-0 group/column",
                             selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
@@ -2571,7 +2582,7 @@ const handleDeleteItem = () => {
                       >
                          {col.blocks.length > 0 ? (
                              <div className="flex flex-col gap-2 w-full">
-                                 {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id, columns.length))}
+                                 {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id, columns?.length || 1))}
                                  <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}><PlusCircle className="mr-2"/>Añadir</Button>
                              </div>
                          ) : (
@@ -2589,7 +2600,179 @@ const handleDeleteItem = () => {
           </div>
       );
     }
-  
+
+    const updateBlockPayload = (updater: (payload: any) => any) => {
+        if (!selectedElement) return;
+
+        setCanvasContent(prev => prev.map(row => {
+            if (selectedElement.type === 'wrapper' && row.id === selectedElement.wrapperId) {
+                return { ...row, payload: updater(row.payload) };
+            }
+            if (selectedElement.type === 'column' && row.id === selectedElement.rowId && row.type === 'columns') {
+                const newCols = row.payload.columns?.map(col => {
+                    if (col.id === selectedElement.columnId) {
+                        return { ...col, styles: updater(col.styles || {}) };
+                    }
+                    return col;
+                });
+                return { ...row, payload: { ...row.payload, columns: newCols } };
+            }
+            if (selectedElement.type === 'primitive' && row.id === selectedElement.rowId && row.type === 'columns') {
+                const newCols = row.payload.columns?.map(col => {
+                    if (col.id === selectedElement.columnId) {
+                        const newBlocks = col.blocks.map(b => {
+                            if (b.id === selectedElement.primitiveId) {
+                                return { ...b, payload: updater(b.payload) };
+                            }
+                            return b;
+                        });
+                        return { ...col, blocks: newBlocks };
+                    }
+                    return col;
+                });
+                return { ...row, payload: { ...row.payload, columns: newCols } };
+            }
+            if (selectedElement.type === 'wrapper-primitive' && row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+                const newBlocks = row.payload.blocks.map(b => {
+                    if (b.id === selectedElement.primitiveId) {
+                        return { ...b, payload: updater(b.payload) };
+                    }
+                    return b;
+                });
+                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+            }
+            return row;
+        }));
+    };
+
+    // START OF EDITOR COMPONENTS
+    const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        const getBlock = () => {
+            if (selectedElement?.type !== 'primitive') return null;
+            const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
+            const col = row?.payload.columns?.find(c => c.id === selectedElement.columnId);
+            return col?.blocks.find(b => b.id === selectedElement.primitiveId) as HeadingBlock | undefined;
+        };
+
+        const block = getBlock();
+        if (!block) return null;
+
+        const updatePayload = (updater: (p: HeadingBlock['payload']) => HeadingBlock['payload']) => {
+            updateBlockPayload(updater);
+        };
+        
+        return (
+            <div className="space-y-4">
+                <div>
+                    <Label>Texto</Label>
+                    <Input value={block.payload.text} onChange={e => updatePayload(p => ({ ...p, text: e.target.value }))} />
+                </div>
+                <div>
+                    <Label>Tamaño de Fuente</Label>
+                    <Slider value={[block.payload.styles.fontSize]} onValueChange={([v]) => updatePayload(p => ({ ...p, styles: { ...p.styles, fontSize: v } }))} min={12} max={96} />
+                </div>
+                <div>
+                    <Label>Color de Texto</Label>
+                    <ColorPickerAdvanced color={block.payload.styles.color} setColor={c => updatePayload(p => ({ ...p, styles: { ...p.styles, color: c } }))} />
+                </div>
+                <div>
+                    <Label>Alineación</Label>
+                    <div className="flex gap-2">
+                        {(['left', 'center', 'right'] as TextAlign[]).map(align => (
+                            <Button key={align} variant={block.payload.styles.textAlign === align ? 'secondary' : 'outline'} onClick={() => updatePayload(p => ({ ...p, styles: { ...p.styles, textAlign: align } }))}>
+                                {align === 'left' ? <AlignLeft /> : align === 'center' ? <AlignCenter /> : <AlignRight />}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <Label>Estilos</Label>
+                    <div className="flex gap-2">
+                        <Toggle pressed={block.payload.styles.fontWeight === 'bold'} onPressedChange={v => updatePayload(p => ({ ...p, styles: { ...p.styles, fontWeight: v ? 'bold' : 'normal' } }))}><Bold /></Toggle>
+                        <Toggle pressed={block.payload.styles.fontStyle === 'italic'} onPressedChange={v => updatePayload(p => ({ ...p, styles: { ...p.styles, fontStyle: v ? 'italic' : 'normal' } }))}><Italic /></Toggle>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for TextEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">TextEditor no implementado aún.</div>;
+    };
+    
+    const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for ImageEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">ImageEditor no implementado aún.</div>;
+    };
+    
+    const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for ButtonEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">ButtonEditor no implementado aún.</div>;
+    };
+    
+    const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for SeparatorEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">SeparatorEditor no implementado aún.</div>;
+    };
+    
+    const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for YouTubeEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">YouTubeEditor no implementado aún.</div>;
+    };
+    
+    const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for TimerEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">TimerEditor no implementado aún.</div>;
+    };
+    
+    const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for StaticEmojiEditor
+         return <div className="text-xs text-muted-foreground p-2 border rounded-md">StaticEmojiEditor no implementado aún.</div>;
+    };
+
+    const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for InteractiveEmojiEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">InteractiveEmojiEditor no implementado aún.</div>;
+    };
+    
+    const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for InteractiveHeadingEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">InteractiveHeadingEditor no implementado aún.</div>;
+    };
+    
+    const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for RatingEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">RatingEditor no implementado aún.</div>;
+    };
+    
+    const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for SwitchEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">SwitchEditor no implementado aún.</div>;
+    };
+
+    const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for ShapesEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">ShapesEditor no implementado aún.</div>;
+    };
+
+    const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for GifEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">GifEditor no implementado aún.</div>;
+    };
+
+    const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasContent }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void }) => {
+        // Implementation for ColumnDistributionEditor
+        return <div className="text-xs text-muted-foreground p-2 border rounded-md">ColumnDistributionEditor no implementado aún.</div>;
+    };
+    
+    const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenImageModal }: { selectedElement: SelectedElement, canvasContent: CanvasBlock[], setCanvasContent: (updater: (prev: CanvasBlock[]) => CanvasBlock[], record?: boolean) => void, onOpenImageModal: () => void }) => {
+        // Implementation for BackgroundEditor
+        return <Button onClick={onOpenImageModal}>Gestionar Fondo</Button>;
+    };
+
+    // END OF EDITOR COMPONENTS
+    
     const StyleEditorHeader = () => {
       if (!selectedElement) return null;
   
@@ -2648,7 +2831,7 @@ const handleDeleteItem = () => {
       );
   };
   
-  const LayerPanel = () => {
+    const LayerPanel = () => {
       const { toast } = useToast();
       const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   
@@ -2692,7 +2875,7 @@ const handleDeleteItem = () => {
           }
   
           const isNameTaken = selectedWrapper.payload.blocks.some(b => b.id !== blockId && b.payload.name === trimmedName);
-  
+
           if (isNameTaken) {
                toast({
                   title: "¡Nombre en uso!",
@@ -2823,7 +3006,7 @@ const handleDeleteItem = () => {
   const handleAddNewCategory = () => {
     const trimmed = newCategory.trim();
     if (trimmed && !allCategories.includes(trimmed)) {
-        setAllCategories(prev => [...prev, trimmed].sort());
+        setAllUniqueCategories(prev => [...prev, trimmed].sort());
         setSelectedCategories(prev => [...prev, trimmed]);
         setNewCategory('');
     } else if (trimmed) {
@@ -3100,7 +3283,9 @@ const handleDeleteItem = () => {
         initialValue={
             selectedElement?.type === 'wrapper'
             ? (canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined)?.payload.styles.backgroundImage
-            : undefined
+            : (selectedElement?.type === 'column' 
+                ? (canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined)?.payload.columns?.find(c => c.id === selectedElement.columnId)?.styles?.backgroundImage
+                : undefined)
         }
        />
 
@@ -3318,3 +3503,5 @@ export default function CreateTemplatePage() {
         </Suspense>
     );
 }
+
+    
